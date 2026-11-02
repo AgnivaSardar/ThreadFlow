@@ -9,7 +9,12 @@
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "seed:calibrated": "tsx prisma/seed.ts --profile=calibrated",
+    "seed:stress": "tsx prisma/seed.ts --profile=stress --stress-count=40",
+    "seed:minimal": "tsx prisma/seed.ts --profile=minimal",
+    "seed:master": "tsx prisma/seed.ts --profile=master-only",
+    "seed:clean": "tsx prisma/seed.ts --profile=calibrated --clean"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

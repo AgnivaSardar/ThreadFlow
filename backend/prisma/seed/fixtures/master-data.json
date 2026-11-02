@@ -1,0 +1,87 @@
+{
+  "buyers": [
+    {
+      "name": "Company B (UK)",
+      "code": "COMPANY_B",
+      "country": "United Kingdom",
+      "contactEmail": "buyer@company-b.co.uk"
+    },
+    {
+      "name": "Company C (Germany)",
+      "code": "COMPANY_C",
+      "country": "Germany",
+      "contactEmail": "compliance@company-c.de"
+    }
+  ],
+  "units": [
+    {
+      "name": "Unit 1 (Cotton Hub - Own)",
+      "code": "UNIT_1",
+      "type": "OWN_UNIT",
+      "location": "Avinashi Road, Tiruppur"
+    },
+    {
+      "name": "Unit 2 (Stitching Hub - Own)",
+      "code": "UNIT_2",
+      "type": "OWN_UNIT",
+      "location": "Palladam Road, Tiruppur"
+    },
+    {
+      "name": "Unit 3 (Specialty - Own)",
+      "code": "UNIT_3",
+      "type": "OWN_UNIT",
+      "location": "Angeripalayam, Tiruppur"
+    },
+    {
+      "name": "Subcontract - PrintTex",
+      "code": "PRINTTEX",
+      "type": "SUBCONTRACTOR",
+      "location": "Industrial Estate, Tiruppur"
+    },
+    {
+      "name": "Subcontract - WashTex",
+      "code": "WASHTEX",
+      "type": "SUBCONTRACTOR",
+      "location": "Dharapuram Road, Tiruppur"
+    }
+  ],
+  "users": [
+    {
+      "email": "merchandiser@company-a.com",
+      "name": "Ramesh Merchandiser",
+      "role": "MERCHANDISER",
+      "languagePreference": "en",
+      "phone": "+91 98422 10001"
+    },
+    {
+      "email": "supervisor.muthu@company-a.com",
+      "name": "Muthu Floor Supervisor",
+      "role": "SUPERVISOR",
+      "languagePreference": "ta",
+      "phone": "+91 98422 20002",
+      "assignedUnitCode": "UNIT_1"
+    },
+    {
+      "email": "supervisor.selvam@company-a.com",
+      "name": "Selvam Floor Supervisor",
+      "role": "SUPERVISOR",
+      "languagePreference": "ta",
+      "phone": "+91 98422 30003",
+      "assignedUnitCode": "UNIT_2"
+    },
+    {
+      "email": "buyer@company-b.co.uk",
+      "name": "Sarah Jenkins (UK Sourcing)",
+      "role": "BUYER",
+      "languagePreference": "en",
+      "buyerCode": "COMPANY_B"
+    },
+    {
+      "email": "compliance@company-c.de",
+      "name": "Klaus Mueller (EU Compliance)",
+      "role": "BUYER",
+      "languagePreference": "en",
+      "buyerCode": "COMPANY_C"
+    }
+  ]
+}

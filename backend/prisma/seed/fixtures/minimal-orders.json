@@ -1,0 +1,29 @@
+[
+  {
+    "poNumber": "MIN-PO-1001",
+    "buyerCode": "COMPANY_B",
+    "unitCode": "UNIT_1",
+    "style": "Basic Crew Tee",
+    "description": "Minimal CI test sample",
+    "totalQuantity": 1000,
+    "fobPricePerPiece": 5.0,
+    "currency": "GBP",
+    "exchangeRate": 105.5,
+    "exFactoryDateStr": "2026-11-15T00:00:00Z",
+    "orderLines": [
+      { "size": "M", "color": "White", "plannedQty": 1000 }
+    ],
+    "milestones": [
+      { "stage": "KNITTING", "sequenceOrder": 1, "plannedStartOffsetDays": -10, "plannedEndOffsetDays": -5, "bufferDaysAhead": 18, "targetQuantity": 1000, "completedQuantity": 1000, "unitCode": "UNIT_1" },
+      { "stage": "DYEING_WASHING", "sequenceOrder": 2, "plannedStartOffsetDays": -4, "plannedEndOffsetDays": -1, "bufferDaysAhead": 14, "targetQuantity": 1000, "completedQuantity": 1000, "unitCode": "UNIT_1" },
+      { "stage": "PRINTING", "sequenceOrder": 3, "plannedStartOffsetDays": 0, "plannedEndOffsetDays": 2, "bufferDaysAhead": 11, "targetQuantity": 1000, "completedQuantity": 1000, "unitCode": "PRINTTEX" },
+      { "stage": "CUTTING", "sequenceOrder": 4, "plannedStartOffsetDays": 3, "plannedEndOffsetDays": 5, "bufferDaysAhead": 9, "targetQuantity": 1000, "completedQuantity": 1000, "unitCode": "UNIT_1" },
+      { "stage": "STITCHING", "sequenceOrder": 5, "plannedStartOffsetDays": 6, "plannedEndOffsetDays": 10, "bufferDaysAhead": 3, "targetQuantity": 1000, "completedQuantity": 500, "unitCode": "UNIT_1" },
+      { "stage": "CHECKING", "sequenceOrder": 6, "plannedStartOffsetDays": 11, "plannedEndOffsetDays": 12, "bufferDaysAhead": 2, "targetQuantity": 1000, "completedQuantity": 0, "unitCode": "UNIT_1" },
+      { "stage": "FINISHING", "sequenceOrder": 7, "plannedStartOffsetDays": 13, "plannedEndOffsetDays": 14, "bufferDaysAhead": 0, "targetQuantity": 1000, "completedQuantity": 0, "unitCode": "UNIT_1" }
+    ],
+    "dailyLogs": [
+      { "dateOffsetDays": 0, "completedQty": 250, "reworkQty": 5, "rejectedQty": 1, "stage": "STITCHING", "unitCode": "UNIT_1", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift", "operatorNotes": "CI baseline update" }
+    ]
+  }
+]
