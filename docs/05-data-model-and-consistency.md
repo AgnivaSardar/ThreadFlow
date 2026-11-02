@@ -15,7 +15,7 @@ All primary keys use **CUID** (`@default(cuid())`), providing URL-safe, time-ord
   * Fields: `id`, `name`, `code`, `type` (`OWN_UNIT`, `SUBCONTRACTOR`), `location`.
   * Manages owned Tiruppur manufacturing units (Unit 1, Unit 2, Unit 3) and external partner units (PrintTex, WashTex).
 * **`Order`**:
-  * Fields: `id`, `poNumber` (unique), `style`, `description`, `totalQuantity`, `currency` (`INR`, `GBP`, `EUR`), `exchangeRate`, `fobPricePerPiece`, `encryptedFobPrice` (AES-256-GCM ciphertext), `totalOrderValue`, `exFactoryDate`, `orderDate`, `status`, `buyerId` (FK), `unitId` (FK).
+  * Fields: `id`, `poNumber` (unique), `style`, `description`, `totalQuantity`, `currency` (`INR`, `GBP`, `EUR`), `exchangeRate`, `fobPricePerPiece`, `encryptedFobPrice` (AES-256-GCM ciphertext), `totalOrderValue`, `exFactoryDate`, `orderDate`, `status`, `version` (optimistic locking), `deletedAt` (soft delete for compliance), `buyerId` (FK), `unitId` (FK).
 * **`OrderLine`**:
   * Fields: `id`, `orderId` (FK), `size` (`S`, `M`, `L`, `XL`), `color`, `plannedQty`, `completedQty`.
   * Compound constraint: `@@unique([orderId, size, color])`.
@@ -23,10 +23,13 @@ All primary keys use **CUID** (`@default(cuid())`), providing URL-safe, time-ord
   * Fields: `id`, `productionUpdateId` (FK), `orderLineId` (FK), `goodQuantity`, `rejectedQuantity`.
   * Directly solves the *"99% Done Size-Ratio Skew Trap"* by recording shift output by size and color.
 * **`TnaMilestone`**:
-  * Fields: `id`, `orderId` (FK), `stage` (`KNITTING` -> `DYEING_WASHING` -> `PRINTING` -> `CUTTING` -> `STITCHING` -> `CHECKING` -> `FINISHING`), `sequenceOrder` (1–7), `plannedStart`, `plannedEnd`, `bufferDaysAhead`, `targetQuantity`, `completedQuantity`, `unitId` (FK).
+  * Fields: `id`, `orderId` (FK), `stage` (`KNITTING` -> `DYEING_WASHING` -> `PRINTING` -> `CUTTING` -> `STITCHING` -> `CHECKING` -> `FINISHING`), `sequenceOrder` (1–7), `plannedStart`, `plannedEnd`, `bufferDaysAhead`, `targetQuantity`, `completedQuantity`, `version` (optimistic locking), `deletedAt` (soft delete), `unitId` (FK).
   * Enforces sequential progression and knitwear buffer deduction rules.
 * **`ProductionUpdate`**:
-  * Fields: `id`, `idempotencyKey` (@unique client UUID), `orderId` (FK), `milestoneId` (FK), `supervisorId` (FK), `stage`, `shift` (`DAY` / `NIGHT`), `machineLine`, `goodQuantity`, `rejectedQuantity`, `notes`, `clientEventAt`, `receivedAt`, `approvalStatus` (`PENDING_REVIEW`, `CONFIRMED`, `OVERRIDDEN`), `confirmedBy`, `confirmedAt`.
+  * Fields: `id`, `idempotencyKey` (@unique client UUID), `orderId` (FK), `milestoneId` (FK), `supervisorId` (FK), `stage`, `shift` (`DAY` / `NIGHT`), `machineLine`, `goodQuantity`, `rejectedQuantity`, `notes`, `audioFileUrl` (S3 link to supervisor's raw Tamil voice recording), `voiceDurationSeconds`, `clientEventAt`, `receivedAt`, `approvalStatus` (`PENDING_REVIEW`, `CONFIRMED`, `OVERRIDDEN`), `confirmedBy`, `confirmedAt`.
+* **`WeeklyBuyerReport`** *(Reporting Snapshot)*:
+  * Fields: `id`, `buyerId` (FK), `weekNumber`, `year`, `fileFormat` (`PDF` / `EXCEL`), `reportUrl`, `summarySnapshot` (JSON), `orderCount`, `generatedById`, `generatedAt`.
+  * Preserves historical weekly snapshot exports so foreign buyers can review historical reports without recalculating dynamic run rates.
 * **`ProductionPhoto`**:
   * Fields: `id`, `productionUpdateId` (FK), `s3Url`, `stage`, `approvalStatus`, `isBuyerVisible` (default: `false`).
 * **`RiskWarning`**:
@@ -83,3 +86,30 @@ To guarantee data confidentiality and regulatory compliance:
   * Continuous WAL archiving via **pgBackRest / WAL-G** pushing to encrypted S3 object storage ensures **Point-In-Time Recovery (PITR)** to any second during outages.
 * **Automated Standby Promotion:**
   * Under orchestrators (e.g., Patroni with `etcd`), a primary hardware or network failure triggers automated health-check failover: promoting the synchronous standby to primary within 10 seconds with zero downtime for factory floor workers.
+
+---
+
+## 5. High-Performance Query Indexing & Database Integrity Constraints
+
+### Optimized Indexing Architecture
+* **Run-Rate Engine 3-Day Weighted Moving Average (WMA):**
+  * `@@index([milestoneId, clientEventAt(sort: Desc)])` and `@@index([orderId, clientEventAt(sort: Desc)])` provide instantaneous index-only scans for the latest 3 production days without in-memory sorting.
+* **Buyer Portal Filter Optimization:**
+  * `@@index([productionUpdateId, isBuyerVisible])` on `production_photos` and `@@index([orderId, approvalStatus, isBuyerVisible])` on `risk_warnings` accelerate read queries from UK/EU buyers by strictly traversing pre-filtered buyer-visible indexes.
+* **Active Order Board Filter:**
+  * `@@index([status])` on `orders` accelerates merchandiser queries by scoping exclusively to active orders.
+
+### Database-Level CHECK Constraints
+Applied directly at the PostgreSQL layer to guarantee invariant enforcement even outside application logic:
+```sql
+ALTER TABLE "order_lines" ADD CONSTRAINT "chk_completed_qty_non_negative" CHECK ("completedQty" >= 0);
+ALTER TABLE "tna_milestones" ADD CONSTRAINT "chk_milestone_dates" CHECK ("plannedEnd" >= "plannedStart");
+ALTER TABLE "tna_milestones" ADD CONSTRAINT "chk_target_qty_positive" CHECK ("targetQuantity" > 0);
+ALTER TABLE "orders" ADD CONSTRAINT "chk_total_qty_positive" CHECK ("totalQuantity" > 0);
+ALTER TABLE "production_updates" ADD CONSTRAINT "chk_good_qty_non_negative" CHECK ("goodQuantity" >= 0);
+ALTER TABLE "production_updates" ADD CONSTRAINT "chk_rejected_qty_non_negative" CHECK ("rejectedQuantity" >= 0);
+```
+
+### Optimistic Concurrency & Compliance Soft Deletes
+* **Optimistic Locking:** `version Int @default(0)` on `Order` and `TnaMilestone` prevents lost updates during concurrent edits by merchandisers and supervisors.
+* **Soft Deletes:** `deletedAt DateTime?` preserves the complete immutable compliance audit history required by European apparel brand audits.

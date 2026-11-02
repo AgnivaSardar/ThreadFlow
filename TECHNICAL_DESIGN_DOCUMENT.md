@@ -130,6 +130,7 @@ erDiagram
     USER ||--o{ AUDIT_EVENT : triggers
     USER ||--o{ RISK_MITIGATION_ACTION : authorizes
     BUYER ||--o{ BUYER_MAGIC_LINK : authorizes
+    BUYER ||--o{ WEEKLY_BUYER_REPORT : receives
 
     ORDER {
         string id PK "CUID"
@@ -144,6 +145,8 @@ erDiagram
         datetime exFactoryDate
         string unitId FK
         string status
+        int version "Optimistic Lock"
+        datetime deletedAt "Soft Delete"
     }
     ORDER_LINE {
         string id PK "CUID"
@@ -170,6 +173,8 @@ erDiagram
         int targetQuantity
         int completedQuantity
         int bufferDaysAhead
+        int version "Optimistic Lock"
+        datetime deletedAt "Soft Delete"
     }
     PRODUCTION_UPDATE {
         string id PK "CUID"
@@ -182,10 +187,23 @@ erDiagram
         int goodQuantity
         int rejectedQuantity
         string notes
+        string audioFileUrl
+        int voiceDurationSeconds
         datetime clientEventAt
         datetime receivedAt
         string approvalStatus
         string confirmedBy
+    }
+    WEEKLY_BUYER_REPORT {
+        string id PK "CUID"
+        string buyerId FK
+        int weekNumber
+        int year
+        string fileFormat
+        string reportUrl
+        string summarySnapshot
+        int orderCount
+        datetime generatedAt
     }
     RISK_WARNING {
         string id PK "CUID"

@@ -79,16 +79,17 @@ enum GatePassStatus {
 // ==========================================
 
 model Buyer {
-  id           String           @id @default(cuid())
+  id           String              @id @default(cuid())
   name         String
-  code         String           @unique
+  code         String              @unique
   country      String?
   contactEmail String?
   orders       Order[]
   users        User[]
   magicLinks   BuyerMagicLink[]
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  reports      WeeklyBuyerReport[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
 
   @@map("buyers")
 }
@@ -147,6 +148,8 @@ model Order {
   exFactoryDate     DateTime
   orderDate         DateTime              @default(now())
   status            String                @default("ACTIVE")
+  version           Int                   @default(0) // Optimistic concurrency lock
+  deletedAt         DateTime?             // Soft delete timestamp for compliance audits
   buyerId           String
   buyer             Buyer                 @relation(fields: [buyerId], references: [id], onDelete: Restrict)
   unitId            String
@@ -163,6 +166,8 @@ model Order {
   @@index([buyerId])
   @@index([unitId])
   @@index([exFactoryDate])
+  @@index([status])
+  @@index([deletedAt])
   @@map("orders")
 }
 
@@ -194,6 +199,8 @@ model TnaMilestone {
   bufferDaysAhead   Int                   @default(0)
   targetQuantity    Int
   completedQuantity Int                   @default(0)
+  version           Int                   @default(0) // Optimistic concurrency lock
+  deletedAt         DateTime?             // Soft delete timestamp
   unitId            String?
   unit              Unit?                 @relation(fields: [unitId], references: [id], onDelete: SetNull)
   productionUpdates ProductionUpdate[]
@@ -206,40 +213,45 @@ model TnaMilestone {
   @@unique([orderId, sequenceOrder])
   @@index([orderId])
   @@index([stage])
+  @@index([deletedAt])
   @@map("tna_milestones")
 }
 
 model ProductionUpdate {
-  id                  String                 @id @default(cuid())
-  idempotencyKey      String                 @unique
-  orderId             String
-  order               Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  milestoneId         String
-  milestone           TnaMilestone           @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
-  supervisorId        String
-  supervisor          User                   @relation(fields: [supervisorId], references: [id], onDelete: Restrict)
-  stage               Stage
-  shift               String?                @default("DAY") // "DAY" or "NIGHT"
-  machineLine         String?                // e.g. "Line 1", "Line 4B"
-  goodQuantity        Int
-  rejectedQuantity    Int                    @default(0)
-  notes               String?                @db.Text
-  clientEventAt       DateTime               @default(now())
-  receivedAt          DateTime               @default(now())
-  approvalStatus      ApprovalStatus         @default(PENDING_REVIEW)
-  confirmedBy         String?
-  confirmedAt         DateTime?
-  photos              ProductionPhoto[]
-  issueClassification IssueClassification?
-  sizeBreakdownLines  ProductionUpdateLine[]
-  createdAt           DateTime               @default(now())
-  updatedAt           DateTime               @updatedAt
+  id                   String                 @id @default(cuid())
+  idempotencyKey       String                 @unique
+  orderId              String
+  order                Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  milestoneId          String
+  milestone            TnaMilestone           @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  supervisorId         String
+  supervisor           User                   @relation(fields: [supervisorId], references: [id], onDelete: Restrict)
+  stage                Stage
+  shift                String?                @default("DAY") // "DAY" or "NIGHT"
+  machineLine          String?                // e.g. "Line 1", "Line 4B"
+  goodQuantity         Int
+  rejectedQuantity     Int                    @default(0)
+  notes                String?                @db.Text
+  audioFileUrl         String?                // S3 link to supervisor's raw Tamil audio note
+  voiceDurationSeconds Int?                   // Audio recording duration in seconds
+  clientEventAt        DateTime               @default(now())
+  receivedAt           DateTime               @default(now())
+  approvalStatus       ApprovalStatus         @default(PENDING_REVIEW)
+  confirmedBy          String?
+  confirmedAt          DateTime?
+  photos               ProductionPhoto[]
+  issueClassification  IssueClassification?
+  sizeBreakdownLines   ProductionUpdateLine[]
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
 
   @@index([orderId])
   @@index([milestoneId])
   @@index([supervisorId])
   @@index([approvalStatus])
   @@index([clientEventAt])
+  @@index([milestoneId, clientEventAt(sort: Desc)])
+  @@index([orderId, clientEventAt(sort: Desc)])
   @@map("production_updates")
 }
 
@@ -274,6 +286,7 @@ model ProductionPhoto {
   @@index([productionUpdateId])
   @@index([isBuyerVisible])
   @@index([approvalStatus])
+  @@index([productionUpdateId, isBuyerVisible])
   @@map("production_photos")
 }
 
@@ -305,6 +318,7 @@ model RiskWarning {
   @@index([riskLevel])
   @@index([approvalStatus])
   @@index([isBuyerVisible])
+  @@index([orderId, approvalStatus, isBuyerVisible])
   @@map("risk_warnings")
 }
 
@@ -420,4 +434,22 @@ model BuyerMagicLink {
   @@index([buyerId])
   @@index([isActive, expiresAt])
   @@map("buyer_magic_links")
+}
+
+model WeeklyBuyerReport {
+  id              String   @id @default(cuid())
+  buyerId         String
+  buyer           Buyer    @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  weekNumber      Int
+  year            Int
+  fileFormat      String   @default("PDF") // "PDF" or "EXCEL"
+  reportUrl       String
+  summarySnapshot String   @db.Text // JSON snapshot of orders, run-rates, risk statuses
+  orderCount      Int
+  generatedById   String?
+  generatedAt     DateTime @default(now())
+
+  @@index([buyerId])
+  @@index([year, weekNumber])
+  @@map("weekly_buyer_reports")
 }
