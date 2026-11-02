@@ -2,12 +2,14 @@ import { Router } from 'express';
 import { authRoutes } from '../modules/auth/auth.routes';
 import { ordersRoutes } from '../modules/orders/orders.routes';
 import { riskRoutes } from '../modules/risk/risk.routes';
+import { productionRoutes } from '../modules/production/production.routes';
 
 const router = Router();
 
 router.use('/auth', authRoutes);
 router.use('/orders', ordersRoutes);
 router.use('/risk', riskRoutes);
+router.use('/production', productionRoutes);
 
 // Health check endpoint
 router.get('/health', (_req, res) => {

@@ -321,3 +321,61 @@ export interface RateSimulationResult {
   simulatedRisk: RiskLevel;
   financialExposureRupees: number;
 }
+
+// ==========================================
+// Feature 6: Supervisor Mobile PWA Types
+// ==========================================
+
+export interface SupervisorActiveMilestone {
+  id: string;
+  stage: Stage;
+  sequenceOrder: number;
+  targetQuantity: number;
+  completedQuantity: number;
+  remainingQuantity: number;
+  progressPct: number;
+}
+
+export interface SupervisorWorkOrderItem {
+  orderId: string;
+  poNumber: string;
+  style: string;
+  description?: string | null;
+  totalQuantity: number;
+  exFactoryDate: string;
+  buyer: { id: string; name: string; code: string };
+  unit: { id: string; name: string; code: string };
+  activeMilestone: SupervisorActiveMilestone | null;
+  milestones: {
+    id: string;
+    stage: Stage;
+    sequenceOrder: number;
+    targetQuantity: number;
+    completedQuantity: number;
+    isCompleted: boolean;
+  }[];
+  orderLines: OrderLine[];
+  overallProgress: number;
+}
+
+export interface SupervisorWorkResponse {
+  unit: { id: string; name: string; code: string; type: string } | null;
+  assignedOrdersCount: number;
+  orders: SupervisorWorkOrderItem[];
+  recentUpdates: {
+    id: string;
+    idempotencyKey: string;
+    poNumber: string;
+    style: string;
+    stage: Stage;
+    shift: string;
+    machineLine?: string | null;
+    goodQuantity: number;
+    rejectedQuantity: number;
+    notes?: string | null;
+    clientEventAt: string;
+    approvalStatus: ApprovalStatus;
+    issueCategory?: string | null;
+  }[];
+}
+

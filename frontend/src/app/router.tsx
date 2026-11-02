@@ -5,6 +5,7 @@ import { AppLayout } from '../components/AppLayout';
 import { OrdersPage } from '../features/orders/OrdersPage';
 import { OrderDetailPage } from '../features/orders/OrderDetailPage';
 import { RiskPage } from '../features/risk/RiskPage';
+import { MyWorkPage } from '../features/supervisor/MyWorkPage';
 
 export const router = createBrowserRouter([
   {
@@ -30,6 +31,10 @@ export const router = createBrowserRouter([
       {
         path: 'risk',
         element: <RiskPage />,
+      },
+      {
+        path: 'supervisor/my-work',
+        element: <MyWorkPage />,
       },
     ],
   },

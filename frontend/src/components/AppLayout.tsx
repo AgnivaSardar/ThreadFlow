@@ -1,16 +1,53 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useAuthStore } from '../features/auth/authStore';
-import { Clock, LogOut } from 'lucide-react';
+import { Clock, Menu, Wifi, WifiOff, RefreshCw, Languages } from 'lucide-react';
 import { syncServerTime, getAuthoritativeServerDate } from '../services/api';
 import { UserMenuDropdown } from './UserMenuDropdown';
+import {
+  isEffectiveOnline,
+  isOfflineSimulated,
+  setOfflineSimulated,
+  getPendingOfflineCount,
+} from '../offline/queue/queue';
+import {
+  registerOfflineSyncListeners,
+  syncOfflineQueue,
+  SyncResult,
+} from '../offline/sync/sync';
 
 export const AppLayout: React.FC = () => {
-  const { isAuthenticated, user, isLoading, logout } = useAuthStore();
+  const { isAuthenticated, user, isLoading } = useAuthStore();
   const location = useLocation();
-  const navigate = useNavigate();
   const [serverTime, setServerTime] = useState<Date>(getAuthoritativeServerDate());
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Network & Sync states in Main Header
+  const [isOnline, setIsOnline] = useState(isEffectiveOnline());
+  const [isSimulated, setIsSimulated] = useState(isOfflineSimulated());
+  const [pendingCount, setPendingCount] = useState<number>(0);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // Language state
+  const [lang, setLang] = useState<'ta' | 'en'>(
+    (localStorage.getItem('threadflow_lang') as 'ta' | 'en') ||
+      (user?.languagePreference === 'ta' ? 'ta' : 'en')
+  );
+
+  // Toggle Language Handler
+  const handleToggleLanguage = () => {
+    const nextLang = lang === 'ta' ? 'en' : 'ta';
+    setLang(nextLang);
+    localStorage.setItem('threadflow_lang', nextLang);
+    window.dispatchEvent(new CustomEvent('threadflow-lang-change', { detail: { lang: nextLang } }));
+  };
+
+  // Refresh pending items count
+  const refreshPending = useCallback(async () => {
+    const count = await getPendingOfflineCount();
+    setPendingCount(count);
+  }, []);
 
   useEffect(() => {
     // Initial server sync
@@ -18,32 +55,74 @@ export const AppLayout: React.FC = () => {
       setServerTime(getAuthoritativeServerDate());
     });
 
-    // Tick every 1 second using monotonic server offset
     const timer = setInterval(() => {
       setServerTime(getAuthoritativeServerDate());
     }, 1000);
 
-    // Periodic re-sync with server every 60s
     const syncInterval = setInterval(() => {
       syncServerTime();
     }, 60000);
 
+    // Offline listeners
+    refreshPending();
+    const cleanupSync = registerOfflineSyncListeners();
+
+    const handleNetworkChange = () => {
+      setIsOnline(isEffectiveOnline());
+      setIsSimulated(isOfflineSimulated());
+      refreshPending();
+    };
+
+    const handleQueueChange = () => {
+      refreshPending();
+    };
+
+    window.addEventListener('online', handleNetworkChange);
+    window.addEventListener('offline', handleNetworkChange);
+    window.addEventListener('threadflow-network-change', handleNetworkChange);
+    window.addEventListener('threadflow-queue-changed', handleQueueChange);
+    window.addEventListener('threadflow-queue-synced', handleQueueChange);
+
     return () => {
       clearInterval(timer);
       clearInterval(syncInterval);
+      cleanupSync();
+      window.removeEventListener('online', handleNetworkChange);
+      window.removeEventListener('offline', handleNetworkChange);
+      window.removeEventListener('threadflow-network-change', handleNetworkChange);
+      window.removeEventListener('threadflow-queue-changed', handleQueueChange);
+      window.removeEventListener('threadflow-queue-synced', handleQueueChange);
     };
-  }, []);
+  }, [refreshPending]);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+  // Toggle Offline Simulation from Main Dashboard Header
+  const handleToggleSimulation = () => {
+    const nextVal = !isSimulated;
+    setOfflineSimulated(nextVal);
+    setIsSimulated(nextVal);
+    setIsOnline(isEffectiveOnline());
+    if (!nextVal) {
+      setTimeout(() => syncOfflineQueue(), 300);
+    }
+  };
+
+  // Manual Trigger Sync from Main Dashboard Header
+  const handleManualSync = async () => {
+    if (!isEffectiveOnline()) return;
+    setIsSyncing(true);
+    try {
+      await syncOfflineQueue();
+    } finally {
+      setIsSyncing(false);
+      refreshPending();
+    }
   };
 
   if (!isAuthenticated && !isLoading) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Format date and time cleanly without cramped location tags
+  // Format date and time
   const formattedDate = serverTime.toLocaleDateString(undefined, {
     day: '2-digit',
     month: 'short',
@@ -59,45 +138,114 @@ export const AppLayout: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#F8FAFC]">
-      {/* Fixed Navigation Sidebar */}
-      <div className="h-full shrink-0 flex flex-col">
-        <Sidebar />
-      </div>
+      {/* Responsive Collapsible Sidebar */}
+      <Sidebar
+        isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
+      />
 
-      {/* Main Workspace Area - Only Content Scrolls */}
+      {/* Main Workspace Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Top Header Bar (Fixed) */}
-        {/* Top Header Bar (Fixed with higher stacking context so dropdown renders on top) */}
-        <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0 relative z-40 shadow-xs">
-          {/* Authoritative Server Date & Time (Clean, Spacious, No Location Tag) */}
-          <div className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-slate-50 border border-slate-200/90 text-slate-700 text-xs shadow-2xs">
-            <Clock className="w-4 h-4 text-sky-600 shrink-0" />
-            <span className="font-semibold text-slate-800">{formattedDate}</span>
-            <span className="text-slate-300">|</span>
-            <span className="font-mono font-bold text-slate-900 tracking-wide text-xs">
-              {formattedTime}
-            </span>
+        {/* Main Dashboard Header (Unified, Fixed) */}
+        <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between shrink-0 relative z-30 shadow-2xs">
+          {/* Left: Mobile Menu Toggle + Authoritative Server Date & Time */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Hamburger Button for Mobile */}
+            <button
+              type="button"
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 active:scale-95 transition-all"
+              aria-label="Open Navigation Menu"
+            >
+              <Menu className="w-5 h-5 text-slate-800" />
+            </button>
+
+            {/* Server Date & Time Badge */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/90 text-slate-700 text-xs shadow-2xs">
+              <Clock className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+              <span className="font-semibold text-slate-800 hidden sm:inline">{formattedDate}</span>
+              <span className="text-slate-300 hidden sm:inline">|</span>
+              <span className="font-mono font-bold text-slate-900 tracking-wide text-xs">
+                {formattedTime}
+              </span>
+            </div>
           </div>
 
-          {/* Right Section: User Name & Clickable Avatar Menu Dropdown */}
-          {user && (
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-                <div className="text-xs font-bold text-slate-800">{user.name}</div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
-                  {user.role} {user.buyer?.name ? `• ${user.buyer.code}` : ''}
-                </div>
-              </div>
+          {/* Right: Online/Offline Badge + Language Toggle + User Avatar Dropdown */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Online / Offline Simulator Pill in Main Header */}
+            <button
+              type="button"
+              onClick={handleToggleSimulation}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs ${
+                !isOnline || isSimulated
+                  ? 'bg-rose-50 text-rose-800 border border-rose-300 hover:bg-rose-100'
+                  : 'bg-emerald-50 text-emerald-900 border border-emerald-300 hover:bg-emerald-100'
+              }`}
+              title="Click to toggle Offline Simulation mode"
+            >
+              {!isOnline || isSimulated ? (
+                <>
+                  <WifiOff className="w-3.5 h-3.5 text-rose-600" />
+                  <span className="text-[11px] font-black">OFFLINE</span>
+                  {isSimulated && (
+                    <span className="hidden md:inline text-[10px] text-rose-500 font-semibold">(Sim)</span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Wifi className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="text-[11px] font-black text-emerald-800">ONLINE</span>
+                </>
+              )}
+            </button>
 
-              {/* Clickable Avatar with Dropdown Menu (Profile view/edit, contacts) */}
-              <UserMenuDropdown />
-            </div>
-          )}
+            {/* Sync Queue Action Pill (Shown whenever items are queued) */}
+            {pendingCount > 0 && (
+              <button
+                type="button"
+                onClick={handleManualSync}
+                disabled={isSyncing || !isOnline}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 transition-all shadow-2xs disabled:opacity-50"
+                title="Synchronize offline queue now"
+              >
+                <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span className="text-[11px]">Sync ({pendingCount})</span>
+              </button>
+            )}
+
+            {/* Language Toggle (தமிழ் / EN) */}
+            <button
+              type="button"
+              onClick={handleToggleLanguage}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all shadow-2xs"
+              title="Switch Language / மொழியை மாற்றவும்"
+            >
+              <Languages className="w-3.5 h-3.5 text-slate-600" />
+              <span className="text-[11px] font-black">{lang === 'ta' ? 'தமிழ்' : 'EN'}</span>
+            </button>
+
+            {/* User Profile Avatar with Dropdown */}
+            {user && (
+              <div className="flex items-center gap-2 sm:gap-3 pl-1 sm:pl-2 border-l border-slate-200">
+                <div className="text-right hidden md:block">
+                  <div className="text-xs font-bold text-slate-800 truncate max-w-[140px]">
+                    {user.name}
+                  </div>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+                    {user.role} {user.buyer?.code ? `• ${user.buyer.code}` : ''}
+                  </div>
+                </div>
+
+                <UserMenuDropdown />
+              </div>
+            )}
+          </div>
         </header>
 
-        {/* Scrollable Content Container (Docked to right viewport edge with butter-smooth scrolling) */}
+        {/* Scrollable Content Container (Smooth, Responsive, Fits any screen) */}
         <main className="flex-1 overflow-y-auto w-full smooth-scroll">
-          <div className="p-6 max-w-7xl w-full mx-auto">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
             <Outlet />
           </div>
         </main>
