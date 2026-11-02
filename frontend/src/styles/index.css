@@ -9,10 +9,12 @@
   color-scheme: light;
 }
 
+html,
 body {
   margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+  padding: 0;
+  height: 100%;
+  width: 100%;
   background-color: #F4F7FB;
   color: #0F172A;
   -webkit-font-smoothing: antialiased;
@@ -20,5 +22,5 @@ body {
 
 #root {
   width: 100%;
-  min-height: 100vh;
+  height: 100%;
 }
