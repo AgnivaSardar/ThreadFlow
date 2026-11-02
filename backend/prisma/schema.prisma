@@ -55,12 +55,31 @@ enum IssueCategory {
   OTHER
 }
 
+enum AuditCategory {
+  DATE_CHANGE
+  FINANCIAL_IMPACT
+  RISK_STATUS_CHANGE
+  OVERTIME_AUTHORIZATION
+  PRICE_UPDATE
+  STAGE_OUTPUT
+  ACCESS_CONTROL
+  GATE_PASS_EVENT
+  DISCOUNT_PENALTY
+}
+
+enum GatePassStatus {
+  DISPATCHED
+  PARTIAL_RECEIVED
+  COMPLETED
+  OVERDUE
+}
+
 // ==========================================
-// MODELS
+// MODELS (Using CUID for K-Sortable, Anti-Enumeration IDs)
 // ==========================================
 
 model Buyer {
-  id           String           @id @default(uuid())
+  id           String           @id @default(cuid())
   name         String
   code         String           @unique
   country      String?
@@ -75,36 +94,38 @@ model Buyer {
 }
 
 model Unit {
-  id         String         @id @default(uuid())
-  name       String
-  code       String         @unique
-  type       UnitType       @default(OWN_UNIT)
-  location   String?
-  orders     Order[]
-  users      User[]
-  milestones TnaMilestone[]
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  id             String                @id @default(cuid())
+  name           String
+  code           String                @unique
+  type           UnitType              @default(OWN_UNIT)
+  location       String?
+  orders         Order[]
+  users          User[]
+  milestones     TnaMilestone[]
+  gatePasses     SubcontractGatePass[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
 
   @@map("units")
 }
 
 model User {
-  id                 String             @id @default(uuid())
-  email              String             @unique
+  id                 String                 @id @default(cuid())
+  email              String                 @unique
   passwordHash       String
   name               String
-  role               Role               @default(SUPERVISOR)
-  languagePreference String             @default("ta") // "ta" or "en"
+  role               Role                   @default(SUPERVISOR)
+  languagePreference String                 @default("ta") // "ta" or "en"
   phone              String?
   buyerId            String?
-  buyer              Buyer?             @relation(fields: [buyerId], references: [id], onDelete: SetNull)
+  buyer              Buyer?                 @relation(fields: [buyerId], references: [id], onDelete: SetNull)
   assignedUnitId     String?
-  assignedUnit       Unit?              @relation(fields: [assignedUnitId], references: [id], onDelete: SetNull)
+  assignedUnit       Unit?                  @relation(fields: [assignedUnitId], references: [id], onDelete: SetNull)
   productionUpdates  ProductionUpdate[]
   auditEvents        AuditEvent[]
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  mitigationActions  RiskMitigationAction[]
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
 
   @@index([role])
   @@index([buyerId])
@@ -113,26 +134,31 @@ model User {
 }
 
 model Order {
-  id                String             @id @default(uuid())
-  poNumber          String             @unique
+  id                String                @id @default(cuid())
+  poNumber          String                @unique
   style             String
   description       String?
   totalQuantity     Int
+  currency          String                @default("INR") // e.g. "INR", "GBP", "EUR", "USD"
+  exchangeRate      Float                 @default(1.0)
   fobPricePerPiece  Float?
+  encryptedFobPrice String?               // Optional AES-256-GCM encrypted commercial FOB value
+  totalOrderValue   Float?
   exFactoryDate     DateTime
-  orderDate         DateTime           @default(now())
-  status            String             @default("ACTIVE")
+  orderDate         DateTime              @default(now())
+  status            String                @default("ACTIVE")
   buyerId           String
-  buyer             Buyer              @relation(fields: [buyerId], references: [id], onDelete: Restrict)
+  buyer             Buyer                 @relation(fields: [buyerId], references: [id], onDelete: Restrict)
   unitId            String
-  unit              Unit               @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  unit              Unit                  @relation(fields: [unitId], references: [id], onDelete: Restrict)
   orderLines        OrderLine[]
   milestones        TnaMilestone[]
   productionUpdates ProductionUpdate[]
   riskWarnings      RiskWarning[]
   auditEvents       AuditEvent[]
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  gatePasses        SubcontractGatePass[]
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
 
   @@index([buyerId])
   @@index([unitId])
@@ -141,15 +167,16 @@ model Order {
 }
 
 model OrderLine {
-  id           String   @id @default(uuid())
-  orderId      String
-  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  size         String // S, M, L, XL, etc.
-  color        String
-  plannedQty   Int
-  completedQty Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String                 @id @default(cuid())
+  orderId       String
+  order         Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  size          String                 // S, M, L, XL, etc.
+  color         String
+  plannedQty    Int
+  completedQty  Int                    @default(0)
+  updateLines   ProductionUpdateLine[]
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
 
   @@unique([orderId, size, color])
   @@index([orderId])
@@ -157,22 +184,23 @@ model OrderLine {
 }
 
 model TnaMilestone {
-  id                String             @id @default(uuid())
+  id                String                @id @default(cuid())
   orderId           String
-  order             Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order             Order                 @relation(fields: [orderId], references: [id], onDelete: Cascade)
   stage             Stage
-  sequenceOrder     Int // Sequence 1–7
+  sequenceOrder     Int                   // Sequence 1–7
   plannedStart      DateTime
   plannedEnd        DateTime
-  bufferDaysAhead   Int                @default(0)
+  bufferDaysAhead   Int                   @default(0)
   targetQuantity    Int
-  completedQuantity Int                @default(0)
+  completedQuantity Int                   @default(0)
   unitId            String?
-  unit              Unit?              @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  unit              Unit?                 @relation(fields: [unitId], references: [id], onDelete: SetNull)
   productionUpdates ProductionUpdate[]
   riskWarnings      RiskWarning[]
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  gatePasses        SubcontractGatePass[]
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
 
   @@unique([orderId, stage])
   @@unique([orderId, sequenceOrder])
@@ -182,27 +210,30 @@ model TnaMilestone {
 }
 
 model ProductionUpdate {
-  id                  String               @id @default(uuid())
-  idempotencyKey      String               @unique
+  id                  String                 @id @default(cuid())
+  idempotencyKey      String                 @unique
   orderId             String
-  order               Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order               Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   milestoneId         String
-  milestone           TnaMilestone         @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  milestone           TnaMilestone           @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
   supervisorId        String
-  supervisor          User                 @relation(fields: [supervisorId], references: [id], onDelete: Restrict)
+  supervisor          User                   @relation(fields: [supervisorId], references: [id], onDelete: Restrict)
   stage               Stage
+  shift               String?                @default("DAY") // "DAY" or "NIGHT"
+  machineLine         String?                // e.g. "Line 1", "Line 4B"
   goodQuantity        Int
-  rejectedQuantity    Int                  @default(0)
-  notes               String?              @db.Text
-  clientEventAt       DateTime             @default(now())
-  receivedAt          DateTime             @default(now())
-  approvalStatus      ApprovalStatus       @default(PENDING_REVIEW)
+  rejectedQuantity    Int                    @default(0)
+  notes               String?                @db.Text
+  clientEventAt       DateTime               @default(now())
+  receivedAt          DateTime               @default(now())
+  approvalStatus      ApprovalStatus         @default(PENDING_REVIEW)
   confirmedBy         String?
   confirmedAt         DateTime?
   photos              ProductionPhoto[]
   issueClassification IssueClassification?
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  sizeBreakdownLines  ProductionUpdateLine[]
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
 
   @@index([orderId])
   @@index([milestoneId])
@@ -212,8 +243,25 @@ model ProductionUpdate {
   @@map("production_updates")
 }
 
+model ProductionUpdateLine {
+  id                 String           @id @default(cuid())
+  productionUpdateId String
+  productionUpdate   ProductionUpdate @relation(fields: [productionUpdateId], references: [id], onDelete: Cascade)
+  orderLineId        String
+  orderLine          OrderLine        @relation(fields: [orderLineId], references: [id], onDelete: Cascade)
+  goodQuantity       Int
+  rejectedQuantity   Int              @default(0)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@unique([productionUpdateId, orderLineId])
+  @@index([productionUpdateId])
+  @@index([orderLineId])
+  @@map("production_update_lines")
+}
+
 model ProductionPhoto {
-  id                 String           @id @default(uuid())
+  id                 String           @id @default(cuid())
   productionUpdateId String
   productionUpdate   ProductionUpdate @relation(fields: [productionUpdateId], references: [id], onDelete: Cascade)
   s3Url              String
@@ -230,11 +278,11 @@ model ProductionPhoto {
 }
 
 model RiskWarning {
-  id                      String         @id @default(uuid())
+  id                      String                 @id @default(cuid())
   orderId                 String
-  order                   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order                   Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   milestoneId             String
-  milestone               TnaMilestone   @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  milestone               TnaMilestone           @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
   riskLevel               RiskLevel
   requiredDailyRate       Float
   actualRollingRate       Float
@@ -242,14 +290,15 @@ model RiskWarning {
   projectedCompletionDate DateTime?
   daysLate                Int
   financialExposureRupees Float
-  mathBreakdown           String         @db.Text // JSON string
-  mitigationPlan          String?        @db.Text
-  approvalStatus          ApprovalStatus @default(PENDING_REVIEW)
-  isBuyerVisible          Boolean        @default(false)
+  mathBreakdown           String                 @db.Text // JSON string
+  mitigationPlan          String?                @db.Text
+  approvalStatus          ApprovalStatus         @default(PENDING_REVIEW)
+  isBuyerVisible          Boolean                @default(false)
   reviewedById            String?
   reviewedAt              DateTime?
-  createdAt               DateTime       @default(now())
-  updatedAt               DateTime       @updatedAt
+  mitigationActions       RiskMitigationAction[]
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
 
   @@index([orderId])
   @@index([milestoneId])
@@ -259,8 +308,52 @@ model RiskWarning {
   @@map("risk_warnings")
 }
 
+model RiskMitigationAction {
+  id                  String      @id @default(cuid())
+  riskWarningId       String
+  riskWarning         RiskWarning @relation(fields: [riskWarningId], references: [id], onDelete: Cascade)
+  actionType          String      // e.g. "AUTHORIZE_OVERTIME", "ADD_STITCHING_LINE", "SPLIT_SUBCONTRACT"
+  description         String      @db.Text
+  addedDailyCapacity  Int         @default(0) // pcs/day added
+  estimatedCostRupees Float       @default(0.0) // cost impact of mitigation
+  authorizedById      String
+  authorizedBy        User        @relation(fields: [authorizedById], references: [id], onDelete: Restrict)
+  createdAt           DateTime    @default(now())
+
+  @@index([riskWarningId])
+  @@index([authorizedById])
+  @@map("risk_mitigation_actions")
+}
+
+model SubcontractGatePass {
+  id               String         @id @default(cuid())
+  gatePassNumber   String         @unique
+  orderId          String
+  order            Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  milestoneId      String
+  milestone        TnaMilestone   @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  unitId           String
+  unit             Unit           @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  dispatchedQty    Int
+  receivedQty      Int            @default(0)
+  dispatchedAt     DateTime       @default(now())
+  expectedReturnAt DateTime
+  actualReturnedAt DateTime?
+  status           GatePassStatus @default(DISPATCHED)
+  challanDocUrl    String?
+  notes            String?        @db.Text
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([orderId])
+  @@index([milestoneId])
+  @@index([unitId])
+  @@index([status])
+  @@map("subcontract_gate_passes")
+}
+
 model IssueClassification {
-  id                 String           @id @default(uuid())
+  id                 String           @id @default(cuid())
   productionUpdateId String           @unique
   productionUpdate   ProductionUpdate @relation(fields: [productionUpdateId], references: [id], onDelete: Cascade)
   category           IssueCategory
@@ -280,23 +373,30 @@ model IssueClassification {
 }
 
 model AuditEvent {
-  id            String   @id @default(uuid())
-  entityType    String // Order, TnaMilestone, ProductionUpdate, RiskWarning, etc.
-  entityId      String
-  action        String
-  reasonCode    String // mandatory reasonCode e.g. "BUYER_REVISED_SPEC", "FABRIC_DELAY"
-  notes         String?  @db.Text
-  previousValue String?  @db.Text // JSON diff string
-  newValue      String?  @db.Text // JSON diff string
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Restrict)
-  orderId       String?
-  order         Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  timestamp     DateTime @default(now())
-  ipAddress     String?
-  userAgent     String?
+  id                    String        @id @default(cuid())
+  entityType            String        // Order, TnaMilestone, ProductionUpdate, RiskWarning, SubcontractGatePass
+  entityId              String
+  action                String        // e.g. "UPDATE_EX_FACTORY_DATE", "CONFIRM_RISK_WARNING", "LOG_FINANCIAL_PENALTY"
+  category              AuditCategory @default(DATE_CHANGE)
+  reasonCode            String        // mandatory reason code e.g. "BUYER_REVISED_SPEC", "FABRIC_DELAY"
+  notes                 String?       @db.Text
+  previousValue         String?       @db.Text // JSON diff string
+  newValue              String?       @db.Text // JSON diff string
+  financialImpactRupees Float?        // Money auditing: financial penalty or exposure in INR
+  currency              String?       @default("INR")
+  auditHash             String?       // SHA-256 tamper-evident integrity hash
+  userId                String
+  userRole              Role          @default(SUPERVISOR) // Role at time of action
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  orderId               String?
+  order                 Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  timestamp             DateTime      @default(now())
+  ipAddress             String?
+  userAgent             String?
 
   @@index([entityType, entityId])
+  @@index([category])
+  @@index([userRole])
   @@index([userId])
   @@index([orderId])
   @@index([timestamp])
@@ -304,8 +404,9 @@ model AuditEvent {
 }
 
 model BuyerMagicLink {
-  id         String    @id @default(uuid())
+  id         String    @id @default(cuid())
   token      String    @unique
+  tokenHash  String?   @unique // Cryptographic SHA-256 hash for secure verification
   buyerId    String
   buyer      Buyer     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
   expiresAt  DateTime
@@ -315,6 +416,7 @@ model BuyerMagicLink {
   updatedAt  DateTime  @updatedAt
 
   @@index([token])
+  @@index([tokenHash])
   @@index([buyerId])
   @@index([isActive, expiresAt])
   @@map("buyer_magic_links")

@@ -35,11 +35,18 @@ PORT=4000
 APP_ORIGIN=https://threadflow.yourdomain.com
 API_PREFIX=/api/v1
 
-# Relational Database (PostgreSQL 16)
+# Relational Database (PostgreSQL 16) - Primary & High-Availability Read Replica
 DATABASE_URL="postgresql://threadflow_admin:SECURE_PG_PASSWORD_HERE@postgres:5432/threadflow_prod?schema=public&sslmode=prefer"
+REPLICA_DATABASE_URL="postgresql://threadflow_readonly:SECURE_PG_PASSWORD_HERE@postgres-replica:5432/threadflow_prod?schema=public&sslmode=prefer"
+DB_POOL_MIN=2
+DB_POOL_MAX=20
+DB_ENABLE_REPLICA_READS=true
 POSTGRES_USER=threadflow_admin
 POSTGRES_PASSWORD=SECURE_PG_PASSWORD_HERE
 POSTGRES_DB=threadflow_prod
+
+# Field-Level Cryptographic Master Key (AES-256-GCM, 64 hex characters)
+ENCRYPTION_MASTER_KEY="GENERATE_64_CHAR_HEX_RANDOM_ENCRYPTION_KEY"
 
 # Cryptographic Tokens & Authentication
 JWT_ACCESS_SECRET="GENERATE_64_CHAR_HEX_RANDOM_ACCESS_SECRET"

@@ -117,26 +117,51 @@ erDiagram
     ORDER ||--o{ PRODUCTION_UPDATE : tracks
     ORDER ||--o{ RISK_WARNING : monitors
     ORDER ||--o{ AUDIT_EVENT : records
+    ORDER ||--o{ SUBCONTRACT_GATE_PASS : issues
     TNA_MILESTONE ||--o{ PRODUCTION_UPDATE : logs
     TNA_MILESTONE ||--o{ RISK_WARNING : generates
+    TNA_MILESTONE ||--o{ SUBCONTRACT_GATE_PASS : fulfills
+    ORDER_LINE ||--o{ PRODUCTION_UPDATE_LINE : details
+    PRODUCTION_UPDATE ||--o{ PRODUCTION_UPDATE_LINE : breaks_down
     PRODUCTION_UPDATE ||--o{ PRODUCTION_PHOTO : attaches
     PRODUCTION_UPDATE ||--o{ ISSUE_CLASSIFICATION : analyzes
+    RISK_WARNING ||--o{ RISK_MITIGATION_ACTION : executes
     USER ||--o{ PRODUCTION_UPDATE : submits
     USER ||--o{ AUDIT_EVENT : triggers
+    USER ||--o{ RISK_MITIGATION_ACTION : authorizes
     BUYER ||--o{ BUYER_MAGIC_LINK : authorizes
 
     ORDER {
-        string id PK
+        string id PK "CUID"
         string poNumber UK
         string buyerId FK
         string style
         int totalQuantity
+        string currency
+        float exchangeRate
+        float fobPricePerPiece
+        string encryptedFobPrice
         datetime exFactoryDate
         string unitId FK
         string status
     }
+    ORDER_LINE {
+        string id PK "CUID"
+        string orderId FK
+        string size
+        string color
+        int plannedQty
+        int completedQty
+    }
+    PRODUCTION_UPDATE_LINE {
+        string id PK "CUID"
+        string productionUpdateId FK
+        string orderLineId FK
+        int goodQuantity
+        int rejectedQuantity
+    }
     TNA_MILESTONE {
-        string id PK
+        string id PK "CUID"
         string orderId FK
         string stage
         int sequenceOrder
@@ -147,11 +172,13 @@ erDiagram
         int bufferDaysAhead
     }
     PRODUCTION_UPDATE {
-        string id PK
+        string id PK "CUID"
         string idempotencyKey UK
         string orderId FK
         string milestoneId FK
         string supervisorId FK
+        string shift
+        string machineLine
         int goodQuantity
         int rejectedQuantity
         string notes
@@ -161,7 +188,7 @@ erDiagram
         string confirmedBy
     }
     RISK_WARNING {
-        string id PK
+        string id PK "CUID"
         string orderId FK
         string milestoneId FK
         string riskLevel
@@ -171,8 +198,46 @@ erDiagram
         datetime projectedCompletionDate
         int daysLate
         float financialExposureRupees
+        string mathBreakdown
+        string mitigationPlan
         string approvalStatus
         boolean isBuyerVisible
+    }
+    RISK_MITIGATION_ACTION {
+        string id PK "CUID"
+        string riskWarningId FK
+        string actionType
+        int addedDailyCapacity
+        float estimatedCostRupees
+        string authorizedById FK
+    }
+    SUBCONTRACT_GATE_PASS {
+        string id PK "CUID"
+        string gatePassNumber UK
+        string orderId FK
+        string milestoneId FK
+        string unitId FK
+        int dispatchedQty
+        int receivedQty
+        datetime dispatchedAt
+        datetime expectedReturnAt
+        string status
+    }
+    AUDIT_EVENT {
+        string id PK "CUID"
+        string entityType
+        string entityId
+        string action
+        string category
+        string reasonCode
+        float financialImpactRupees
+        string currency
+        string auditHash
+        string userId FK
+        string userRole
+        string previousValue
+        string newValue
+        datetime timestamp
     }
 ```
 
@@ -185,6 +250,14 @@ erDiagram
 3. **Cutting Allowance Tolerance Ceiling:**
    $$\text{Cumulative Output}_{\text{Stage}} \le \text{Total PO Quantity} \times 1.03$$
    Prevents accidental extra zeros (e.g., entering 52,000 instead of 5,200 on an 8,000 unit order) by enforcing Tiruppur's standard 3% fabric overage limit.
+4. **Subcontractor Gate Pass Sentinel:**
+   Milestones assigned to subcontracted units (`PrintTex`, `WashTex`) must be tied to physical `SubcontractGatePass` tracking. If a lot batch exceeds `expectedReturnAt` without inward receipt, the milestone is flagged as `OVERDUE` and automatically triggers an Amber alert.
+5. **Size-Ratio Skew Sentinel (`ProductionUpdateLine`):**
+   Validates shift progress across individual sizes (S, M, L, XL). Eliminates the "99% Done Trap" where an order looks nearly finished but cannot be shipped due to lagging cartons of a single size ratio.
+6. **Role-Wise Financial Auditing & Tamper-Evident Chaining:**
+   All critical mutations (ex-factory shifts, price revisions, overtime authorizations, risk overrides) record `financialImpactRupees`, `currency`, `userRole`, mandatory `reasonCode`, and a cryptographic SHA-256 `auditHash`.
+7. **Database High Availability (HA) & Standby Replication:**
+   Configured with synchronous physical streaming replication (`synchronous_commit = on`) and hot standby promotion (Patroni/etcd), paired with continuous WAL archiving to S3 for zero-data-loss Point-In-Time Recovery (PITR). Sensitive contract terms use application-layer AES-256-GCM encryption.
 
 ---
 
