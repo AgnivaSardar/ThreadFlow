@@ -1,1 +1,321 @@
-# TODO: implement this module
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum Role {
+  MERCHANDISER
+  SUPERVISOR
+  BUYER
+  ADMIN
+}
+
+enum UnitType {
+  OWN_UNIT
+  SUBCONTRACTOR
+}
+
+enum Stage {
+  KNITTING
+  DYEING_WASHING
+  PRINTING
+  CUTTING
+  STITCHING
+  CHECKING
+  FINISHING
+}
+
+enum RiskLevel {
+  GREEN
+  AMBER
+  RED
+}
+
+enum ApprovalStatus {
+  PENDING_REVIEW
+  CONFIRMED
+  OVERRIDDEN
+}
+
+enum IssueCategory {
+  MACHINE_BREAKDOWN
+  POWER_OUTAGE
+  FABRIC_DEFECT
+  SUBCONTRACTOR_DELAY
+  LABOUR_SHORTAGE
+  QUALITY_HOLD
+  OTHER
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model Buyer {
+  id           String           @id @default(uuid())
+  name         String
+  code         String           @unique
+  country      String?
+  contactEmail String?
+  orders       Order[]
+  users        User[]
+  magicLinks   BuyerMagicLink[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@map("buyers")
+}
+
+model Unit {
+  id         String         @id @default(uuid())
+  name       String
+  code       String         @unique
+  type       UnitType       @default(OWN_UNIT)
+  location   String?
+  orders     Order[]
+  users      User[]
+  milestones TnaMilestone[]
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@map("units")
+}
+
+model User {
+  id                 String             @id @default(uuid())
+  email              String             @unique
+  passwordHash       String
+  name               String
+  role               Role               @default(SUPERVISOR)
+  languagePreference String             @default("ta") // "ta" or "en"
+  phone              String?
+  buyerId            String?
+  buyer              Buyer?             @relation(fields: [buyerId], references: [id], onDelete: SetNull)
+  assignedUnitId     String?
+  assignedUnit       Unit?              @relation(fields: [assignedUnitId], references: [id], onDelete: SetNull)
+  productionUpdates  ProductionUpdate[]
+  auditEvents        AuditEvent[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([role])
+  @@index([buyerId])
+  @@index([assignedUnitId])
+  @@map("users")
+}
+
+model Order {
+  id                String             @id @default(uuid())
+  poNumber          String             @unique
+  style             String
+  description       String?
+  totalQuantity     Int
+  fobPricePerPiece  Float?
+  exFactoryDate     DateTime
+  orderDate         DateTime           @default(now())
+  status            String             @default("ACTIVE")
+  buyerId           String
+  buyer             Buyer              @relation(fields: [buyerId], references: [id], onDelete: Restrict)
+  unitId            String
+  unit              Unit               @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  orderLines        OrderLine[]
+  milestones        TnaMilestone[]
+  productionUpdates ProductionUpdate[]
+  riskWarnings      RiskWarning[]
+  auditEvents       AuditEvent[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([buyerId])
+  @@index([unitId])
+  @@index([exFactoryDate])
+  @@map("orders")
+}
+
+model OrderLine {
+  id           String   @id @default(uuid())
+  orderId      String
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  size         String // S, M, L, XL, etc.
+  color        String
+  plannedQty   Int
+  completedQty Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([orderId, size, color])
+  @@index([orderId])
+  @@map("order_lines")
+}
+
+model TnaMilestone {
+  id                String             @id @default(uuid())
+  orderId           String
+  order             Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  stage             Stage
+  sequenceOrder     Int // Sequence 1–7
+  plannedStart      DateTime
+  plannedEnd        DateTime
+  bufferDaysAhead   Int                @default(0)
+  targetQuantity    Int
+  completedQuantity Int                @default(0)
+  unitId            String?
+  unit              Unit?              @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  productionUpdates ProductionUpdate[]
+  riskWarnings      RiskWarning[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@unique([orderId, stage])
+  @@unique([orderId, sequenceOrder])
+  @@index([orderId])
+  @@index([stage])
+  @@map("tna_milestones")
+}
+
+model ProductionUpdate {
+  id                  String               @id @default(uuid())
+  idempotencyKey      String               @unique
+  orderId             String
+  order               Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  milestoneId         String
+  milestone           TnaMilestone         @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  supervisorId        String
+  supervisor          User                 @relation(fields: [supervisorId], references: [id], onDelete: Restrict)
+  stage               Stage
+  goodQuantity        Int
+  rejectedQuantity    Int                  @default(0)
+  notes               String?              @db.Text
+  clientEventAt       DateTime             @default(now())
+  receivedAt          DateTime             @default(now())
+  approvalStatus      ApprovalStatus       @default(PENDING_REVIEW)
+  confirmedBy         String?
+  confirmedAt         DateTime?
+  photos              ProductionPhoto[]
+  issueClassification IssueClassification?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  @@index([orderId])
+  @@index([milestoneId])
+  @@index([supervisorId])
+  @@index([approvalStatus])
+  @@index([clientEventAt])
+  @@map("production_updates")
+}
+
+model ProductionPhoto {
+  id                 String           @id @default(uuid())
+  productionUpdateId String
+  productionUpdate   ProductionUpdate @relation(fields: [productionUpdateId], references: [id], onDelete: Cascade)
+  s3Url              String
+  stage              Stage
+  approvalStatus     ApprovalStatus   @default(PENDING_REVIEW)
+  isBuyerVisible     Boolean          @default(false)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([productionUpdateId])
+  @@index([isBuyerVisible])
+  @@index([approvalStatus])
+  @@map("production_photos")
+}
+
+model RiskWarning {
+  id                      String         @id @default(uuid())
+  orderId                 String
+  order                   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  milestoneId             String
+  milestone               TnaMilestone   @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  riskLevel               RiskLevel
+  requiredDailyRate       Float
+  actualRollingRate       Float
+  varianceQtyPerDay       Float
+  projectedCompletionDate DateTime?
+  daysLate                Int
+  financialExposureRupees Float
+  mathBreakdown           String         @db.Text // JSON string
+  mitigationPlan          String?        @db.Text
+  approvalStatus          ApprovalStatus @default(PENDING_REVIEW)
+  isBuyerVisible          Boolean        @default(false)
+  reviewedById            String?
+  reviewedAt              DateTime?
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+
+  @@index([orderId])
+  @@index([milestoneId])
+  @@index([riskLevel])
+  @@index([approvalStatus])
+  @@index([isBuyerVisible])
+  @@map("risk_warnings")
+}
+
+model IssueClassification {
+  id                 String           @id @default(uuid())
+  productionUpdateId String           @unique
+  productionUpdate   ProductionUpdate @relation(fields: [productionUpdateId], references: [id], onDelete: Cascade)
+  category           IssueCategory
+  confidenceScore    Float
+  needsReview        Boolean          @default(false)
+  isConfirmed        Boolean          @default(false)
+  rawTamilText       String?          @db.Text
+  translatedText     String?          @db.Text
+  classifiedBy       String?          @default("AI")
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([category])
+  @@index([needsReview])
+  @@index([isConfirmed])
+  @@map("issue_classifications")
+}
+
+model AuditEvent {
+  id            String   @id @default(uuid())
+  entityType    String // Order, TnaMilestone, ProductionUpdate, RiskWarning, etc.
+  entityId      String
+  action        String
+  reasonCode    String // mandatory reasonCode e.g. "BUYER_REVISED_SPEC", "FABRIC_DELAY"
+  notes         String?  @db.Text
+  previousValue String?  @db.Text // JSON diff string
+  newValue      String?  @db.Text // JSON diff string
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  orderId       String?
+  order         Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  timestamp     DateTime @default(now())
+  ipAddress     String?
+  userAgent     String?
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([orderId])
+  @@index([timestamp])
+  @@map("audit_events")
+}
+
+model BuyerMagicLink {
+  id         String    @id @default(uuid())
+  token      String    @unique
+  buyerId    String
+  buyer      Buyer     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  isActive   Boolean   @default(true)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([token])
+  @@index([buyerId])
+  @@index([isActive, expiresAt])
+  @@map("buyer_magic_links")
+}
