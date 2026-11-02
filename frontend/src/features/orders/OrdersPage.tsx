@@ -294,12 +294,12 @@ export const OrdersPage: React.FC = () => {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 sm:gap-3">
           {/* Status Tabs (RED / AMBER / GREEN) & Mobile Filter Toggle */}
           <div className="flex items-center justify-between gap-1.5">
-            <div className="flex items-center gap-1 sm:gap-1.5 p-1 bg-slate-100 rounded-xl overflow-x-auto">
+            <div className="flex items-center gap-1 sm:gap-1.5 p-1 bg-slate-100 rounded-xl overflow-x-auto no-scrollbar">
               {(['ALL', 'GREEN', 'AMBER', 'RED'] as const).map((s) => (
                 <button
                   key={s}
                   onClick={() => handleStatusChange(s)}
-                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                  className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
                     statusFilter === s
                       ? s === 'RED'
                         ? 'bg-rose-600 text-white shadow-xs'
@@ -311,7 +311,14 @@ export const OrdersPage: React.FC = () => {
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {s === 'ALL' ? 'All Orders' : s}
+                  {s === 'ALL' ? (
+                    <>
+                      <span className="sm:hidden">All</span>
+                      <span className="hidden sm:inline">All Orders</span>
+                    </>
+                  ) : (
+                    s
+                  )}
                 </button>
               ))}
             </div>
@@ -661,44 +668,46 @@ export const OrdersPage: React.FC = () => {
       </div>
     )}
 
-      {/* Floating Multi-PO Bulk Action Bar */}
-      {selectedOrderIds.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#0C2D48] text-white px-5 py-3 rounded-2xl shadow-2xl border border-sky-400/30 flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-200">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-            <span className="text-xs font-bold font-mono">
-              {selectedOrderIds.length} {selectedOrderIds.length === 1 ? 'Order' : 'Orders'} Selected
-            </span>
-            <span className="text-sky-300 text-xs">
-              (
-              {orders
-                .filter((o) => selectedOrderIds.includes(o.id))
-                .reduce((sum, o) => sum + o.totalQuantity, 0)
-                .toLocaleString()}{' '}
-              pcs)
-            </span>
+      {/* Floating Multi-PO Bulk Action Bar (Hidden when modal is open to avoid background clutter) */}
+      {!isBulkShiftModalOpen && selectedOrderIds.length > 0 && (
+        <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-24px)] sm:w-auto max-w-xl bg-[#0C2D48] text-white px-3.5 py-2.5 sm:px-5 sm:py-3 rounded-2xl shadow-2xl border border-sky-400/30 flex items-center justify-between sm:justify-start gap-2 sm:gap-4 animate-in slide-in-from-bottom-4 duration-200">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
+            <div className="text-xs font-mono truncate">
+              <span className="font-bold">{selectedOrderIds.length}</span>
+              <span className="text-slate-300 hidden sm:inline"> {selectedOrderIds.length === 1 ? 'Order' : 'Orders'}</span>
+              <span className="text-slate-300 sm:hidden"> sel</span>
+              <span className="text-sky-300 ml-1 text-[11px] sm:text-xs">
+                ({orders
+                  .filter((o) => selectedOrderIds.includes(o.id))
+                  .reduce((sum, o) => sum + o.totalQuantity, 0)
+                  .toLocaleString()}{' '}
+                pcs)
+              </span>
+            </div>
           </div>
 
-          <div className="h-4 w-px bg-slate-700" />
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {hasRole('MERCHANDISER', 'ADMIN') && (
+              <button
+                type="button"
+                onClick={() => setIsBulkShiftModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 active:scale-95 text-slate-950 text-xs font-bold shadow-xs transition cursor-pointer whitespace-nowrap"
+              >
+                <Calendar className="w-3.5 h-3.5 shrink-0" />
+                <span>Shift Date</span>
+                <span className="hidden sm:inline"> (Bulk)</span>
+              </button>
+            )}
 
-          {hasRole('MERCHANDISER', 'ADMIN') && (
             <button
               type="button"
-              onClick={() => setIsBulkShiftModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-bold shadow-xs transition cursor-pointer"
+              onClick={() => setSelectedOrderIds([])}
+              className="text-xs font-semibold text-sky-200 hover:text-white px-2 py-1 rounded-lg hover:bg-white/10 transition cursor-pointer whitespace-nowrap"
             >
-              <Calendar className="w-3.5 h-3.5" />
-              Bulk Shift Ex-Factory Date
+              Clear
             </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setSelectedOrderIds([])}
-            className="text-xs font-semibold text-sky-200 hover:text-white transition cursor-pointer"
-          >
-            Clear Selection
-          </button>
+          </div>
         </div>
       )}
 

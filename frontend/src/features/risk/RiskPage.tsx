@@ -213,19 +213,26 @@ export const RiskPage: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-3">
           {/* Status Segmented Buttons & Mobile Filter Toggle */}
           <div className="flex items-center justify-between gap-1.5">
-            <div className="inline-flex p-1 bg-slate-100 rounded-xl gap-1 overflow-x-auto">
+            <div className="inline-flex p-1 bg-slate-100 rounded-xl gap-1 overflow-x-auto no-scrollbar">
               {(['ALL', 'RED', 'AMBER', 'GREEN'] as const).map((lvl) => (
                 <button
                   key={lvl}
                   type="button"
                   onClick={() => setRiskLevelFilter(lvl)}
-                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                  className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
                     riskLevelFilter === lvl
                       ? 'bg-white text-slate-900 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {lvl === 'ALL' ? 'All Risks' : lvl}
+                  {lvl === 'ALL' ? (
+                    <>
+                      <span className="sm:hidden">All</span>
+                      <span className="hidden sm:inline">All Risks</span>
+                    </>
+                  ) : (
+                    lvl
+                  )}
                 </button>
               ))}
             </div>

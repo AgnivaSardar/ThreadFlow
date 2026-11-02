@@ -79,32 +79,33 @@ export const BulkShiftModal: React.FC<BulkShiftModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
       <div
         style={{ colorScheme: 'light' }}
-        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden text-slate-900 max-h-[90vh] flex flex-col"
+        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden text-slate-900 max-h-[92vh] sm:max-h-[88vh] flex flex-col animate-in zoom-in-95"
       >
         {/* Header */}
-        <div className="bg-[#0C2D48] px-6 py-4 text-white flex items-center justify-between shrink-0">
+        <div className="bg-[#0C2D48] px-4 sm:px-6 py-3.5 sm:py-4 text-white flex items-center justify-between shrink-0">
           <div>
             <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-amber-400" />
-              <h3 className="text-base font-bold text-white">Bulk Ex-Factory Schedule Shift</h3>
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 shrink-0" />
+              <h3 className="text-sm sm:text-base font-bold text-white">Bulk Ex-Factory Schedule Shift</h3>
             </div>
-            <p className="text-xs text-sky-200/80 mt-0.5">
+            <p className="text-[11px] sm:text-xs text-sky-200/80 mt-0.5">
               Batch delivery date rescheduling and milestone recalculation
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-sky-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition"
+            className="text-sky-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
+        {/* Form Body (Scrollable) */}
+        <form id="bulk-shift-form" onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 text-left">
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -113,24 +114,24 @@ export const BulkShiftModal: React.FC<BulkShiftModalProps> = ({
           )}
 
           {/* Selected Orders Summary Banner */}
-          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+          <div className="p-3 sm:p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-800 mb-2">
               <span>Selected Export Orders ({selectedOrders.length})</span>
-              <span className="text-sky-700 font-mono">
+              <span className="text-sky-700 font-mono font-bold">
                 {selectedOrders.reduce((sum, o) => sum + o.totalQuantity, 0).toLocaleString()} pcs total
               </span>
             </div>
-            <div className="max-h-28 overflow-y-auto divide-y divide-slate-100 text-xs">
+            <div className="max-h-28 overflow-y-auto divide-y divide-slate-100 text-xs no-scrollbar">
               {selectedOrders.map((o) => (
-                <div key={o.id} className="py-1.5 flex items-center justify-between text-slate-600">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-slate-800">{o.poNumber}</span>
-                    <span className="text-slate-400">•</span>
-                    <span className="text-slate-700 truncate max-w-[180px]">{o.style}</span>
-                    <span className="text-slate-400">({o.buyer.code})</span>
+                <div key={o.id} className="py-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-slate-600">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="font-mono font-bold text-slate-900 shrink-0">{o.poNumber}</span>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-slate-700 truncate max-w-[190px] font-medium">{o.style}</span>
+                    <span className="text-slate-400 text-[11px] shrink-0">({o.buyer.code})</span>
                   </div>
-                  <div className="flex items-center gap-2 font-medium">
-                    <span className="text-slate-500">Current: {formatDate(o.exFactoryDate)}</span>
+                  <div className="text-[11px] text-slate-500 shrink-0">
+                    Current: <span className="font-semibold text-slate-700">{formatDate(o.exFactoryDate)}</span>
                   </div>
                 </div>
               ))}
@@ -142,30 +143,30 @@ export const BulkShiftModal: React.FC<BulkShiftModalProps> = ({
             <label className="block text-xs font-semibold text-slate-800 mb-1.5">
               Schedule Adjustment Mode
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setShiftMode('DAYS')}
-                className={`py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-2 ${
+                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
                   shiftMode === 'DAYS'
                     ? 'bg-sky-50 border-sky-400 text-sky-800 shadow-2xs'
                     : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                <Clock className="w-4 h-4 text-sky-600" />
+                <Clock className="w-4 h-4 text-sky-600 shrink-0" />
                 <span>Shift Forward by Working Days</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setShiftMode('FIXED_DATE')}
-                className={`py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-2 ${
+                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
                   shiftMode === 'FIXED_DATE'
                     ? 'bg-sky-50 border-sky-400 text-sky-800 shadow-2xs'
                     : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                <Calendar className="w-4 h-4 text-sky-600" />
+                <Calendar className="w-4 h-4 text-sky-600 shrink-0" />
                 <span>Set Fixed Target Date</span>
               </button>
             </div>
@@ -177,19 +178,20 @@ export const BulkShiftModal: React.FC<BulkShiftModalProps> = ({
               <label className="block text-xs font-semibold text-slate-800 mb-1">
                 Postpone Working Days (Excluding Sundays)
               </label>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="grid grid-cols-5 gap-1.5 mb-2">
                 {[3, 5, 7, 10, 14].map((d) => (
                   <button
                     key={d}
                     type="button"
                     onClick={() => setShiftDays(d)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                    className={`py-2 px-1 rounded-lg text-xs font-bold transition text-center cursor-pointer ${
                       shiftDays === d
                         ? 'bg-[#0C2D48] text-white shadow-xs'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                   >
-                    +{d} Days
+                    <span className="sm:hidden">+{d}d</span>
+                    <span className="hidden sm:inline">+{d} Days</span>
                   </button>
                 ))}
               </div>
@@ -262,27 +264,28 @@ export const BulkShiftModal: React.FC<BulkShiftModalProps> = ({
               Recalibrates milestone schedules across {selectedOrders.length} orders and notifies buyer accounts.
             </div>
           </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting || selectedOrders.length === 0}
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-500 rounded-xl shadow-xs transition cursor-pointer disabled:opacity-50"
-            >
-              {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              Apply Bulk Shift to {selectedOrders.length} POs
-            </button>
-          </div>
         </form>
+
+        {/* Sticky Action Footer (Always visible at the bottom) */}
+        <div className="px-4 sm:px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5 shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200/70 rounded-xl transition cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="bulk-shift-form"
+            disabled={isSubmitting || selectedOrders.length === 0}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-500 active:scale-95 rounded-xl shadow-xs transition cursor-pointer disabled:opacity-50"
+          >
+            {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            <span>Apply Shift ({selectedOrders.length} POs)</span>
+          </button>
+        </div>
       </div>
     </div>
   );
