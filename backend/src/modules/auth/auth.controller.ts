@@ -1,2 +1,123 @@
-// TODO: implement this module
+import { Request, Response } from 'express';
+import { authService } from './auth.service';
+import { loginSchema, magicLinkParamSchema } from './auth.schema';
+import { config } from '../../config/env';
+import { AppError } from '../../common/errors/AppError';
 
+// Cookie options for 7-day HttpOnly refresh token
+const REFRESH_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: config.isProduction,
+  sameSite: 'lax' as const,
+  maxAge: config.jwt.refreshExpiryDays * 24 * 60 * 60 * 1000,
+  path: '/',
+};
+
+export class AuthController {
+  /**
+   * POST /api/v1/auth/login
+   * Standard email + password authentication
+   */
+  public async login(req: Request, res: Response): Promise<void> {
+    const parsed = loginSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw new AppError(parsed.error.errors[0].message, 400);
+    }
+
+    const { email, password } = parsed.data;
+    const { tokens, user } = await authService.login(email, password);
+
+    // Set 7-day Refresh Token in HttpOnly cookie
+    res.cookie('refreshToken', tokens.refreshToken, REFRESH_COOKIE_OPTIONS);
+
+    res.status(200).json({
+      success: true,
+      message: 'Authentication successful',
+      accessToken: tokens.accessToken,
+      user,
+    });
+  }
+
+  /**
+   * POST /api/v1/auth/refresh
+   * Exchanges 7-day refresh token for a fresh 15-minute access token
+   */
+  public async refresh(req: Request, res: Response): Promise<void> {
+    const token = req.cookies?.refreshToken || req.body?.refreshToken;
+
+    if (!token) {
+      throw new AppError('Refresh token missing from request cookie or body', 401);
+    }
+
+    const { tokens, user } = await authService.refreshToken(token);
+
+    // Refresh the cookie expiration
+    res.cookie('refreshToken', tokens.refreshToken, REFRESH_COOKIE_OPTIONS);
+
+    res.status(200).json({
+      success: true,
+      accessToken: tokens.accessToken,
+      user,
+    });
+  }
+
+  /**
+   * POST /api/v1/auth/logout
+   * Clears the refresh token cookie
+   */
+  public async logout(_req: Request, res: Response): Promise<void> {
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: config.isProduction,
+      sameSite: 'lax',
+      path: '/',
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Session terminated successfully',
+    });
+  }
+
+  /**
+   * GET /api/v1/auth/me
+   * Fetches the current authenticated user's profile and active permissions
+   */
+  public async me(req: Request, res: Response): Promise<void> {
+    if (!req.user) {
+      throw new AppError('Unauthenticated', 401);
+    }
+
+    const user = await authService.getProfile(req.user.id);
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  }
+
+  /**
+   * GET /api/v1/auth/magic-link/:token
+   * Validates a passwordless cryptographic Magic Link for foreign buyers
+   */
+  public async validateMagicLink(req: Request, res: Response): Promise<void> {
+    const parsed = magicLinkParamSchema.safeParse(req.params);
+    if (!parsed.success) {
+      throw new AppError(parsed.error.errors[0].message, 400);
+    }
+
+    const { token } = parsed.data;
+    const { tokens, user } = await authService.validateMagicLink(token);
+
+    res.cookie('refreshToken', tokens.refreshToken, REFRESH_COOKIE_OPTIONS);
+
+    res.status(200).json({
+      success: true,
+      message: 'Magic link authenticated successfully',
+      accessToken: tokens.accessToken,
+      user,
+    });
+  }
+}
+
+export const authController = new AuthController();
