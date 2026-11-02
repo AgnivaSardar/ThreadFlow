@@ -15,8 +15,8 @@ import {
   translateBuyer,
 } from './supervisorTranslations';
 import { useTamilSpeechRecognition } from '../../hooks/useTamilSpeechRecognition';
-import { compressFloorPhoto } from '../../offline/imageCompressor';
-import { queueProductionUpdate, isEffectiveOnline, generateUUID } from '../../offline/queue/queue';
+import { compressImage, blobToBase64, formatByteSize } from '../../offline/compression';
+import { enqueueFloorUpdate, isEffectiveOnline, generateUUIDv4 } from '../../offline/queue/queue';
 import { apiRequest } from '../../services/api';
 import {
   Mic,
@@ -60,6 +60,9 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
   const [selectedChip, setSelectedChip] = useState<IssueChipItem | null>(null);
   const [notes, setNotes] = useState<string>('');
   const [compressedPhoto, setCompressedPhoto] = useState<string | null>(null);
+  const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
+  const [photoSizeLabel, setPhotoSizeLabel] = useState<string | null>(null);
+  const [rawPhotoFile, setRawPhotoFile] = useState<File | null>(null);
   const [isCompressingPhoto, setIsCompressingPhoto] = useState(false);
 
   // Status
@@ -140,15 +143,19 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
     }
   };
 
-  // Photo compression handler
+  // Photo compression handler (Client-Side Canvas, max 1024px, WebP ~85 KB)
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
       setIsCompressingPhoto(true);
-      const compressedDataUrl = await compressFloorPhoto(file, 1024, 0.72);
-      setCompressedPhoto(compressedDataUrl);
+      setRawPhotoFile(file);
+      const blob = await compressImage(file, 1024, 0.72);
+      setPhotoBlob(blob);
+      setPhotoSizeLabel(formatByteSize(blob.size));
+      const base64Preview = await blobToBase64(blob);
+      setCompressedPhoto(base64Preview);
       triggerHaptic(60);
     } catch (err: any) {
       setFormError(`Photo error: ${err.message || 'Failed to compress photo'}`);
@@ -205,20 +212,33 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             method: 'POST',
             body: JSON.stringify({
               ...payload,
-              idempotencyKey: generateUUID(),
+              idempotencyKey: generateUUIDv4(),
             }),
           });
           triggerHaptic(100);
           onSuccess(
             lang === 'ta'
-              ? `ஆர்டர் #${order.poNumber} க்கு ${goodQty} துணிகள் வெற்றிகரமாக பதிவாகியது!`
+              ? `ஆர்டர் #${order.poNumber} க்கு ${goodQty} துண்டுகள் வெற்றிகரமாக பதிவாகியது!`
               : `Successfully logged ${goodQty} pieces for ${order.poNumber}!`
           );
           return;
         } catch (apiErr: any) {
           // If network failed midway, fallback to offline queue automatically!
           console.warn('Direct API submission failed, falling back to offline queue:', apiErr);
-          await queueProductionUpdate(payload);
+          await enqueueFloorUpdate({
+            orderId: order.orderId,
+            poNumber: order.poNumber,
+            style: order.style,
+            milestoneId: targetMilestone.id,
+            stage: selectedStage,
+            shift,
+            machineLine,
+            goodQty,
+            rejectedQty,
+            notes: notes.trim() || null,
+            issueCategory: selectedChip?.category || null,
+            photoFile: rawPhotoFile,
+          });
           triggerHaptic(80);
           onSuccess(
             lang === 'ta'
@@ -229,7 +249,20 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
         }
       } else {
         // Offline / Offline Simulated Submission
-        await queueProductionUpdate(payload);
+        await enqueueFloorUpdate({
+          orderId: order.orderId,
+          poNumber: order.poNumber,
+          style: order.style,
+          milestoneId: targetMilestone.id,
+          stage: selectedStage,
+          shift,
+          machineLine,
+          goodQty,
+          rejectedQty,
+          notes: notes.trim() || null,
+          issueCategory: selectedChip?.category || null,
+          photoFile: rawPhotoFile,
+        });
         triggerHaptic(80);
         onSuccess(
           lang === 'ta'
@@ -576,13 +609,24 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
                 alt="Floor capture"
                 className="w-9 h-9 object-cover rounded-lg border border-emerald-400 shadow-sm"
               />
-              <span className="text-[10px] font-bold text-emerald-700">
-                {t.photoAttached}
-              </span>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-emerald-700">
+                  {t.photoAttached}
+                </span>
+                <span className="text-[9px] font-mono text-slate-500">
+                  {photoSizeLabel ? `${photoSizeLabel} WebP` : '~85 KB'}
+                </span>
+              </div>
               <button
                 type="button"
-                onClick={() => setCompressedPhoto(null)}
-                className="text-xs text-slate-400 hover:text-red-500"
+                onClick={() => {
+                  setCompressedPhoto(null);
+                  setPhotoBlob(null);
+                  setPhotoSizeLabel(null);
+                  setRawPhotoFile(null);
+                }}
+                className="text-xs text-slate-400 hover:text-red-500 p-1"
+                title="Remove photo"
               >
                 ✕
               </button>

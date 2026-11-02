@@ -16,7 +16,13 @@ import {
   formatDateLocalized,
 } from './supervisorTranslations';
 import { ProductionUpdateForm } from './ProductionUpdateForm';
-import { isEffectiveOnline } from '../../offline/queue/queue';
+import {
+  isEffectiveOnline,
+  isOfflineSimulated,
+  setOfflineSimulated,
+  getPendingOfflineCount,
+} from '../../offline/queue/queue';
+import { syncOfflineQueue } from '../../offline/sync/sync';
 import {
   cacheSupervisorWork,
   getCachedSupervisorWork,
@@ -34,6 +40,8 @@ import {
   History,
   TrendingUp,
   Package,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 
 export const MyWorkPage: React.FC = () => {
@@ -54,16 +62,82 @@ export const MyWorkPage: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<SupervisorWorkOrderItem | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Synchronize language changes from the Main Dashboard Header
+  // Feature 7: Offline Queue & Simulation States
+  const [pendingCount, setPendingCount] = useState<number>(0);
+  const [isOnline, setIsOnline] = useState<boolean>(isEffectiveOnline());
+  const [isSimulated, setIsSimulated] = useState<boolean>(isOfflineSimulated());
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+
+  // Refresh pending count
+  const refreshPendingCount = useCallback(async () => {
+    const count = await getPendingOfflineCount();
+    setPendingCount(count);
+  }, []);
+
+  // Synchronize language changes & queue updates
   useEffect(() => {
+    refreshPendingCount();
+
     const handleLangChange = (e: any) => {
       if (e.detail?.lang) {
         setLang(e.detail.lang);
       }
     };
+
+    const handleNetworkChange = () => {
+      setIsOnline(isEffectiveOnline());
+      setIsSimulated(isOfflineSimulated());
+      refreshPendingCount();
+    };
+
+    const handleQueueChange = () => {
+      refreshPendingCount();
+    };
+
+    const handleQueueSynced = () => {
+      refreshPendingCount();
+      fetchWork();
+    };
+
     window.addEventListener('threadflow-lang-change', handleLangChange);
-    return () => window.removeEventListener('threadflow-lang-change', handleLangChange);
-  }, []);
+    window.addEventListener('online', handleNetworkChange);
+    window.addEventListener('offline', handleNetworkChange);
+    window.addEventListener('threadflow-network-change', handleNetworkChange);
+    window.addEventListener('threadflow-queue-changed', handleQueueChange);
+    window.addEventListener('threadflow-queue-synced', handleQueueSynced);
+
+    return () => {
+      window.removeEventListener('threadflow-lang-change', handleLangChange);
+      window.removeEventListener('online', handleNetworkChange);
+      window.removeEventListener('offline', handleNetworkChange);
+      window.removeEventListener('threadflow-network-change', handleNetworkChange);
+      window.removeEventListener('threadflow-queue-changed', handleQueueChange);
+      window.removeEventListener('threadflow-queue-synced', handleQueueSynced);
+    };
+  }, [refreshPendingCount]);
+
+  // Toggle offline simulation switch
+  const handleToggleSimulation = () => {
+    const nextVal = !isSimulated;
+    setOfflineSimulated(nextVal);
+    setIsSimulated(nextVal);
+    setIsOnline(isEffectiveOnline());
+    if (!nextVal) {
+      setTimeout(() => syncOfflineQueue(), 300);
+    }
+  };
+
+  // Manual Trigger Sync from MyWorkPage
+  const handleManualSync = async () => {
+    if (!isEffectiveOnline()) return;
+    setIsSyncing(true);
+    try {
+      await syncOfflineQueue();
+    } finally {
+      setIsSyncing(false);
+      refreshPendingCount();
+    }
+  };
 
   // Fetch Supervisor Work from API (with offline cache fallback)
   const fetchWork = useCallback(async () => {
@@ -160,6 +234,85 @@ export const MyWorkPage: React.FC = () => {
             <Building2 className="w-4 h-4 text-sky-700" />
             <span>{translateUnit(workData?.unit?.name || 'Unit 1 (Cotton Hub - Own)', lang)}</span>
           </div>
+        </div>
+      </div>
+
+      {/* Feature 7: Offline Queue Banner & Reviewer Simulation Toggle */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+        {/* Left: Queue Status Pill */}
+        <div className="flex items-center gap-2.5">
+          <div
+            className={`w-3 h-3 rounded-full shrink-0 ${
+              !isOnline
+                ? 'bg-amber-500 animate-pulse'
+                : pendingCount > 0
+                ? 'bg-sky-500 animate-pulse'
+                : 'bg-emerald-500'
+            }`}
+          />
+          <div className="text-xs font-bold text-slate-800">
+            {pendingCount > 0 ? (
+              <span className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-amber-800 font-extrabold">
+                  {lang === 'ta'
+                    ? `ஆஃப்லைன் வரிசை: ${pendingCount} பதிவுகள் காத்திருக்கின்றன`
+                    : `Offline Queue: ${pendingCount} Pending`}
+                </span>
+                <span className="text-slate-400 font-normal hidden sm:inline">•</span>
+                <span className="text-slate-500 font-medium text-[11px]">
+                  {lang === 'ta' ? '(இணைப்பு வந்ததும் தானாக சேரும்)' : '(Auto-syncs when online)'}
+                </span>
+              </span>
+            ) : (
+              <span className="text-slate-600">
+                {lang === 'ta'
+                  ? 'ஆஃப்லைன் வரிசை: 0 காத்திருப்பு (அனைத்தும் சர்வரில் சேர்க்கப்பட்டது)'
+                  : 'Offline Queue: 0 Pending (All floor logs synchronized)'}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Manual Reviewer Toggle & Sync Now Button */}
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+          {pendingCount > 0 && isOnline && (
+            <button
+              type="button"
+              onClick={handleManualSync}
+              disabled={isSyncing}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-bold shadow-xs transition active:scale-95 disabled:opacity-50 cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{lang === 'ta' ? 'இப்போதே சேமி' : 'Sync Now'}</span>
+            </button>
+          )}
+
+          {/* Reviewer Simulation Toggle Switch */}
+          <button
+            type="button"
+            onClick={handleToggleSimulation}
+            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-2xs cursor-pointer ${
+              isSimulated
+                ? 'bg-rose-50 text-rose-800 border-rose-300 hover:bg-rose-100'
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+            }`}
+            title="Toggle offline simulation for testing without turning off Wi-Fi"
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isSimulated ? 'bg-rose-500 animate-ping' : 'bg-slate-400'
+              }`}
+            />
+            <span>
+              {isSimulated
+                ? lang === 'ta'
+                  ? 'ஆஃப்லைன் மாதிரி: ஆன்'
+                  : 'Simulate: OFFLINE'
+                : lang === 'ta'
+                ? 'இணைப்பில் மாதிரி'
+                : 'Simulate: ONLINE'}
+            </span>
+          </button>
         </div>
       </div>
 
