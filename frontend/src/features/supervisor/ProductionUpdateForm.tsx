@@ -10,9 +10,6 @@ import {
   SUPERVISOR_I18N,
   Language,
   IssueChipItem,
-  translateStyle,
-  translateDescription,
-  translateBuyer,
 } from './supervisorTranslations';
 import { useTamilSpeechRecognition } from '../../hooks/useTamilSpeechRecognition';
 import { compressImage, blobToBase64, formatByteSize } from '../../offline/compression';
@@ -30,6 +27,12 @@ import {
   Clock,
   Check,
   ChevronDown,
+  Zap,
+  Wrench,
+  Scissors,
+  Palette,
+  Users,
+  X,
 } from 'lucide-react';
 
 interface ProductionUpdateFormProps {
@@ -55,6 +58,20 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
   // Quantities
   const [goodQty, setGoodQty] = useState<number>(0);
   const [rejectedQty, setRejectedQty] = useState<number>(0);
+
+  // Per-size Breakdown state: orderLineId -> pcs logged this shift
+  const [sizeQuantities, setSizeQuantities] = useState<Record<string, number>>({});
+
+  // Initialize size breakdown map when order changes
+  useEffect(() => {
+    if (order.orderLines && order.orderLines.length > 0) {
+      const initial: Record<string, number> = {};
+      order.orderLines.forEach((line) => {
+        initial[line.id] = 0;
+      });
+      setSizeQuantities(initial);
+    }
+  }, [order.orderId]);
 
   // Issues & Notes
   const [selectedChip, setSelectedChip] = useState<IssueChipItem | null>(null);
@@ -105,16 +122,64 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
     }
   };
 
-  // Quick increment handlers for Good Quantity
+  // Helper to distribute a total goodQty proportionally across order lines
+  const distributeTotalAcrossSizes = (total: number) => {
+    if (!order.orderLines || order.orderLines.length === 0) return;
+    const totalRemaining = order.orderLines.reduce(
+      (acc, l) => acc + Math.max(1, l.plannedQty - l.completedQty),
+      0
+    );
+    const updated: Record<string, number> = {};
+    let allocated = 0;
+    order.orderLines.forEach((l, idx) => {
+      if (idx === order.orderLines.length - 1) {
+        updated[l.id] = Math.max(0, total - allocated);
+      } else {
+        const remaining = Math.max(1, l.plannedQty - l.completedQty);
+        const share = Math.round((remaining / totalRemaining) * total);
+        updated[l.id] = share;
+        allocated += share;
+      }
+    });
+    setSizeQuantities(updated);
+  };
+
+  // Per-size input change handler
+  const handleSizeChange = (lineId: string, val: number) => {
+    triggerHaptic(25);
+    const updated = { ...sizeQuantities, [lineId]: Math.max(0, val) };
+    setSizeQuantities(updated);
+    const sum = Object.values(updated).reduce((acc, curr) => acc + curr, 0);
+    setGoodQty(sum);
+    setFormError(null);
+  };
+
+  // Per-size quick increment handler
+  const handleSizeAdd = (lineId: string, delta: number) => {
+    triggerHaptic(35);
+    const current = sizeQuantities[lineId] || 0;
+    handleSizeChange(lineId, current + delta);
+  };
+
+  // Quick increment handlers for overall Good Quantity
   const handleAddGoodQty = (amount: number) => {
     triggerHaptic(40);
-    setGoodQty((prev) => Math.max(0, prev + amount));
+    const newTotal = Math.max(0, goodQty + amount);
+    setGoodQty(newTotal);
+    distributeTotalAcrossSizes(newTotal);
     setFormError(null);
   };
 
   const handleResetGoodQty = () => {
     triggerHaptic(30);
     setGoodQty(0);
+    if (order.orderLines && order.orderLines.length > 0) {
+      const resetMap: Record<string, number> = {};
+      order.orderLines.forEach((l) => {
+        resetMap[l.id] = 0;
+      });
+      setSizeQuantities(resetMap);
+    }
   };
 
   // Quick increment handlers for Rejected Quantity
@@ -135,11 +200,30 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       setSelectedChip(null);
     } else {
       setSelectedChip(chip);
-      // Pre-populate note if empty with the Tamil/English description
       const chipText = lang === 'ta' ? chip.labelTa : chip.labelEn;
       if (!notes.includes(chipText)) {
         setNotes((prev) => (prev ? `${prev} [${chipText}]` : `[${chipText}]`));
       }
+    }
+  };
+
+  // Helper to render pure Lucide SVG icons instead of emojis
+  const renderChipIcon = (iconType: string) => {
+    switch (iconType) {
+      case 'zap':
+        return <Zap className="w-5 h-5 text-amber-500" />;
+      case 'wrench':
+        return <Wrench className="w-5 h-5 text-sky-600" />;
+      case 'scissors':
+        return <Scissors className="w-5 h-5 text-rose-500" />;
+      case 'palette':
+        return <Palette className="w-5 h-5 text-purple-600" />;
+      case 'users':
+        return <Users className="w-5 h-5 text-indigo-600" />;
+      case 'clock':
+        return <Clock className="w-5 h-5 text-orange-500" />;
+      default:
+        return <Sparkles className="w-5 h-5 text-amber-500" />;
     }
   };
 
@@ -188,6 +272,18 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
     const targetMilestone =
       order.milestones.find((m) => m.stage === selectedStage) || activeMilestone;
 
+    // Prepare per-size breakdown array for database and offline queue
+    const sizeBreakdownLines =
+      order.orderLines && order.orderLines.length > 0
+        ? order.orderLines
+            .map((line) => ({
+              orderLineId: line.id,
+              goodQuantity: sizeQuantities[line.id] || 0,
+              rejectedQuantity: 0,
+            }))
+            .filter((l) => l.goodQuantity > 0 || l.rejectedQuantity > 0)
+        : undefined;
+
     const payload = {
       orderId: order.orderId,
       poNumber: order.poNumber,
@@ -202,11 +298,11 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       issueCategory: selectedChip?.category || undefined,
       compressedPhotoBase64: compressedPhoto || undefined,
       clientEventAt: new Date().toISOString(),
+      sizeBreakdownLines,
     };
 
     try {
       if (isEffectiveOnline()) {
-        // Direct Online Submission
         try {
           await apiRequest('/production/updates', {
             method: 'POST',
@@ -218,12 +314,11 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           triggerHaptic(100);
           onSuccess(
             lang === 'ta'
-              ? `ஆர்டர் #${order.poNumber} க்கு ${goodQty} துண்டுகள் வெற்றிகரமாக பதிவாகியது!`
-              : `Successfully logged ${goodQty} pieces for ${order.poNumber}!`
+              ? `ஆர்டர் #${order.poNumber} க்கு ${goodQty} துண்டுகள் அளவு வாரியாக வெற்றிகரமாக பதிவாகியது!`
+              : `Successfully logged ${goodQty} pieces by size for ${order.poNumber}!`
           );
           return;
         } catch (apiErr: any) {
-          // If network failed midway, fallback to offline queue automatically!
           console.warn('Direct API submission failed, falling back to offline queue:', apiErr);
           await enqueueFloorUpdate({
             orderId: order.orderId,
@@ -238,6 +333,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             notes: notes.trim() || null,
             issueCategory: selectedChip?.category || null,
             photoFile: rawPhotoFile,
+            sizeBreakdownLines,
           });
           triggerHaptic(80);
           onSuccess(
@@ -248,7 +344,6 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           return;
         }
       } else {
-        // Offline / Offline Simulated Submission
         await enqueueFloorUpdate({
           orderId: order.orderId,
           poNumber: order.poNumber,
@@ -262,6 +357,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           notes: notes.trim() || null,
           issueCategory: selectedChip?.category || null,
           photoFile: rawPhotoFile,
+          sizeBreakdownLines,
         });
         triggerHaptic(80);
         onSuccess(
@@ -276,9 +372,6 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       setIsSubmitting(false);
     }
   };
-
-  const stageName =
-    STAGE_TRANSLATIONS[selectedStage]?.[lang] || selectedStage;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -314,7 +407,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
               {order.milestones.map((m) => (
                 <option key={m.id} value={m.stage}>
                   {STAGE_TRANSLATIONS[m.stage]?.[lang] || m.stage}{' '}
-                  {m.isCompleted ? '✓' : ''}
+                  {m.isCompleted ? (lang === 'ta' ? ' (முடிந்தது)' : ' (Done)') : ''}
                 </option>
               ))}
             </select>
@@ -323,7 +416,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
         </div>
       </div>
 
-      {/* Shift & Line Selectors (Responsive 1-col on mobile, 2-col on sm+) */}
+      {/* Shift & Line Selectors */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {/* Shift Toggle */}
         <div className="bg-white rounded-xl p-2.5 border border-slate-200 flex items-center justify-between gap-2">
@@ -338,7 +431,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
                 triggerHaptic(30);
                 setShift('DAY');
               }}
-              className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all ${
+              className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
                 shift === 'DAY'
                   ? 'bg-amber-400 text-slate-950 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
@@ -352,7 +445,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
                 triggerHaptic(30);
                 setShift('NIGHT');
               }}
-              className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all ${
+              className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
                 shift === 'NIGHT'
                   ? 'bg-indigo-900 text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
@@ -380,7 +473,105 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
         </div>
       </div>
 
-      {/* ONE-TAP QUICK-INCREMENT KEYPAD (Good Output) */}
+      {/* PER-SIZE BREAKDOWN CARD (S, M, L, XL Separately) */}
+      {order.orderLines && order.orderLines.length > 0 && (
+        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-sky-600" />
+              <span>{t.sizeBreakdownTitle}</span>
+            </span>
+            <span className="text-[11px] font-bold text-slate-400">
+              {order.orderLines.length} {t.sizesCount}
+            </span>
+          </div>
+
+          <p className="text-[11px] text-slate-500 mb-3">
+            {lang === 'ta'
+              ? 'அளவுகள் வாரியாக (S, M, L, XL) எண்ணிக்கையை தனித்தனியாக உள்ளிடவும்:'
+              : 'Log output per size individually (S, M, L, XL):'}
+          </p>
+
+          <div className="space-y-2.5">
+            {order.orderLines.map((line) => {
+              const lineQty = sizeQuantities[line.id] || 0;
+              const isDone = line.completedQty >= line.plannedQty;
+              const pct =
+                line.plannedQty > 0
+                  ? Math.min(100, Math.round((line.completedQty / line.plannedQty) * 100))
+                  : 0;
+
+              return (
+                <div
+                  key={line.id}
+                  className="p-3 bg-slate-50/90 rounded-xl border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                >
+                  {/* Size Label & Planning Progress */}
+                  <div className="flex-1 min-w-[130px]">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-1 rounded-lg bg-slate-900 text-white font-black text-xs font-mono tracking-wider shadow-xs">
+                        {line.size}
+                      </span>
+                      {line.color && (
+                        <span className="text-[11px] font-semibold text-slate-600 truncate max-w-[120px]">
+                          {line.color}
+                        </span>
+                      )}
+                      {isDone && (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-700 bg-emerald-100/90 px-1.5 py-0.5 rounded">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                          <span>{lang === 'ta' ? 'முடிந்தது' : 'Done'}</span>
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-1 font-mono">
+                      <span>{t.completedPcs}:</span>
+                      <span className="font-bold text-slate-800">
+                        {line.completedQty.toLocaleString()} / {line.plannedQty.toLocaleString()}
+                      </span>
+                      <span className="text-slate-400">({pct}%)</span>
+                    </div>
+                  </div>
+
+                  {/* Size Input & Quick Increment Buttons */}
+                  <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                    <div className="relative w-24">
+                      <input
+                        type="number"
+                        min={0}
+                        value={lineQty === 0 ? '' : lineQty}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          handleSizeChange(line.id, isNaN(val) ? 0 : val);
+                        }}
+                        placeholder="0"
+                        className="w-full text-center text-sm font-black text-slate-900 bg-white border border-slate-300 rounded-lg py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono shadow-inner"
+                      />
+                      <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400 pointer-events-none">
+                        {t.pieces}
+                      </span>
+                    </div>
+                    <div className="flex gap-1">
+                      {[10, 25, 50].map((amt) => (
+                        <button
+                          key={amt}
+                          type="button"
+                          onClick={() => handleSizeAdd(line.id, amt)}
+                          className="px-2 py-1.5 bg-white hover:bg-sky-50 active:scale-95 text-sky-800 font-bold text-xs rounded-lg border border-slate-200 shadow-2xs transition-all cursor-pointer"
+                        >
+                          +{amt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ONE-TAP QUICK-INCREMENT KEYPAD (Good Output Total) */}
       <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
@@ -390,7 +581,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           <button
             type="button"
             onClick={handleResetGoodQty}
-            className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-red-600 px-2 py-1 rounded-md hover:bg-red-50 transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-red-600 px-2 py-1 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             {t.reset}
@@ -405,11 +596,13 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             value={goodQty === 0 ? '' : goodQty}
             onChange={(e) => {
               const val = parseInt(e.target.value, 10);
-              setGoodQty(isNaN(val) ? 0 : Math.max(0, val));
+              const safeVal = isNaN(val) ? 0 : Math.max(0, val);
+              setGoodQty(safeVal);
+              distributeTotalAcrossSizes(safeVal);
               setFormError(null);
             }}
             placeholder="0"
-            className="w-full text-center text-4xl font-black text-slate-900 tracking-tight bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all shadow-inner"
+            className="w-full text-center text-4xl font-black text-slate-900 tracking-tight bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all shadow-inner font-mono"
           />
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
             {t.pieces.toUpperCase()}
@@ -423,7 +616,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
               key={amount}
               type="button"
               onClick={() => handleAddGoodQty(amount)}
-              className="min-h-[52px] bg-slate-100 hover:bg-emerald-600 active:scale-95 text-slate-900 hover:text-white font-black text-base rounded-xl border border-slate-300 shadow-sm transition-all flex flex-col items-center justify-center"
+              className="min-h-[52px] bg-slate-100 hover:bg-emerald-600 active:scale-95 text-slate-900 hover:text-white font-black text-base rounded-xl border border-slate-300 shadow-sm transition-all flex flex-col items-center justify-center cursor-pointer"
             >
               <span className="text-xs font-semibold opacity-70">+</span>
               <span>{amount}</span>
@@ -432,8 +625,8 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
         </div>
       </div>
 
-      {/* REJECTED QUANTITY COUNTER (Defective output) */}
-      <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-sm">
+      {/* REJECTED QUANTITY COUNTER (Defective output - Cursor-wise Editable) */}
+      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-black uppercase tracking-wider text-rose-800 flex items-center gap-1.5">
             <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
@@ -443,17 +636,29 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             <button
               type="button"
               onClick={handleResetRejectedQty}
-              className="text-xs font-bold text-slate-400 hover:text-red-600 px-2 py-0.5 rounded"
+              className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-red-600 px-2 py-0.5 rounded cursor-pointer"
             >
+              <RotateCcw className="w-3 h-3" />
               {t.reset}
             </button>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex-1 text-center py-2 bg-rose-50 border border-rose-200 rounded-xl">
-            <span className="text-2xl font-black text-rose-700">
-              {rejectedQty} <span className="text-xs font-normal">{t.pieces}</span>
+          <div className="relative flex-1">
+            <input
+              type="number"
+              min={0}
+              value={rejectedQty === 0 ? '' : rejectedQty}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10);
+                setRejectedQty(isNaN(val) ? 0 : Math.max(0, val));
+              }}
+              placeholder="0"
+              className="w-full text-center text-2xl font-black text-rose-700 bg-rose-50 border-2 border-rose-200 rounded-xl py-2 px-3 focus:outline-none focus:border-rose-500 focus:bg-white transition-all shadow-inner font-mono"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-rose-400 pointer-events-none">
+              {t.pieces}
             </span>
           </div>
           <div className="flex gap-1.5">
@@ -462,7 +667,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
                 key={amt}
                 type="button"
                 onClick={() => handleAddRejectedQty(amt)}
-                className="min-h-[46px] px-3.5 bg-slate-100 hover:bg-rose-100 active:scale-95 text-rose-800 font-black text-sm rounded-xl border border-slate-300 transition-all"
+                className="min-h-[46px] px-3.5 bg-slate-100 hover:bg-rose-100 active:scale-95 text-rose-800 font-black text-sm rounded-xl border border-slate-300 transition-all cursor-pointer"
               >
                 +{amt}
               </button>
@@ -471,7 +676,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
         </div>
       </div>
 
-      {/* 6 VISUAL TAMIL ISSUE CHIPS */}
+      {/* 6 VISUAL ISSUE CHIPS (Lucide SVG Icons - No Emojis) */}
       <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-2.5">
           <span className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
@@ -482,7 +687,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             <button
               type="button"
               onClick={() => setSelectedChip(null)}
-              className="text-xs text-slate-400 hover:text-slate-600 font-bold"
+              className="text-xs text-slate-400 hover:text-slate-600 font-bold cursor-pointer"
             >
               {t.clear}
             </button>
@@ -497,17 +702,19 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
                 key={chip.id}
                 type="button"
                 onClick={() => handleToggleChip(chip)}
-                className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
                   isSelected
                     ? 'bg-amber-100 border-amber-500 shadow-md ring-2 ring-amber-400/50'
                     : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-800'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xl">{chip.emoji}</span>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="p-1 rounded-lg bg-white border border-slate-200/80 shadow-2xs">
+                    {renderChipIcon(chip.iconType)}
+                  </div>
                   {isSelected && (
-                    <span className="w-4 h-4 rounded-full bg-amber-600 text-white flex items-center justify-center text-[10px] font-bold">
-                      ✓
+                    <span className="w-4 h-4 rounded-full bg-amber-600 text-white flex items-center justify-center">
+                      <Check className="w-2.5 h-2.5 stroke-[3]" />
                     </span>
                   )}
                 </div>
@@ -540,7 +747,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             type="button"
             onClick={handleToggleVoice}
             disabled={!isSpeechSupported}
-            className={`w-full min-h-[52px] rounded-xl font-black text-sm flex items-center justify-center gap-2.5 transition-all shadow-sm ${
+            className={`w-full min-h-[52px] rounded-xl font-black text-sm flex items-center justify-center gap-2.5 transition-all shadow-sm cursor-pointer ${
               isListening
                 ? 'bg-rose-600 text-white animate-pulse ring-4 ring-rose-200'
                 : 'bg-indigo-50 border-2 border-indigo-200 text-indigo-900 hover:bg-indigo-100 active:scale-95'
@@ -596,7 +803,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isCompressingPhoto}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition-colors cursor-pointer"
           >
             <Camera className="w-4 h-4 text-slate-600" />
             {isCompressingPhoto ? (lang === 'ta' ? 'சுருக்கப்படுகிறது...' : 'Compressing...') : t.takePhoto}
@@ -625,10 +832,10 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
                   setPhotoSizeLabel(null);
                   setRawPhotoFile(null);
                 }}
-                className="text-xs text-slate-400 hover:text-red-500 p-1"
+                className="text-slate-400 hover:text-red-500 p-1 cursor-pointer"
                 title="Remove photo"
               >
-                ✕
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
@@ -647,7 +854,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full min-h-[56px] bg-slate-900 hover:bg-black active:scale-[0.98] text-white font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full min-h-[56px] bg-slate-900 hover:bg-black active:scale-[0.98] text-white font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
         >
           {isSubmitting ? (
             <span>{t.submitting}</span>
@@ -663,7 +870,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className="w-full mt-2 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 text-center"
+            className="w-full mt-2 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 text-center cursor-pointer"
           >
             {t.cancel}
           </button>

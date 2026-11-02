@@ -3,7 +3,7 @@ export type Language = 'ta' | 'en';
 export interface IssueChipItem {
   id: string;
   category: string;
-  emoji: string;
+  iconType: 'zap' | 'wrench' | 'scissors' | 'palette' | 'users' | 'clock';
   labelTa: string;
   labelEn: string;
   subtextTa: string;
@@ -14,7 +14,7 @@ export const SUPERVISOR_ISSUE_CHIPS: IssueChipItem[] = [
   {
     id: 'power_outage',
     category: 'POWER_OUTAGE',
-    emoji: '⚡',
+    iconType: 'zap',
     labelTa: 'மின்வெட்டு',
     labelEn: 'Power Outage',
     subtextTa: 'ஜெனரேட்டர் / EB சப்ளை நின்றது',
@@ -23,7 +23,7 @@ export const SUPERVISOR_ISSUE_CHIPS: IssueChipItem[] = [
   {
     id: 'machine_breakdown',
     category: 'MACHINE_BREAKDOWN',
-    emoji: '🪡',
+    iconType: 'wrench',
     labelTa: 'ஊசி உடைவு',
     labelEn: 'Machine Breakdown',
     subtextTa: 'ஊசி / மோட்டார் பழுது',
@@ -32,7 +32,7 @@ export const SUPERVISOR_ISSUE_CHIPS: IssueChipItem[] = [
   {
     id: 'fabric_defect',
     category: 'FABRIC_DEFECT',
-    emoji: '🧵',
+    iconType: 'scissors',
     labelTa: 'நூல்/துணி குறை',
     labelEn: 'Fabric Defect',
     subtextTa: 'துணி ஓட்டை / GSM வேரியேஷன்',
@@ -41,7 +41,7 @@ export const SUPERVISOR_ISSUE_CHIPS: IssueChipItem[] = [
   {
     id: 'dyeing_delay',
     category: 'FABRIC_DEFECT',
-    emoji: '🎨',
+    iconType: 'palette',
     labelTa: 'சாயம் பழுது',
     labelEn: 'Dyeing Delay',
     subtextTa: 'சாயம் குறை / வாஷிங் தாமதம்',
@@ -50,7 +50,7 @@ export const SUPERVISOR_ISSUE_CHIPS: IssueChipItem[] = [
   {
     id: 'labour_shortage',
     category: 'LABOUR_SHORTAGE',
-    emoji: '👥',
+    iconType: 'users',
     labelTa: 'ஆட்கள் பற்றாக்குறை',
     labelEn: 'Labour Shortage',
     subtextTa: 'தையல் கலைஞர்கள் லீவு',
@@ -59,7 +59,7 @@ export const SUPERVISOR_ISSUE_CHIPS: IssueChipItem[] = [
   {
     id: 'subcontractor_delay',
     category: 'SUBCONTRACTOR_DELAY',
-    emoji: '⏳',
+    iconType: 'clock',
     labelTa: 'தாமதம்',
     labelEn: 'Subcontractor Delay',
     subtextTa: 'பிரிண்டிங் / வாஷிங் இன்னும் வரல',
@@ -254,6 +254,11 @@ export const SUPERVISOR_I18N = {
     openSimulator: 'சிமுலேட்டரைத் திற',
     logout: 'வெளியேறு',
     tiruppurKnitwear: 'திருப்பூர் பின்னலாடை',
+    sizeBreakdownTitle: 'அளவு வாரியாக (S, M, L, XL)',
+    bySize: 'அளவு வாரியாக பதிவு',
+    allSizesProportional: 'மொத்த எண்ணிக்கை (விகிதப்படி)',
+    sizesCount: 'அளவுகள்',
+    allocated: 'பங்கீடு',
   },
   en: {
     appTitle: 'Floor Production Work',
@@ -278,6 +283,11 @@ export const SUPERVISOR_I18N = {
     takePhoto: 'Snap Defect / Floor Photo',
     photoAttached: 'Photo Compressed (~85 KB)',
     submitShiftUpdate: 'Submit Shift Output',
+    sizeBreakdownTitle: 'Size Breakdown (S, M, L, XL)',
+    bySize: 'Log By Size',
+    allSizesProportional: 'Lump Sum (Ratio Distributed)',
+    sizesCount: 'Sizes',
+    allocated: 'Allocated',
     submitting: 'Saving...',
     offlineQueueNotice: 'Offline Queue: {count} pending (auto-syncs on network return)',
     syncNow: 'Sync Now',

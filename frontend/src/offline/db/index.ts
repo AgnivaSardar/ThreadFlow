@@ -29,6 +29,11 @@ export interface PendingUpdateRecord {
   shift: 'DAY' | 'NIGHT';
   machineLine?: string | null;
   issueCategory?: string | null;
+  sizeBreakdownLines?: {
+    orderLineId: string;
+    goodQuantity: number;
+    rejectedQuantity: number;
+  }[];
 }
 
 const DB_NAME = 'threadflow_offline_store';

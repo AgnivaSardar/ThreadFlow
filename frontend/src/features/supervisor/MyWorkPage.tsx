@@ -200,9 +200,10 @@ export const MyWorkPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setToastMessage(null)}
-            className="text-slate-400 hover:text-white"
+            className="text-slate-400 hover:text-white p-1 cursor-pointer"
+            title="Dismiss"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}
@@ -430,6 +431,62 @@ export const MyWorkPage: React.FC = () => {
                                 className="bg-sky-600 h-2.5 rounded-full transition-all duration-500"
                                 style={{ width: `${activeStage.progressPct}%` }}
                               />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Per-Size Breakdown Pills (S, M, L, XL separately) */}
+                        {order.orderLines && order.orderLines.length > 0 && (
+                          <div className="mt-3 pt-2.5 border-t border-slate-100">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 mb-1.5">
+                              <span className="flex items-center gap-1 text-slate-700">
+                                <Layers className="w-3 h-3 text-sky-600" />
+                                <span>{t.sizeBreakdownTitle}</span>
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-mono">
+                                {order.orderLines.length} {t.sizesCount}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                              {order.orderLines.map((line) => {
+                                const isDone = line.completedQty >= line.plannedQty;
+                                const pct =
+                                  line.plannedQty > 0
+                                    ? Math.min(100, Math.round((line.completedQty / line.plannedQty) * 100))
+                                    : 0;
+                                return (
+                                  <div
+                                    key={line.id}
+                                    className={`px-2 py-1.5 rounded-lg border text-center transition-all ${
+                                      isDone
+                                        ? 'bg-emerald-50/80 border-emerald-200'
+                                        : 'bg-slate-50 border-slate-200/80'
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between text-[11px] leading-tight font-black mb-0.5">
+                                      <span className="text-slate-900">{line.size}</span>
+                                      <span
+                                        className={`text-[9px] font-bold ${
+                                          isDone ? 'text-emerald-700' : 'text-slate-500'
+                                        }`}
+                                      >
+                                        {pct}%
+                                      </span>
+                                    </div>
+                                    <div className="text-[10px] font-mono text-slate-600 truncate">
+                                      {line.completedQty.toLocaleString()}/{line.plannedQty.toLocaleString()}
+                                    </div>
+                                    <div className="w-full bg-slate-200 rounded-full h-1 mt-1 overflow-hidden">
+                                      <div
+                                        className={`h-1 rounded-full transition-all duration-300 ${
+                                          isDone ? 'bg-emerald-500' : 'bg-sky-500'
+                                        }`}
+                                        style={{ width: `${pct}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         )}

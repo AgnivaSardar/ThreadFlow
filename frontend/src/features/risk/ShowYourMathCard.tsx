@@ -11,6 +11,11 @@ import {
   ShieldAlert,
   Copy,
   Check,
+  Target,
+  Zap,
+  Users,
+  RotateCcw,
+  ClipboardList,
 } from 'lucide-react';
 
 interface ShowYourMathCardProps {
@@ -70,7 +75,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
     const formattedDate = formatDate(activeResult.projectedCompletionDate);
     const effDays = mathBreakdown.workingDaysTotal - mathBreakdown.downstreamBufferDays;
     const memo = [
-      `📋 THREADFLOW RUN-RATE AUDIT`,
+      `[THREADFLOW RUN-RATE AUDIT]`,
       `PO: ${poNumber || 'B-PO'} | Style: ${styleName || 'Apparel'} | Stage: ${stageName || 'Active Stage'}`,
       `• Remaining: ${mathBreakdown.remainingPieces.toLocaleString()} pcs across ${effDays} working days`,
       `• Required Pace: ${requiredDailyRate.toLocaleString()} pcs/day`,
@@ -416,46 +421,50 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
             <button
               type="button"
               onClick={() => handleSliderChange(requiredDailyRate)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                 simulatedRate === requiredDailyRate
                   ? 'bg-sky-700 text-white shadow-2xs'
                   : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300'
               }`}
             >
-              🎯 Match Target Pace ({requiredDailyRate} pcs/day)
+              <Target className="w-3.5 h-3.5" />
+              <span>Match Target Pace ({requiredDailyRate} pcs/day)</span>
             </button>
             <button
               type="button"
               onClick={() => handleSliderChange(Math.round(actualRollingRate * 1.25))}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                 simulatedRate === Math.round(actualRollingRate * 1.25)
                   ? 'bg-amber-600 text-white shadow-2xs'
                   : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300'
               }`}
             >
-              ⚡ +2h Overtime (+25%)
+              <Zap className="w-3.5 h-3.5" />
+              <span>+2h Overtime (+25%)</span>
             </button>
             <button
               type="button"
               onClick={() => handleSliderChange(actualRollingRate + 100)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                 simulatedRate === actualRollingRate + 100
                   ? 'bg-indigo-600 text-white shadow-2xs'
                   : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300'
               }`}
             >
-              👥 +1 Line Station (+100 pcs/day)
+              <Users className="w-3.5 h-3.5" />
+              <span>+1 Line Station (+100 pcs/day)</span>
             </button>
             <button
               type="button"
               onClick={() => handleSliderChange(actualRollingRate)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1 cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1.5 cursor-pointer ${
                 simulatedRate === actualRollingRate
                   ? 'bg-slate-800 text-white'
                   : 'bg-white hover:bg-slate-100 text-slate-500 border border-slate-200'
               }`}
             >
-              ↺ Reset ({actualRollingRate} pcs/day)
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset ({actualRollingRate} pcs/day)</span>
             </button>
           </div>
 

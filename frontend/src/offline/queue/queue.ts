@@ -66,6 +66,11 @@ export interface EnqueueFloorParams {
   issueCategory?: string | null;
   photoFile?: File | null;
   clientEventAt?: string;
+  sizeBreakdownLines?: {
+    orderLineId: string;
+    goodQuantity: number;
+    rejectedQuantity: number;
+  }[];
 }
 
 /**
@@ -103,6 +108,7 @@ export async function enqueueFloorUpdate(params: EnqueueFloorParams): Promise<Pe
     status: 'QUEUED',
     retryCount: 0,
     createdAt: Date.now(),
+    sizeBreakdownLines: params.sizeBreakdownLines,
   };
 
   await enqueuePendingUpdate(record);

@@ -115,6 +115,7 @@ export async function syncOfflineQueue(): Promise<SyncResult> {
         issueCategory: item.issueCategory || null,
         compressedPhotoBase64: photoBase64,
         clientEventAt: item.clientEventAt,
+        sizeBreakdownLines: item.sizeBreakdownLines,
       };
 
       await apiRequest('/production/updates', {
