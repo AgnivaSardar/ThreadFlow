@@ -249,21 +249,21 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Target PO Header Card */}
+      {/* Target PO Header Card (Preserves authentic commercial buyer & product names) */}
       <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-1">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            {translateBuyer(order.buyer.name, lang)}
+            {order.buyer.name}
           </span>
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
             {order.poNumber}
           </span>
         </div>
         <div className="text-base font-extrabold text-slate-900 truncate">
-          {translateStyle(order.style, lang)}
+          {order.style}
         </div>
         <div className="text-xs text-slate-500 mt-0.5 truncate">
-          {translateDescription(order.description, lang) || (lang === 'ta' ? 'ஏற்றுமதி பின்னலாடை ஆர்டர்' : 'Export Knitwear Style')}
+          {order.description || (lang === 'ta' ? 'ஏற்றுமதி பின்னலாடை ஆர்டர்' : 'Export Knitwear Style')}
         </div>
 
         {/* Stage Selector */}

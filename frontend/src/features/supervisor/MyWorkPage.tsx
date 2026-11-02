@@ -239,17 +239,17 @@ export const MyWorkPage: React.FC = () => {
                           </span>
                         </div>
 
-                        {/* Style Name & Buyer Info */}
+                        {/* Style Name & Buyer Info (Preserves authentic commercial buyer & product names) */}
                         <h3 className="text-base font-extrabold text-slate-900 group-hover:text-sky-700 transition-colors line-clamp-1">
-                          {translateStyle(order.style, lang)}
+                          {order.style}
                         </h3>
                         <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
-                          {translateDescription(order.description, lang) || (lang === 'ta' ? 'ஏற்றுமதி பின்னலாடை ஆர்டர்' : 'Export Knitwear Order')}
+                          {order.description || 'Export Knitwear Order'}
                         </p>
 
                         <div className="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
                           <span className="font-semibold text-slate-700">
-                            {translateBuyer(order.buyer.name, lang)}
+                            {order.buyer.name}
                           </span>
                           <span className="flex items-center gap-1 text-slate-500 font-medium">
                             <Calendar className="w-3.5 h-3.5 text-slate-400" />
