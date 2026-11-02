@@ -95,6 +95,24 @@ export class AuthController {
       user,
     });
   }
+
+  /**
+   * PATCH /api/v1/auth/me
+   * Updates current user's profile details (name, phone, languagePreference)
+   */
+  public async updateProfile(req: Request, res: Response): Promise<void> {
+    if (!req.user) {
+      throw new AppError('Unauthenticated', 401);
+    }
+
+    const user = await authService.updateProfile(req.user.id, req.body);
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      user,
+    });
+  }
 }
 
 export const authController = new AuthController();

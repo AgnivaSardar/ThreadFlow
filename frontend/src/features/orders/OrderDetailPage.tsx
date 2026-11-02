@@ -1,2 +1,569 @@
-// TODO: implement this module
+import React, { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import {
+  ArrowLeft,
+  Calendar,
+  Building2,
+  Clock,
+  Layers,
+  ShieldCheck,
+  AlertTriangle,
+  History,
+  CheckCircle,
+  Hash,
+  Loader2,
+  DollarSign,
+  X,
+  Send,
+  Zap,
+  Mail,
+} from 'lucide-react';
+import { OrderDetail, UpdateExFactoryDatePayload, RiskEvaluationResult } from '../../types';
+import { apiRequest } from '../../services/api';
+import { StatusBadge } from '../../components/StatusBadge';
+import { CircularTnaPipeline } from '../tna/CircularTnaPipeline';
+import { SizeBreakdownVisualizer } from './SizeBreakdownVisualizer';
+import { ShowYourMathCard } from '../risk/ShowYourMathCard';
 
+export const OrderDetailPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const [order, setOrder] = useState<OrderDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [riskEvaluation, setRiskEvaluation] = useState<RiskEvaluationResult | null>(null);
+
+  // Ex-Factory Date Change Modal state
+  const [isDateModalOpen, setIsDateModalOpen] = useState(false);
+  const [newDate, setNewDate] = useState('');
+  const [reasonCode, setReasonCode] = useState('BUYER_REQUEST');
+  const [notes, setNotes] = useState('');
+  const [financialImpact, setFinancialImpact] = useState<number>(0);
+  const [updatingDate, setUpdatingDate] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [directiveSent, setDirectiveSent] = useState(false);
+
+  const fetchRiskEvaluation = async (orderId: string, milestoneId: string) => {
+    try {
+      const res = await apiRequest<{ success: boolean; data: RiskEvaluationResult }>(
+        `/risk/${orderId}/${milestoneId}`
+      );
+      if (res.data) {
+        setRiskEvaluation(res.data);
+      }
+    } catch {
+      // Non-blocking fallback
+    }
+  };
+
+  const fetchOrderDetail = async () => {
+    if (!id) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await apiRequest<{ success: boolean; data: OrderDetail }>(`/orders/${id}`);
+      setOrder(res.data);
+      if (res.data?.exFactoryDate) {
+        setNewDate(new Date(res.data.exFactoryDate).toISOString().split('T')[0]);
+      }
+
+      if (res.data?.id && res.data.milestones?.length > 0) {
+        const activeMilestone =
+          res.data.milestones.find((m) => m.stage === res.data.activeStage) ||
+          res.data.milestones.find((m) => m.completedQuantity < m.targetQuantity) ||
+          res.data.milestones[0];
+        if (activeMilestone) {
+          fetchRiskEvaluation(res.data.id, activeMilestone.id);
+        }
+      }
+    } catch (err: any) {
+      if (err.status === 401) {
+        window.location.replace('/login');
+        return;
+      }
+      setError(err.message || 'Failed to load order details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrderDetail();
+  }, [id]);
+
+  const handleDateChangeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+    setModalError(null);
+
+    if (!reasonCode) {
+      setModalError('Reason code is mandatory for all ex-factory date revisions');
+      return;
+    }
+
+    try {
+      setUpdatingDate(true);
+      const payload: UpdateExFactoryDatePayload = {
+        newExFactoryDate: new Date(newDate).toISOString(),
+        reasonCode,
+        notes: notes.trim() || undefined,
+        financialImpactRupees: Number(financialImpact) || 0,
+      };
+
+      await apiRequest(`/orders/${id}/ex-factory-date`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+
+      setIsDateModalOpen(false);
+      setNotes('');
+      await fetchOrderDetail();
+    } catch (err: any) {
+      setModalError(err.message || 'Failed to update ex-factory date');
+    } finally {
+      setUpdatingDate(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
+        <Loader2 className="w-8 h-8 text-sky-600 animate-spin" />
+        <span className="text-sm text-slate-500 font-medium">Loading export order details & TNA timeline...</span>
+      </div>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <div className="p-8 max-w-xl mx-auto text-center space-y-4">
+        <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+          <AlertTriangle className="w-6 h-6" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-800">Order Not Found</h2>
+        <p className="text-sm text-slate-500">{error || 'Could not retrieve order information.'}</p>
+        <Link
+          to="/orders"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-800"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Orders
+        </Link>
+      </div>
+    );
+  }
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
+
+  return (
+    <div className="space-y-6 pb-12 animate-in fade-in duration-200">
+      {/* Top Breadcrumb & Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Link
+            to="/orders"
+            className="p-2 bg-white border border-slate-200 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition shadow-2xs"
+            title="Back to Orders"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div>
+            <div className="text-[11px] font-semibold text-slate-400">Export Orders / Details</div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{order.style}</h1>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* PO Number & Status Badge neatly positioned in the header metadata bar */}
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
+            <span className="text-[10px] uppercase font-bold text-slate-400">PO</span>
+            <span className="font-mono text-xs font-bold text-slate-800">
+              {order.poNumber}
+            </span>
+            <div className="h-3 w-px bg-slate-200 mx-0.5" />
+            <StatusBadge status={order.healthStatus} size="sm" />
+          </div>
+
+          <button
+            onClick={() => setIsDateModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs shadow-xs transition cursor-pointer"
+          >
+            <Calendar className="w-4 h-4" />
+            Shift Ex-Factory Date
+          </button>
+        </div>
+      </div>
+
+      {/* Primary KPI Header Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Buyer & Destination</div>
+          <div className="text-base font-bold text-slate-800 mt-1">{order.buyer.name}</div>
+          <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+            <Building2 className="w-3.5 h-3.5 text-slate-400" />
+            {order.buyer.code} • {order.buyer.country || 'Europe'}
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Manufacturing Unit</div>
+          <div className="text-base font-bold text-slate-800 mt-1">{order.unit.name}</div>
+          <div className="text-xs text-slate-500 mt-0.5">
+            <span
+              className={`inline-block w-2 h-2 rounded-full mr-1.5 ${
+                order.unit.type === 'SUBCONTRACTOR' ? 'bg-purple-500' : 'bg-emerald-500'
+              }`}
+            ></span>
+            {order.unit.type === 'SUBCONTRACTOR' ? 'Subcontract Unit' : 'Primary Factory'}
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ex-Factory Deadline</div>
+          <div className="text-base font-bold text-slate-800 mt-1">{formatDate(order.exFactoryDate)}</div>
+          <div className="text-xs text-amber-600 font-semibold flex items-center gap-1 mt-0.5">
+            <Clock className="w-3.5 h-3.5" />
+            {order.workingDaysLeft} working days left (CW {order.shipWeek})
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Order Value (FOB)</div>
+          <div className="text-base font-bold text-slate-800 mt-1 font-mono">
+            ₹{(order.totalOrderValue || 0).toLocaleString()}
+          </div>
+          <div className="text-xs text-slate-500 mt-0.5">
+            {order.currency} {order.fobPricePerPiece}/pc ({order.totalQuantity.toLocaleString()} pcs)
+          </div>
+        </div>
+      </div>
+
+      {/* Size Ratio & Breakdown Graph Visualizer */}
+      <SizeBreakdownVisualizer
+        sizeProgress={order.sizeProgress}
+        hasSkewWarning={order.hasSkewWarning}
+        totalPlanned={order.totalPlanned}
+        totalCompleted={order.totalCompleted}
+        overallCompletionPct={order.overallCompletionPct}
+      />
+
+      {/* Size Ratio Floor Rebalancing Directive Card */}
+      {order.sizeSkewRecommendation && (
+        <div className="bg-amber-50/90 border border-amber-300 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1.5">
+              <Zap className="w-4 h-4 text-amber-600 shrink-0" />
+              <span className="text-xs font-bold text-amber-950 uppercase tracking-wide">
+                Floor Rebalance Directive
+              </span>
+            </div>
+            <p className="text-xs text-amber-900 font-medium leading-relaxed">
+              {order.sizeSkewRecommendation.directive}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setDirectiveSent(true);
+              setTimeout(() => setDirectiveSent(false), 3000);
+            }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-1.5 shadow-xs cursor-pointer ${
+              directiveSent
+                ? 'bg-emerald-600 text-white'
+                : 'bg-[#0C2D48] hover:bg-[#143D60] text-white'
+            }`}
+          >
+            {directiveSent ? (
+              <>
+                <CheckCircle className="w-4 h-4" />
+                Directive Dispatched
+              </>
+            ) : (
+              <>
+                <Send className="w-3.5 h-3.5" />
+                Dispatch Directive to Floor
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Critical Path & Buffer Compression Alert Banner */}
+      {order.criticalPathAlert && (
+        <div className="bg-rose-50 border-l-4 border-rose-500 p-4 rounded-xl shadow-xs space-y-1">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
+            <h4 className="text-sm font-bold text-rose-900">
+              Critical Path Alert: {order.criticalPathAlert.stageDisplayName} Overrun ({order.criticalPathAlert.bufferCompressionDays} Working Days Buffer Compressed)
+            </h4>
+          </div>
+          <p className="text-xs text-rose-800 ml-7 leading-relaxed">
+            {order.criticalPathAlert.message} {order.criticalPathAlert.downstreamRisk}
+          </p>
+        </div>
+      )}
+
+      {/* 7-Stage Circular Radial Donut Pipeline */}
+      <CircularTnaPipeline milestones={order.milestones} currentStage={order.activeStage} />
+
+      {/* Feature 5: Transparent Show-Your-Math Run-Rate Engine */}
+      {riskEvaluation && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+              Active Stage Run-Rate Analysis ({order.activeStage.replace(/_/g, ' ')})
+            </h3>
+          </div>
+          <ShowYourMathCard
+            mathBreakdown={riskEvaluation.mathBreakdown}
+            riskLevel={riskEvaluation.riskLevel}
+            differencePill={riskEvaluation.differencePill}
+            requiredDailyRate={riskEvaluation.requiredDailyRate}
+            actualRollingRate={riskEvaluation.actualRollingRate}
+            varianceQtyPerDay={riskEvaluation.varianceQtyPerDay}
+            daysLate={riskEvaluation.daysLate}
+            projectedCompletionDate={new Date(riskEvaluation.projectedCompletionDate).toISOString()}
+            financialExposureRupees={riskEvaluation.financialExposureRupees}
+            rulesTriggered={riskEvaluation.rulesTriggered}
+            plannedStageEnd={
+              order.milestones.find((m) => m.stage === order.activeStage)?.plannedEnd
+            }
+            poNumber={order.poNumber}
+            styleName={order.style}
+            stageName={order.activeStage.replace(/_/g, ' ')}
+          />
+        </div>
+      )}
+
+      {/* Order Change History Table */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <History className="w-4 h-4 text-slate-600" />
+            <h3 className="text-base font-bold text-slate-800">Order Change History</h3>
+          </div>
+          <span className="text-xs text-slate-500 font-medium">
+            {order.auditEvents.length} Recorded Changes
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-200">
+              <tr>
+                <th className="py-2.5 px-3">Date & Time</th>
+                <th className="py-2.5 px-3">Action</th>
+                <th className="py-2.5 px-3">Reason</th>
+                <th className="py-2.5 px-3">Change Summary</th>
+                <th className="py-2.5 px-3">User & Role</th>
+                <th className="py-2.5 px-3 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 font-normal">
+              {order.auditEvents.map((ev) => {
+                let prev = '-';
+                let next = '-';
+                try {
+                  if (ev.previousValue) prev = JSON.parse(ev.previousValue).exFactoryDate?.split('T')[0] || '-';
+                  if (ev.newValue) next = JSON.parse(ev.newValue).exFactoryDate?.split('T')[0] || '-';
+                } catch {
+                  // fallback
+                }
+
+                const friendlyReason =
+                  ev.action === 'BUYER_SCHEDULE_NOTIFICATION'
+                    ? 'Automated Dispatch'
+                    : ev.reasonCode === 'BUYER_REQUEST'
+                    ? 'Buyer Request'
+                    : ev.reasonCode === 'FABRIC_DELAY'
+                    ? 'Fabric Delay'
+                    : ev.reasonCode === 'LABOUR_SHORTAGE'
+                    ? 'Labour Shortage'
+                    : ev.reasonCode === 'MACHINE_BREAKDOWN'
+                    ? 'Machine Breakdown'
+                    : ev.reasonCode === 'POWER_OUTAGE'
+                    ? 'Power Interruption'
+                    : ev.reasonCode === 'QUALITY_HOLD'
+                    ? 'Quality Hold'
+                    : ev.reasonCode === 'SUBCONTRACTOR_DELAY'
+                    ? 'Subcontractor Delay'
+                    : ev.reasonCode === 'INITIAL_PO_CREATION'
+                    ? 'New Order'
+                    : ev.reasonCode || 'Schedule Update';
+
+                const friendlyAction =
+                  ev.action === 'UPDATE_EX_FACTORY_DATE'
+                    ? 'Ex-Factory Revised'
+                    : ev.action === 'BULK_UPDATE_EX_FACTORY_DATE'
+                    ? 'Bulk Schedule Shift'
+                    : ev.action === 'BUYER_SCHEDULE_NOTIFICATION'
+                    ? 'Buyer Notification'
+                    : ev.action === 'CREATE_ORDER'
+                    ? 'Order Created'
+                    : ev.action;
+
+                return (
+                  <tr key={ev.id} className="hover:bg-slate-50/50 transition">
+                    <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
+                      {new Date(ev.timestamp).toLocaleString(undefined, {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </td>
+                    <td className="py-2.5 px-3 font-semibold text-slate-800 whitespace-nowrap">
+                      {friendlyAction}
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-900 border border-amber-200">
+                        {friendlyReason}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 font-medium text-slate-700 whitespace-nowrap">
+                      {prev !== '-' ? `${prev} → ${next}` : next}
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap text-slate-600">
+                      {ev.user?.name || 'System'} ({ev.userRole})
+                    </td>
+                    <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                      <span className="inline-flex items-center gap-1 font-semibold text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                        Logged
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Date Alteration Modal with Reason Code Prompt */}
+      {isDateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div
+            style={{ colorScheme: 'light' }}
+            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden text-slate-900"
+          >
+            <div className="bg-[#0C2D48] px-6 py-4 text-white flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-white">Shift Ex-Factory Delivery Date</h3>
+                <p className="text-xs text-sky-200/80">
+                  Delivery schedule shift and compliance logging
+                </p>
+              </div>
+              <button
+                onClick={() => setIsDateModalOpen(false)}
+                className="text-sky-200 hover:text-white p-1 rounded-lg hover:bg-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleDateChangeSubmit} className="p-6 space-y-4 bg-white text-slate-900">
+              {modalError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{modalError}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-800 mb-1">
+                  New Ex-Factory Date <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={newDate}
+                  onChange={(e) => setNewDate(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 font-medium bg-white text-slate-900 shadow-xs"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-800 mb-1">
+                  Reason for Date Change <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={reasonCode}
+                  onChange={(e) => setReasonCode(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 font-semibold bg-white text-slate-900 shadow-xs"
+                  required
+                >
+                  <option className="bg-white text-slate-900" value="BUYER_REQUEST">Buyer Requested Delivery Postponement</option>
+                  <option className="bg-white text-slate-900" value="FABRIC_DELAY">Fabric / Yarn Supply Delay</option>
+                  <option className="bg-white text-slate-900" value="LABOUR_SHORTAGE">Labour / Attendance Shortage</option>
+                  <option className="bg-white text-slate-900" value="MACHINE_BREAKDOWN">Machine Maintenance / Line Breakdown</option>
+                  <option className="bg-white text-slate-900" value="POWER_OUTAGE">Power Outage / Facility Interruption</option>
+                  <option className="bg-white text-slate-900" value="QUALITY_HOLD">Quality Inspection / Shade Approval Hold</option>
+                  <option className="bg-white text-slate-900" value="SUBCONTRACTOR_DELAY">Subcontractor Processing Delay</option>
+                  <option className="bg-white text-slate-900" value="OTHER">Other Reason</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-800 mb-1">
+                  Explanatory Notes & Rationale
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                  placeholder="Provide context regarding the schedule shift for buyer and internal records..."
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 bg-white text-slate-900 placeholder:text-slate-400 shadow-xs"
+                ></textarea>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-800 mb-1">
+                  Estimated Financial Impact (₹ INR)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  value={financialImpact}
+                  onChange={(e) => setFinancialImpact(Number(e.target.value))}
+                  placeholder="e.g. 50000 for air-freight or overtime penalty"
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 font-mono bg-white text-slate-900 placeholder:text-slate-400 shadow-xs"
+                />
+              </div>
+
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-600">
+                Recalibrates milestone schedules and records change in audit history.
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsDateModalOpen(false)}
+                  disabled={updatingDate}
+                  className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updatingDate || !reasonCode}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-500 rounded-xl shadow-xs transition"
+                >
+                  {updatingDate && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  Confirm Date Shift
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

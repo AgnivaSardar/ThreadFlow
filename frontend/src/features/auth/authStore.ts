@@ -15,6 +15,7 @@ interface AuthState {
   refreshSession: () => Promise<boolean>;
   clearError: () => void;
   hasRole: (...roles: Role[]) => boolean;
+  updateUser: (updatedUser: User) => void;
 }
 
 // Retrieve cached session from localStorage on initial load
@@ -107,5 +108,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { user } = get();
     if (!user) return false;
     return roles.includes(user.role);
+  },
+
+  updateUser: (updatedUser: User) => {
+    localStorage.setItem('threadflow_user', JSON.stringify(updatedUser));
+    set({ user: updatedUser });
   },
 }));

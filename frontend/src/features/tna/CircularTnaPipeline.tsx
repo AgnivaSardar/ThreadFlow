@@ -1,0 +1,347 @@
+import React, { useState } from 'react';
+import { TnaMilestone, Stage } from '../../types';
+import {
+  CheckCircle2,
+  Clock,
+  Layers,
+  Sparkles,
+  Scissors,
+  CheckCheck,
+  Package,
+  Droplets,
+  AlertTriangle,
+  CircleDot,
+  Calendar,
+  ChevronRight,
+} from 'lucide-react';
+
+interface CircularTnaPipelineProps {
+  milestones: TnaMilestone[];
+  currentStage?: Stage;
+}
+
+const STAGE_METADATA: Record<
+  Stage,
+  { label: string; department: string; icon: React.ReactNode; color: string }
+> = {
+  KNITTING: {
+    label: 'Knitting',
+    department: 'Yarn to Greige Fabric',
+    icon: <Layers className="w-4 h-4" />,
+    color: '#0284C7', // sky-600
+  },
+  DYEING_WASHING: {
+    label: 'Dyeing & Washing',
+    department: 'Wet Processing & Softening',
+    icon: <Droplets className="w-4 h-4" />,
+    color: '#4F46E5', // indigo-600
+  },
+  PRINTING: {
+    label: 'Printing & Embroidery',
+    department: 'Chest Prints & Badges',
+    icon: <Sparkles className="w-4 h-4" />,
+    color: '#9333EA', // purple-600
+  },
+  CUTTING: {
+    label: 'Fabric Cutting',
+    department: 'Pattern Lay & Bundle Prep',
+    icon: <Scissors className="w-4 h-4" />,
+    color: '#D97706', // amber-600
+  },
+  STITCHING: {
+    label: 'Assembly & Stitching',
+    department: 'Sewing Lines & Assembly',
+    icon: <CircleDot className="w-4 h-4" />,
+    color: '#059669', // emerald-600
+  },
+  CHECKING: {
+    label: 'Quality Checking',
+    department: 'Inline & Needle Inspection',
+    icon: <CheckCheck className="w-4 h-4" />,
+    color: '#0D9488', // teal-600
+  },
+  FINISHING: {
+    label: 'Finishing & Packing',
+    department: 'Steam Iron & Carton Packing',
+    icon: <Package className="w-4 h-4" />,
+    color: '#2563EB', // blue-600
+  },
+};
+
+export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
+  milestones,
+  currentStage,
+}) => {
+  const sorted = [...milestones].sort((a, b) => a.sequenceOrder - b.sequenceOrder);
+
+  // Default selected stage to active stage or first milestone
+  const activeIndex = sorted.findIndex((m) => m.stage === currentStage);
+  const initialIndex = activeIndex >= 0 ? activeIndex : 0;
+  const [selectedIndex, setSelectedIndex] = useState<number>(initialIndex);
+
+  const selectedMilestone = sorted[selectedIndex] || sorted[0];
+  const selectedMeta = selectedMilestone
+    ? STAGE_METADATA[selectedMilestone.stage]
+    : STAGE_METADATA.KNITTING;
+
+  // Total completed vs target
+  const totalCompletedPieces = sorted.reduce((sum, m) => sum + m.completedQuantity, 0);
+  const totalTargetPieces = sorted.reduce((sum, m) => sum + m.targetQuantity, 0);
+  const overallAvgPct =
+    totalTargetPieces > 0 ? Math.round((totalCompletedPieces / totalTargetPieces) * 100) : 0;
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  };
+
+  // Math for 7-Segment SVG Circular Gauge
+  const R = 105;
+  const C = 2 * Math.PI * R; // ~659.73
+  const segmentLength = (C / 7) - 6; // ~88.25 with 6px gap
+
+  return (
+    <div className="w-full bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div>
+          <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            7-Stage Time & Action Pipeline
+          </h3>
+        </div>
+        <div className="flex items-center gap-3 text-xs font-semibold text-slate-500">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Completed
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span> In Progress
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-200"></span> Pending
+          </span>
+        </div>
+      </div>
+
+      {/* Main Grid: 7-Segment Radial Donut + Detailed Inspection Panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-6">
+        {/* Left Side: 7-Segment Circular Donut (Takes 5 cols on lg) */}
+        <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
+          <div className="relative w-64 h-64 flex items-center justify-center select-none">
+            <svg
+              className="w-full h-full -rotate-90 transform"
+              viewBox="0 0 260 260"
+            >
+              {/* Background Track Circle */}
+              <circle
+                cx="130"
+                cy="130"
+                r={R}
+                fill="none"
+                stroke="#F1F5F9"
+                strokeWidth="20"
+              />
+
+              {/* 7 Segment Arcs */}
+              {sorted.map((ms, idx) => {
+                const pct =
+                  ms.targetQuantity > 0
+                    ? Math.min(100, Math.round((ms.completedQuantity / ms.targetQuantity) * 100))
+                    : 0;
+                const isCompleted = pct >= 100;
+                const isActive = ms.stage === currentStage;
+                const isSelected = selectedIndex === idx;
+
+                let strokeColor = '#E2E8F0'; // Pending
+                if (ms.isCriticalPathBottleneck) {
+                  strokeColor = '#EF4444'; // Red Bottleneck
+                } else if (isCompleted) {
+                  strokeColor = '#10B981'; // Completed
+                } else if (isActive || pct > 0) {
+                  strokeColor = '#F59E0B'; // In Progress
+                }
+
+                // Calculate dash offset for 7 segments
+                const dashOffset = -(idx * (C / 7));
+
+                return (
+                  <circle
+                    key={ms.id || ms.stage}
+                    cx="130"
+                    cy="130"
+                    r={R}
+                    fill="none"
+                    stroke={strokeColor}
+                    strokeWidth={isSelected ? 26 : 20}
+                    strokeDasharray={`${segmentLength} ${C - segmentLength}`}
+                    strokeDashoffset={dashOffset}
+                    strokeLinecap="round"
+                    onClick={() => setSelectedIndex(idx)}
+                    className="cursor-pointer transition-all duration-200 hover:opacity-90"
+                    style={{
+                      filter: isSelected ? 'drop-shadow(0 0 6px rgba(12, 45, 72, 0.25))' : 'none',
+                    }}
+                  />
+                );
+              })}
+            </svg>
+
+            {/* Inner Circular Hub Details */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Pipeline Health
+              </span>
+              <span className="text-3xl font-mono font-black text-slate-900 tracking-tight my-0.5">
+                {overallAvgPct}%
+              </span>
+              <span className="text-xs font-bold text-sky-700 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200">
+                Stage {selectedMilestone?.sequenceOrder || 1} of 7
+              </span>
+              <span className="text-[11px] font-semibold text-slate-600 mt-1 max-w-[140px] truncate">
+                {selectedMeta.label}
+              </span>
+            </div>
+          </div>
+
+          <span className="text-[11px] text-slate-400 mt-2 font-medium">
+            Click any segment to inspect stage lead time & progress
+          </span>
+        </div>
+
+        {/* Right Side: Active Stage Detail & Lead Time Card (Takes 7 cols on lg) */}
+        <div className="lg:col-span-7 bg-slate-50/70 border border-slate-200 rounded-2xl p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-xs"
+                style={{ backgroundColor: selectedMeta.color }}
+              >
+                {selectedMeta.icon}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded">
+                    Stage {selectedMilestone.sequenceOrder}
+                  </span>
+                  <h4 className="text-base font-bold text-slate-900">{selectedMeta.label}</h4>
+                </div>
+                <div className="text-xs text-slate-500">{selectedMeta.department}</div>
+              </div>
+            </div>
+
+            <div className="text-right">
+              <span
+                className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                  selectedMilestone.bufferDaysAhead > 0
+                    ? 'bg-sky-100 text-sky-800 border border-sky-200'
+                    : 'bg-slate-200 text-slate-700'
+                }`}
+              >
+                {selectedMilestone.bufferDaysAhead}d Buffer Reserved
+              </span>
+            </div>
+          </div>
+
+          {/* Progress Bar & Piece Counter */}
+          <div>
+            <div className="flex items-center justify-between text-xs mb-1.5">
+              <span className="font-semibold text-slate-700">Stage Output Completion</span>
+              <span className="font-mono font-bold text-slate-900 text-sm">
+                {selectedMilestone.targetQuantity > 0
+                  ? Math.min(100, Math.round((selectedMilestone.completedQuantity / selectedMilestone.targetQuantity) * 100))
+                  : 0}
+                %
+              </span>
+            </div>
+            <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  backgroundColor: selectedMeta.color,
+                  width: `${
+                    selectedMilestone.targetQuantity > 0
+                      ? Math.min(100, Math.round((selectedMilestone.completedQuantity / selectedMilestone.targetQuantity) * 100))
+                      : 0
+                  }%`,
+                }}
+              ></div>
+            </div>
+            <div className="flex items-center justify-between text-xs text-slate-500 font-medium mt-1.5">
+              <span>Completed Pieces</span>
+              <span className="font-mono font-bold text-slate-800">
+                {selectedMilestone.completedQuantity.toLocaleString()} /{' '}
+                {selectedMilestone.targetQuantity.toLocaleString()} pcs
+              </span>
+            </div>
+          </div>
+
+          {/* Window & Buffer Details */}
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="p-3 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
+              <div className="text-[10px] uppercase font-bold text-slate-400 mb-1 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-slate-400" /> Planned Window
+              </div>
+              <div className="text-xs font-bold text-slate-800">
+                {formatDate(selectedMilestone.plannedStart)} – {formatDate(selectedMilestone.plannedEnd)}
+              </div>
+            </div>
+
+            <div className="p-3 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
+              <div className="text-[10px] uppercase font-bold text-slate-400 mb-1 flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-slate-400" /> Downstream Protection
+              </div>
+              <div className="text-xs font-bold text-slate-800">
+                {selectedMilestone.bufferDaysAhead} Working Days Lead Time
+              </div>
+            </div>
+          </div>
+
+          {/* Critical Path Warning if this stage is compressed */}
+          {selectedMilestone.isCriticalPathBottleneck && (
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+              <span>
+                Schedule Overrun: Buffer compressed by {selectedMilestone.bufferCompressionDays} working days.
+              </span>
+            </div>
+          )}
+
+          {/* Quick Segment Selector Buttons */}
+          <div className="pt-2 border-t border-slate-200/80">
+            <div className="text-[10px] uppercase font-bold text-slate-400 mb-2 tracking-wider">
+              Select Stage to Inspect
+            </div>
+            <div className="grid grid-cols-7 gap-1.5">
+              {sorted.map((m, idx) => {
+                const isSelected = selectedIndex === idx;
+                const pct =
+                  m.targetQuantity > 0
+                    ? Math.min(100, Math.round((m.completedQuantity / m.targetQuantity) * 100))
+                    : 0;
+                return (
+                  <button
+                    key={m.id || m.stage}
+                    type="button"
+                    onClick={() => setSelectedIndex(idx)}
+                    className={`py-1.5 rounded-lg text-xs font-bold flex flex-col items-center justify-center transition cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#0C2D48] text-white shadow-xs'
+                        : pct >= 100
+                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
+                        : m.stage === currentStage
+                        ? 'bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100'
+                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>{idx + 1}</span>
+                    <span className="text-[9px] font-mono font-normal">{pct}%</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

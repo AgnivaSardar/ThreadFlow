@@ -55,9 +55,28 @@ export class OrdersSeedRunner {
       });
       ordersSeeded++;
 
-      // 2. Upsert Order Lines
+      // 2. Upsert Order Lines with realistic completed quantities
+      // Find active milestone progress to calibrate line completion
+      const activeMilestone =
+        fixture.milestones.find((m) => m.completedQuantity < m.targetQuantity) ||
+        fixture.milestones[fixture.milestones.length - 1];
+      const activeCompleted = activeMilestone?.completedQuantity || 0;
+      const overallRatio = fixture.totalQuantity > 0 ? activeCompleted / fixture.totalQuantity : 0;
+
       const orderLinesByCombo = new Map<string, string>();
       for (const line of fixture.orderLines) {
+        let lineCompletedQty = 0;
+        if (fixture.poNumber === 'B-PO-88240') {
+          // Calibrated size skew fixture: XL lags significantly behind (Anti-99% Done Trap)
+          if (line.size === 'XL') lineCompletedQty = 400; // 33%
+          else if (line.size === 'S') lineCompletedQty = 1150; // 72%
+          else if (line.size === 'M') lineCompletedQty = 1950; // 70%
+          else if (line.size === 'L') lineCompletedQty = 1700; // 71%
+          else lineCompletedQty = Math.round(line.plannedQty * overallRatio);
+        } else {
+          lineCompletedQty = Math.min(line.plannedQty, Math.round(line.plannedQty * overallRatio));
+        }
+
         const orderLine = await prisma.orderLine.upsert({
           where: {
             orderId_size_color: {
@@ -68,13 +87,14 @@ export class OrdersSeedRunner {
           },
           update: {
             plannedQty: line.plannedQty,
+            completedQty: lineCompletedQty,
           },
           create: {
             orderId: order.id,
             size: line.size,
             color: line.color,
             plannedQty: line.plannedQty,
-            completedQty: 0,
+            completedQty: lineCompletedQty,
           },
         });
         orderLinesByCombo.set(`${line.size}-${line.color}`, orderLine.id);

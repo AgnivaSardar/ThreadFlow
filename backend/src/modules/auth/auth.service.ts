@@ -166,6 +166,40 @@ export class AuthService {
       assignedUnit: user.assignedUnit,
     };
   }
+
+  /**
+   * Updates user profile fields (name, phone, languagePreference)
+   */
+  public async updateProfile(
+    userId: string,
+    data: { name?: string; phone?: string; languagePreference?: string }
+  ): Promise<UserSessionDTO> {
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(data.name ? { name: data.name.trim() } : {}),
+        ...(data.phone !== undefined ? { phone: data.phone.trim() || null } : {}),
+        ...(data.languagePreference ? { languagePreference: data.languagePreference } : {}),
+      },
+      include: {
+        buyer: { select: { id: true, name: true, code: true } },
+        assignedUnit: { select: { id: true, name: true, code: true } },
+      },
+    });
+
+    return {
+      id: updated.id,
+      email: updated.email,
+      name: updated.name,
+      role: updated.role,
+      languagePreference: updated.languagePreference,
+      phone: updated.phone,
+      buyerId: updated.buyerId,
+      assignedUnitId: updated.assignedUnitId,
+      buyer: updated.buyer,
+      assignedUnit: updated.assignedUnit,
+    };
+  }
 }
 
 export const authService = new AuthService();

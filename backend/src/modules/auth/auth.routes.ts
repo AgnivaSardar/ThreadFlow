@@ -10,7 +10,8 @@ router.post('/login', asyncHandler((req, res) => authController.login(req, res))
 router.post('/refresh', asyncHandler((req, res) => authController.refresh(req, res)));
 router.post('/logout', asyncHandler((req, res) => authController.logout(req, res)));
 
-// Protected profile route
+// Protected profile routes
 router.get('/me', authMiddleware, asyncHandler((req, res) => authController.me(req, res)));
+router.patch('/me', authMiddleware, asyncHandler((req, res) => authController.updateProfile(req, res)));
 
 export const authRoutes = router;

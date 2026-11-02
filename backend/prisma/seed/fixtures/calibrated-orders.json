@@ -190,7 +190,11 @@
       { "stage": "CHECKING", "sequenceOrder": 6, "plannedStartOffsetDays": 23, "plannedEndOffsetDays": 26, "bufferDaysAhead": 2, "targetQuantity": 5000, "completedQuantity": 0, "unitCode": "UNIT_3" },
       { "stage": "FINISHING", "sequenceOrder": 7, "plannedStartOffsetDays": 27, "plannedEndOffsetDays": 32, "bufferDaysAhead": 0, "targetQuantity": 5000, "completedQuantity": 0, "unitCode": "UNIT_3" }
     ],
-    "dailyLogs": []
+    "dailyLogs": [
+      { "stage": "CUTTING", "completedQty": 420, "rejectedQty": 6, "operatorNotes": "Pattern bundle cutting for fleece batch", "dateOffsetDays": -2, "unitCode": "UNIT_3", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" },
+      { "stage": "CUTTING", "completedQty": 400, "rejectedQty": 4, "operatorNotes": "Laser pattern cutting fleece", "dateOffsetDays": -1, "unitCode": "UNIT_3", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" },
+      { "stage": "CUTTING", "completedQty": 380, "rejectedQty": 8, "operatorNotes": "Pocket and hood pattern bundling", "dateOffsetDays": 0, "unitCode": "UNIT_3", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" }
+    ]
   },
   {
     "poNumber": "C-PO-0492",
@@ -217,7 +221,11 @@
       { "stage": "CHECKING", "sequenceOrder": 6, "plannedStartOffsetDays": 16, "plannedEndOffsetDays": 17, "bufferDaysAhead": 2, "targetQuantity": 6000, "completedQuantity": 0, "unitCode": "UNIT_1" },
       { "stage": "FINISHING", "sequenceOrder": 7, "plannedStartOffsetDays": 18, "plannedEndOffsetDays": 20, "bufferDaysAhead": 0, "targetQuantity": 6000, "completedQuantity": 0, "unitCode": "UNIT_1" }
     ],
-    "dailyLogs": [],
+    "dailyLogs": [
+      { "stage": "DYEING_WASHING", "completedQty": 520, "rejectedQty": 12, "operatorNotes": "Soft-flow dyeing lot 1 vintage olive", "dateOffsetDays": -2, "unitCode": "WASHTEX", "userEmail": "supervisor.selvam@company-a.com", "shift": "Day Shift" },
+      { "stage": "DYEING_WASHING", "completedQty": 500, "rejectedQty": 8, "operatorNotes": "Bio-wash & silicon softening lot 2", "dateOffsetDays": -1, "unitCode": "WASHTEX", "userEmail": "supervisor.selvam@company-a.com", "shift": "Day Shift" },
+      { "stage": "DYEING_WASHING", "completedQty": 480, "rejectedQty": 10, "operatorNotes": "Hydro-extraction and tumble drying lot 3", "dateOffsetDays": 0, "unitCode": "WASHTEX", "userEmail": "supervisor.selvam@company-a.com", "shift": "Day Shift" }
+    ],
     "gatePasses": [
       {
         "passNumber": "GP-2026-WT-003",
@@ -256,7 +264,11 @@
       { "stage": "CHECKING", "sequenceOrder": 6, "plannedStartOffsetDays": 41, "plannedEndOffsetDays": 43, "bufferDaysAhead": 2, "targetQuantity": 15000, "completedQuantity": 0, "unitCode": "UNIT_1" },
       { "stage": "FINISHING", "sequenceOrder": 7, "plannedStartOffsetDays": 44, "plannedEndOffsetDays": 46, "bufferDaysAhead": 0, "targetQuantity": 15000, "completedQuantity": 0, "unitCode": "UNIT_1" }
     ],
-    "dailyLogs": []
+    "dailyLogs": [
+      { "stage": "KNITTING", "completedQty": 650, "rejectedQty": 15, "operatorNotes": "Circular 28-gauge jersey knitting batch A", "dateOffsetDays": -2, "unitCode": "UNIT_1", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" },
+      { "stage": "KNITTING", "completedQty": 620, "rejectedQty": 10, "operatorNotes": "Circular knitting batch B greige roll output", "dateOffsetDays": -1, "unitCode": "UNIT_1", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" },
+      { "stage": "KNITTING", "completedQty": 600, "rejectedQty": 12, "operatorNotes": "High-density knit fabric inspection roll C", "dateOffsetDays": 0, "unitCode": "UNIT_1", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" }
+    ]
   },
   {
     "poNumber": "C-PO-0501",
@@ -283,7 +295,11 @@
       { "stage": "CHECKING", "sequenceOrder": 6, "plannedStartOffsetDays": -3, "plannedEndOffsetDays": 3, "bufferDaysAhead": 2, "targetQuantity": 7500, "completedQuantity": 6100, "unitCode": "UNIT_2" },
       { "stage": "FINISHING", "sequenceOrder": 7, "plannedStartOffsetDays": 4, "plannedEndOffsetDays": 7, "bufferDaysAhead": 0, "targetQuantity": 7500, "completedQuantity": 0, "unitCode": "UNIT_2" }
     ],
-    "dailyLogs": [],
+    "dailyLogs": [
+      { "stage": "CHECKING", "completedQty": 220, "rejectedQty": 18, "operatorNotes": "Needle detector and inline measurement check", "dateOffsetDays": -2, "unitCode": "UNIT_2", "userEmail": "supervisor.selvam@company-a.com", "shift": "Day Shift" },
+      { "stage": "CHECKING", "completedQty": 210, "rejectedQty": 14, "operatorNotes": "Stitch density & collar alignment audit", "dateOffsetDays": -1, "unitCode": "UNIT_2", "userEmail": "supervisor.selvam@company-a.com", "shift": "Day Shift" },
+      { "stage": "CHECKING", "completedQty": 200, "rejectedQty": 22, "operatorNotes": "Final pre-pack quality checking pass", "dateOffsetDays": 0, "unitCode": "UNIT_2", "userEmail": "supervisor.selvam@company-a.com", "shift": "Day Shift" }
+    ],
     "riskWarnings": [
       {
         "stage": "CHECKING",
@@ -332,6 +348,10 @@
       { "stage": "CHECKING", "sequenceOrder": 6, "plannedStartOffsetDays": -1, "plannedEndOffsetDays": 1, "bufferDaysAhead": 2, "targetQuantity": 4200, "completedQuantity": 4200, "unitCode": "UNIT_3" },
       { "stage": "FINISHING", "sequenceOrder": 7, "plannedStartOffsetDays": 2, "plannedEndOffsetDays": 4, "bufferDaysAhead": 0, "targetQuantity": 4200, "completedQuantity": 3600, "unitCode": "UNIT_3" }
     ],
-    "dailyLogs": []
+    "dailyLogs": [
+      { "stage": "FINISHING", "completedQty": 180, "rejectedQty": 4, "operatorNotes": "Steam pressing long sleeve waffle henleys", "dateOffsetDays": -2, "unitCode": "UNIT_3", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" },
+      { "stage": "FINISHING", "completedQty": 170, "rejectedQty": 2, "operatorNotes": "Tagging and polybag carton packing", "dateOffsetDays": -1, "unitCode": "UNIT_3", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" },
+      { "stage": "FINISHING", "completedQty": 160, "rejectedQty": 5, "operatorNotes": "Export master carton sorting and barcoding", "dateOffsetDays": 0, "unitCode": "UNIT_3", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" }
+    ]
   }
 ]
