@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -12,6 +12,10 @@ import {
   X,
 } from 'lucide-react';
 import { useAuthStore } from '../features/auth/authStore';
+import {
+  Language,
+  SUPERVISOR_I18N,
+} from '../features/supervisor/supervisorTranslations';
 
 interface SidebarProps {
   isMobileOpen?: boolean;
@@ -24,6 +28,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const navigate = useNavigate();
   const { user, logout, hasRole } = useAuthStore();
+  const [lang, setLang] = useState<Language>(
+    (localStorage.getItem('threadflow_lang') as Language) ||
+      (user?.languagePreference === 'ta' ? 'ta' : 'en')
+  );
+
+  useEffect(() => {
+    const handleLangChange = (e: any) => {
+      if (e.detail?.lang) {
+        setLang(e.detail.lang);
+      }
+    };
+    window.addEventListener('threadflow-lang-change', handleLangChange);
+    return () => window.removeEventListener('threadflow-lang-change', handleLangChange);
+  }, []);
+
+  const t = SUPERVISOR_I18N[lang];
 
   const handleLogout = async () => {
     await logout();
@@ -32,37 +52,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = [
     {
-      label: 'Order Board',
+      label: t.orderBoard,
       to: '/orders',
       icon: <LayoutDashboard className="w-5 h-5" />,
       visible: hasRole('MERCHANDISER', 'ADMIN'),
     },
     {
-      label: 'Floor Work',
+      label: t.floorWork,
       to: '/supervisor/my-work',
       icon: <Factory className="w-5 h-5" />,
       visible: hasRole('SUPERVISOR', 'MERCHANDISER', 'ADMIN'),
     },
     {
-      label: 'Risk & Delays',
+      label: t.riskDelays,
       to: '/risk',
       icon: <AlertTriangle className="w-5 h-5" />,
       visible: hasRole('MERCHANDISER', 'ADMIN'),
     },
     {
-      label: 'Buyer Portal',
+      label: t.buyerPortal,
       to: '/buyer-portal',
       icon: <Globe className="w-5 h-5" />,
       visible: hasRole('BUYER', 'MERCHANDISER', 'ADMIN'),
     },
     {
-      label: 'Audit History',
+      label: t.auditHistory,
       to: '/audit',
       icon: <ShieldCheck className="w-5 h-5" />,
       visible: hasRole('MERCHANDISER', 'ADMIN'),
     },
     {
-      label: 'Weekly Reports',
+      label: t.weeklyReports,
       to: '/reports',
       icon: <FileText className="w-5 h-5" />,
       visible: hasRole('MERCHANDISER', 'ADMIN', 'BUYER'),
@@ -99,7 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   Thread<span className="text-amber-400">Flow</span>
                 </div>
                 <div className="text-[10px] text-sky-200/70 uppercase tracking-widest font-semibold mt-1">
-                  Tiruppur Knitwear
+                  {t.tiruppurKnitwear}
                 </div>
               </div>
             </div>
@@ -119,7 +139,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Main Navigation */}
           <div className="px-3 py-4">
             <div className="text-[10px] uppercase font-bold text-sky-200/40 px-3 mb-2 tracking-wider">
-              Production Ops
+              {t.productionOps}
             </div>
             <nav className="space-y-1">
               {navItems
@@ -164,10 +184,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="rounded-2xl p-3.5 bg-gradient-to-br from-[#1E5676] to-[#0E3652] border border-sky-400/20 text-white shadow-lg relative overflow-hidden">
               <div className="flex items-center gap-2 mb-1">
                 <TrendingUp className="w-4 h-4 text-amber-400" />
-                <span className="text-xs font-bold text-white tracking-wide">Shift Run-Rate</span>
+                <span className="text-xs font-bold text-white tracking-wide">{t.shiftRunRate}</span>
               </div>
               <p className="text-[11px] text-sky-100/80 leading-relaxed mb-2.5">
-                Simulate floor recovery & line reallocations 14 days ahead.
+                {t.shiftRunRateDesc}
               </p>
               <button
                 type="button"
@@ -177,7 +197,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 className="w-full py-1.5 px-3 bg-white hover:bg-slate-50 text-[#0C2D48] rounded-lg text-xs font-bold shadow transition-all cursor-pointer text-center"
               >
-                Open Simulator
+                {t.openSimulator}
               </button>
             </div>
           )}
@@ -190,7 +210,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-sky-100 hover:text-white bg-[#103859]/60 hover:bg-rose-500/20 hover:border-rose-400/40 border border-transparent transition-all cursor-pointer shadow-xs"
             >
               <LogOut className="w-4 h-4 text-rose-400" />
-              <span>Logout</span>
+              <span>{t.logout}</span>
             </button>
           </div>
         </div>

@@ -4,6 +4,11 @@ import { useAuthStore } from '../features/auth/authStore';
 import { useNavigate } from 'react-router-dom';
 import { ProfileModal } from './ProfileModal';
 import { ContactsModal } from './ContactsModal';
+import {
+  Language,
+  translateRole,
+  translateUnit,
+} from '../features/supervisor/supervisorTranslations';
 
 export const UserMenuDropdown: React.FC = () => {
   const { user, logout } = useAuthStore();
@@ -12,6 +17,20 @@ export const UserMenuDropdown: React.FC = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isContactsModalOpen, setIsContactsModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [lang, setLang] = useState<Language>(
+    (localStorage.getItem('threadflow_lang') as Language) ||
+      (user?.languagePreference === 'ta' ? 'ta' : 'en')
+  );
+
+  useEffect(() => {
+    const handleLangChange = (e: any) => {
+      if (e.detail?.lang) {
+        setLang(e.detail.lang);
+      }
+    };
+    window.addEventListener('threadflow-lang-change', handleLangChange);
+    return () => window.removeEventListener('threadflow-lang-change', handleLangChange);
+  }, []);
 
   // Close when clicking outside
   useEffect(() => {
@@ -64,7 +83,7 @@ export const UserMenuDropdown: React.FC = () => {
                 <div className="text-xs text-slate-500 truncate">{user.email}</div>
                 <div className="mt-1">
                   <span className="inline-block px-2 py-0.5 rounded-md font-mono font-bold text-[10px] bg-amber-100 text-amber-900">
-                    {user.role}
+                    {translateRole(user.role, lang)}
                   </span>
                 </div>
               </div>
@@ -73,7 +92,7 @@ export const UserMenuDropdown: React.FC = () => {
             {user.assignedUnit && (
               <div className="mt-2.5 pt-2 border-t border-slate-100/80 text-[11px] text-slate-600 flex items-center gap-1.5">
                 <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span className="truncate">{user.assignedUnit.name}</span>
+                <span className="truncate">{translateUnit(user.assignedUnit.name, lang)}</span>
               </div>
             )}
           </div>
@@ -89,7 +108,7 @@ export const UserMenuDropdown: React.FC = () => {
               className="w-full px-4 py-2 text-left flex items-center gap-2.5 hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition"
             >
               <User className="w-4 h-4 text-slate-500" />
-              <span>View & Edit Profile</span>
+              <span>{lang === 'ta' ? 'சுயவிவரம் பார்க்க & திருத்த' : 'View & Edit Profile'}</span>
             </button>
 
             <button
@@ -101,7 +120,7 @@ export const UserMenuDropdown: React.FC = () => {
               className="w-full px-4 py-2 text-left flex items-center gap-2.5 hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition"
             >
               <Phone className="w-4 h-4 text-emerald-600" />
-              <span>Plant Directory & Contacts</span>
+              <span>{lang === 'ta' ? 'தொழிற்சாலை தொடர்புகள் & எண்கள்' : 'Plant Directory & Contacts'}</span>
             </button>
           </div>
 
@@ -113,7 +132,7 @@ export const UserMenuDropdown: React.FC = () => {
               className="w-full px-4 py-2 text-left flex items-center gap-2.5 text-rose-600 hover:bg-rose-50 transition text-xs font-semibold"
             >
               <LogOut className="w-4 h-4" />
-              <span>Sign Out / Log Out</span>
+              <span>{lang === 'ta' ? 'வெளியேறு' : 'Sign Out / Log Out'}</span>
             </button>
           </div>
         </div>

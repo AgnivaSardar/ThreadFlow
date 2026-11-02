@@ -10,6 +10,9 @@ import {
   SUPERVISOR_I18N,
   Language,
   IssueChipItem,
+  translateStyle,
+  translateDescription,
+  translateBuyer,
 } from './supervisorTranslations';
 import { useTamilSpeechRecognition } from '../../hooks/useTamilSpeechRecognition';
 import { compressFloorPhoto } from '../../offline/imageCompressor';
@@ -250,17 +253,17 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-1">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            {order.buyer.name}
+            {translateBuyer(order.buyer.name, lang)}
           </span>
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
             {order.poNumber}
           </span>
         </div>
         <div className="text-base font-extrabold text-slate-900 truncate">
-          {order.style}
+          {translateStyle(order.style, lang)}
         </div>
         <div className="text-xs text-slate-500 mt-0.5 truncate">
-          {order.description || 'Export Knitwear Style'}
+          {translateDescription(order.description, lang) || (lang === 'ta' ? 'ஏற்றுமதி பின்னலாடை ஆர்டர்' : 'Export Knitwear Style')}
         </div>
 
         {/* Stage Selector */}
@@ -293,7 +296,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
         <div className="bg-white rounded-xl p-2.5 border border-slate-200 flex items-center justify-between">
           <span className="text-xs font-bold text-slate-700 flex items-center gap-1">
             <Clock className="w-3.5 h-3.5 text-amber-500" />
-            Shift:
+            {t.shiftLabel}:
           </span>
           <div className="inline-flex rounded-lg bg-slate-100 p-0.5">
             <button
@@ -308,7 +311,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              {lang === 'ta' ? 'பகல்' : 'Day'}
+              {t.shiftDay}
             </button>
             <button
               type="button"
@@ -322,7 +325,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              {lang === 'ta' ? 'இரவு' : 'Night'}
+              {t.shiftNight}
             </button>
           </div>
         </div>
@@ -335,11 +338,11 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             onChange={(e) => setMachineLine(e.target.value)}
             className="bg-slate-100 text-slate-900 font-bold text-xs rounded-lg px-2 py-1 border border-slate-200 focus:outline-none"
           >
-            <option value="Line 1">Line 1</option>
-            <option value="Line 2">Line 2</option>
-            <option value="Line 3">Line 3</option>
-            <option value="Line 4">Line 4</option>
-            <option value="Subcontract">Outside Unit</option>
+            <option value="Line 1">{lang === 'ta' ? 'வரிசை 1' : 'Line 1'}</option>
+            <option value="Line 2">{lang === 'ta' ? 'வரிசை 2' : 'Line 2'}</option>
+            <option value="Line 3">{lang === 'ta' ? 'வரிசை 3' : 'Line 3'}</option>
+            <option value="Line 4">{lang === 'ta' ? 'வரிசை 4' : 'Line 4'}</option>
+            <option value="Subcontract">{t.outsideUnit}</option>
           </select>
         </div>
       </div>
@@ -376,7 +379,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             className="w-full text-center text-4xl font-black text-slate-900 tracking-tight bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all shadow-inner"
           />
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
-            PCS
+            {t.pieces.toUpperCase()}
           </span>
         </div>
 
@@ -417,7 +420,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
         <div className="flex items-center gap-2">
           <div className="flex-1 text-center py-2 bg-rose-50 border border-rose-200 rounded-xl">
             <span className="text-2xl font-black text-rose-700">
-              {rejectedQty} <span className="text-xs font-normal">pcs</span>
+              {rejectedQty} <span className="text-xs font-normal">{t.pieces}</span>
             </span>
           </div>
           <div className="flex gap-1.5">
@@ -446,9 +449,9 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             <button
               type="button"
               onClick={() => setSelectedChip(null)}
-              className="text-xs text-slate-400 hover:text-slate-600"
+              className="text-xs text-slate-400 hover:text-slate-600 font-bold"
             >
-              Clear
+              {t.clear}
             </button>
           )}
         </div>
@@ -491,10 +494,10 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-black uppercase tracking-wider text-slate-800">
-            {lang === 'ta' ? 'குறிப்புகள் / குரல் பதிவு' : 'Notes / Voice UI'}
+            {t.notesVoiceTitle}
           </span>
           <span className="text-[10px] font-bold text-slate-400">
-            Tamil Speech (ta-IN)
+            {lang === 'ta' ? 'தமிழ் குரல் பதிவு (ta-IN)' : 'Tamil Speech (ta-IN)'}
           </span>
         </div>
 
@@ -563,7 +566,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition-colors"
           >
             <Camera className="w-4 h-4 text-slate-600" />
-            {isCompressingPhoto ? 'Compressing...' : t.takePhoto}
+            {isCompressingPhoto ? (lang === 'ta' ? 'சுருக்கப்படுகிறது...' : 'Compressing...') : t.takePhoto}
           </button>
 
           {compressedPhoto && (
@@ -618,7 +621,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             onClick={onCancel}
             className="w-full mt-2 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 text-center"
           >
-            {lang === 'ta' ? 'ரத்து செய்' : 'Cancel'}
+            {t.cancel}
           </button>
         )}
       </div>
