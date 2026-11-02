@@ -1,0 +1,68 @@
+# Project structure
+
+```text
+threadflow/
+  backend/
+    src/
+      config/
+      common/
+        errors/
+        middleware/
+        types/
+        validation/
+        utils/
+      modules/
+        auth/
+        users/
+        buyers/
+        units/
+        orders/
+        tna/
+        production/
+        risk/
+        ai/
+        buyer-portal/
+        audit/
+        reports/
+      jobs/
+      routes/
+      app.ts
+      server.ts
+    prisma/
+      schema.prisma
+      seed.ts
+    tests/
+    Dockerfile
+  frontend/
+    src/
+      app/
+      components/
+      features/
+        auth/
+        dashboard/
+        orders/
+        tna/
+        supervisor/
+        production/
+        risk/
+        buyer/
+        audit/
+        reports/
+      offline/
+        db/
+        queue/
+        sync/
+      services/
+      hooks/
+      stores/
+      types/
+      styles/
+    public/
+    tests/
+    Dockerfile
+  docs/
+  docker-compose.yml
+  .env.example
+```
+
+Keep business logic out of route handlers. Use service/repository boundaries where useful; avoid unnecessary abstraction.
