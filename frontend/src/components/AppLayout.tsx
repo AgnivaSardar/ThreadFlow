@@ -129,10 +129,16 @@ export const AppLayout: React.FC = () => {
   // Format date and time
   const formattedDate = formatDateLocalized(serverTime, lang);
 
-  const formattedTime = serverTime.toLocaleTimeString(undefined, {
+  const formattedTimeFull = serverTime.toLocaleTimeString(undefined, {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
+    hour12: true,
+  });
+
+  const formattedTimeCompact = serverTime.toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
     hour12: true,
   });
 
@@ -146,38 +152,42 @@ export const AppLayout: React.FC = () => {
 
       {/* Main Workspace Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Main Dashboard Header (Unified, Fixed) */}
-        <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between shrink-0 relative z-30 shadow-2xs">
+        {/* Main Dashboard Header (Unified, Compact on Mobile, Non-Congested) */}
+        <header className="h-13 sm:h-16 bg-white border-b border-slate-200 px-2 sm:px-6 flex items-center justify-between shrink-0 relative z-30 shadow-2xs">
           {/* Left: Mobile Menu Toggle + Authoritative Server Date & Time */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
             {/* Hamburger Button for Mobile */}
             <button
               type="button"
               onClick={() => setIsMobileSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 active:scale-95 transition-all"
+              className="lg:hidden p-1.5 sm:p-2 rounded-xl text-slate-700 hover:bg-slate-100 active:scale-95 transition-all shrink-0"
               aria-label="Open Navigation Menu"
             >
               <Menu className="w-5 h-5 text-slate-800" />
             </button>
 
             {/* Server Date & Time Badge */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/90 text-slate-700 text-xs shadow-2xs">
-              <Clock className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+            <div className="flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-slate-50 border border-slate-200/90 text-slate-700 text-xs shadow-2xs shrink-0">
+              <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-sky-600 shrink-0" />
               <span className="font-semibold text-slate-800 hidden sm:inline">{formattedDate}</span>
               <span className="text-slate-300 hidden sm:inline">|</span>
-              <span className="font-mono font-bold text-slate-900 tracking-wide text-xs">
-                {formattedTime}
+              {/* Compact time on mobile, full with seconds on sm+ */}
+              <span className="font-mono font-bold text-slate-900 tracking-tight text-[11px] sm:hidden">
+                {formattedTimeCompact}
+              </span>
+              <span className="font-mono font-bold text-slate-900 tracking-wide text-xs hidden sm:inline">
+                {formattedTimeFull}
               </span>
             </div>
           </div>
 
           {/* Right: Online/Offline Badge + Language Toggle + User Avatar Dropdown */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
             {/* Online / Offline Simulator Pill in Main Header */}
             <button
               type="button"
               onClick={handleToggleSimulation}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs ${
+              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-bold transition-all shadow-2xs ${
                 !isOnline || isSimulated
                   ? 'bg-rose-50 text-rose-800 border border-rose-300 hover:bg-rose-100'
                   : 'bg-emerald-50 text-emerald-900 border border-emerald-300 hover:bg-emerald-100'
@@ -186,8 +196,8 @@ export const AppLayout: React.FC = () => {
             >
               {!isOnline || isSimulated ? (
                 <>
-                  <WifiOff className="w-3.5 h-3.5 text-rose-600" />
-                  <span className="text-[11px] font-black">
+                  <WifiOff className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-600 shrink-0" />
+                  <span className="text-[10px] sm:text-[11px] font-black">
                     {lang === 'ta' ? 'இணைப்பில்லை' : 'OFFLINE'}
                   </span>
                   {isSimulated && (
@@ -198,8 +208,8 @@ export const AppLayout: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <Wifi className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="text-[11px] font-black text-emerald-800">
+                  <Wifi className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-600 shrink-0" />
+                  <span className="text-[10px] sm:text-[11px] font-black text-emerald-800">
                     {lang === 'ta' ? 'இணைப்பில்' : 'ONLINE'}
                   </span>
                 </>
@@ -212,11 +222,11 @@ export const AppLayout: React.FC = () => {
                 type="button"
                 onClick={handleManualSync}
                 disabled={isSyncing || !isOnline}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 transition-all shadow-2xs disabled:opacity-50"
+                className="inline-flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 transition-all shadow-2xs disabled:opacity-50"
                 title="Synchronize offline queue now"
               >
                 <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
-                <span className="text-[11px]">
+                <span className="text-[10px] sm:text-[11px]">
                   {lang === 'ta' ? 'சேமி' : 'Sync'} ({pendingCount})
                 </span>
               </button>
@@ -226,16 +236,16 @@ export const AppLayout: React.FC = () => {
             <button
               type="button"
               onClick={handleToggleLanguage}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all shadow-2xs"
+              className="inline-flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all shadow-2xs"
               title="Switch Language / மொழியை மாற்றவும்"
             >
-              <Languages className="w-3.5 h-3.5 text-slate-600" />
-              <span className="text-[11px] font-black">{lang === 'ta' ? 'தமிழ்' : 'EN'}</span>
+              <Languages className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-600 shrink-0" />
+              <span className="text-[10px] sm:text-[11px] font-black">{lang === 'ta' ? 'தமிழ்' : 'EN'}</span>
             </button>
 
             {/* User Profile Avatar with Dropdown */}
             {user && (
-              <div className="flex items-center gap-2 sm:gap-3 pl-1 sm:pl-2 border-l border-slate-200">
+              <div className="flex items-center gap-1.5 sm:gap-3 pl-1 sm:pl-2 border-l border-slate-200">
                 <div className="text-right hidden md:block">
                   <div className="text-xs font-bold text-slate-800 truncate max-w-[140px]">
                     {user.name}
@@ -253,7 +263,7 @@ export const AppLayout: React.FC = () => {
 
         {/* Scrollable Content Container (Smooth, Responsive, Fits any screen) */}
         <main className="flex-1 overflow-y-auto w-full smooth-scroll">
-          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+          <div className="p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
             <Outlet />
           </div>
         </main>

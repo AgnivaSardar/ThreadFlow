@@ -290,15 +290,15 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
         </div>
       </div>
 
-      {/* Shift & Line Selectors */}
-      <div className="grid grid-cols-2 gap-2">
+      {/* Shift & Line Selectors (Responsive 1-col on mobile, 2-col on sm+) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {/* Shift Toggle */}
-        <div className="bg-white rounded-xl p-2.5 border border-slate-200 flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-700 flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-amber-500" />
-            {t.shiftLabel}:
+        <div className="bg-white rounded-xl p-2.5 border border-slate-200 flex items-center justify-between gap-2">
+          <span className="text-xs font-bold text-slate-700 flex items-center gap-1 shrink-0">
+            <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            <span>{t.shiftLabel}:</span>
           </span>
-          <div className="inline-flex rounded-lg bg-slate-100 p-0.5">
+          <div className="inline-flex rounded-lg bg-slate-100 p-0.5 shrink-0">
             <button
               type="button"
               onClick={() => {
@@ -331,12 +331,12 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
         </div>
 
         {/* Machine Line Selector */}
-        <div className="bg-white rounded-xl p-2.5 border border-slate-200 flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-700">{t.lineSelector}:</span>
+        <div className="bg-white rounded-xl p-2.5 border border-slate-200 flex items-center justify-between gap-2">
+          <span className="text-xs font-bold text-slate-700 shrink-0">{t.lineSelector}:</span>
           <select
             value={machineLine}
             onChange={(e) => setMachineLine(e.target.value)}
-            className="bg-slate-100 text-slate-900 font-bold text-xs rounded-lg px-2 py-1 border border-slate-200 focus:outline-none"
+            className="flex-1 max-w-[150px] bg-slate-100 text-slate-900 font-bold text-xs rounded-lg px-2 py-1.5 border border-slate-200 focus:outline-none truncate"
           >
             <option value="Line 1">{lang === 'ta' ? 'வரிசை 1' : 'Line 1'}</option>
             <option value="Line 2">{lang === 'ta' ? 'வரிசை 2' : 'Line 2'}</option>

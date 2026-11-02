@@ -178,9 +178,9 @@ export const OrderDetailPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* PO Number & Status Badge neatly positioned in the header metadata bar */}
-          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
+          <div className="flex items-center gap-2 bg-white px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
             <span className="text-[10px] uppercase font-bold text-slate-400">PO</span>
             <span className="font-mono text-xs font-bold text-slate-800">
               {order.poNumber}
@@ -191,16 +191,16 @@ export const OrderDetailPage: React.FC = () => {
 
           <button
             onClick={() => setIsDateModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs shadow-xs transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs shadow-xs transition cursor-pointer"
           >
             <Calendar className="w-4 h-4" />
-            Shift Ex-Factory Date
+            <span>Shift Ex-Factory Date</span>
           </button>
         </div>
       </div>
 
       {/* Primary KPI Header Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
           <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Buyer & Destination</div>
           <div className="text-base font-bold text-slate-800 mt-1">{order.buyer.name}</div>

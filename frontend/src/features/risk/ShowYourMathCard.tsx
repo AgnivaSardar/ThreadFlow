@@ -170,35 +170,34 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
   return (
     <div className="space-y-4">
       {/* Both Formulas inside ONE cohesive div (NO inner div bg colors, NO inner div borders) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 py-2">
         {/* Formula 1: Required Run-Rate */}
         <div className="flex flex-col justify-center">
           <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
               Formula 1: Required Run-Rate
             </span>
-            <span className="text-[11px] text-slate-400 font-medium">Minimum pace to hit ship date</span>
+            <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">Minimum pace to hit ship date</span>
           </div>
 
-          {/* Large, Legible Calculation (NO capsule box around result) */}
-          <div className="flex items-center justify-center gap-3 py-3 font-mono text-base font-bold text-slate-800">
-            <span className="text-slate-600 font-sans font-medium">Required =</span>
-            <div className="inline-flex flex-col items-center leading-none">
-              <span className="border-b-2 border-slate-700 px-3 pb-1 text-slate-900 text-lg">
+          {/* Sizing: Regular, legible font sizes fitting perfectly on mobile */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-1.5 sm:gap-3 py-2 font-mono text-xs sm:text-sm font-semibold text-slate-800">
+            <span className="text-slate-600 font-sans font-medium text-xs sm:text-sm shrink-0">Required =</span>
+            <div className="inline-flex flex-col items-center leading-tight shrink-0">
+              <span className="border-b border-slate-600 px-2 pb-0.5 text-slate-900 text-xs sm:text-sm font-bold">
                 {mathBreakdown.remainingPieces.toLocaleString()} pcs
               </span>
-              <span className="pt-1 text-slate-600 text-sm">
+              <span className="pt-0.5 text-slate-600 text-[11px] sm:text-xs">
                 {mathBreakdown.workingDaysTotal}d − {mathBreakdown.downstreamBufferDays}d
               </span>
             </div>
-            <span className="text-xl text-slate-400 font-light">=</span>
-            {/* Pure bold typography without capsule border */}
-            <span className="text-2xl font-black text-sky-900 tracking-tight">
-              {requiredDailyRate.toLocaleString()} <span className="text-xs font-sans font-bold text-sky-700">pcs/day</span>
+            <span className="text-sm sm:text-base text-slate-400 font-light shrink-0">=</span>
+            <span className="text-base sm:text-xl font-black text-sky-900 tracking-tight shrink-0">
+              {requiredDailyRate.toLocaleString()} <span className="text-[10px] sm:text-xs font-sans font-bold text-sky-700">pcs/day</span>
             </span>
           </div>
 
-          <div className="text-xs text-slate-500 font-mono text-center tracking-wide">
+          <div className="text-[11px] sm:text-xs text-slate-500 font-mono text-center tracking-wide mt-0.5">
             Remaining: <strong className="text-slate-800">{mathBreakdown.remainingPieces.toLocaleString()} pcs</strong> in <strong className="text-slate-800">{mathBreakdown.workingDaysTotal - mathBreakdown.downstreamBufferDays}</strong> working days
           </div>
         </div>
@@ -209,19 +208,18 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
             <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
               Formula 2: Actual Rate (3-Day WMA)
             </span>
-            <span className="text-[11px] text-slate-400 font-medium">Weighted floor speed</span>
+            <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">Weighted floor speed</span>
           </div>
 
-          {/* Large, Legible Calculation (NO capsule box around result) */}
-          <div className="flex items-center justify-center gap-3 py-3 font-mono text-base font-bold text-slate-800">
-            <span className="text-slate-600 font-sans font-medium">Actual =</span>
-            <span className="text-slate-700 text-sm tracking-tight">
+          {/* Sizing: Regular, legible font sizes fitting perfectly on mobile */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-1.5 sm:gap-2.5 py-2 font-mono text-xs sm:text-sm font-semibold text-slate-800">
+            <span className="text-slate-600 font-sans font-medium text-xs sm:text-sm shrink-0">Actual =</span>
+            <span className="text-slate-700 text-[11px] sm:text-xs tracking-tight shrink-0">
               (Q₁×0.5 + Q₂×0.3 + Q₃×0.2)
             </span>
-            <span className="text-xl text-slate-400 font-light">=</span>
-            {/* Pure bold typography without capsule border */}
+            <span className="text-sm sm:text-base text-slate-400 font-light shrink-0">=</span>
             <span
-              className={`text-2xl font-black tracking-tight ${
+              className={`text-base sm:text-xl font-black tracking-tight shrink-0 ${
                 (activeResult.simulatedRate > 0 ? activeResult.simulatedRate : actualRollingRate) >=
                 requiredDailyRate
                   ? 'text-emerald-700'
@@ -229,27 +227,27 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
               }`}
             >
               {(showSimulator ? activeResult.simulatedRate : actualRollingRate).toLocaleString()}{' '}
-              <span className="text-xs font-sans font-bold text-slate-600">pcs/day</span>
+              <span className="text-[10px] sm:text-xs font-sans font-bold text-slate-600">pcs/day</span>
             </span>
           </div>
 
           {/* 3-Day Shift Logs with Visual Sparkline & Momentum Badge */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 pt-2 border-t border-slate-100">
             {/* Momentum Indicator Pill */}
             {hasMomentumData ? (
               <div className="flex items-center gap-1.5 text-xs font-semibold">
                 {momentumDiff > 0 ? (
-                  <span className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                  <span className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 text-[11px] sm:text-xs">
                     <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
                     +{momentumDiff} pcs vs yesterday (Gaining)
                   </span>
                 ) : momentumDiff < 0 ? (
-                  <span className="inline-flex items-center gap-1 text-rose-800 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
+                  <span className="inline-flex items-center gap-1 text-rose-800 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200 text-[11px] sm:text-xs">
                     <TrendingDown className="w-3.5 h-3.5 text-rose-600" />
                     {momentumDiff} pcs vs yesterday (Slipping)
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-slate-600 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200">
+                  <span className="inline-flex items-center gap-1 text-slate-600 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200 text-[11px] sm:text-xs">
                     <Minus className="w-3.5 h-3.5 text-slate-400" />
                     Steady Velocity
                   </span>
@@ -294,8 +292,8 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
       </div>
 
       {/* Bottom Bar: Generous Spacing Between Each Metric */}
-      <div className="pt-3 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-t border-slate-100">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="pt-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 border-t border-slate-100">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
             type="button"
             onClick={() => setShowSimulator(!showSimulator)}
@@ -326,8 +324,8 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
           </button>
         </div>
 
-        {/* Generous spacing between Projected Finish, Late status, Difference pill, and Exposure */}
-        <div className="flex flex-wrap items-center gap-6 sm:gap-8 text-xs">
+        {/* Responsive spacing between Projected Finish, Late status, Difference pill, and Exposure */}
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-6 text-xs">
           <div className="text-slate-600">
             Projected Finish:{' '}
             <strong className="text-slate-900 font-bold ml-1">

@@ -364,8 +364,8 @@ export const MyWorkPage: React.FC = () => {
 
       {/* MODAL / DRAWER FOR PRODUCTION UPDATE FORM */}
       {selectedOrder && selectedOrder.activeMilestone && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in">
-          <div className="w-full max-w-xl bg-slate-50 rounded-3xl max-h-[92vh] overflow-y-auto p-5 sm:p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-6 animate-in fade-in">
+          <div className="w-full max-w-xl bg-slate-50 rounded-2xl sm:rounded-3xl max-h-[94vh] overflow-y-auto overflow-x-hidden p-3.5 sm:p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95">
             <div className="flex items-center justify-between pb-3.5 border-b border-slate-200 mb-4">
               <div className="flex items-center gap-2.5">
                 <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />

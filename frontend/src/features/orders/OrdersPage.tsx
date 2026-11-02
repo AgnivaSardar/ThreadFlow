@@ -15,6 +15,7 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
 } from 'lucide-react';
 import { OrderListItem, Buyer, Unit, RiskLevel, PaginationMeta } from '../../types';
 import { apiRequest } from '../../services/api';
@@ -53,6 +54,7 @@ export const OrdersPage: React.FC = () => {
   const [unitFilter, setUnitFilter] = useState<string>('ALL');
   const [shipWeekFilter, setShipWeekFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [isMobileFilterExpanded, setIsMobileFilterExpanded] = useState<boolean>(false);
 
   // Order Creation Modal
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -287,30 +289,49 @@ export const OrdersPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Sticky Filter Bar (Solid white bg for hardware-accelerated smooth scrolling) */}
-      <div className="sticky top-0 z-10 bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-3">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          {/* Status Tabs (RED / AMBER / GREEN) */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
-            {(['ALL', 'GREEN', 'AMBER', 'RED'] as const).map((s) => (
-              <button
-                key={s}
-                onClick={() => handleStatusChange(s)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                  statusFilter === s
-                    ? s === 'RED'
-                      ? 'bg-rose-600 text-white shadow-xs'
-                      : s === 'AMBER'
-                      ? 'bg-amber-500 text-slate-950 shadow-xs'
-                      : s === 'GREEN'
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {s === 'ALL' ? 'All Orders' : s}
-              </button>
-            ))}
+      {/* Filter Bar (Relative on mobile so it never covers content when scrolling; Sticky on sm+) */}
+      <div className="relative sm:sticky sm:top-0 z-10 bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-xs space-y-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 sm:gap-3">
+          {/* Status Tabs (RED / AMBER / GREEN) & Mobile Filter Toggle */}
+          <div className="flex items-center justify-between gap-1.5">
+            <div className="flex items-center gap-1 sm:gap-1.5 p-1 bg-slate-100 rounded-xl overflow-x-auto">
+              {(['ALL', 'GREEN', 'AMBER', 'RED'] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => handleStatusChange(s)}
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                    statusFilter === s
+                      ? s === 'RED'
+                        ? 'bg-rose-600 text-white shadow-xs'
+                        : s === 'AMBER'
+                        ? 'bg-amber-500 text-slate-950 shadow-xs'
+                        : s === 'GREEN'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-white text-slate-900 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {s === 'ALL' ? 'All Orders' : s}
+                </button>
+              ))}
+            </div>
+
+            {/* Mobile Filter Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setIsMobileFilterExpanded(!isMobileFilterExpanded)}
+              className="sm:hidden inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
+              title="Toggle dropdown filters"
+            >
+              <Filter className="w-3.5 h-3.5 text-slate-500" />
+              <span>Filters</span>
+              {(buyerFilter !== 'ALL' || unitFilter !== 'ALL' || shipWeekFilter !== 'ALL') && (
+                <span className="w-4 h-4 rounded-full bg-sky-600 text-white text-[10px] flex items-center justify-center font-bold">
+                  {(buyerFilter !== 'ALL' ? 1 : 0) + (unitFilter !== 'ALL' ? 1 : 0) + (shipWeekFilter !== 'ALL' ? 1 : 0)}
+                </span>
+              )}
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isMobileFilterExpanded ? 'rotate-180' : ''}`} />
+            </button>
           </div>
 
           {/* Quick Search */}
@@ -326,8 +347,8 @@ export const OrdersPage: React.FC = () => {
           </form>
         </div>
 
-        {/* Custom Dropdown Selectors */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-1 border-t border-slate-100 text-xs">
+        {/* Custom Dropdown Selectors (Collapsible on mobile to maximize viewport, visible on sm+) */}
+        <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-slate-100 text-xs ${isMobileFilterExpanded ? 'block' : 'hidden sm:grid'}`}>
           {/* Buyer Filter */}
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
@@ -365,7 +386,7 @@ export const OrdersPage: React.FC = () => {
           </div>
 
           {/* Result Count Indicator */}
-          <div className="flex items-end justify-end pb-1 text-slate-500 font-medium text-xs">
+          <div className="flex items-end justify-between sm:justify-end pb-1 text-slate-500 font-medium text-xs">
             <span>
               Total: <strong className="text-slate-800">{pagination.total}</strong> orders
             </span>
@@ -400,7 +421,7 @@ export const OrdersPage: React.FC = () => {
         <div className="space-y-4">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-xs min-w-[760px]">
               <thead className="bg-slate-50/80 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
                 <tr>
                   <th className="py-3.5 px-3 text-center w-10">

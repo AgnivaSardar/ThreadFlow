@@ -102,15 +102,15 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
 
   return (
     <div className="w-full bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-      {/* Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+      {/* Header (Responsive on Mobile) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 sm:pb-4 border-b border-slate-100">
         <div>
           <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
             7-Stage Time & Action Pipeline
           </h3>
         </div>
-        <div className="flex items-center gap-3 text-xs font-semibold text-slate-500">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 text-[11px] sm:text-xs font-semibold text-slate-500">
           <span className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Completed
           </span>
@@ -209,29 +209,29 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
         </div>
 
         {/* Right Side: Active Stage Detail & Lead Time Card (Takes 7 cols on lg) */}
-        <div className="lg:col-span-7 bg-slate-50/70 border border-slate-200 rounded-2xl p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
+        <div className="lg:col-span-7 bg-slate-50/70 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-200/80">
             <div className="flex items-center gap-3">
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-xs"
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-xs shrink-0"
                 style={{ backgroundColor: selectedMeta.color }}
               >
                 {selectedMeta.icon}
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded">
+                  <span className="font-mono text-xs font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded shrink-0">
                     Stage {selectedMilestone.sequenceOrder}
                   </span>
-                  <h4 className="text-base font-bold text-slate-900">{selectedMeta.label}</h4>
+                  <h4 className="text-base font-bold text-slate-900 truncate">{selectedMeta.label}</h4>
                 </div>
-                <div className="text-xs text-slate-500">{selectedMeta.department}</div>
+                <div className="text-xs text-slate-500 truncate">{selectedMeta.department}</div>
               </div>
             </div>
 
-            <div className="text-right">
+            <div className="self-start sm:self-auto shrink-0">
               <span
-                className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                className={`text-xs font-bold px-2.5 py-1 rounded-full inline-block ${
                   selectedMilestone.bufferDaysAhead > 0
                     ? 'bg-sky-100 text-sky-800 border border-sky-200'
                     : 'bg-slate-200 text-slate-700'
