@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { authService } from './auth.service';
-import { loginSchema, magicLinkParamSchema } from './auth.schema';
+import { loginSchema } from './auth.schema';
 import { config } from '../../config/env';
 import { AppError } from '../../common/errors/AppError';
 
@@ -16,7 +16,7 @@ const REFRESH_COOKIE_OPTIONS = {
 export class AuthController {
   /**
    * POST /api/v1/auth/login
-   * Standard email + password authentication
+   * Standard authenticated email + password login
    */
   public async login(req: Request, res: Response): Promise<void> {
     const parsed = loginSchema.safeParse(req.body);
@@ -92,29 +92,6 @@ export class AuthController {
 
     res.status(200).json({
       success: true,
-      user,
-    });
-  }
-
-  /**
-   * GET /api/v1/auth/magic-link/:token
-   * Validates a passwordless cryptographic Magic Link for foreign buyers
-   */
-  public async validateMagicLink(req: Request, res: Response): Promise<void> {
-    const parsed = magicLinkParamSchema.safeParse(req.params);
-    if (!parsed.success) {
-      throw new AppError(parsed.error.errors[0].message, 400);
-    }
-
-    const { token } = parsed.data;
-    const { tokens, user } = await authService.validateMagicLink(token);
-
-    res.cookie('refreshToken', tokens.refreshToken, REFRESH_COOKIE_OPTIONS);
-
-    res.status(200).json({
-      success: true,
-      message: 'Magic link authenticated successfully',
-      accessToken: tokens.accessToken,
       user,
     });
   }

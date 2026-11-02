@@ -4,7 +4,6 @@ import { Role, User } from '@prisma/client';
 import { prisma } from '../../config/db';
 import { config } from '../../config/env';
 import { AppError } from '../../common/errors/AppError';
-import { hashToken } from '../../common/utils/crypto';
 import { TokenPayload } from '../../common/middleware/auth';
 
 export interface AuthTokens {
@@ -133,88 +132,6 @@ export class AuthService {
       assignedUnitId: user.assignedUnitId,
       buyer: user.buyer,
       assignedUnit: user.assignedUnit,
-    };
-
-    return { tokens, user: userDTO };
-  }
-
-  /**
-   * Validates a passwordless cryptographic Magic Link token for foreign buyers,
-   * checks its expiry and active status, and authenticates the buyer directly.
-   */
-  public async validateMagicLink(rawToken: string): Promise<{ tokens: AuthTokens; user: UserSessionDTO }> {
-    const hashed = hashToken(rawToken);
-
-    // Check by raw token or SHA-256 hash
-    const magicLink = await prisma.buyerMagicLink.findFirst({
-      where: {
-        OR: [{ token: rawToken }, { tokenHash: hashed }],
-      },
-      include: {
-        buyer: true,
-      },
-    });
-
-    if (!magicLink) {
-      throw new AppError('Magic link is invalid or does not exist', 401);
-    }
-
-    if (!magicLink.isActive) {
-      throw new AppError('This magic link has been deactivated', 403);
-    }
-
-    if (new Date() > magicLink.expiresAt) {
-      throw new AppError('This magic link has expired. Please request a new link from your merchandiser', 401);
-    }
-
-    // Find a buyer user associated with this buyer, or use/create the default buyer sourcing contact
-    let buyerUser = await prisma.user.findFirst({
-      where: {
-        buyerId: magicLink.buyerId,
-        role: Role.BUYER,
-      },
-      include: {
-        buyer: { select: { id: true, name: true, code: true } },
-      },
-    });
-
-    if (!buyerUser) {
-      // Fallback: create temporary or scoped buyer user record for this tenant
-      const defaultEmail = magicLink.buyer.contactEmail || `buyer@${magicLink.buyer.code.toLowerCase()}.com`;
-      buyerUser = await prisma.user.create({
-        data: {
-          email: defaultEmail,
-          passwordHash: await bcrypt.hash('MAGIC_LINK_AUTH_NO_PASSWORD', 10),
-          name: `${magicLink.buyer.name} Sourcing Representative`,
-          role: Role.BUYER,
-          buyerId: magicLink.buyerId,
-          languagePreference: 'en',
-        },
-        include: {
-          buyer: { select: { id: true, name: true, code: true } },
-        },
-      });
-    }
-
-    // Record last used timestamp
-    await prisma.buyerMagicLink.update({
-      where: { id: magicLink.id },
-      data: { lastUsedAt: new Date() },
-    });
-
-    const tokens = this.generateTokens(buyerUser);
-
-    const userDTO: UserSessionDTO = {
-      id: buyerUser.id,
-      email: buyerUser.email,
-      name: buyerUser.name,
-      role: buyerUser.role,
-      languagePreference: buyerUser.languagePreference,
-      phone: buyerUser.phone,
-      buyerId: buyerUser.buyerId,
-      assignedUnitId: null,
-      buyer: buyerUser.buyer,
-      assignedUnit: null,
     };
 
     return { tokens, user: userDTO };

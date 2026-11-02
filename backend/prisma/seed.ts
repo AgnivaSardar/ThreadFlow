@@ -1,11 +1,10 @@
 import bcrypt from 'bcryptjs';
 import { PrismaClient, Role, UnitType } from '@prisma/client';
-import { hashToken } from '../src/common/utils/crypto';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('[Seed] Seeding ThreadFlow core authentication and demo entities...');
+  console.log('[Seed] Seeding ThreadFlow authenticated entities into database threadflow_db (user: dbuser)...');
 
   // 1. Seed Buyers
   const buyerB = await prisma.buyer.upsert({
@@ -68,10 +67,10 @@ async function main() {
 
   console.log('[Seed] Units created:', { unit1: unit1.code, unit2: unit2.code, printTex: printTex.code });
 
-  // 3. Seed Users with default password 'ThreadFlow@2026'
+  // 3. Seed Users with default secure password 'ThreadFlow@2026'
   const passwordHash = await bcrypt.hash('ThreadFlow@2026', 10);
 
-  // Demo User 1: Merchandiser
+  // Authenticated Persona 1: Merchandiser
   const merchandiser = await prisma.user.upsert({
     where: { email: 'merchandiser@company-a.com' },
     update: { passwordHash },
@@ -85,7 +84,7 @@ async function main() {
     },
   });
 
-  // Demo User 2: Floor Supervisor Muthu (Unit 1)
+  // Authenticated Persona 2: Floor Supervisor Muthu (Unit 1)
   const supervisor = await prisma.user.upsert({
     where: { email: 'supervisor.muthu@company-a.com' },
     update: { passwordHash, assignedUnitId: unit1.id },
@@ -100,7 +99,7 @@ async function main() {
     },
   });
 
-  // Demo User 3: Foreign Buyer B (UK)
+  // Authenticated Persona 3: Foreign Buyer B (UK)
   const buyerUserB = await prisma.user.upsert({
     where: { email: 'buyer@company-b.co.uk' },
     update: { passwordHash, buyerId: buyerB.id },
@@ -114,7 +113,7 @@ async function main() {
     },
   });
 
-  // Demo User 4: Foreign Buyer C (Germany)
+  // Authenticated Persona 4: Foreign Buyer C (Germany)
   const buyerUserC = await prisma.user.upsert({
     where: { email: 'compliance@company-c.de' },
     update: { passwordHash, buyerId: buyerC.id },
@@ -128,33 +127,15 @@ async function main() {
     },
   });
 
-  console.log('[Seed] Demo Users created:', {
-    merchandiser: merchandiser.email,
-    supervisor: supervisor.email,
-    buyerB: buyerUserB.email,
-    buyerC: buyerUserC.email,
-  });
+  console.log('[Seed] Authenticated Demo Users seeded successfully:');
+  console.table([
+    { Role: merchandiser.role, Email: merchandiser.email, Name: merchandiser.name },
+    { Role: supervisor.role, Email: supervisor.email, Name: supervisor.name },
+    { Role: buyerUserB.role, Email: buyerUserB.email, Name: buyerUserB.name },
+    { Role: buyerUserC.role, Email: buyerUserC.email, Name: buyerUserC.name },
+  ]);
 
-  // 4. Seed Demo Buyer Magic Link
-  const demoMagicToken = 'demo_magic_link_company_b_uk_2026';
-  await prisma.buyerMagicLink.upsert({
-    where: { token: demoMagicToken },
-    update: {},
-    create: {
-      token: demoMagicToken,
-      tokenHash: hashToken(demoMagicToken),
-      buyerId: buyerB.id,
-      expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // Valid for 1 year
-      isActive: true,
-    },
-  });
-
-  console.log('[Seed] Demo Buyer Magic Link seeded:', {
-    token: demoMagicToken,
-    url: `http://localhost:5173/magic-link/${demoMagicToken}`,
-  });
-
-  console.log('[Seed] Seeding completed successfully.');
+  console.log('[Seed] All open/magic links removed. All access is strictly authenticated via credentials.');
 }
 
 main()

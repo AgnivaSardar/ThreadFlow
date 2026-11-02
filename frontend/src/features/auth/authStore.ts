@@ -11,7 +11,6 @@ interface AuthState {
 
   // Actions
   login: (email: string, password: string) => Promise<User>;
-  loginWithMagicLink: (token: string) => Promise<User>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<boolean>;
   clearError: () => void;
@@ -57,33 +56,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return user;
     } catch (err: any) {
       set({ isLoading: false, error: err.message || 'Login failed' });
-      throw err;
-    }
-  },
-
-  loginWithMagicLink: async (token: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await apiRequest<AuthResponse>(`/auth/magic-link/${token}`, {
-        method: 'GET',
-      });
-
-      const { accessToken, user } = response;
-      setApiAccessToken(accessToken);
-      localStorage.setItem('threadflow_token', accessToken);
-      localStorage.setItem('threadflow_user', JSON.stringify(user));
-
-      set({
-        user,
-        accessToken,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
-
-      return user;
-    } catch (err: any) {
-      set({ isLoading: false, error: err.message || 'Magic link authentication failed' });
       throw err;
     }
   },

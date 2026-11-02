@@ -10,7 +10,6 @@ import {
   Eye,
   EyeOff,
   Sparkles,
-  Link2,
   CheckCircle2,
   AlertCircle,
   Factory,
@@ -30,13 +29,11 @@ interface DemoUserCard {
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, loginWithMagicLink, isLoading, error, clearError } = useAuthStore();
+  const { login, isLoading, error, clearError } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [magicTokenInput, setMagicTokenInput] = useState('');
-  const [activeTab, setActiveTab] = useState<'password' | 'magicLink'>('password');
   const [loginSuccessMessage, setLoginSuccessMessage] = useState<string | null>(null);
 
   const demoAccounts: DemoUserCard[] = [
@@ -89,7 +86,7 @@ export const LoginPage: React.FC = () => {
     try {
       const user = await login(account.email, account.passwordPlain);
       setLoginSuccessMessage(`Signed in as ${user.name} (${user.role})`);
-      setTimeout(() => redirectByRole(user.role), 600);
+      setTimeout(() => redirectByRole(user.role), 500);
     } catch {
       // Error handled by store
     }
@@ -102,20 +99,7 @@ export const LoginPage: React.FC = () => {
     try {
       const user = await login(email, password);
       setLoginSuccessMessage(`Signed in as ${user.name} (${user.role})`);
-      setTimeout(() => redirectByRole(user.role), 600);
-    } catch {
-      // Error is set in store
-    }
-  };
-
-  const handleMagicLinkSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    clearError();
-    if (!magicTokenInput) return;
-    try {
-      const user = await loginWithMagicLink(magicTokenInput.trim());
-      setLoginSuccessMessage(`Authenticated via Magic Link as ${user.name}`);
-      setTimeout(() => redirectByRole(user.role), 600);
+      setTimeout(() => redirectByRole(user.role), 500);
     } catch {
       // Error is set in store
     }
@@ -163,7 +147,7 @@ export const LoginPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-sky-400" />
               <span className="text-xs font-semibold tracking-wider uppercase text-slate-300">
-                Reviewer Evaluation — 1-Click Demo Quick-Fill
+                Authenticated Reviewer Demo Quick-Fill
               </span>
             </div>
             <span className="text-[11px] bg-slate-800 px-2 py-0.5 rounded text-slate-400 font-mono">
@@ -196,175 +180,84 @@ export const LoginPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Login Card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-          {/* Tab Selection */}
-          <div className="flex border-b border-slate-800">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('password');
-                clearError();
-              }}
-              className={`flex-1 py-3 text-xs font-medium text-center transition-colors flex items-center justify-center gap-2 ${
-                activeTab === 'password'
-                  ? 'border-b-2 border-sky-400 text-sky-400 bg-slate-800/30'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Lock className="w-3.5 h-3.5" />
-              Standard Password Login
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('magicLink');
-                clearError();
-              }}
-              className={`flex-1 py-3 text-xs font-medium text-center transition-colors flex items-center justify-center gap-2 ${
-                activeTab === 'magicLink'
-                  ? 'border-b-2 border-sky-400 text-sky-400 bg-slate-800/30'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Link2 className="w-3.5 h-3.5" />
-              Buyer Magic Link
-            </button>
-          </div>
+        {/* Authenticated Login Form Card */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden p-6">
+          {/* Feedback Alerts */}
+          {error && (
+            <div className="mb-4 p-3 rounded-lg bg-rose-950/40 border border-rose-800/60 flex items-start gap-2.5 text-xs text-rose-300">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
 
-          <div className="p-6">
-            {/* Feedback Alerts */}
-            {error && (
-              <div className="mb-4 p-3 rounded-lg bg-rose-950/40 border border-rose-800/60 flex items-start gap-2.5 text-xs text-rose-300">
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                <span>{error}</span>
+          {loginSuccessMessage && (
+            <div className="mb-4 p-3 rounded-lg bg-emerald-950/40 border border-emerald-800/60 flex items-center gap-2.5 text-xs text-emerald-300">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>{loginSuccessMessage}</span>
+            </div>
+          )}
+
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">
+                Email Address
+              </label>
+              <div className="relative rounded-lg shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                  <Mail className="h-4 w-4" />
+                </div>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="e.g. merchandiser@company-a.com"
+                  className="block w-full pl-9 pr-3 py-2 text-sm bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
+                />
               </div>
-            )}
+            </div>
 
-            {loginSuccessMessage && (
-              <div className="mb-4 p-3 rounded-lg bg-emerald-950/40 border border-emerald-800/60 flex items-center gap-2.5 text-xs text-emerald-300">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>{loginSuccessMessage}</span>
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Password</label>
+              <div className="relative rounded-lg shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                  <Lock className="h-4 w-4" />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="block w-full pl-9 pr-10 py-2 text-sm bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
-            )}
+            </div>
 
-            {activeTab === 'password' ? (
-              <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Email Address
-                  </label>
-                  <div className="relative rounded-lg shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-                      <Mail className="h-4 w-4" />
-                    </div>
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="e.g. merchandiser@company-a.com"
-                      className="block w-full pl-9 pr-3 py-2 text-sm bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Password</label>
-                  <div className="relative rounded-lg shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-                      <Lock className="h-4 w-4" />
-                    </div>
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••••••"
-                      className="block w-full pl-9 pr-10 py-2 text-sm bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-slate-950 bg-sky-400 hover:bg-sky-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50 transition-colors"
-                  >
-                    {isLoading ? (
-                      <span className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-slate-950 border-t-transparent" />
-                    ) : (
-                      <>
-                        Sign In to ThreadFlow
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <form onSubmit={handleMagicLinkSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Buyer Magic Link Token
-                  </label>
-                  <div className="relative rounded-lg shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-                      <Link2 className="h-4 w-4" />
-                    </div>
-                    <input
-                      type="text"
-                      required
-                      value={magicTokenInput}
-                      onChange={(e) => setMagicTokenInput(e.target.value)}
-                      placeholder="e.g. demo_magic_link_company_b_uk_2026"
-                      className="block w-full pl-9 pr-3 py-2 text-sm bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 font-mono text-xs"
-                    />
-                  </div>
-                  <p className="mt-1.5 text-[11px] text-slate-400">
-                    Foreign buyer sourcing representatives can authenticate passwordlessly using their
-                    unique cryptographic token.
-                  </p>
-                </div>
-
-                <div className="bg-slate-950/50 p-2.5 rounded-lg border border-slate-800 text-[11px] text-slate-400">
-                  <span className="text-slate-300 font-semibold">Test Token:</span>{' '}
-                  <code
-                    className="text-sky-400 cursor-pointer hover:underline"
-                    onClick={() => setMagicTokenInput('demo_magic_link_company_b_uk_2026')}
-                  >
-                    demo_magic_link_company_b_uk_2026
-                  </code>{' '}
-                  (Click to paste)
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-slate-950 bg-sky-400 hover:bg-sky-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50 transition-colors"
-                  >
-                    {isLoading ? (
-                      <span className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-slate-950 border-t-transparent" />
-                    ) : (
-                      <>
-                        Verify Magic Link & Enter Portal
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-slate-950 bg-sky-400 hover:bg-sky-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50 transition-colors"
+              >
+                {isLoading ? (
+                  <span className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-slate-950 border-t-transparent" />
+                ) : (
+                  <>
+                    Sign In with Credentials
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
