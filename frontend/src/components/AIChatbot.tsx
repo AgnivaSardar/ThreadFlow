@@ -10,9 +10,6 @@ import {
   RotateCcw,
   Bot,
   User,
-  HelpCircle,
-  AlertCircle,
-  ExternalLink,
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -20,6 +17,7 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  showQuickPrompts?: boolean;
 }
 
 const QUICK_PROMPTS = [
@@ -37,9 +35,9 @@ export const AIChatbot: React.FC = () => {
     {
       id: 'welcome',
       role: 'assistant',
-      content:
-        'Hello! I am **ThreadFlow AI Guide**. I can guide you through the website, explain how to log shift outputs or simulate air freight, and give you live status updates for orders directly from the database.\n\n*Note: I only answer questions related to ThreadFlow and factory operations.*',
+      content: 'Hello! I am ThreadFlow AI. How can I help you?',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      showQuickPrompts: true,
     },
   ]);
 
@@ -165,22 +163,12 @@ export const AIChatbot: React.FC = () => {
 
   return (
     <>
-      {/* Floating Circle Button at Right-Bottom */}
-      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
-        {!isOpen && (
-          <div
-            onClick={() => setIsOpen(true)}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/90 text-white text-xs font-bold shadow-lg backdrop-blur-xs cursor-pointer border border-slate-700 hover:bg-slate-800 transition-all hover:scale-105"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-            <span>AI Guide & DB Status</span>
-          </div>
-        )}
-
+      {/* Floating Circle Button at Right-Bottom (Minimal circular icon only) */}
+      <div className="fixed bottom-6 right-6 z-50">
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          aria-label="Toggle ThreadFlow AI Assistant"
+          aria-label="Toggle ThreadFlow AI"
           className={`w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 cursor-pointer active:scale-95 ${
             isOpen
               ? 'bg-slate-900 text-white rotate-90 ring-4 ring-slate-300'
@@ -200,24 +188,14 @@ export const AIChatbot: React.FC = () => {
 
       {/* Floating Chat Window Drawer */}
       {isOpen && (
-        <div className="fixed bottom-24 right-4 sm:right-6 z-50 w-[calc(100vw-32px)] sm:w-[420px] max-w-[420px] h-[580px] max-h-[80vh] bg-white rounded-3xl shadow-2xl border border-slate-200/90 flex flex-col overflow-hidden animate-fadeIn">
-          {/* Header */}
+        <div className="fixed bottom-24 right-4 sm:right-6 z-50 w-[calc(100vw-32px)] sm:w-[400px] max-w-[400px] h-[540px] max-h-[80vh] bg-white rounded-3xl shadow-2xl border border-slate-200/90 flex flex-col overflow-hidden animate-fadeIn">
+          {/* Header - ThreadFlow AI only */}
           <div className="p-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-2xl bg-indigo-600/80 border border-indigo-400/40 flex items-center justify-center shadow-inner">
-                <Bot className="w-5 h-5 text-sky-200" />
+              <div className="w-8 h-8 rounded-xl bg-indigo-600/80 border border-indigo-400/40 flex items-center justify-center">
+                <Bot className="w-4 h-4 text-sky-200" />
               </div>
-              <div>
-                <div className="flex items-center gap-1.5 font-black text-sm tracking-wide">
-                  <span>ThreadFlow AI Guide</span>
-                  <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                    Live DB Grounded
-                  </span>
-                </div>
-                <div className="text-[11px] text-slate-400">
-                  Site navigation & live factory order status
-                </div>
-              </div>
+              <h3 className="font-black text-sm tracking-wide text-white">ThreadFlow AI</h3>
             </div>
 
             <div className="flex items-center gap-1">
@@ -228,17 +206,17 @@ export const AIChatbot: React.FC = () => {
                     {
                       id: 'welcome',
                       role: 'assistant',
-                      content:
-                        'Conversation cleared. Ask anything about ThreadFlow orders, production floor work, or website navigation!',
+                      content: 'Hello! I am ThreadFlow AI. How can I help you?',
                       timestamp: new Date().toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',
                       }),
+                      showQuickPrompts: true,
                     },
                   ])
                 }
                 title="Reset conversation"
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
@@ -246,26 +224,11 @@ export const AIChatbot: React.FC = () => {
                 type="button"
                 onClick={() => setIsOpen(false)}
                 title="Close"
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-          </div>
-
-          {/* Quick Prompts Pills */}
-          <div className="px-3 py-2 bg-slate-50 border-b border-slate-200/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            {QUICK_PROMPTS.map((prompt, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleSend(prompt)}
-                disabled={isLoading}
-                className="whitespace-nowrap px-2.5 py-1 rounded-full bg-white text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 font-semibold text-[11px] border border-slate-200 transition-all shadow-3xs shrink-0 cursor-pointer"
-              >
-                {prompt}
-              </button>
-            ))}
           </div>
 
           {/* Messages Container */}
@@ -282,13 +245,31 @@ export const AIChatbot: React.FC = () => {
                 )}
 
                 <div
-                  className={`max-w-[85%] rounded-2xl p-3 text-xs leading-relaxed shadow-3xs ${
+                  className={`max-w-[88%] rounded-2xl p-3 text-xs leading-relaxed shadow-3xs ${
                     msg.role === 'user'
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-br-xs'
                       : 'bg-white text-slate-800 border border-slate-200/90 rounded-bl-xs'
                   }`}
                 >
                   <div className="whitespace-pre-wrap">{msg.content}</div>
+
+                  {/* Beneath the greeting: Quick click capsules */}
+                  {msg.showQuickPrompts && (
+                    <div className="flex flex-wrap gap-1.5 mt-2.5 pt-2 border-t border-slate-100">
+                      {QUICK_PROMPTS.map((prompt, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleSend(prompt)}
+                          disabled={isLoading}
+                          className="px-2.5 py-1 rounded-full bg-indigo-50/80 hover:bg-indigo-100 text-indigo-900 border border-indigo-200/80 text-[11px] font-semibold transition-all cursor-pointer text-left shadow-3xs active:scale-95"
+                        >
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
                   <div
                     className={`mt-1.5 text-[9px] text-right font-mono ${
                       msg.role === 'user' ? 'text-blue-200' : 'text-slate-400'
@@ -309,7 +290,7 @@ export const AIChatbot: React.FC = () => {
             {isLoading && (
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 italic p-2">
                 <Sparkles className="w-4 h-4 text-indigo-600 animate-spin" />
-                <span>Checking live database & generating guide...</span>
+                <span>Thinking...</span>
               </div>
             )}
 
@@ -321,12 +302,12 @@ export const AIChatbot: React.FC = () => {
             <div className="px-3 py-1.5 bg-rose-50 border-t border-rose-200 flex items-center justify-between text-xs text-rose-700 animate-pulse font-bold">
               <span className="flex items-center gap-1.5">
                 <Mic className="w-3.5 h-3.5 text-rose-600 animate-bounce" />
-                Listening... Speak your question now
+                Listening... Speak now
               </span>
               <button
                 type="button"
                 onClick={stopListening}
-                className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-rose-200 hover:bg-rose-300 text-rose-900"
+                className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-rose-200 hover:bg-rose-300 text-rose-900 cursor-pointer"
               >
                 Stop
               </button>
@@ -342,7 +323,7 @@ export const AIChatbot: React.FC = () => {
                   type="button"
                   onClick={toggleVoice}
                   title={isListening ? 'Stop recording' : 'Speak to AI'}
-                  className={`p-2 rounded-xl transition-all cursor-pointer ${
+                  className={`p-2.5 rounded-xl transition-all cursor-pointer ${
                     isListening
                       ? 'bg-rose-600 text-white animate-pulse'
                       : 'bg-slate-100 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200'
@@ -363,7 +344,7 @@ export const AIChatbot: React.FC = () => {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about website navigation or order status..."
+                placeholder="Ask anything about ThreadFlow..."
                 disabled={isLoading}
                 className="flex-1 text-xs font-medium bg-slate-100 text-slate-900 px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:bg-white focus:border-indigo-500 transition-all placeholder:text-slate-400"
               />
@@ -378,11 +359,6 @@ export const AIChatbot: React.FC = () => {
               >
                 <Send className="w-4 h-4" />
               </button>
-            </div>
-
-            <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-400 font-medium">
-              <span>Type or speak • Strictly grounded in DB</span>
-              <span>ThreadFlow v2.0</span>
             </div>
           </div>
         </div>
