@@ -7,6 +7,7 @@ import {
   getIssuesQueueSchema,
   confirmIssueSchema,
   overrideIssueSchema,
+  assistantChatSchema,
 } from './ai.schema';
 import { Role } from '@prisma/client';
 
@@ -14,6 +15,13 @@ const router = Router();
 
 // All AI routes require authentication
 router.use(authMiddleware);
+
+// AI Assistant Chatbot: guides users through the site and reports DB status
+router.post(
+  '/chat',
+  validateRequest(assistantChatSchema),
+  AIController.chatWithAssistant
+);
 
 // Supervisors, Merchandisers, and Admins can request real-time text classification
 router.post(

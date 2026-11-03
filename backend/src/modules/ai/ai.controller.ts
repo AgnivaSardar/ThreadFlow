@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { AIService } from './ai.service';
+import { AssistantService } from './assistant.service';
 import { asyncHandler } from '../../common/utils/asyncHandler';
 import { IssueCategory } from '@prisma/client';
 
@@ -79,6 +80,21 @@ export class AIController {
       success: true,
       message: 'Issue classification overridden successfully',
       data: updated,
+    });
+  });
+
+  /**
+   * AI Assistant Chatbot: Guides through the site and answers status strictly grounded in the DB.
+   */
+  static chatWithAssistant = asyncHandler(async (req: Request, res: Response) => {
+    const { message, history } = req.body;
+    const user = req.user!;
+
+    const result = await AssistantService.handleChat(message, history || [], user);
+
+    res.status(200).json({
+      success: true,
+      data: result,
     });
   });
 }

@@ -69,3 +69,18 @@ export const confirmIssueSchema = z.object({
     id: z.string().min(1, 'Issue ID is required'),
   }),
 });
+
+export const assistantChatSchema = z.object({
+  body: z.object({
+    message: z.string().min(1, 'Message is required').max(1000, 'Message too long'),
+    history: z
+      .array(
+        z.object({
+          role: z.enum(['user', 'assistant']),
+          content: z.string().max(2000),
+        })
+      )
+      .optional()
+      .default([]),
+  }),
+});

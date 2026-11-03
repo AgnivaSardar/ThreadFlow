@@ -6,6 +6,7 @@ import { Clock, Menu, Wifi, WifiOff, RefreshCw, Languages } from 'lucide-react';
 import { syncServerTime, getAuthoritativeServerDate } from '../services/api';
 import { UserMenuDropdown } from './UserMenuDropdown';
 import { OfflineQueueDrawer } from './OfflineQueueDrawer';
+import { AIChatbot } from './AIChatbot';
 import {
   getPendingOfflineCount,
 } from '../offline/queue/queue';
@@ -263,6 +264,9 @@ export const AppLayout: React.FC = () => {
           }}
           lang={lang}
         />
+
+        {/* Global Floating AI Chatbot Guide & Status Assistant */}
+        <AIChatbot />
       </div>
     </div>
   );
