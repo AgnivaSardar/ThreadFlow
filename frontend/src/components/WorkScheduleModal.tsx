@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Calendar as CalendarIcon,
   CheckCircle2,
@@ -285,9 +286,9 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
   const completedCount = tasks.filter((t) => t.completed).length;
   const progressPercent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[88vh] mx-auto animate-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="bg-[#0C2D48] text-white p-5 flex items-center justify-between border-b border-[#143D60]">
           <div className="flex items-center gap-3">
@@ -453,4 +454,6 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

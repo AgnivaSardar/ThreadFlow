@@ -91,17 +91,18 @@ export const SidebarCalendar: React.FC = () => {
 
   return (
     <>
-      <div className="rounded-2xl p-2.5 bg-[#092238] border border-sky-400/20 text-white shadow-md select-none">
+      {/* Light-Themed Month Calendar Card */}
+      <div className="rounded-2xl p-3 bg-white text-slate-800 shadow-md border border-slate-200/90 select-none">
         {/* Month Header with Navigation */}
-        <div className="flex items-center justify-between mb-2 px-1">
-          <span className="text-[11px] font-black uppercase tracking-wider text-sky-100 font-mono">
+        <div className="flex items-center justify-between mb-2.5 px-0.5">
+          <span className="text-xs font-black uppercase tracking-wider text-slate-900 font-mono">
             {monthTitle}
           </span>
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={prevMonth}
-              className="p-1 rounded-lg hover:bg-white/10 text-sky-200/70 hover:text-white transition-colors cursor-pointer"
+              className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
               title="Previous Month"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
@@ -109,7 +110,7 @@ export const SidebarCalendar: React.FC = () => {
             <button
               type="button"
               onClick={nextMonth}
-              className="p-1 rounded-lg hover:bg-white/10 text-sky-200/70 hover:text-white transition-colors cursor-pointer"
+              className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
               title="Next Month"
             >
               <ChevronRight className="w-3.5 h-3.5" />
@@ -118,11 +119,13 @@ export const SidebarCalendar: React.FC = () => {
         </div>
 
         {/* Days of Week Row */}
-        <div className="grid grid-cols-7 gap-1 text-center mb-1">
+        <div className="grid grid-cols-7 gap-1 text-center mb-1.5 border-b border-slate-100 pb-1">
           {weekDayHeaders.map((w, idx) => (
             <span
               key={idx}
-              className="text-[9px] font-black uppercase text-sky-300/40 font-mono"
+              className={`text-[10px] font-black uppercase font-mono ${
+                idx === 0 || idx === 6 ? 'text-rose-500' : 'text-slate-400'
+              }`}
             >
               {w}
             </span>
@@ -136,7 +139,7 @@ export const SidebarCalendar: React.FC = () => {
               return (
                 <div
                   key={cell.key}
-                  className="h-6 flex items-center justify-center text-[10px] text-sky-200/20 cursor-default"
+                  className="h-6 flex items-center justify-center text-[10px] font-medium text-slate-300 cursor-default"
                 >
                   {cell.day}
                 </div>
@@ -155,10 +158,10 @@ export const SidebarCalendar: React.FC = () => {
                 onClick={() => handleDayClick(cell.day, true)}
                 className={`h-6 rounded-lg text-[10px] font-bold font-mono relative flex flex-col items-center justify-center transition-all cursor-pointer ${
                   cell.isToday
-                    ? 'bg-amber-400 text-slate-950 font-black shadow-xs ring-1 ring-amber-300'
+                    ? 'bg-amber-400 text-slate-950 font-black shadow-xs ring-2 ring-amber-300/80 scale-105'
                     : isSelected
-                    ? 'bg-sky-600 text-white font-black'
-                    : 'text-sky-100 hover:bg-[#164368] hover:text-white'
+                    ? 'bg-[#0C2D48] text-white font-black shadow-xs'
+                    : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
                 }`}
                 title={`View planned work for ${monthNames[month]} ${cell.day}, ${year}`}
               >
@@ -171,7 +174,7 @@ export const SidebarCalendar: React.FC = () => {
                         ? 'bg-slate-950'
                         : isSelected
                         ? 'bg-amber-300'
-                        : 'bg-amber-400'
+                        : 'bg-amber-500'
                     }`}
                   />
                 )}
@@ -181,14 +184,21 @@ export const SidebarCalendar: React.FC = () => {
         </div>
 
         {/* Quick Footer Prompt */}
-        <div className="mt-2 pt-1.5 border-t border-[#143D60]/60 flex items-center justify-between text-[9px] text-sky-200/60 px-1">
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+        <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 px-0.5">
+          <span className="flex items-center gap-1.5 font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
             <span>Event planned</span>
           </span>
-          <span className="text-amber-300 font-semibold cursor-pointer hover:underline" onClick={() => { setSelectedDate(new Date(2026, 10, 4)); setIsModalOpen(true); }}>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedDate(new Date(2026, 10, 4));
+              setIsModalOpen(true);
+            }}
+            className="text-amber-600 hover:text-amber-700 font-bold hover:underline cursor-pointer"
+          >
             Today (Nov 04)
-          </span>
+          </button>
         </div>
       </div>
 
