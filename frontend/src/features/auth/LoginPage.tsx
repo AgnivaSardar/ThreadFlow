@@ -123,7 +123,7 @@ export const LoginPage: React.FC = () => {
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company-a.com"
+                  placeholder="admin@threadflow.com"
                   className="block w-full pl-10 pr-3 py-2.5 text-sm bg-[#092238] border border-[#164368] rounded-xl text-white placeholder-sky-200/30 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
                 />
               </div>
@@ -195,68 +195,12 @@ export const LoginPage: React.FC = () => {
                 )}
               </button>
             </div>
-
-            {/* Quick Demo Role Logins */}
-            <div className="pt-3 border-t border-[#143D60]/60 space-y-2">
-              <div className="text-[10px] uppercase font-bold tracking-wider text-sky-200/60 text-center">
-                Quick Role Fill (Default Password: ThreadFlow@2026)
-              </div>
-              <div className="grid grid-cols-2 gap-1.5 text-[11px]">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('merchandiser@company-a.com');
-                    setPassword('ThreadFlow@2026');
-                  }}
-                  className="px-2.5 py-1.5 rounded-xl bg-[#0E3352] hover:bg-[#164368] text-sky-100 font-semibold border border-sky-400/20 text-left transition-all cursor-pointer active:scale-95"
-                >
-                  <div className="font-bold text-amber-300 text-[11px]">Merchandiser</div>
-                  <div className="text-[10px] text-sky-200/60 truncate">Ramesh (Orders/TNA)</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('supervisor.muthu@company-a.com');
-                    setPassword('ThreadFlow@2026');
-                  }}
-                  className="px-2.5 py-1.5 rounded-xl bg-[#0E3352] hover:bg-[#164368] text-sky-100 font-semibold border border-sky-400/20 text-left transition-all cursor-pointer active:scale-95"
-                >
-                  <div className="font-bold text-emerald-300 text-[11px]">Supervisor (Unit 1)</div>
-                  <div className="text-[10px] text-sky-200/60 truncate">Muthu (Floor Work)</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('supervisor.selvam@company-a.com');
-                    setPassword('ThreadFlow@2026');
-                  }}
-                  className="px-2.5 py-1.5 rounded-xl bg-[#0E3352] hover:bg-[#164368] text-sky-100 font-semibold border border-sky-400/20 text-left transition-all cursor-pointer active:scale-95"
-                >
-                  <div className="font-bold text-emerald-300 text-[11px]">Supervisor (Unit 2)</div>
-                  <div className="text-[10px] text-sky-200/60 truncate">Selvam (Floor Work)</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('buyer@company-b.co.uk');
-                    setPassword('ThreadFlow@2026');
-                  }}
-                  className="px-2.5 py-1.5 rounded-xl bg-[#0E3352] hover:bg-[#164368] text-sky-100 font-semibold border border-sky-400/20 text-left transition-all cursor-pointer active:scale-95"
-                >
-                  <div className="font-bold text-sky-300 text-[11px]">Buyer (Company B)</div>
-                  <div className="text-[10px] text-sky-200/60 truncate">Sarah (UK Portal)</div>
-                </button>
-              </div>
-            </div>
           </form>
         </div>
 
         {/* Left Bottom Copyright */}
         <div className="text-[11px] text-sky-200/40 text-center pt-3 border-t border-[#143D60]/60">
-          © 2026 Company A. All rights reserved.
+          © 2026 ThreadFlow. All rights reserved.
         </div>
       </div>
 

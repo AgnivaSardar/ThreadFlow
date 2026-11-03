@@ -82,6 +82,20 @@
       "role": "BUYER",
       "languagePreference": "en",
       "buyerCode": "COMPANY_C"
+    },
+    {
+      "email": "admin@threadflow.com",
+      "name": "System Administrator",
+      "role": "ADMIN",
+      "languagePreference": "en",
+      "phone": "+91 98422 99999"
+    },
+    {
+      "email": "admin@company-a.com",
+      "name": "System Administrator",
+      "role": "ADMIN",
+      "languagePreference": "en",
+      "phone": "+91 98422 99999"
     }
   ]
 }
