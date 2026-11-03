@@ -672,19 +672,29 @@ export const OrderDetailPage: React.FC = () => {
               })}
             </div>
 
-            {/* Desktop Table View (Scrollable horizontally if screen narrows, hidden on mobile) */}
-            <div className="hidden md:block w-full rounded-xl border border-slate-200 overflow-x-auto bg-white shadow-2xs">
-              <table className="w-full text-left text-xs min-w-[700px] border-collapse">
+            {/* Clean, Fixed-Layout Desktop Table View */}
+            <div className="hidden md:block w-full rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-xs">
+              <table className="w-full text-left text-xs table-fixed border-collapse">
+                <colgroup>
+                  <col className="w-[12%]" />
+                  <col className="w-[11%]" />
+                  <col className="w-[13%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[15%]" />
+                  <col className="w-[11%]" />
+                  <col className="w-[6%]" />
+                  <col className="w-[22%]" />
+                </colgroup>
                 <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
                   <tr>
-                    <th className="py-2.5 px-3 text-slate-100">Date / Time</th>
-                    <th className="py-2.5 px-2 text-slate-100">Stage</th>
-                    <th className="py-2.5 px-2 text-slate-100">Shift · Line</th>
-                    <th className="py-2.5 px-2 text-right text-slate-100">Output</th>
-                    <th className="py-2.5 px-3 text-slate-100">Issue Reason</th>
-                    <th className="py-2.5 px-2 text-slate-100">Logged By</th>
-                    <th className="py-2.5 px-2 text-center text-slate-100">Photo</th>
-                    <th className="py-2.5 px-3 text-slate-100">Supervisor Note & AI Summary</th>
+                    <th className="py-3 px-3 text-slate-100">Date / Time</th>
+                    <th className="py-3 px-2 text-slate-100">Stage</th>
+                    <th className="py-3 px-2 text-slate-100">Shift · Line</th>
+                    <th className="py-3 px-2 text-right text-slate-100">Output</th>
+                    <th className="py-3 px-3 text-slate-100">Issue Reason</th>
+                    <th className="py-3 px-2 text-slate-100">Logged By</th>
+                    <th className="py-3 px-2 text-center text-slate-100">Proof</th>
+                    <th className="py-3 px-3 text-slate-100">Supervisor Note & AI Summary</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -716,14 +726,25 @@ export const OrderDetailPage: React.FC = () => {
                           .replace(' Merchandiser', ' (M)')
                       : 'Supervisor';
 
+                    const cleanNote = (() => {
+                      if (noteText.includes('[English:')) {
+                        const parts = noteText.split('[English:');
+                        return parts[1]?.replace(/\]$/, '').trim() || parts[0].trim();
+                      }
+                      if (classification?.translatedText) {
+                        return classification.translatedText;
+                      }
+                      return noteText;
+                    })();
+
                     return (
                       <tr
                         key={update.id}
-                        className="even:bg-slate-50/80 odd:bg-white hover:bg-sky-50/60 transition-colors align-top"
+                        className="even:bg-slate-50/70 odd:bg-white hover:bg-sky-50/50 transition-colors"
                       >
                         {/* 1. Date & Time */}
-                        <td className="py-2 px-3 font-mono leading-tight whitespace-nowrap">
-                          <div className="font-semibold text-slate-800 text-[11px]">
+                        <td className="py-3 px-3 font-mono leading-tight whitespace-nowrap">
+                          <div className="font-bold text-slate-800 text-[11px]">
                             {dateStr}
                           </div>
                           <div className="text-[10px] text-slate-400">
@@ -732,56 +753,58 @@ export const OrderDetailPage: React.FC = () => {
                         </td>
 
                         {/* 2. Stage */}
-                        <td className="py-2 px-2 whitespace-nowrap">
-                          <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-900 text-white inline-block" title={update.stage}>
+                        <td className="py-3 px-2 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-900 text-white inline-block shadow-3xs" title={update.stage}>
                             {update.stage.replace(/_/g, ' ')}
                           </span>
                         </td>
 
                         {/* 3. Shift & Machine Line */}
-                        <td className="py-2 px-2 text-[11px] leading-tight whitespace-nowrap">
+                        <td className="py-3 px-2 text-[11px] leading-tight whitespace-nowrap">
                           <span className="text-slate-800 font-bold">
                             {update.shift || 'DAY'}
                           </span>
-                          <span className="text-slate-400 mx-1">·</span>
+                          <span className="text-slate-300 mx-1">·</span>
                           <span className="text-slate-600 font-medium" title={update.machineLine || ''}>
                             {lineName}
                           </span>
                         </td>
 
                         {/* 4. Output Qty */}
-                        <td className="py-2 px-2 text-right whitespace-nowrap">
-                          <span className="inline-flex items-center font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 text-[10px]">
+                        <td className="py-3 px-2 text-right whitespace-nowrap">
+                          <div className="inline-flex items-center font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/80 text-[11px]">
                             +{update.goodQuantity.toLocaleString()}
-                          </span>
+                          </div>
                           {update.rejectedQuantity > 0 && (
-                            <div className="text-[9px] text-rose-600 font-semibold leading-none mt-0.5">
+                            <div className="text-[10px] text-rose-600 font-bold font-mono mt-0.5">
                               {update.rejectedQuantity} rej
                             </div>
                           )}
                         </td>
 
                         {/* 5. Issue Category */}
-                        <td className="py-2 px-3 whitespace-nowrap">
+                        <td className="py-3 px-3 whitespace-nowrap">
                           {classification ? (
                             <span
-                              className="text-[11px] font-semibold text-slate-700"
+                              className="inline-block max-w-full truncate px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-900 border border-amber-200/80"
                               title={`${classification.category.replace(/_/g, ' ')} (${Math.round(classification.confidenceScore * 100)}%)`}
                             >
                               {classification.category.replace(/_/g, ' ')}
                             </span>
                           ) : (
-                            <span className="text-slate-300 font-mono text-[11px]">—</span>
+                            <span className="text-slate-300 font-mono text-[11px] pl-2">—</span>
                           )}
                         </td>
 
                         {/* 6. Supervisor */}
-                        <td className="py-2 px-2 text-slate-700 font-semibold text-[11px] whitespace-nowrap">
-                          {supervisorName}
+                        <td className="py-3 px-2 text-slate-700 font-medium text-[11px] whitespace-nowrap">
+                          <span className="block truncate font-semibold text-slate-800" title={supervisorName}>
+                            {supervisorName}
+                          </span>
                         </td>
 
                         {/* 7. Photo Evidence */}
-                        <td className="py-2 px-2 text-center whitespace-nowrap">
+                        <td className="py-3 px-2 text-center whitespace-nowrap">
                           {hasPhotos ? (
                             <button
                               type="button"
@@ -793,10 +816,10 @@ export const OrderDetailPage: React.FC = () => {
                                   date: new Date(update.clientEventAt).toLocaleString(),
                                 })
                               }
-                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-[10px] font-bold transition cursor-pointer"
-                              title="View photo evidence"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-[10px] font-bold transition cursor-pointer shadow-3xs"
+                              title="View photo proof"
                             >
-                              <Camera className="w-2.5 h-2.5 text-sky-600" />
+                              <Camera className="w-3 h-3 text-sky-600" />
                               <span>{update.photos.length}</span>
                             </button>
                           ) : (
@@ -805,20 +828,11 @@ export const OrderDetailPage: React.FC = () => {
                         </td>
 
                         {/* 8. Supervisor Notes */}
-                        <td className="py-2 px-3">
+                        <td className="py-3 px-3 max-w-0 truncate" title={cleanNote}>
                           {hasNote || classification?.translatedText ? (
-                            <div className="text-[11px] text-slate-900 break-words whitespace-normal font-medium leading-snug">
-                              {(() => {
-                                if (noteText.includes('[English:')) {
-                                  const parts = noteText.split('[English:');
-                                  return parts[1]?.replace(/\]$/, '').trim() || parts[0].trim();
-                                }
-                                if (classification?.translatedText) {
-                                  return classification.translatedText;
-                                }
-                                return noteText;
-                              })()}
-                            </div>
+                            <span className="block truncate text-[11px] text-slate-800 font-medium leading-snug">
+                              {cleanNote}
+                            </span>
                           ) : (
                             <span className="text-slate-400 italic text-[11px]">No notes</span>
                           )}
