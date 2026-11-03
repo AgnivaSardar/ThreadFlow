@@ -8,6 +8,12 @@ interface IWindow extends Window {
 
 export type SpeechLanguage = 'ta-IN' | 'hi-IN' | 'en-IN';
 
+export const SUPPORTED_SPEECH_LANGUAGES: { code: SpeechLanguage; label: string; native: string }[] = [
+  { code: 'ta-IN', label: 'Tamil', native: 'தமிழ்' },
+  { code: 'en-IN', label: 'English', native: 'English' },
+  { code: 'hi-IN', label: 'Hindi', native: 'हिंदी' },
+];
+
 export interface SpeechRecognitionHook {
   isListening: boolean;
   isSupported: boolean;
@@ -27,7 +33,15 @@ export function useTamilSpeechRecognition(initialLang: SpeechLanguage = 'ta-IN')
   const [interimTranscript, setInterimTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSupported, setIsSupported] = useState(true);
-  const [speechLang, setSpeechLangState] = useState<SpeechLanguage>(initialLang);
+  const [speechLang, setSpeechLangState] = useState<SpeechLanguage>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('threadflow_speech_lang') as SpeechLanguage;
+      if (saved && ['ta-IN', 'en-IN', 'hi-IN'].includes(saved)) {
+        return saved;
+      }
+    }
+    return initialLang || 'ta-IN';
+  });
 
   const recognitionRef = useRef<any>(null);
 
@@ -105,6 +119,11 @@ export function useTamilSpeechRecognition(initialLang: SpeechLanguage = 'ta-IN')
 
   const setSpeechLang = useCallback((lang: SpeechLanguage) => {
     setSpeechLangState(lang);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('threadflow_speech_lang', lang);
+      } catch {}
+    }
     if (recognitionRef.current) {
       recognitionRef.current.lang = lang;
     }

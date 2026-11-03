@@ -11,7 +11,10 @@ import {
   Language,
   IssueChipItem,
 } from './supervisorTranslations';
-import { useTamilSpeechRecognition } from '../../hooks/useTamilSpeechRecognition';
+import {
+  useTamilSpeechRecognition,
+  SUPPORTED_SPEECH_LANGUAGES,
+} from '../../hooks/useTamilSpeechRecognition';
 import { compressImage, blobToBase64, formatByteSize } from '../../offline/compression';
 import { enqueueFloorUpdate, isEffectiveOnline, generateUUIDv4 } from '../../offline/queue/queue';
 import { apiRequest } from '../../services/api';
@@ -148,7 +151,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
     startListening,
     stopListening,
     resetTranscript,
-  } = useTamilSpeechRecognition(lang === 'ta' ? 'ta-IN' : 'en-IN');
+  } = useTamilSpeechRecognition('ta-IN');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -169,16 +172,64 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
     isListeningRef.current = isListening;
   }, [isListening]);
 
+  /**
+   * Normalizes colloquial Tamil number words into digits so entity extractors can parse quantities accurately.
+   */
+  const normalizeTamilSpeechNumbers = (text: string): string => {
+    if (!text) return '';
+    let normalized = text;
+    const tamilWordMap: [RegExp, string][] = [
+      [/ஒன்று|ஒரு\s*பீஸ்/gi, '1 '],
+      [/இரண்டு|ரெண்டு/gi, '2 '],
+      [/மூன்று|மூணு/gi, '3 '],
+      [/நான்கு|நாலு/gi, '4 '],
+      [/ஐந்து|அஞ்சு/gi, '5 '],
+      [/ஆறு/gi, '6 '],
+      [/ஏழு/gi, '7 '],
+      [/எட்டு/gi, '8 '],
+      [/ஒன்பது/gi, '9 '],
+      [/பத்து/gi, '10 '],
+      [/இருபது/gi, '20 '],
+      [/முப்பது/gi, '30 '],
+      [/நாற்பது/gi, '40 '],
+      [/ஐம்பது/gi, '50 '],
+      [/அறுபது/gi, '60 '],
+      [/எழுபது/gi, '70 '],
+      [/எண்பது/gi, '80 '],
+      [/தொண்ணூறு/gi, '90 '],
+      [/நூறு/gi, '100 '],
+      [/இருநூறு/gi, '200 '],
+      [/முந்நூறு/gi, '300 '],
+      [/நானூறு/gi, '400 '],
+      [/ஐந்நூறு/gi, '500 '],
+      [/அறுநூறு/gi, '600 '],
+      [/எழுநூறு/gi, '700 '],
+      [/எண்ணூறு/gi, '800 '],
+      [/தொள்ளாயிரம்/gi, '900 '],
+      [/ஆயிரம்/gi, '1000 '],
+      [/இரண்டாயிரம்/gi, '2000 '],
+      [/மூவாயிரம்/gi, '3000 '],
+      [/ஐந்தாயிரம்/gi, '5000 '],
+    ];
+
+    for (const [pattern, replacement] of tamilWordMap) {
+      normalized = normalized.replace(pattern, replacement);
+    }
+    return normalized;
+  };
+
   // Smart speech entity extractor: parses good quantity, rejected quantity, and issue reasons
-  const parseAndAutofillFromSpeech = (spokenText: string) => {
-    if (!spokenText.trim()) return;
+  const parseAndAutofillFromSpeech = (rawText: string) => {
+    if (!rawText.trim()) return;
+    const spokenText = normalizeTamilSpeechNumbers(rawText);
 
     // 1. Extract Good Output Quantity
     // Matches patterns like "300 good outputs", "300 pieces done", "output 300", "completed 250 pcs", etc.
+    // 1. Extract Good Output Quantity (Tamil, English, Hindi keywords)
     const goodQtyRegex =
-      /(\d+)\s*(?:good\s*(?:output|outputs|pcs|pieces)?|output|outputs|pieces|pcs|completed|done|finished)/i;
+      /(\d+)\s*(?:good\s*(?:output|outputs|pcs|pieces)?|output|outputs|pieces|pcs|completed|done|finished|பீஸ்|பீஸ்கள்|முடிந்தது|உற்பத்தி|தயார்|தயாரானது|நல்லது|tayar|banaya)/i;
     const goodQtyRegex2 =
-      /(?:good\s*output|good\s*outputs|output|produced|done|completed|finished)\s*(?:is|was|were|of)?\s*(\d+)/i;
+      /(?:good\s*output|good\s*outputs|output|produced|done|completed|finished|உற்பத்தி|தயாரானது|முடிந்தது)\s*(?:is|was|were|of|ஆக)?\s*(\d+)/i;
 
     let extractedGood: number | null = null;
     const matchG1 = spokenText.match(goodQtyRegex);
@@ -193,11 +244,11 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       if (numMatch) extractedGood = parseInt(numMatch[1], 10);
     }
 
-    // 2. Extract Rejected Quantity
+    // 2. Extract Rejected Quantity (Tamil, English, Hindi keywords)
     const rejRegex =
-      /(\d+)\s*(?:reject|rejected|rejection|defect|defects|damaged|damage|waste|alteration)/i;
+      /(\d+)\s*(?:reject|rejected|rejection|defect|defects|damaged|damage|waste|alteration|ரிஜெக்ட்|ரிஜக்ட்|கழிவு|சேதம்|குறைபாடு|வேஸ்ட்)/i;
     const rejRegex2 =
-      /(?:reject|rejected|rejection|defect|defects|damaged|damage)\s*(?:is|was|were|of)?\s*(\d+)/i;
+      /(?:reject|rejected|rejection|defect|defects|damaged|damage|ரிஜெக்ட்|கழிவு|சேதம்)\s*(?:is|was|were|of|ஆக)?\s*(\d+)/i;
 
     let extractedRej: number | null = null;
     const matchR1 = spokenText.match(rejRegex);
@@ -1066,51 +1117,115 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
         </div>
       </div>
 
-      {/* VOICE-TO-TEXT & NOTES (Auto-detecting single speak button) */}
-      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-black uppercase tracking-wider text-slate-800">
-            {t.notesVoiceTitle}
-          </span>
-          <span className="text-[10px] font-bold text-slate-400">
-            Auto-Detect Voice & AI Autofill
-          </span>
+      {/* VOICE-TO-TEXT & NOTES (Multi-Lingual Speech Engine with Language Selector) */}
+      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-800">
+              {t.notesVoiceTitle}
+            </span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+              AI Voice & Text
+            </span>
+          </div>
+
+          {/* Voice Language Switcher: Explicitly tunes SpeechRecognition to Tamil, English, or Hindi */}
+          <div className="flex items-center gap-1.5 self-start sm:self-auto">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Voice:</span>
+            <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-0.5 shadow-2xs">
+              {SUPPORTED_SPEECH_LANGUAGES.map((sl) => (
+                <button
+                  key={sl.code}
+                  type="button"
+                  onClick={() => setSpeechLang(sl.code)}
+                  className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition cursor-pointer ${
+                    speechLang === sl.code
+                      ? 'bg-[#0C2D48] text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  }`}
+                  title={`Switch microphone speech recognizer to ${sl.label} (${sl.code})`}
+                >
+                  {sl.native}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Voice Recognition Control: Single Clean Speak Button */}
-        <div className="mb-3 space-y-2">
+        {/* Voice Recognition Control: Microphone Button */}
+        <div className="space-y-2">
           <button
             type="button"
             onClick={handleToggleVoice}
             disabled={!isSpeechSupported}
-            className={`w-full min-h-[50px] rounded-xl font-black text-sm flex items-center justify-center gap-2.5 transition-all shadow-sm cursor-pointer ${
+            className={`w-full min-h-[52px] rounded-xl font-black text-sm flex items-center justify-center gap-2.5 transition-all shadow-sm cursor-pointer ${
               isListening
                 ? 'bg-rose-600 text-white animate-pulse ring-4 ring-rose-200'
-                : 'bg-indigo-50 border-2 border-indigo-200 text-indigo-900 hover:bg-indigo-100 active:scale-95'
+                : 'bg-indigo-50 border-2 border-indigo-200 text-indigo-900 hover:bg-indigo-100 active:scale-98'
             }`}
           >
             {isListening ? (
               <>
                 <MicOff className="w-5 h-5 text-white animate-bounce" />
-                <span>Listening... Speak in any language (Tap to stop)</span>
+                <span>
+                  {speechLang === 'ta-IN'
+                    ? 'கேட்கிறது... தமிழில் பேசுங்கள் (Tap to Stop)'
+                    : speechLang === 'hi-IN'
+                    ? 'सुन रहा है... हिंदी में बोलें (Tap to Stop)'
+                    : 'Listening... Speak in English (Tap to Stop)'}
+                </span>
               </>
             ) : (
               <>
                 <Mic className="w-5 h-5 text-indigo-700" />
-                <span>Tap to Speak (Auto-detects language & autofills output)</span>
+                <span>
+                  {speechLang === 'ta-IN'
+                    ? 'தமிழில் பேசவும் (Tap to Speak in Tamil)'
+                    : speechLang === 'hi-IN'
+                    ? 'हिंदी में बोलें (Tap to Speak in Hindi)'
+                    : 'Tap to Speak in English'}
+                </span>
               </>
             )}
           </button>
 
+          {/* Quick Tamil speech prompt templates */}
+          <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+            <span className="text-[10px] font-bold text-slate-400">உதாரணம் (Examples):</span>
+            <button
+              type="button"
+              onClick={() => {
+                const sample = 'இன்று 400 பீஸ் முடிந்தது 10 ரிஜெக்ட்';
+                setNotes(sample);
+                parseAndAutofillFromSpeech(sample);
+              }}
+              className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+            >
+              "400 பீஸ் முடிந்தது 10 ரிஜெக்ட்"
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const sample = '350 தயார் இயந்திர கோளாறு காரணமாக தாமதம்';
+                setNotes(sample);
+                parseAndAutofillFromSpeech(sample);
+              }}
+              className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+            >
+              "350 தயார் இயந்திர கோளாறு"
+            </button>
+          </div>
+
           {/* Interim speech transcript live preview */}
           {isListening && interimTranscript && (
-            <div className="mt-2 p-2 bg-indigo-50/70 border border-indigo-100 rounded-lg text-xs font-medium text-indigo-900 italic">
-              "{interimTranscript}..."
+            <div className="p-2.5 bg-indigo-50/80 border border-indigo-200 rounded-lg text-xs font-medium text-indigo-950 italic flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+              <span>"{interimTranscript}..."</span>
             </div>
           )}
 
           {speechError && (
-            <div className="mt-1.5 text-xs text-rose-600 font-semibold">
+            <div className="p-2 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 font-semibold">
               {speechError}
             </div>
           )}
