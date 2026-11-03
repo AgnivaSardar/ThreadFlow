@@ -574,18 +574,13 @@ export const ReportsPage: React.FC = () => {
 
         {/* Milestone Health & On-Time Confidence Pie Chart */}
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between space-y-4">
-          <div className="border-b border-slate-100 pb-2 flex items-center justify-between">
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                {t.reports.scheduleHealth}
-              </h3>
-              <p className="text-[11px] text-slate-400">
-                {data?.metrics.totalOrders || 0} {t.reports.riskClassification}
-              </p>
-            </div>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              {data?.metrics.onTimeConfidencePercent || 92}% {t.reports.overallConfidence}
-            </span>
+          <div className="border-b border-slate-100 pb-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+              {t.reports.scheduleHealth}
+            </h3>
+            <p className="text-[11px] text-slate-400">
+              {data?.metrics.totalOrders || 0} {t.reports.riskClassification}
+            </p>
           </div>
 
           {/* SVG Donut / Pie Chart with Radial Separators & Centered Metric */}
@@ -659,10 +654,10 @@ export const ReportsPage: React.FC = () => {
                     </path>
                   </svg>
 
-                  {/* Centered Hub */}
+                  {/* Centered Hub - Sole 67% On-Time indicator */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
                     <span className="text-2xl font-black font-mono tracking-tight text-[#0C2D48]">
-                      {data?.metrics.onTimeConfidencePercent || 92}%
+                      {data?.metrics.onTimeConfidencePercent || 67}%
                     </span>
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                       On-Time
@@ -699,13 +694,6 @@ export const ReportsPage: React.FC = () => {
               </div>
             );
           })()}
-
-          <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-[11px] text-slate-600 flex items-center justify-between">
-            <span className="font-medium">{t.reports.overallConfidence}</span>
-            <span className="font-bold text-[#0C2D48] font-mono text-xs">
-              {data?.metrics.onTimeConfidencePercent || 92}%
-            </span>
-          </div>
         </div>
       </div>
 
