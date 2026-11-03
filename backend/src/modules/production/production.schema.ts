@@ -57,4 +57,16 @@ export const createProductionUpdateSchema = z.object({
   body: createProductionUpdateBodySchema,
 });
 
+export const bulkProductionUpdateBodySchema = z.object({
+  updates: z
+    .array(createProductionUpdateBodySchema)
+    .min(1, 'Bulk batch must contain at least one update')
+    .max(100, 'Bulk batch cannot exceed 100 updates per request'),
+});
+
+export const bulkProductionUpdateSchema = z.object({
+  body: bulkProductionUpdateBodySchema,
+});
+
 export type CreateProductionUpdateInput = z.infer<typeof createProductionUpdateBodySchema>;
+export type BulkProductionUpdateInput = z.infer<typeof bulkProductionUpdateBodySchema>;

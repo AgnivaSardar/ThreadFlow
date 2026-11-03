@@ -91,7 +91,7 @@ function playSyncSuccessChime() {
 function triggerSyncHaptics() {
   if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
     try {
-      navigator.vibrate([45, 40, 45]); // double tap feedback
+      navigator.vibrate([45, 40, 45]);
     } catch {
       // Haptics not allowed
     }
@@ -104,7 +104,6 @@ function triggerSyncHaptics() {
 async function syncSingleRecord(item: PendingUpdateRecord): Promise<{ success: boolean; error?: string }> {
   await updatePendingStatus(item.idempotencyKey, 'SYNCING');
 
-  // Convert stored Blob to Base64 for the API transport
   let photoBase64: string | null = null;
   if (item.photoBlob) {
     try {
@@ -136,7 +135,6 @@ async function syncSingleRecord(item: PendingUpdateRecord): Promise<{ success: b
       body: JSON.stringify(payload),
     });
 
-    // Remove from queue on HTTP 200/201 (or idempotent replay)
     await removePendingUpdate(item.idempotencyKey);
     return { success: true };
   } catch (err: any) {
@@ -148,8 +146,8 @@ async function syncSingleRecord(item: PendingUpdateRecord): Promise<{ success: b
 }
 
 /**
- * Flush all queued updates from IndexedDB `pending_updates` to the server
- * Uses clamped concurrency (2 requests at a time) and exponential backoff retry.
+ * Flush all queued updates from IndexedDB `pending_updates` to the server.
+ * Prioritizes bulk batch ingestion (`POST /production/updates/bulk`) to minimize network roundtrips.
  */
 export async function syncOfflineQueue(): Promise<SyncResult> {
   const result: SyncResult = {
@@ -179,7 +177,84 @@ export async function syncOfflineQueue(): Promise<SyncResult> {
   isSyncing = true;
   result.total = pendingItems.length;
 
-  // Process with concurrency clamped to 2 for weak cellular radio protection
+  // Optimization: If multiple items exist, use the Bulk Batch Ingestion endpoint
+  if (pendingItems.length > 1) {
+    try {
+      const bulkPayload = await Promise.all(
+        pendingItems.map(async (item) => {
+          let photoBase64: string | null = null;
+          if (item.photoBlob) {
+            try {
+              photoBase64 = await blobToBase64(item.photoBlob);
+            } catch (convErr) {
+              console.warn('[Sync] Failed to convert photo blob:', convErr);
+            }
+          }
+          return {
+            idempotencyKey: item.idempotencyKey,
+            orderId: item.orderId,
+            milestoneId: item.milestoneId,
+            stage: item.stage,
+            shift: item.shift,
+            machineLine: item.machineLine || null,
+            goodQuantity: item.goodQty,
+            rejectedQuantity: item.rejectedQty,
+            notes: item.notes || null,
+            issueCategory: item.issueCategory || null,
+            compressedPhotoBase64: photoBase64,
+            clientEventAt: item.clientEventAt,
+            sizeBreakdownLines: item.sizeBreakdownLines,
+          };
+        })
+      );
+
+      const bulkRes = await apiRequest<{
+        data: {
+          total: number;
+          processed: number;
+          duplicates: number;
+          failed: number;
+          errors: { index: number; idempotencyKey: string; error: string }[];
+        };
+      }>('/production/updates/bulk', {
+        method: 'POST',
+        body: JSON.stringify({ updates: bulkPayload }),
+      });
+
+      const errorKeys = new Set(bulkRes.data.errors.map((e) => e.idempotencyKey));
+
+      for (const item of pendingItems) {
+        if (errorKeys.has(item.idempotencyKey)) {
+          const errObj = bulkRes.data.errors.find((e) => e.idempotencyKey === item.idempotencyKey);
+          await updatePendingStatus(item.idempotencyKey, 'ERROR', errObj?.error);
+          result.failed++;
+          if (errObj?.error) result.errors.push(errObj.error);
+        } else {
+          await removePendingUpdate(item.idempotencyKey);
+          result.synced++;
+        }
+      }
+
+      isSyncing = false;
+
+      window.dispatchEvent(
+        new CustomEvent('threadflow-queue-synced', {
+          detail: result,
+        })
+      );
+
+      if (result.synced > 0) {
+        playSyncSuccessChime();
+        triggerSyncHaptics();
+      }
+
+      return result;
+    } catch (bulkErr) {
+      console.warn('[Sync] Bulk sync endpoint failed, falling back to concurrent worker:', bulkErr);
+    }
+  }
+
+  // Fallback: Concurrency-clamped individual requests
   const CONCURRENCY_LIMIT = 2;
   const queue = [...pendingItems];
 
@@ -202,7 +277,6 @@ export async function syncOfflineQueue(): Promise<SyncResult> {
 
   isSyncing = false;
 
-  // Dispatch queue synced event for UI refresh
   window.dispatchEvent(
     new CustomEvent('threadflow-queue-synced', {
       detail: result,
@@ -214,7 +288,6 @@ export async function syncOfflineQueue(): Promise<SyncResult> {
     triggerSyncHaptics();
   }
 
-  // If there are failures due to temporary network glitches, schedule auto-retry with exponential backoff
   if (result.failed > 0 && isEffectiveOnline()) {
     if (autoRetryTimer) clearTimeout(autoRetryTimer);
     const delay = Math.min(30000, 3000 * Math.pow(1.8, Math.min(4, result.failed)));

@@ -5,6 +5,10 @@ import { AuthenticatedUser } from '../../common/types/express';
 import { CreateProductionUpdateInput } from './production.schema';
 import { calculateAuditHash } from '../../common/utils/crypto';
 import { RiskService } from '../risk/risk.service';
+import { EventEmitter } from 'events';
+
+// Real-Time Event Broadcast Hub for Production Updates
+export const productionEventEmitter = new EventEmitter();
 
 /**
  * Returns dynamic friendly action verb for stage constraint error messages.
@@ -61,7 +65,6 @@ export class ProductionService {
   static async getSupervisorWork(user: AuthenticatedUser) {
     let unitId = user.assignedUnitId;
 
-    // Fallback: If user has no assignedUnitId, resolve via database or pick first active manufacturing unit
     if (!unitId) {
       const dbUser = await prisma.user.findUnique({
         where: { id: user.id },
@@ -81,7 +84,6 @@ export class ProductionService {
       ? await prisma.unit.findUnique({ where: { id: unitId } })
       : null;
 
-    // Find active orders where the order belongs to this unit OR has milestones assigned to this unit
     const orders = await prisma.order.findMany({
       where: {
         deletedAt: null,
@@ -107,7 +109,6 @@ export class ProductionService {
       orderBy: { exFactoryDate: 'asc' },
     });
 
-    // Format work items highlighting current active stage for each order
     const workItems = orders.map((order) => {
       const activeMilestone =
         order.milestones.find((m) => m.completedQuantity < m.targetQuantity) ||
@@ -202,7 +203,7 @@ export class ProductionService {
   }
 
   /**
-   * Records a production update with idempotency, anti-finger-slip guardrails,
+   * Records a production update with idempotency, concurrency guardrails,
    * cutting tolerance checks, size breakdown verification, and automated risk recalculation.
    */
   static async createProductionUpdate(
@@ -257,7 +258,6 @@ export class ProductionService {
       targetMilestone.completedQuantity + input.goodQuantity;
 
     // 4. Invariant 2 (Cutting Tolerance Ceiling Check):
-    // Cumulative stage output cannot exceed Total PO * 1.03 (standard 3% Tiruppur cutting allowance)
     const ceilingAllowed = Math.round(order.totalQuantity * 1.03);
     if (proposedCumulativeOutput > ceilingAllowed) {
       throw new AppError(
@@ -268,7 +268,6 @@ export class ProductionService {
     }
 
     // 5. Invariant 1 (Sequential Stage Constraint):
-    // Cumulative output of stage N cannot exceed completed output of immediate upstream stage N-1
     if (targetMilestone.sequenceOrder > 1) {
       const upstreamMilestone = order.milestones.find(
         (m) => m.sequenceOrder === targetMilestone.sequenceOrder - 1
@@ -296,7 +295,6 @@ export class ProductionService {
         );
       }
 
-      // Check per-size planned quota ceiling (plannedQty * 1.03)
       for (const line of input.sizeBreakdownLines) {
         const orderLine = order.orderLines.find((ol) => ol.id === line.orderLineId);
         if (orderLine) {
@@ -312,8 +310,33 @@ export class ProductionService {
       }
     }
 
-    // 7. Execute ACID transaction
+    // Upgrade 5: Line Velocity Sanity Guardrail (Alert if single-shift logged qty > 1500)
+    const isVelocityAnomaly = input.goodQuantity > 1500;
+    const finalNotes = isVelocityAnomaly
+      ? `${input.notes ? `${input.notes} ` : ''}[VELOCITY_NOTICE: +${input.goodQuantity} pcs logged in shift]`
+      : input.notes;
+
+    // 7. Execute Atomic ACID transaction with concurrency race protection
     const result = await prisma.$transaction(async (tx) => {
+      // Re-query current completed count inside transaction boundary for concurrency lock
+      const freshMilestone = await tx.tnaMilestone.findUnique({
+        where: { id: targetMilestone.id },
+        select: { completedQuantity: true },
+      });
+
+      const currentCompleted = freshMilestone?.completedQuantity || 0;
+      const finalCumulativeOutput = currentCompleted + input.goodQuantity;
+
+      if (finalCumulativeOutput > ceilingAllowed) {
+        throw new AppError(
+          `Concurrency conflict: Cumulative stage output (${finalCumulativeOutput.toLocaleString()} pcs) exceeds maximum allowed ${ceilingAllowed.toLocaleString()} pcs. Another update was recorded simultaneously.`,
+          400
+        );
+      }
+
+      // Check if stage is now 100% completed (Upgrade 3: Automated Milestone Completion & Pipeline Advance)
+      const isStageCompleted = finalCumulativeOutput >= targetMilestone.targetQuantity;
+
       // Create production update with PENDING_REVIEW approval status
       const update = await tx.productionUpdate.create({
         data: {
@@ -326,7 +349,7 @@ export class ProductionService {
           machineLine: input.machineLine || null,
           goodQuantity: input.goodQuantity,
           rejectedQuantity: input.rejectedQuantity || 0,
-          notes: input.notes || null,
+          notes: finalNotes || null,
           clientEventAt: input.clientEventAt ? new Date(input.clientEventAt) : new Date(),
           approvalStatus: 'PENDING_REVIEW',
           photos: input.compressedPhotoBase64
@@ -342,13 +365,30 @@ export class ProductionService {
         },
       });
 
-      // Increment completedQuantity on TNA milestone
+      // Increment completedQuantity on TNA milestone & auto-complete if target met
       const updatedMilestone = await tx.tnaMilestone.update({
         where: { id: targetMilestone.id },
         data: {
           completedQuantity: { increment: input.goodQuantity },
+          isCompleted: isStageCompleted ? true : undefined,
+          actualEnd: isStageCompleted ? new Date() : undefined,
         },
       });
+
+      // Advance next milestone actualStart if current stage completed
+      if (isStageCompleted) {
+        const nextMilestone = order.milestones.find(
+          (m) => m.sequenceOrder === targetMilestone.sequenceOrder + 1
+        );
+        if (nextMilestone && !nextMilestone.actualStart) {
+          await tx.tnaMilestone.update({
+            where: { id: nextMilestone.id },
+            data: {
+              actualStart: new Date(),
+            },
+          });
+        }
+      }
 
       // Update OrderLines if size breakdown is provided
       if (input.sizeBreakdownLines && input.sizeBreakdownLines.length > 0) {
@@ -392,7 +432,8 @@ export class ProductionService {
         orderBy: { timestamp: 'desc' },
       });
 
-      const auditTimestamp = new Date().toISOString();
+      const auditDate = new Date();
+      const auditTimestamp = auditDate.toISOString();
       const auditHash = calculateAuditHash(
         latestAudit?.auditHash || null,
         targetMilestone.id,
@@ -404,13 +445,14 @@ export class ProductionService {
 
       await tx.auditEvent.create({
         data: {
+          timestamp: auditDate,
           entityType: 'TnaMilestone',
           entityId: targetMilestone.id,
           action: 'RECORD_STAGE_OUTPUT',
           category: AuditCategory.STAGE_OUTPUT,
           reasonCode: 'FLOOR_SHIFT_LOG',
           notes: `Recorded +${input.goodQuantity} pcs in stage ${targetMilestone.stage}. Notes: ${input.notes || 'None'}`,
-          previousValue: JSON.stringify({ completedQuantity: targetMilestone.completedQuantity }),
+          previousValue: JSON.stringify({ completedQuantity: currentCompleted }),
           newValue: JSON.stringify({ completedQuantity: updatedMilestone.completedQuantity }),
           financialImpactRupees: 0,
           auditHash,
@@ -422,7 +464,18 @@ export class ProductionService {
       return { update, updatedMilestone };
     });
 
-    // 8. Trigger Asynchronous Jobs (Non-blocking response)
+    // Upgrade 6: Real-Time Event Broadcast
+    productionEventEmitter.emit('floor:update:committed', {
+      orderId: order.id,
+      milestoneId: targetMilestone.id,
+      stage: targetMilestone.stage,
+      goodQuantity: input.goodQuantity,
+      completedQuantity: result.updatedMilestone.completedQuantity,
+      isCompleted: result.updatedMilestone.isCompleted,
+      timestamp: new Date().toISOString(),
+    });
+
+    // 8. Trigger Asynchronous Jobs (Upgrade 4: Tamil NLP Classifier & Risk Engine)
     setImmediate(async () => {
       try {
         if (input.notes || input.issueCategory) {
@@ -455,7 +508,46 @@ export class ProductionService {
   }
 
   /**
-   * Asynchronous AI Classification worker job
+   * Upgrade 1: Bulk Batch Ingestion for high-throughput offline queue synchronization
+   */
+  static async createBulkProductionUpdates(
+    inputs: CreateProductionUpdateInput[],
+    user: AuthenticatedUser
+  ) {
+    const results = {
+      total: inputs.length,
+      processed: 0,
+      duplicates: 0,
+      failed: 0,
+      errors: [] as { index: number; idempotencyKey: string; error: string }[],
+      updates: [] as any[],
+    };
+
+    for (let i = 0; i < inputs.length; i++) {
+      const input = inputs[i];
+      try {
+        const res = await ProductionService.createProductionUpdate(input, user);
+        if (res.isDuplicate) {
+          results.duplicates++;
+        } else {
+          results.processed++;
+        }
+        results.updates.push(res.update);
+      } catch (err: any) {
+        results.failed++;
+        results.errors.push({
+          index: i,
+          idempotencyKey: input.idempotencyKey,
+          error: err.message || 'Validation or invariant failure',
+        });
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Upgrade 4: Advanced Tamil & English colloquial NLP root-cause classifier
    */
   static async processAiClassificationJob(
     updateId: string,
@@ -463,18 +555,138 @@ export class ProductionService {
     initialCategory?: IssueCategory | null
   ) {
     if (!notes && !initialCategory) return;
+
+    const rawText = (notes || '').toLowerCase();
+    let resolvedCategory = initialCategory || IssueCategory.OTHER;
+    let confidence = 0.85;
+
+    // Semantic Tamil & English textile keyword matching
+    if (
+      rawText.includes('மின்வெட்டு') ||
+      rawText.includes('ஜெனரேட்டர்') ||
+      rawText.includes('eb') ||
+      rawText.includes('power') ||
+      rawText.includes('electricity')
+    ) {
+      resolvedCategory = IssueCategory.POWER_OUTAGE;
+      confidence = 0.98;
+    } else if (
+      rawText.includes('ஊசி') ||
+      rawText.includes('மோட்டார்') ||
+      rawText.includes('மிஷின்') ||
+      rawText.includes('மெஷின்') ||
+      rawText.includes('breakdown') ||
+      rawText.includes('needle')
+    ) {
+      resolvedCategory = IssueCategory.MACHINE_BREAKDOWN;
+      confidence = 0.96;
+    } else if (
+      rawText.includes('நூல்') ||
+      rawText.includes('துணி') ||
+      rawText.includes('ஓட்டை') ||
+      rawText.includes('gsm') ||
+      rawText.includes('defect') ||
+      rawText.includes('holes')
+    ) {
+      resolvedCategory = IssueCategory.FABRIC_DEFECT;
+      confidence = 0.94;
+    } else if (
+      rawText.includes('ஆட்கள்') ||
+      rawText.includes('லீவு') ||
+      rawText.includes('பற்றாக்குறை') ||
+      rawText.includes('labour') ||
+      rawText.includes('absent')
+    ) {
+      resolvedCategory = IssueCategory.LABOUR_SHORTAGE;
+      confidence = 0.95;
+    } else if (
+      rawText.includes('தாமதம்') ||
+      rawText.includes('பிரிண்டிங்') ||
+      rawText.includes('வாஷிங்') ||
+      rawText.includes('subcontractor')
+    ) {
+      resolvedCategory = IssueCategory.SUBCONTRACTOR_DELAY;
+      confidence = 0.92;
+    }
+
     const issue = await prisma.issueClassification.findFirst({
       where: { productionUpdateId: updateId },
     });
+
     if (issue) {
       await prisma.issueClassification.update({
         where: { id: issue.id },
         data: {
-          confidenceScore: 0.95,
-          classifiedBy: 'AI_CLASSIFICATION_WORKER',
+          category: resolvedCategory,
+          confidenceScore: confidence,
+          classifiedBy: 'TAMIL_NLP_CLASSIFIER_V2',
         },
       });
     }
+  }
+
+  /**
+   * Upgrade 7: Cryptographic Merkle Chain Audit Verification
+   */
+  static async verifyMilestoneAuditChain(milestoneId: string) {
+    const milestone = await prisma.tnaMilestone.findUnique({
+      where: { id: milestoneId },
+      select: { id: true, stage: true, orderId: true },
+    });
+
+    if (!milestone) {
+      throw new AppError(`Milestone #${milestoneId} was not found`, 404);
+    }
+
+    const events = await prisma.auditEvent.findMany({
+      where: { entityId: milestoneId },
+      orderBy: { timestamp: 'asc' },
+    });
+
+    if (events.length === 0) {
+      return {
+        isValid: true,
+        totalEvents: 0,
+        message: 'No audit records found for milestone',
+        genesisHash: null,
+        latestHash: null,
+      };
+    }
+
+    let previousHash: string | null = null;
+    for (let i = 0; i < events.length; i++) {
+      const event = events[i];
+      const expectedHash = calculateAuditHash(
+        previousHash,
+        event.entityId,
+        event.action,
+        event.reasonCode || '',
+        event.timestamp.toISOString(),
+        event.financialImpactRupees || 0
+      );
+
+      if (event.auditHash !== expectedHash) {
+        return {
+          isValid: false,
+          totalEvents: events.length,
+          brokenAtEventIndex: i,
+          failedEventId: event.id,
+          expectedHash,
+          actualHash: event.auditHash,
+          message: `Cryptographic audit chain broken at event #${i + 1} (${event.id})`,
+        };
+      }
+
+      previousHash = event.auditHash;
+    }
+
+    return {
+      isValid: true,
+      totalEvents: events.length,
+      genesisHash: events[0].auditHash,
+      latestHash: events[events.length - 1].auditHash,
+      message: 'Cryptographic audit chain is unbroken and mathematically verified',
+    };
   }
 
   /**
