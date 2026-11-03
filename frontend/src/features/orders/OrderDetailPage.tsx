@@ -381,19 +381,19 @@ export const OrderDetailPage: React.FC = () => {
             </p>
           </div>
         ) : (
-          /* Floor Shift Production Updates Table (High Density, Single-Row with Wrapped Description) */
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
-            <table className="w-full text-left text-xs border-collapse">
+          /* Floor Shift Production Updates Table (High Density, Fixed-Width Responsive - No Horizontal Scroll) */
+          <div className="w-full rounded-xl border border-slate-200 overflow-hidden bg-white shadow-2xs">
+            <table className="w-full table-fixed text-left text-xs border-collapse">
               <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
                 <tr>
-                  <th className="py-2.5 px-3 whitespace-nowrap w-40">Date & Time</th>
-                  <th className="py-2.5 px-3 whitespace-nowrap w-28">Stage</th>
-                  <th className="py-2.5 px-3 whitespace-nowrap w-32">Shift & Line</th>
-                  <th className="py-2.5 px-3 whitespace-nowrap w-28 text-right">Good Output</th>
-                  <th className="py-2.5 px-3 whitespace-nowrap w-48">Issue / Classification</th>
-                  <th className="py-2.5 px-3 whitespace-nowrap w-36">Logged By</th>
-                  <th className="py-2.5 px-3 whitespace-nowrap w-16 text-center">Photo</th>
-                  <th className="py-2.5 px-3 min-w-[280px]">Supervisor Note & AI Summary</th>
+                  <th className="py-2 px-2 w-[11%]">Date / Time</th>
+                  <th className="py-2 px-1.5 w-[9%]">Stage</th>
+                  <th className="py-2 px-2 w-[11%]">Shift · Line</th>
+                  <th className="py-2 px-2 w-[9%] text-right">Output</th>
+                  <th className="py-2 px-2 w-[14%]">Issue Reason</th>
+                  <th className="py-2 px-2 w-[11%]">Logged By</th>
+                  <th className="py-2 px-1 w-[5%] text-center">Photo</th>
+                  <th className="py-2 px-2 w-[30%]">Supervisor Note & AI Summary</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
@@ -403,74 +403,103 @@ export const OrderDetailPage: React.FC = () => {
                   const noteText = update.notes || '';
                   const hasNote = Boolean(noteText.trim());
 
+                  const eventDate = new Date(update.clientEventAt);
+                  const dateStr = eventDate.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                  });
+                  const timeStr = eventDate.toLocaleTimeString(undefined, {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true,
+                  });
+
+                  const lineName = (update.machineLine || 'Line 1')
+                    .replace('UNIT_3 Floor Line', 'U3 Line')
+                    .replace('Floor Line', 'Line')
+                    .trim();
+
+                  const supervisorName = update.supervisor?.name
+                    ? update.supervisor.name
+                        .replace(' Floor Supervisor', '')
+                        .replace(' Merchandiser', ' (M)')
+                    : 'Supervisor';
+
                   return (
                     <tr
                       key={update.id}
-                      className="hover:bg-slate-50/80 transition-colors align-top"
+                      className="hover:bg-slate-50/70 transition-colors align-top"
                     >
-                      {/* 1. Date & Time */}
-                      <td className="py-2.5 px-3 whitespace-nowrap text-slate-600 font-medium font-mono text-[11px]">
-                        {new Date(update.clientEventAt).toLocaleString(undefined, {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                      {/* 1. Date & Time (Stacked for maximum horizontal savings) */}
+                      <td className="py-2 px-2 font-mono leading-tight">
+                        <div className="font-semibold text-slate-800 text-[11px] whitespace-nowrap">
+                          {dateStr}
+                        </div>
+                        <div className="text-[10px] text-slate-400 whitespace-nowrap">
+                          {timeStr}
+                        </div>
                       </td>
 
                       {/* 2. Stage */}
-                      <td className="py-2.5 px-3 whitespace-nowrap">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-900 text-white">
+                      <td className="py-2 px-1.5">
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-900 text-white inline-block max-w-full truncate" title={update.stage}>
                           {update.stage.replace(/_/g, ' ')}
                         </span>
                       </td>
 
                       {/* 3. Shift & Machine Line */}
-                      <td className="py-2.5 px-3 whitespace-nowrap">
-                        <span className="text-slate-700 font-bold">
+                      <td className="py-2 px-2 text-[11px] leading-tight">
+                        <span className="text-slate-800 font-bold whitespace-nowrap">
                           {update.shift || 'DAY'}
                         </span>
-                        <span className="text-slate-400 mx-1">·</span>
-                        <span className="text-slate-600 font-medium">
-                          {update.machineLine || 'Line 1'}
+                        <span className="text-slate-400 mx-0.5">·</span>
+                        <span
+                          className="text-slate-600 font-medium truncate inline-block max-w-[70px] align-bottom"
+                          title={update.machineLine || ''}
+                        >
+                          {lineName}
                         </span>
                       </td>
 
                       {/* 4. Output Qty */}
-                      <td className="py-2.5 px-3 whitespace-nowrap text-right">
-                        <span className="inline-flex items-center gap-1 font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          <CheckCircle className="w-3 h-3 text-emerald-600 shrink-0" />
-                          +{update.goodQuantity.toLocaleString()} pcs
+                      <td className="py-2 px-2 text-right">
+                        <span className="inline-flex items-center gap-0.5 font-mono font-bold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200 text-[11px] whitespace-nowrap">
+                          +{update.goodQuantity.toLocaleString()}
                         </span>
                         {update.rejectedQuantity > 0 && (
-                          <div className="text-[10px] text-rose-600 font-semibold mt-0.5">
-                            {update.rejectedQuantity} pcs rej
+                          <div className="text-[10px] text-rose-600 font-semibold leading-none mt-0.5 whitespace-nowrap">
+                            {update.rejectedQuantity} rej
                           </div>
                         )}
                       </td>
 
                       {/* 5. Issue Category */}
-                      <td className="py-2.5 px-3 whitespace-nowrap">
+                      <td className="py-2 px-2">
                         {classification ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-300">
-                            <Sparkles className="w-3 h-3 text-amber-600 shrink-0" />
-                            <span>
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-300 max-w-full truncate"
+                            title={`${classification.category.replace(/_/g, ' ')} (${Math.round(classification.confidenceScore * 100)}%)`}
+                          >
+                            <Sparkles className="w-2.5 h-2.5 text-amber-600 shrink-0" />
+                            <span className="truncate">
                               {classification.category.replace(/_/g, ' ')} ({Math.round(classification.confidenceScore * 100)}%)
                             </span>
                           </span>
                         ) : (
-                          <span className="text-slate-400 font-mono text-[11px]">—</span>
+                          <span className="text-slate-300 font-mono text-[11px]">—</span>
                         )}
                       </td>
 
                       {/* 6. Supervisor */}
-                      <td className="py-2.5 px-3 whitespace-nowrap text-slate-800 font-semibold text-xs">
-                        {update.supervisor?.name || 'Floor Supervisor'}
+                      <td
+                        className="py-2 px-2 text-slate-700 font-semibold text-[11px] truncate whitespace-nowrap"
+                        title={update.supervisor?.name || ''}
+                      >
+                        {supervisorName}
                       </td>
 
                       {/* 7. Photo Evidence */}
-                      <td className="py-2.5 px-3 whitespace-nowrap text-center">
+                      <td className="py-2 px-1 text-center whitespace-nowrap">
                         {hasPhotos ? (
                           <button
                             type="button"
@@ -482,10 +511,10 @@ export const OrderDetailPage: React.FC = () => {
                                 date: new Date(update.clientEventAt).toLocaleString(),
                               })
                             }
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-[10px] font-bold transition cursor-pointer"
+                            className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-[10px] font-bold transition cursor-pointer"
                             title="View photo evidence"
                           >
-                            <Camera className="w-3 h-3 text-sky-600" />
+                            <Camera className="w-2.5 h-2.5 text-sky-600" />
                             <span>{update.photos.length}</span>
                           </button>
                         ) : (
@@ -493,15 +522,15 @@ export const OrderDetailPage: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 8. Supervisor Notes & Bilingual Summary (Multi-line text if long) */}
-                      <td className="py-2.5 px-3 min-w-[280px]">
+                      {/* 8. Supervisor Notes & Bilingual Summary (Multi-line text wraps without expanding width) */}
+                      <td className="py-2 px-2">
                         {hasNote ? (
-                          <div className="space-y-0.5 leading-relaxed">
-                            <div className="text-xs text-slate-900 whitespace-pre-wrap break-words">
+                          <div className="space-y-0.5 leading-snug">
+                            <div className="text-[11px] text-slate-900 break-words whitespace-normal font-medium">
                               {noteText}
                             </div>
                             {classification?.translatedText && !noteText.includes('[English:') && (
-                              <div className="text-[11px] font-bold text-indigo-700 bg-indigo-50/80 px-1.5 py-0.5 rounded border border-indigo-100 inline-block mt-0.5 break-words">
+                              <div className="text-[10px] font-bold text-indigo-700 bg-indigo-50/80 px-1 py-0.5 rounded border border-indigo-100 inline-block mt-0.5 break-words whitespace-normal">
                                 [English: {classification.translatedText}]
                               </div>
                             )}
