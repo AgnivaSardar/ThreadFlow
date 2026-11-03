@@ -137,7 +137,7 @@ export const AppLayout: React.FC = () => {
   });
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#F8FAFC]">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#EEF2F6]">
       {/* Responsive Collapsible Sidebar */}
       <Sidebar
         isMobileOpen={isMobileSidebarOpen}
@@ -249,7 +249,7 @@ export const AppLayout: React.FC = () => {
         </header>
 
         {/* Scrollable Content Container (Smooth, Responsive, Fits any screen) */}
-        <main className="flex-1 overflow-y-auto w-full smooth-scroll">
+        <main className="flex-1 overflow-y-auto w-full smooth-scroll bg-[#EEF2F6]">
           <div className="p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
             <Outlet />
           </div>
