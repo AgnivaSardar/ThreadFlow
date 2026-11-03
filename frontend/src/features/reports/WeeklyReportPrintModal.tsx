@@ -262,29 +262,86 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
             </div>
           )}
 
-          {/* 4. Graphical Analytics Snapshot: 7-Stage TNA Progress & Health */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            {/* 7-Stage TNA Milestone Rates */}
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-              <div className="font-bold text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-1">
-                <BarChart2 className="w-3.5 h-3.5 text-sky-700" />
-                7-Stage TNA Milestone Rates
+          {/* 4. Graphical Analytics Snapshot: Multi-Bar 7-Stage TNA Trend & Schedule Health */}
+          <div className="space-y-3">
+            {/* Multi-Bar 7-Stage TNA Progress Trend Chart */}
+            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                <div className="flex items-center gap-1.5">
+                  <BarChart2 className="w-4 h-4 text-sky-700" />
+                  <span className="font-bold text-slate-900 uppercase tracking-wider text-[11px]">
+                    7-Stage TNA Pipeline Progress Trends (Past 5 Weeks Multi-Bar Comparison)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-xs bg-slate-400" /> W41
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-xs bg-sky-300" /> W42
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-xs bg-sky-400" /> W43
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-xs bg-sky-600" /> W44
+                  </span>
+                  <span className="inline-flex items-center gap-1 font-bold text-[#0C2D48]">
+                    <span className="w-2 h-2 rounded-xs bg-[#0C2D48]" /> W45 (Now)
+                  </span>
+                </div>
               </div>
-              <div className="space-y-1.5 pt-1">
-                {stageTrends.slice(0, 5).map((st) => (
-                  <div key={st.stage} className="space-y-0.5">
-                    <div className="flex justify-between text-[10px] font-semibold text-slate-700">
-                      <span>{st.displayName}</span>
-                      <span className="font-mono">{st.currentRate}%</span>
+
+              {/* 7 Columns: 1 for each Stage */}
+              <div className="grid grid-cols-7 gap-2">
+                {stageTrends.map((stage) => {
+                  const barColors = [
+                    'bg-slate-400',
+                    'bg-sky-300',
+                    'bg-sky-400',
+                    'bg-sky-600',
+                    'bg-[#0C2D48]',
+                  ];
+
+                  return (
+                    <div
+                      key={stage.stage}
+                      className="bg-white p-2 rounded-lg border border-slate-200 flex flex-col justify-between"
+                    >
+                      <div className="text-center mb-1">
+                        <div className="text-[10px] font-bold text-slate-800 truncate" title={stage.displayName}>
+                          {stage.displayName}
+                        </div>
+                        <div className="text-[10px] font-black font-mono text-[#0C2D48]">
+                          {stage.currentRate}%
+                        </div>
+                      </div>
+
+                      {/* Multi-Bar Group for 5 Weeks */}
+                      <div className="h-20 flex items-end justify-between gap-0.5 px-1 py-0.5 bg-slate-50 border border-slate-200 rounded">
+                        {stage.weeklyBars?.map((bar, barIdx) => (
+                          <div
+                            key={bar.week}
+                            className="flex-1 flex flex-col items-center justify-end h-full"
+                          >
+                            <div
+                              className={`w-full rounded-t-xs ${barColors[barIdx] || 'bg-sky-600'}`}
+                              style={{ height: `${Math.max(8, bar.rate)}%` }}
+                              title={`${bar.week}: ${bar.rate}%`}
+                            />
+                            <span className="text-[7px] font-mono text-slate-500 mt-0.5 scale-90">
+                              {bar.week.replace('CW ', 'W')}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="text-[9px] text-center font-bold font-mono mt-1 text-slate-600">
+                        {stage.trend === 'UP' ? '▲ +' : stage.trend === 'DOWN' ? '▼ ' : '— '}{stage.trendDelta}%
+                      </div>
                     </div>
-                    <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-sky-600 rounded-full"
-                        style={{ width: `${Math.min(100, st.currentRate)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
