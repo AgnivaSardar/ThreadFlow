@@ -416,10 +416,14 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
           <button
             type="button"
             onClick={() => setShowSimulator(!showSimulator)}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0C2D48] hover:text-sky-700 transition cursor-pointer"
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition shadow-2xs cursor-pointer border ${
+              showSimulator
+                ? 'bg-[#0C2D48] text-white border-[#0C2D48] hover:bg-slate-800'
+                : 'bg-white hover:bg-slate-50 text-[#0C2D48] border-slate-300'
+            }`}
           >
-            <Sliders className="w-3.5 h-3.5 text-sky-600" />
-            <span>{showSimulator ? 'Close Simulator' : 'Test "What-If" Rate'}</span>
+            <Sliders className={`w-3.5 h-3.5 ${showSimulator ? 'text-sky-300' : 'text-sky-600'}`} />
+            <span>{showSimulator ? 'Close Simulator' : 'Simulator'}</span>
           </button>
 
           <button
