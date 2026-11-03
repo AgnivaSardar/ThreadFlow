@@ -1,12 +1,13 @@
 import { prisma } from '../src/config/db';
 import { ProductionService } from '../src/modules/production/production.service';
+import { createProductionUpdateBodySchema } from '../src/modules/production/production.schema';
 import { Role, Stage, IssueCategory } from '@prisma/client';
 import { AuthenticatedUser } from '../src/common/types/express';
 import { randomUUID } from 'crypto';
 
 async function runProductionTestSuite() {
   console.log('================================================================');
-  console.log('🧪 RUNNING FEATURE 6: SUPERVISOR PRODUCTION & INVARIANTS TEST SUITE');
+  console.log('🧪 RUNNING FEATURE 8: PRODUCTION INGESTION, IDEMPOTENCY & INVARIANTS');
   console.log('================================================================\n');
 
   let passed = 0;
@@ -65,7 +66,6 @@ async function runProductionTestSuite() {
     // -------------------------------------------------------------
     console.log('\n[Test Group 2] Anti-Finger-Slip Stage Invariant Enforcement');
 
-    // Find an order where an upstream milestone is partially completed (< totalQuantity)
     const candidates = await prisma.order.findMany({
       include: { milestones: { orderBy: { sequenceOrder: 'asc' } } },
     });
@@ -76,15 +76,13 @@ async function runProductionTestSuite() {
         const upstream = ord.milestones[i - 1];
         const downstream = ord.milestones[i];
 
-        // If upstream is partially completed and downstream completed < upstream completed
         if (upstream.completedQuantity > 0 && upstream.completedQuantity < ord.totalQuantity) {
-          // Attempt to log downstream output exceeding upstream completed
           const exceedingQty = (upstream.completedQuantity - downstream.completedQuantity) + 500;
           const proposedDownstream = downstream.completedQuantity + exceedingQty;
 
-          // Ensure it does not trip the totalQuantity * 1.03 ceiling
           if (proposedDownstream <= ord.totalQuantity) {
             let hierarchyBlocked = false;
+            let capturedMessage = '';
             try {
               await ProductionService.createProductionUpdate(
                 {
@@ -100,13 +98,15 @@ async function runProductionTestSuite() {
                 mockSupervisorAuth
               );
             } catch (err: any) {
-              hierarchyBlocked = err.message.includes('Sequential stage violation');
+              capturedMessage = err.message || '';
+              hierarchyBlocked = capturedMessage.includes('Cannot') && capturedMessage.includes('more pieces than have completed');
             }
 
             assert(
               hierarchyBlocked,
               `Rejects stage ${downstream.stage} output (${proposedDownstream} pcs) exceeding upstream ${upstream.stage} completed (${upstream.completedQuantity} pcs)`
             );
+            console.log(`   ℹ️ Friendly error message: "${capturedMessage}"`);
             hierarchyTested = true;
             break;
           }
@@ -163,7 +163,7 @@ async function runProductionTestSuite() {
     console.log('\n[Test Group 4] Valid Shift Production Update Logging');
 
     const testIdempotencyKey = randomUUID();
-    const qtyToLog = 50; // safe incremental quantity
+    const qtyToLog = 50;
 
     const headroomOrder = await prisma.order.findFirst({
       where: {
@@ -190,7 +190,7 @@ async function runProductionTestSuite() {
         machineLine: 'Line 2',
         goodQuantity: qtyToLog,
         rejectedQuantity: 2,
-        notes: '⚡ மின்வெட்டு காரணமாக 30 நிமிடம் தாமதம்',
+        notes: '[மின்வெட்டு] ஜெனரேட்டர் தாமதம்',
         issueCategory: IssueCategory.POWER_OUTAGE,
       },
       mockSupervisorAuth
@@ -232,7 +232,6 @@ async function runProductionTestSuite() {
     // -------------------------------------------------------------
     console.log('\n[Test Group 5] Idempotency Verification (Anti-Double-Count)');
 
-    // Replay the exact same submission with the same idempotencyKey
     const replaySubmission = await ProductionService.createProductionUpdate(
       {
         idempotencyKey: testIdempotencyKey,
@@ -243,7 +242,7 @@ async function runProductionTestSuite() {
         machineLine: 'Line 2',
         goodQuantity: qtyToLog,
         rejectedQuantity: 2,
-        notes: '⚡ மின்வெட்டு காரணமாக 30 நிமிடம் தாமதம்',
+        notes: '[மின்வெட்டு] ஜெனரேட்டர் தாமதம்',
         issueCategory: IssueCategory.POWER_OUTAGE,
       },
       mockSupervisorAuth
@@ -259,6 +258,76 @@ async function runProductionTestSuite() {
       afterReplayMilestone?.completedQuantity === expectedCompleted,
       `Milestone count was NOT double-incremented on idempotent replay`
     );
+
+    // -------------------------------------------------------------
+    // Test Group 6: Schema Validation (UUIDv4 Format & Non-Zero Qty)
+    // -------------------------------------------------------------
+    console.log('\n[Test Group 6] Schema Validation Guardrails');
+
+    const invalidUuidResult = createProductionUpdateBodySchema.safeParse({
+      idempotencyKey: 'not-a-valid-uuid-string',
+      orderId: 'some-order',
+      milestoneId: 'some-milestone',
+      stage: Stage.CUTTING,
+      goodQuantity: 10,
+    });
+    assert(!invalidUuidResult.success, 'Rejects malformed non-UUID idempotencyKey');
+
+    const validUuidResult = createProductionUpdateBodySchema.safeParse({
+      idempotencyKey: randomUUID(),
+      orderId: 'some-order',
+      milestoneId: 'some-milestone',
+      stage: Stage.CUTTING,
+      goodQuantity: 10,
+    });
+    assert(validUuidResult.success, 'Accepts valid RFC4122 UUIDv4 idempotencyKey');
+
+    const zeroQuantityResult = createProductionUpdateBodySchema.safeParse({
+      idempotencyKey: randomUUID(),
+      orderId: 'some-order',
+      milestoneId: 'some-milestone',
+      stage: Stage.CUTTING,
+      goodQuantity: 0,
+      rejectedQuantity: 0,
+    });
+    assert(!zeroQuantityResult.success, 'Rejects submission when both goodQuantity and rejectedQuantity are zero');
+
+    // -------------------------------------------------------------
+    // Test Group 7: Size Breakdown Lines Invariant (Features 6 & 7)
+    // -------------------------------------------------------------
+    console.log('\n[Test Group 7] Per-Size Breakdown Reconciliation');
+
+    const orderWithLines = await prisma.order.findFirst({
+      where: { orderLines: { some: {} } },
+      include: { orderLines: true, milestones: { orderBy: { sequenceOrder: 'asc' } } },
+    });
+
+    if (orderWithLines && orderWithLines.orderLines.length > 0) {
+      const line1 = orderWithLines.orderLines[0];
+      const targetMilestoneForSize = orderWithLines.milestones[0];
+
+      let sizeMismatchBlocked = false;
+      try {
+        await ProductionService.createProductionUpdate(
+          {
+            idempotencyKey: randomUUID(),
+            orderId: orderWithLines.id,
+            milestoneId: targetMilestoneForSize.id,
+            stage: targetMilestoneForSize.stage,
+            goodQuantity: 50,
+            rejectedQuantity: 0,
+            sizeBreakdownLines: [
+              { orderLineId: line1.id, goodQuantity: 30, rejectedQuantity: 0 }, // 30 != 50
+            ],
+          },
+          mockSupervisorAuth
+        );
+      } catch (err: any) {
+        sizeMismatchBlocked = err.message.includes('Size breakdown mismatch');
+      }
+
+      assert(sizeMismatchBlocked, 'Rejects update when size breakdown sum (30) does not match goodQuantity (50)');
+    }
 
     console.log('\n================================================================');
     console.log(`TEST SUITE RESULTS: ${passed} PASSED, ${failed} FAILED`);
