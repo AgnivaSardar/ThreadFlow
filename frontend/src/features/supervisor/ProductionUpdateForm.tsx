@@ -138,11 +138,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
   const isListeningRef = useRef(isListening);
   useEffect(() => {
     isListeningRef.current = isListening;
-    // When listening ends and we have an English summary, update notes to clean English
-    if (!isListening && aiPreview?.summary) {
-      setNotes(aiPreview.summary);
-    }
-  }, [isListening, aiPreview?.summary]);
+  }, [isListening]);
 
   // Smart speech entity extractor: parses good quantity, rejected quantity, and issue reasons
   const parseAndAutofillFromSpeech = (spokenText: string) => {
@@ -391,11 +387,6 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           if (res.data.category) {
             const chip = SUPERVISOR_ISSUE_CHIPS.find((c) => c.category === res.data.category);
             if (chip) setSelectedChip(chip);
-          }
-
-          // Auto-refine notes input into clean English summary if not actively recording speech
-          if (res.data.englishSummary && !isListeningRef.current) {
-            setNotes(res.data.englishSummary);
           }
         }
       } catch {
@@ -649,7 +640,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
               machineLine,
               goodQty,
               rejectedQty,
-              notes: notes.trim() || null,
+              notes: finalFormattedNote || null,
               issueCategory: selectedChip?.category || null,
               photoFile: rawPhotoFile,
               sizeBreakdownLines,
@@ -682,7 +673,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           machineLine,
           goodQty,
           rejectedQty,
-          notes: notes.trim() || null,
+          notes: finalFormattedNote || null,
           issueCategory: selectedChip?.category || null,
           photoFile: rawPhotoFile,
           sizeBreakdownLines,
@@ -1139,24 +1130,12 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             </div>
             {aiPreview.summary && !aiPreview.isLoading && (
               <div className="mt-2 pt-2 border-t border-indigo-200/60">
-                <div className="flex items-center justify-between gap-1 mb-1">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    {lang === 'ta'
-                      ? 'சுத்தமான ஆங்கில மொழிபெயர்ப்பு (பதிவாகும் உரை):'
-                      : 'Clean English Note (Saved to Order Log):'}
-                  </div>
-                  <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                    {lang === 'ta' ? 'ஆங்கிலத்தில் சேமிக்கப்படும்' : 'English Translation Only'}
-                  </span>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  Clean English Note
                 </div>
                 <div className="text-xs font-bold text-slate-900 bg-white p-2.5 rounded-lg border border-indigo-100 shadow-2xs whitespace-pre-wrap leading-relaxed">
                   {aiPreview.summary}
                 </div>
-                {rawSpokenText && rawSpokenText !== aiPreview.summary && (
-                  <div className="mt-1 text-[10px] text-slate-400 italic truncate" title={rawSpokenText}>
-                    Audio input: "{rawSpokenText}"
-                  </div>
-                )}
               </div>
             )}
           </div>
