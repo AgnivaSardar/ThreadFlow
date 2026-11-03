@@ -49,8 +49,12 @@ export const createProductionUpdateBodySchema = z
       .optional(),
   })
   .refine(
-    (data) => data.goodQuantity > 0 || data.rejectedQuantity > 0,
-    { message: 'At least one of good quantity or rejected quantity must be greater than zero' }
+    (data) =>
+      data.goodQuantity > 0 ||
+      data.rejectedQuantity > 0 ||
+      (typeof data.notes === 'string' && data.notes.trim().length > 0) ||
+      Boolean(data.issueCategory),
+    { message: 'At least one of good quantity, rejected quantity, or a floor issue note must be provided' }
   );
 
 export const createProductionUpdateSchema = z.object({

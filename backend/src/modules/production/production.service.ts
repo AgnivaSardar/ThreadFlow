@@ -260,7 +260,7 @@ export class ProductionService {
 
     // 4. Invariant 2 (Cutting Tolerance Ceiling Check):
     const ceilingAllowed = Math.round(order.totalQuantity * 1.03);
-    if (proposedCumulativeOutput > ceilingAllowed) {
+    if (input.goodQuantity > 0 && proposedCumulativeOutput > ceilingAllowed) {
       throw new AppError(
         `Tolerance ceiling exceeded: Proposed stage output (${proposedCumulativeOutput.toLocaleString()} pcs) ` +
           `exceeds maximum allowed ${ceilingAllowed.toLocaleString()} pcs (PO Qty: ${order.totalQuantity.toLocaleString()} + 3% tolerance ceiling). Check entry for extra zeroes.`,
@@ -269,7 +269,7 @@ export class ProductionService {
     }
 
     // 5. Invariant 1 (Sequential Stage Constraint):
-    if (targetMilestone.sequenceOrder > 1) {
+    if (targetMilestone.sequenceOrder > 1 && input.goodQuantity > 0) {
       const upstreamMilestone = order.milestones.find(
         (m) => m.sequenceOrder === targetMilestone.sequenceOrder - 1
       );
@@ -287,7 +287,7 @@ export class ProductionService {
     }
 
     // 6. Invariant 3 (Per-Size Breakdown Lines Reconciliation):
-    if (input.sizeBreakdownLines && input.sizeBreakdownLines.length > 0) {
+    if (input.sizeBreakdownLines && input.sizeBreakdownLines.length > 0 && input.goodQuantity > 0) {
       const sizeSum = input.sizeBreakdownLines.reduce((acc, l) => acc + l.goodQuantity, 0);
       if (sizeSum !== input.goodQuantity) {
         throw new AppError(

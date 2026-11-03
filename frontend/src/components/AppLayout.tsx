@@ -69,16 +69,25 @@ export const AppLayout: React.FC = () => {
 
     // Offline listeners
     refreshPending();
+    if (isEffectiveOnline()) {
+      setTimeout(() => syncOfflineQueue(), 200);
+    }
     const cleanupSync = registerOfflineSyncListeners();
 
     const handleNetworkChange = () => {
       setIsOnline(isEffectiveOnline());
       setIsSimulated(isOfflineSimulated());
       refreshPending();
+      if (isEffectiveOnline()) {
+        setTimeout(() => syncOfflineQueue(), 300);
+      }
     };
 
     const handleQueueChange = () => {
       refreshPending();
+      if (isEffectiveOnline()) {
+        setTimeout(() => syncOfflineQueue(), 300);
+      }
     };
 
     window.addEventListener('online', handleNetworkChange);
@@ -185,9 +194,19 @@ export const AppLayout: React.FC = () => {
           <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
             {/* On header left side of Online/Offline capsule: Write queue pending when offline or pending exists */}
             {(!isOnline || isSimulated || pendingCount > 0) && (
-              <span className="text-[10px] sm:text-[11px] font-black text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl shadow-2xs">
-                {pendingCount} Pending
-              </span>
+              <button
+                type="button"
+                onClick={handleManualSync}
+                disabled={isSyncing || !isOnline}
+                title={isOnline ? (lang === 'ta' ? 'கிளிக் செய்து உடனே ஒத்திசைக்கவும்' : 'Click to sync pending updates') : undefined}
+                className={`text-[10px] sm:text-[11px] font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl shadow-2xs transition-all ${
+                  isOnline && pendingCount > 0
+                    ? 'text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 cursor-pointer active:scale-95'
+                    : 'text-amber-900 bg-amber-100 border border-amber-300 cursor-default'
+                }`}
+              >
+                {isSyncing ? (lang === 'ta' ? 'ஒத்திசைகிறது...' : 'Syncing...') : `${pendingCount} Pending`}
+              </button>
             )}
 
             {/* Online / Offline Simulator Pill in Main Header */}

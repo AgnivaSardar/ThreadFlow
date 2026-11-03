@@ -366,7 +366,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
   // Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (goodQty <= 0 && rejectedQty <= 0) {
+    if (goodQty <= 0 && rejectedQty <= 0 && !notes.trim() && !selectedChip) {
       setFormError(t.validationErrorQty);
       return;
     }
@@ -426,34 +426,51 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           triggerHaptic(100);
           onSuccess(
             lang === 'ta'
-              ? `ஆர்டர் #${order.poNumber} க்கு ${goodQty} துண்டுகள் அளவு வாரியாக வெற்றிகரமாக பதிவாகியது!`
-              : `Successfully logged ${goodQty} pieces by size for ${order.poNumber}!`
+              ? `ஆர்டர் #${order.poNumber} க்கு வெற்றிகரமாக பதிவாகியது!`
+              : `Successfully logged update for ${order.poNumber}!`
           );
           return;
         } catch (apiErr: any) {
-          console.warn('Direct API submission failed, falling back to offline queue:', apiErr);
-          await enqueueFloorUpdate({
-            orderId: order.orderId,
-            poNumber: order.poNumber,
-            style: order.style,
-            milestoneId: targetMilestone.id,
-            stage: selectedStage,
-            shift,
-            machineLine,
-            goodQty,
-            rejectedQty,
-            notes: notes.trim() || null,
-            issueCategory: selectedChip?.category || null,
-            photoFile: rawPhotoFile,
-            sizeBreakdownLines,
-            cacheKey: `work_${order.unit?.id || 'default'}`,
-          });
-          triggerHaptic(80);
-          onSuccess(
-            lang === 'ta'
-              ? `நெட்வொர்க் பிழை. பதிவு ஆஃப்லைன் வரிசையில் சேர்க்கப்பட்டது (Auto-syncs)!`
-              : `Network dropped. Saved to Offline Queue (Auto-syncs when online)!`
-          );
+          // Check if this is an actual network connectivity failure (fetch failed / status 0)
+          const isNetworkError =
+            apiErr.status === 0 ||
+            !navigator.onLine ||
+            apiErr.message?.includes('Network request failed') ||
+            apiErr.message?.includes('Failed to fetch') ||
+            apiErr.name === 'TypeError';
+
+          if (isNetworkError) {
+            console.warn('Network failure detected, saving to offline queue:', apiErr);
+            await enqueueFloorUpdate({
+              orderId: order.orderId,
+              poNumber: order.poNumber,
+              style: order.style,
+              milestoneId: targetMilestone.id,
+              stage: selectedStage,
+              shift,
+              machineLine,
+              goodQty,
+              rejectedQty,
+              notes: notes.trim() || null,
+              issueCategory: selectedChip?.category || null,
+              photoFile: rawPhotoFile,
+              sizeBreakdownLines,
+              cacheKey: `work_${order.unit?.id || 'default'}`,
+            });
+            triggerHaptic(80);
+            onSuccess(
+              lang === 'ta'
+                ? `நெட்வொர்க் இணைப்பு துண்டிக்கப்பட்டது. பதிவு ஆஃப்லைன் வரிசையில் சேர்க்கப்பட்டது.`
+                : `Network dropped. Saved to Offline Queue (Auto-syncs when online)!`
+            );
+            return;
+          }
+
+          // If server was reached and responded with HTTP error (e.g. 400 validation error, tolerance ceiling, etc.):
+          // Do NOT save to offline queue! Show the actual server error to the user!
+          console.error('Server rejected production update:', apiErr);
+          setFormError(apiErr.message || 'Server error occurred during submission');
+          setIsSubmitting(false);
           return;
         }
       } else {
