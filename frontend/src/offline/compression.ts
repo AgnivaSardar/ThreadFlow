@@ -2,6 +2,8 @@
  * Memory-Safe Client-Side Image Compression Engine
  * Specifically designed for low-memory Android devices (2–3 GB RAM).
  * 
+ * - Prioritizes zero-jank background decoding via `createImageBitmap` and `OffscreenCanvas`.
+ * - Automatic fallback to standard `<canvas>` on older browser engines.
  * - Clamps max width/height to 1024px while preserving aspect ratio.
  * - Exports as WebP (quality: 0.72) with fallback to JPEG.
  * - Reduces raw 6–8 MB camera captures down to ~60–85 KB.
@@ -17,6 +19,65 @@ export async function compressImage(
     throw new Error('Selected file is not an image');
   }
 
+  // Path A: Zero-Jank OffscreenCanvas + createImageBitmap (Off-thread background decoding)
+  if (
+    typeof window !== 'undefined' &&
+    'createImageBitmap' in window &&
+    typeof OffscreenCanvas !== 'undefined'
+  ) {
+    try {
+      const bitmap = await createImageBitmap(file);
+      let width = bitmap.width;
+      let height = bitmap.height;
+
+      // Clamped aspect ratio calculations
+      if (width > maxDimension || height > maxDimension) {
+        if (width > height) {
+          height = Math.round((height * maxDimension) / width);
+          width = maxDimension;
+        } else {
+          width = Math.round((width * maxDimension) / height);
+          height = maxDimension;
+        }
+      }
+
+      const offscreen = new OffscreenCanvas(width, height);
+      const ctx = offscreen.getContext('2d', { alpha: false });
+      if (ctx) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(bitmap, 0, 0, width, height);
+
+        // Immediate release of GPU texture memory from bitmap
+        bitmap.close();
+
+        try {
+          const webpBlob = await offscreen.convertToBlob({
+            type: 'image/webp',
+            quality,
+          });
+          if (webpBlob && webpBlob.size > 0) {
+            return webpBlob;
+          }
+        } catch {
+          // Fallback to JPEG convertToBlob if WebP export is unsupported
+          const jpegBlob = await offscreen.convertToBlob({
+            type: 'image/jpeg',
+            quality,
+          });
+          if (jpegBlob && jpegBlob.size > 0) {
+            return jpegBlob;
+          }
+        }
+      } else {
+        bitmap.close();
+      }
+    } catch (err) {
+      console.warn('[Compression] OffscreenCanvas path failed, falling back to standard canvas:', err);
+    }
+  }
+
+  // Path B: Standard HTMLImageElement + Canvas fallback for older Android engines
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();

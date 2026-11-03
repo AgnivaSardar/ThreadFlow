@@ -9,9 +9,6 @@ import {
   SUPERVISOR_I18N,
   STAGE_TRANSLATIONS,
   Language,
-  translateStyle,
-  translateDescription,
-  translateBuyer,
   translateUnit,
   formatDateLocalized,
 } from './supervisorTranslations';
@@ -21,11 +18,22 @@ import {
   isOfflineSimulated,
   setOfflineSimulated,
   getPendingOfflineCount,
+  getPendingQueueList,
+  discardOfflineUpdate,
+  retryOfflineUpdate,
+  getStorageQuota,
 } from '../../offline/queue/queue';
-import { syncOfflineQueue } from '../../offline/sync/sync';
+import {
+  syncOfflineQueue,
+  getNetworkQuality,
+  registerOfflineSyncListeners,
+  NetworkQuality,
+} from '../../offline/sync/sync';
 import {
   cacheSupervisorWork,
   getCachedSupervisorWork,
+  PendingUpdateRecord,
+  StorageQuotaInfo,
 } from '../../offline/db';
 import {
   Layers,
@@ -37,11 +45,15 @@ import {
   Clock,
   RefreshCw,
   X,
-  History,
-  TrendingUp,
   Package,
   Wifi,
   WifiOff,
+  Signal,
+  HardDrive,
+  Eye,
+  Trash2,
+  RotateCcw,
+  AlertTriangle,
 } from 'lucide-react';
 
 export const MyWorkPage: React.FC = () => {
@@ -62,82 +74,30 @@ export const MyWorkPage: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<SupervisorWorkOrderItem | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Feature 7: Offline Queue & Simulation States
+  // Feature 7: Offline Queue, Quality & Simulation States
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [isOnline, setIsOnline] = useState<boolean>(isEffectiveOnline());
   const [isSimulated, setIsSimulated] = useState<boolean>(isOfflineSimulated());
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [networkQuality, setNetworkQuality] = useState<NetworkQuality>(getNetworkQuality());
+  const [storageQuota, setStorageQuota] = useState<StorageQuotaInfo | null>(null);
 
-  // Refresh pending count
+  // Queue Drawer Modal state
+  const [isQueueDrawerOpen, setIsQueueDrawerOpen] = useState(false);
+  const [pendingList, setPendingList] = useState<PendingUpdateRecord[]>([]);
+
+  // Refresh pending count & list
   const refreshPendingCount = useCallback(async () => {
     const count = await getPendingOfflineCount();
     setPendingCount(count);
   }, []);
 
-  // Synchronize language changes & queue updates
-  useEffect(() => {
-    refreshPendingCount();
-
-    const handleLangChange = (e: any) => {
-      if (e.detail?.lang) {
-        setLang(e.detail.lang);
-      }
-    };
-
-    const handleNetworkChange = () => {
-      setIsOnline(isEffectiveOnline());
-      setIsSimulated(isOfflineSimulated());
-      refreshPendingCount();
-    };
-
-    const handleQueueChange = () => {
-      refreshPendingCount();
-    };
-
-    const handleQueueSynced = () => {
-      refreshPendingCount();
-      fetchWork();
-    };
-
-    window.addEventListener('threadflow-lang-change', handleLangChange);
-    window.addEventListener('online', handleNetworkChange);
-    window.addEventListener('offline', handleNetworkChange);
-    window.addEventListener('threadflow-network-change', handleNetworkChange);
-    window.addEventListener('threadflow-queue-changed', handleQueueChange);
-    window.addEventListener('threadflow-queue-synced', handleQueueSynced);
-
-    return () => {
-      window.removeEventListener('threadflow-lang-change', handleLangChange);
-      window.removeEventListener('online', handleNetworkChange);
-      window.removeEventListener('offline', handleNetworkChange);
-      window.removeEventListener('threadflow-network-change', handleNetworkChange);
-      window.removeEventListener('threadflow-queue-changed', handleQueueChange);
-      window.removeEventListener('threadflow-queue-synced', handleQueueSynced);
-    };
-  }, [refreshPendingCount]);
-
-  // Toggle offline simulation switch
-  const handleToggleSimulation = () => {
-    const nextVal = !isSimulated;
-    setOfflineSimulated(nextVal);
-    setIsSimulated(nextVal);
-    setIsOnline(isEffectiveOnline());
-    if (!nextVal) {
-      setTimeout(() => syncOfflineQueue(), 300);
-    }
-  };
-
-  // Manual Trigger Sync from MyWorkPage
-  const handleManualSync = async () => {
-    if (!isEffectiveOnline()) return;
-    setIsSyncing(true);
-    try {
-      await syncOfflineQueue();
-    } finally {
-      setIsSyncing(false);
-      refreshPendingCount();
-    }
-  };
+  const loadPendingList = useCallback(async () => {
+    const list = await getPendingQueueList();
+    setPendingList(list);
+    const quota = await getStorageQuota();
+    setStorageQuota(quota);
+  }, []);
 
   // Fetch Supervisor Work from API (with offline cache fallback)
   const fetchWork = useCallback(async () => {
@@ -178,17 +138,117 @@ export const MyWorkPage: React.FC = () => {
     }
   }, [user?.assignedUnitId, lang]);
 
-  // Listen to background sync notifications
+  // Synchronize language changes & queue updates
   useEffect(() => {
-    fetchWork();
+    refreshPendingCount();
+    getStorageQuota().then(setStorageQuota);
 
-    const handleQueueSynced = () => {
-      fetchWork();
+    // Register background listeners
+    const unregisterSync = registerOfflineSyncListeners();
+
+    const handleLangChange = (e: any) => {
+      if (e.detail?.lang) {
+        setLang(e.detail.lang);
+      }
     };
 
+    const handleNetworkChange = () => {
+      setIsOnline(isEffectiveOnline());
+      setIsSimulated(isOfflineSimulated());
+      setNetworkQuality(getNetworkQuality());
+      refreshPendingCount();
+    };
+
+    const handleQualityChange = (e: any) => {
+      if (e.detail) {
+        setNetworkQuality(e.detail);
+      }
+    };
+
+    const handleQueueChange = () => {
+      refreshPendingCount();
+      loadPendingList();
+    };
+
+    const handleQueueSynced = (e: any) => {
+      refreshPendingCount();
+      loadPendingList();
+      fetchWork();
+      if (e.detail?.synced > 0) {
+        setToastMessage(
+          lang === 'ta'
+            ? `${e.detail.synced} ஆஃப்லைன் பதிவுகள் வெற்றிகரமாக சர்வரில் சேர்க்கப்பட்டது!`
+            : `Successfully synchronized ${e.detail.synced} offline shift updates!`
+        );
+      }
+    };
+
+    const handleOptimisticUpdate = async () => {
+      const cacheKey = `work_${user?.assignedUnitId || 'default'}`;
+      const cached = await getCachedSupervisorWork(cacheKey);
+      if (cached) {
+        setWorkData({ ...cached });
+      }
+      refreshPendingCount();
+    };
+
+    window.addEventListener('threadflow-lang-change', handleLangChange);
+    window.addEventListener('online', handleNetworkChange);
+    window.addEventListener('offline', handleNetworkChange);
+    window.addEventListener('threadflow-network-change', handleNetworkChange);
+    window.addEventListener('threadflow-quality-changed', handleQualityChange);
+    window.addEventListener('threadflow-queue-changed', handleQueueChange);
     window.addEventListener('threadflow-queue-synced', handleQueueSynced);
-    return () => window.removeEventListener('threadflow-queue-synced', handleQueueSynced);
+    window.addEventListener('threadflow-cache-optimistic-updated', handleOptimisticUpdate);
+
+    return () => {
+      unregisterSync();
+      window.removeEventListener('threadflow-lang-change', handleLangChange);
+      window.removeEventListener('online', handleNetworkChange);
+      window.removeEventListener('offline', handleNetworkChange);
+      window.removeEventListener('threadflow-network-change', handleNetworkChange);
+      window.removeEventListener('threadflow-quality-changed', handleQualityChange);
+      window.removeEventListener('threadflow-queue-changed', handleQueueChange);
+      window.removeEventListener('threadflow-queue-synced', handleQueueSynced);
+      window.removeEventListener('threadflow-cache-optimistic-updated', handleOptimisticUpdate);
+    };
+  }, [refreshPendingCount, loadPendingList, fetchWork, user?.assignedUnitId, lang]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchWork();
   }, [fetchWork]);
+
+  // Toggle offline simulation switch
+  const handleToggleSimulation = () => {
+    const nextVal = !isSimulated;
+    setOfflineSimulated(nextVal);
+    setIsSimulated(nextVal);
+    setIsOnline(isEffectiveOnline());
+    setNetworkQuality(getNetworkQuality());
+    if (!nextVal) {
+      setTimeout(() => syncOfflineQueue(), 300);
+    }
+  };
+
+  // Manual Trigger Sync from MyWorkPage
+  const handleManualSync = async () => {
+    if (!isEffectiveOnline()) return;
+    setIsSyncing(true);
+    try {
+      await syncOfflineQueue();
+    } finally {
+      setIsSyncing(false);
+      refreshPendingCount();
+      loadPendingList();
+    }
+  };
+
+  // Open Queue Drawer
+  const handleOpenQueueDrawer = async () => {
+    await loadPendingList();
+    setIsQueueDrawerOpen(true);
+  };
 
   return (
     <div className="space-y-6 w-full animate-in fade-in duration-300">
@@ -208,7 +268,7 @@ export const MyWorkPage: React.FC = () => {
         </div>
       )}
 
-      {/* Page Title & Action Bar (Matching Export Order Board exactly) */}
+      {/* Page Title & Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
@@ -238,44 +298,78 @@ export const MyWorkPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Feature 7: Offline Queue Banner & Reviewer Simulation Toggle */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
-        {/* Left: Queue Status Pill */}
-        <div className="flex items-center gap-2.5">
-          <div
-            className={`w-3 h-3 rounded-full shrink-0 ${
-              !isOnline
-                ? 'bg-amber-500 animate-pulse'
-                : pendingCount > 0
-                ? 'bg-sky-500 animate-pulse'
-                : 'bg-emerald-500'
-            }`}
-          />
-          <div className="text-xs font-bold text-slate-800">
-            {pendingCount > 0 ? (
-              <span className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-amber-800 font-extrabold">
-                  {lang === 'ta'
-                    ? `ஆஃப்லைன் வரிசை: ${pendingCount} பதிவுகள் காத்திருக்கின்றன`
-                    : `Offline Queue: ${pendingCount} Pending`}
+      {/* Feature 7: Upgraded Offline Queue Banner, Telemetry & Reviewer Simulation Toggle */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+        {/* Left: Queue Status Pill & Interactive Drawer Opener */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            type="button"
+            onClick={handleOpenQueueDrawer}
+            className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/90 transition-all text-left cursor-pointer group"
+            title="Click to inspect offline queue details"
+          >
+            <div
+              className={`w-3 h-3 rounded-full shrink-0 ${
+                !isOnline
+                  ? 'bg-amber-500 animate-pulse'
+                  : pendingCount > 0
+                  ? 'bg-sky-500 animate-pulse'
+                  : 'bg-emerald-500'
+              }`}
+            />
+            <div className="text-xs font-bold text-slate-800">
+              {pendingCount > 0 ? (
+                <span className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-amber-800 font-extrabold">
+                    {lang === 'ta'
+                      ? `ஆஃப்லைன் வரிசை: ${pendingCount} பதிவுகள்`
+                      : `Offline Queue: ${pendingCount} Pending`}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[11px] text-sky-700 group-hover:text-sky-900 font-black">
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>{t.inspectQueue}</span>
+                  </span>
                 </span>
-                <span className="text-slate-400 font-normal hidden sm:inline">•</span>
-                <span className="text-slate-500 font-medium text-[11px]">
-                  {lang === 'ta' ? '(இணைப்பு வந்ததும் தானாக சேரும்)' : '(Auto-syncs when online)'}
+              ) : (
+                <span className="text-slate-600 flex items-center gap-1">
+                  <span>{lang === 'ta' ? 'ஆஃப்லைன் வரிசை: 0 காத்திருப்பு' : 'Offline Queue: 0 Pending'}</span>
+                  <span className="text-[11px] text-slate-400">({lang === 'ta' ? 'அனைத்தும் ஒத்திசைக்கப்பட்டது' : 'Synced'})</span>
                 </span>
+              )}
+            </div>
+          </button>
+
+          {/* Network Quality Telemetry Pill */}
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border">
+            {!networkQuality.isOnline ? (
+              <span className="text-rose-700 flex items-center gap-1 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-200">
+                <WifiOff className="w-3.5 h-3.5 text-rose-600" />
+                <span>{t.networkQualityOffline}</span>
+              </span>
+            ) : networkQuality.isWeakSignal ? (
+              <span className="text-amber-800 flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-300">
+                <Signal className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+                <span>{t.networkQualitySlow}</span>
               </span>
             ) : (
-              <span className="text-slate-600">
-                {lang === 'ta'
-                  ? 'ஆஃப்லைன் வரிசை: 0 காத்திருப்பு (அனைத்தும் சர்வரில் சேர்க்கப்பட்டது)'
-                  : 'Offline Queue: 0 Pending (All floor logs synchronized)'}
+              <span className="text-emerald-800 flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">
+                <Wifi className="w-3.5 h-3.5 text-emerald-600" />
+                <span>{t.networkQualityFast}</span>
               </span>
             )}
           </div>
+
+          {/* Device Storage Telemetry */}
+          {storageQuota && (
+            <div className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200/70">
+              <HardDrive className="w-3 h-3 text-slate-400" />
+              <span>{storageQuota.usedLabel} {t.storageUsage}</span>
+            </div>
+          )}
         </div>
 
         {/* Right: Manual Reviewer Toggle & Sync Now Button */}
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+        <div className="flex items-center gap-2 self-start lg:self-auto shrink-0 flex-wrap">
           {pendingCount > 0 && isOnline && (
             <button
               type="button"
@@ -366,6 +460,7 @@ export const MyWorkPage: React.FC = () => {
                     : (lang === 'ta' ? 'முடிந்தது' : 'Done');
 
                   const isSelected = selectedOrder?.orderId === order.orderId;
+                  const isOptimistic = (order as any).hasOptimisticPending;
 
                   return (
                     <div
@@ -383,17 +478,26 @@ export const MyWorkPage: React.FC = () => {
                     >
                       <div>
                         {/* Top Metadata Row */}
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-900 border border-blue-200/80">
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
-                            {stageLabel}
-                          </span>
+                        <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-900 border border-blue-200/80">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+                              {stageLabel}
+                            </span>
+                            {/* Optimistic Local Indicator */}
+                            {isOptimistic && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-900 border border-amber-300 animate-pulse">
+                                <Clock className="w-3 h-3 text-amber-600" />
+                                <span>{t.optimisticPendingBadge}</span>
+                              </span>
+                            )}
+                          </div>
                           <span className="text-xs font-black text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200/60 font-mono">
                             {order.poNumber}
                           </span>
                         </div>
 
-                        {/* Style Name & Buyer Info (Preserves authentic commercial buyer & product names) */}
+                        {/* Style Name & Buyer Info */}
                         <h3 className="text-base font-extrabold text-slate-900 group-hover:text-sky-700 transition-colors line-clamp-1">
                           {order.style}
                         </h3>
@@ -499,7 +603,7 @@ export const MyWorkPage: React.FC = () => {
                         </span>
                         <button
                           type="button"
-                          className="inline-flex items-center gap-1 text-xs font-black text-sky-700 group-hover:text-sky-900 group-hover:translate-x-0.5 transition-all"
+                          className="inline-flex items-center gap-1 text-xs font-black text-sky-700 group-hover:text-sky-900 group-hover:translate-x-0.5 transition-all cursor-pointer"
                         >
                           <span>{t.logOutput}</span>
                           <ChevronRight className="w-4 h-4" />
@@ -511,64 +615,6 @@ export const MyWorkPage: React.FC = () => {
               </div>
             )}
           </div>
-
-          {/* RECENT SHIFT SUBMISSIONS SECTION */}
-          {workData?.recentUpdates && workData.recentUpdates.length > 0 && (
-            <div className="pt-4">
-              <div className="flex items-center justify-between mb-3 px-1">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                  <History className="w-4 h-4 text-slate-500" />
-                  {t.recentLogs}
-                </h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                {workData.recentUpdates.slice(0, 6).map((u) => (
-                  <div
-                    key={u.id}
-                    className="bg-white rounded-2xl p-4 border border-slate-200/80 text-xs shadow-2xs flex items-center justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2 font-bold text-slate-900">
-                        <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-[11px]">
-                          {u.poNumber}
-                        </span>
-                        <span className="text-slate-300">•</span>
-                        <span className="text-sky-700 font-extrabold">
-                          {STAGE_TRANSLATIONS[u.stage]?.[lang] || u.stage}
-                        </span>
-                      </div>
-                      <div className="text-slate-500 mt-1 flex items-center gap-1.5 text-[11px]">
-                        <span>{u.shift === 'DAY' ? t.shiftDay : t.shiftNight} {t.shiftLabel}</span>
-                        <span>•</span>
-                        <span>
-                          {new Date(u.clientEventAt).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      </div>
-                      {u.notes && (
-                        <div className="text-slate-600 italic mt-1 line-clamp-1 max-w-[200px]">
-                          "{u.notes}"
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <span className="text-base font-black text-emerald-700">
-                        +{u.goodQuantity} {t.pieces}
-                      </span>
-                      {u.rejectedQuantity > 0 && (
-                        <div className="text-[11px] font-bold text-rose-600">
-                          -{u.rejectedQuantity} {lang === 'ta' ? 'நிராகரிப்பு' : 'rej'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </>
       )}
 
@@ -586,7 +632,7 @@ export const MyWorkPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSelectedOrder(null)}
-                className="w-8 h-8 rounded-full bg-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-300 flex items-center justify-center font-bold text-xs transition-colors"
+                className="w-8 h-8 rounded-full bg-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-300 flex items-center justify-center font-bold text-xs transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -603,6 +649,252 @@ export const MyWorkPage: React.FC = () => {
               }}
               onCancel={() => setSelectedOrder(null)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* FEATURE 7 UPGRADE: INTERACTIVE OFFLINE QUEUE INSPECTOR DRAWER MODAL */}
+      {isQueueDrawerOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-6 animate-in fade-in">
+          <div className="w-full max-w-2xl bg-slate-50 rounded-2xl sm:rounded-3xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 animate-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 bg-white border-b border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-sky-50 border border-sky-200 text-sky-700">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-slate-900">
+                      {t.queueDrawerTitle}
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-300">
+                      {pendingList.length}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {t.queueDrawerSubtitle}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQueueDrawerOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Storage and Network Telemetry Bar */}
+            <div className="px-4 sm:px-5 py-2.5 bg-slate-100/80 border-b border-slate-200/80 flex items-center justify-between text-xs flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <HardDrive className="w-3.5 h-3.5 text-slate-500" />
+                <span className="text-slate-600 font-medium">
+                  {t.storageUsage}:{' '}
+                  <span className="font-bold text-slate-800">
+                    {storageQuota ? storageQuota.usedLabel : '~120 KB'}
+                  </span>
+                  {storageQuota && (
+                    <span className="text-slate-400 text-[11px] ml-1">
+                      ({100 - storageQuota.percentUsed}% {t.storageFree})
+                    </span>
+                  )}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                {!networkQuality.isOnline ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                    <WifiOff className="w-3 h-3 text-rose-600" />
+                    <span>{t.networkQualityOffline}</span>
+                  </span>
+                ) : networkQuality.isWeakSignal ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                    <Signal className="w-3 h-3 text-amber-600 animate-pulse" />
+                    <span>{t.networkQualitySlow}</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <Wifi className="w-3 h-3 text-emerald-600" />
+                    <span>{t.networkQualityFast}</span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Item List */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
+              {pendingList.length === 0 ? (
+                <div className="py-14 text-center space-y-3">
+                  <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
+                  <p className="text-sm font-bold text-slate-700">
+                    {t.noPendingItems}
+                  </p>
+                </div>
+              ) : (
+                pendingList.map((item) => {
+                  const isSyncingItem = item.status === 'SYNCING';
+                  const isErrorItem = item.status === 'ERROR';
+
+                  return (
+                    <div
+                      key={item.idempotencyKey}
+                      className={`bg-white rounded-xl p-4 border transition-all shadow-xs ${
+                        isErrorItem
+                          ? 'border-rose-300 bg-rose-50/30'
+                          : isSyncingItem
+                          ? 'border-blue-300 ring-2 ring-blue-100'
+                          : 'border-slate-200'
+                      }`}
+                    >
+                      {/* Top Info Row */}
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                            {item.poNumber}
+                          </span>
+                          <span className="text-xs font-bold text-slate-800 truncate max-w-[160px] sm:max-w-[220px]">
+                            {item.style}
+                          </span>
+                        </div>
+
+                        {/* Status Pill */}
+                        <div>
+                          {isSyncingItem ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                              <span>{t.statusSyncing}</span>
+                            </span>
+                          ) : isErrorItem ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                              <AlertTriangle className="w-3 h-3" />
+                              <span>{t.statusError}</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                              <Clock className="w-3 h-3" />
+                              <span>{t.statusQueued}</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Quantitative Breakdown & Details */}
+                      <div className="flex items-center justify-between text-xs py-1.5 border-t border-b border-slate-100/80 my-2">
+                        <div className="flex items-center gap-3">
+                          <span className="font-black text-emerald-700">
+                            +{item.goodQty} {t.pieces}
+                          </span>
+                          {item.rejectedQty > 0 && (
+                            <span className="font-bold text-rose-600">
+                              -{item.rejectedQty} {lang === 'ta' ? 'குறை' : 'def'}
+                            </span>
+                          )}
+                          <span className="text-slate-400">•</span>
+                          <span className="text-slate-600 font-medium">
+                            {STAGE_TRANSLATIONS[item.stage as any]?.[lang] || item.stage}
+                          </span>
+                        </div>
+
+                        <span className="text-[11px] text-slate-400 font-mono">
+                          {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+
+                      {/* Per-size Breakdown Badges */}
+                      {item.sizeBreakdownLines && item.sizeBreakdownLines.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {item.sizeBreakdownLines.map((line, idx) => (
+                            <span
+                              key={idx}
+                              className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[11px] font-bold border border-slate-200"
+                            >
+                              {line.goodQuantity} {t.pieces}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Error notice if invariant or server rejected */}
+                      {isErrorItem && item.lastError && (
+                        <div className="mb-2 p-2 bg-rose-50 border border-rose-200 rounded-lg text-xs font-semibold text-rose-800 flex items-start gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
+                          <span className="line-clamp-2">{item.lastError}</span>
+                        </div>
+                      )}
+
+                      {/* Action Buttons for this item */}
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-[10px] text-slate-400 font-mono truncate max-w-[180px]">
+                          {item.idempotencyKey.slice(0, 13)}...
+                        </span>
+
+                        <div className="flex items-center gap-2">
+                          {isErrorItem && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                await retryOfflineUpdate(item.idempotencyKey);
+                                await loadPendingList();
+                                if (isEffectiveOnline()) {
+                                  syncOfflineQueue();
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              <span>{t.retryRecord}</span>
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (window.confirm(t.discardConfirm)) {
+                                await discardOfflineUpdate(item.idempotencyKey);
+                                await loadPendingList();
+                                await refreshPendingCount();
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-rose-700 hover:text-rose-900 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3 text-rose-500" />
+                            <span>{t.discardRecord}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 sm:p-5 bg-white border-t border-slate-200 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setIsQueueDrawerOpen(false)}
+                className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
+              >
+                {t.close}
+              </button>
+
+              {pendingList.length > 0 && isOnline && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await handleManualSync();
+                    await loadPendingList();
+                  }}
+                  disabled={isSyncing}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                  <span>{t.syncAllNow}</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

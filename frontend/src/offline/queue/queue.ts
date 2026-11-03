@@ -2,6 +2,11 @@ import {
   enqueuePendingUpdate,
   getPendingQueueCount,
   getAllPendingUpdates,
+  deletePendingUpdate,
+  resetPendingStatus,
+  applyOptimisticFloorUpdate,
+  getStorageQuotaInfo,
+  StorageQuotaInfo,
   PendingUpdateRecord,
 } from '../db';
 import { compressImage } from '../compression';
@@ -66,6 +71,7 @@ export interface EnqueueFloorParams {
   issueCategory?: string | null;
   photoFile?: File | null;
   clientEventAt?: string;
+  cacheKey?: string;
   sizeBreakdownLines?: {
     orderLineId: string;
     goodQuantity: number;
@@ -74,7 +80,8 @@ export interface EnqueueFloorParams {
 }
 
 /**
- * Memory-safe enqueuing: compresses photo to WebP/JPEG Blob, generates UUIDv4, and persists in IndexedDB.
+ * Memory-safe enqueuing: compresses photo to WebP/JPEG Blob, generates UUIDv4, persists in IndexedDB,
+ * and applies an instant optimistic local update for 0ms floor feedback.
  */
 export async function enqueueFloorUpdate(params: EnqueueFloorParams): Promise<PendingUpdateRecord> {
   const idempotencyKey = generateUUIDv4();
@@ -113,6 +120,15 @@ export async function enqueueFloorUpdate(params: EnqueueFloorParams): Promise<Pe
 
   await enqueuePendingUpdate(record);
 
+  // Apply optimistic local cache update for 0ms UI latency
+  const targetCacheKey = params.cacheKey || 'work_UNIT_1';
+  await applyOptimisticFloorUpdate(targetCacheKey, {
+    orderId: params.orderId,
+    goodQty: params.goodQty,
+    rejectedQty: params.rejectedQty,
+    sizeBreakdownLines: params.sizeBreakdownLines,
+  });
+
   // Notify header pills and UI badges
   window.dispatchEvent(
     new CustomEvent('threadflow-queue-changed', {
@@ -120,7 +136,37 @@ export async function enqueueFloorUpdate(params: EnqueueFloorParams): Promise<Pe
     })
   );
 
+  window.dispatchEvent(
+    new CustomEvent('threadflow-cache-optimistic-updated', {
+      detail: { orderId: params.orderId, goodQty: params.goodQty },
+    })
+  );
+
   return record;
+}
+
+/**
+ * Discard an offline queued update
+ */
+export async function discardOfflineUpdate(idempotencyKey: string): Promise<void> {
+  await deletePendingUpdate(idempotencyKey);
+  window.dispatchEvent(
+    new CustomEvent('threadflow-queue-changed', {
+      detail: { count: await getPendingQueueCount() },
+    })
+  );
+}
+
+/**
+ * Retry an offline queued update marked as ERROR
+ */
+export async function retryOfflineUpdate(idempotencyKey: string): Promise<void> {
+  await resetPendingStatus(idempotencyKey);
+  window.dispatchEvent(
+    new CustomEvent('threadflow-queue-changed', {
+      detail: { count: await getPendingQueueCount() },
+    })
+  );
 }
 
 /**
@@ -135,4 +181,11 @@ export async function getPendingOfflineCount(): Promise<number> {
  */
 export async function getPendingQueueList(): Promise<PendingUpdateRecord[]> {
   return getAllPendingUpdates();
+}
+
+/**
+ * Get current device storage quota information
+ */
+export async function getStorageQuota(): Promise<StorageQuotaInfo | null> {
+  return getStorageQuotaInfo();
 }

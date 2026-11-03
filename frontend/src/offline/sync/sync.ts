@@ -15,7 +15,48 @@ export interface SyncResult {
   errors: string[];
 }
 
+export interface NetworkQuality {
+  isOnline: boolean;
+  effectiveType: 'slow-2g' | '2g' | '3g' | '4g' | 'unknown';
+  isWeakSignal: boolean;
+  downlinkMb?: number;
+  rttMs?: number;
+}
+
 let isSyncing = false;
+let autoRetryTimer: any = null;
+
+/**
+ * Determine network quality using Network Information API
+ */
+export function getNetworkQuality(): NetworkQuality {
+  const isOnline = isEffectiveOnline();
+  const conn =
+    typeof navigator !== 'undefined'
+      ? (navigator as any).connection ||
+        (navigator as any).mozConnection ||
+        (navigator as any).webkitConnection
+      : null;
+
+  if (!conn) {
+    return {
+      isOnline,
+      effectiveType: 'unknown',
+      isWeakSignal: false,
+    };
+  }
+
+  const effectiveType = conn.effectiveType || '4g';
+  const isWeakSignal = isOnline && (effectiveType === 'slow-2g' || effectiveType === '2g');
+
+  return {
+    isOnline,
+    effectiveType,
+    isWeakSignal,
+    downlinkMb: conn.downlink,
+    rttMs: conn.rtt,
+  };
+}
 
 /**
  * Audio chime synthesizer for low-end mobile devices (Web Audio API)
@@ -58,7 +99,57 @@ function triggerSyncHaptics() {
 }
 
 /**
+ * Process a single offline record to the server
+ */
+async function syncSingleRecord(item: PendingUpdateRecord): Promise<{ success: boolean; error?: string }> {
+  await updatePendingStatus(item.idempotencyKey, 'SYNCING');
+
+  // Convert stored Blob to Base64 for the API transport
+  let photoBase64: string | null = null;
+  if (item.photoBlob) {
+    try {
+      photoBase64 = await blobToBase64(item.photoBlob);
+    } catch (convErr) {
+      console.warn('[Sync] Failed to convert photo blob:', convErr);
+    }
+  }
+
+  const payload = {
+    idempotencyKey: item.idempotencyKey,
+    orderId: item.orderId,
+    milestoneId: item.milestoneId,
+    stage: item.stage,
+    shift: item.shift,
+    machineLine: item.machineLine || null,
+    goodQuantity: item.goodQty,
+    rejectedQuantity: item.rejectedQty,
+    notes: item.notes || null,
+    issueCategory: item.issueCategory || null,
+    compressedPhotoBase64: photoBase64,
+    clientEventAt: item.clientEventAt,
+    sizeBreakdownLines: item.sizeBreakdownLines,
+  };
+
+  try {
+    await apiRequest('/production/updates', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    // Remove from queue on HTTP 200/201 (or idempotent replay)
+    await removePendingUpdate(item.idempotencyKey);
+    return { success: true };
+  } catch (err: any) {
+    const errorMsg = err.message || 'Synchronization failure';
+    console.error(`[Sync] Failed to sync update ${item.idempotencyKey}:`, err);
+    await updatePendingStatus(item.idempotencyKey, 'ERROR', errorMsg);
+    return { success: false, error: errorMsg };
+  }
+}
+
+/**
  * Flush all queued updates from IndexedDB `pending_updates` to the server
+ * Uses clamped concurrency (2 requests at a time) and exponential backoff retry.
  */
 export async function syncOfflineQueue(): Promise<SyncResult> {
   const result: SyncResult = {
@@ -88,54 +179,26 @@ export async function syncOfflineQueue(): Promise<SyncResult> {
   isSyncing = true;
   result.total = pendingItems.length;
 
-  for (const item of pendingItems) {
-    try {
-      await updatePendingStatus(item.idempotencyKey, 'SYNCING');
+  // Process with concurrency clamped to 2 for weak cellular radio protection
+  const CONCURRENCY_LIMIT = 2;
+  const queue = [...pendingItems];
 
-      // Convert stored Blob to Base64 for the API transport
-      let photoBase64: string | null = null;
-      if (item.photoBlob) {
-        try {
-          photoBase64 = await blobToBase64(item.photoBlob);
-        } catch (convErr) {
-          console.warn('[Sync] Failed to convert photo blob:', convErr);
-        }
+  const workers = Array.from({ length: Math.min(CONCURRENCY_LIMIT, queue.length) }, async () => {
+    while (queue.length > 0) {
+      const item = queue.shift();
+      if (!item) break;
+
+      const res = await syncSingleRecord(item);
+      if (res.success) {
+        result.synced++;
+      } else {
+        result.failed++;
+        if (res.error) result.errors.push(res.error);
       }
-
-      const payload = {
-        idempotencyKey: item.idempotencyKey,
-        orderId: item.orderId,
-        milestoneId: item.milestoneId,
-        stage: item.stage,
-        shift: item.shift,
-        machineLine: item.machineLine || null,
-        goodQuantity: item.goodQty,
-        rejectedQuantity: item.rejectedQty,
-        notes: item.notes || null,
-        issueCategory: item.issueCategory || null,
-        compressedPhotoBase64: photoBase64,
-        clientEventAt: item.clientEventAt,
-        sizeBreakdownLines: item.sizeBreakdownLines,
-      };
-
-      await apiRequest('/production/updates', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-
-      // On HTTP 200/201 (or idempotent replay), remove from queue
-      await removePendingUpdate(item.idempotencyKey);
-      result.synced++;
-    } catch (err: any) {
-      console.error(`[Sync] Failed to sync update ${item.idempotencyKey}:`, err);
-      const errorMsg = err.message || 'Network synchronization error';
-      result.failed++;
-      result.errors.push(errorMsg);
-
-      // If business rule violation (e.g. stage tolerance error), mark as ERROR
-      await updatePendingStatus(item.idempotencyKey, 'ERROR', errorMsg);
     }
-  }
+  });
+
+  await Promise.all(workers);
 
   isSyncing = false;
 
@@ -151,11 +214,22 @@ export async function syncOfflineQueue(): Promise<SyncResult> {
     triggerSyncHaptics();
   }
 
+  // If there are failures due to temporary network glitches, schedule auto-retry with exponential backoff
+  if (result.failed > 0 && isEffectiveOnline()) {
+    if (autoRetryTimer) clearTimeout(autoRetryTimer);
+    const delay = Math.min(30000, 3000 * Math.pow(1.8, Math.min(4, result.failed)));
+    autoRetryTimer = setTimeout(() => {
+      if (isEffectiveOnline()) {
+        syncOfflineQueue();
+      }
+    }, delay);
+  }
+
   return result;
 }
 
 /**
- * Register automatic background sync listeners
+ * Register automatic background sync listeners and network quality changes
  */
 export function registerOfflineSyncListeners(): () => void {
   const handleOnline = () => {
@@ -170,11 +244,36 @@ export function registerOfflineSyncListeners(): () => void {
     }
   };
 
+  const handleConnChange = () => {
+    window.dispatchEvent(
+      new CustomEvent('threadflow-quality-changed', {
+        detail: getNetworkQuality(),
+      })
+    );
+  };
+
   window.addEventListener('online', handleOnline);
   window.addEventListener('threadflow-network-change', handleCustomNetwork);
+
+  const conn =
+    typeof navigator !== 'undefined'
+      ? (navigator as any).connection ||
+        (navigator as any).mozConnection ||
+        (navigator as any).webkitConnection
+      : null;
+
+  if (conn && conn.addEventListener) {
+    conn.addEventListener('change', handleConnChange);
+  }
 
   return () => {
     window.removeEventListener('online', handleOnline);
     window.removeEventListener('threadflow-network-change', handleCustomNetwork);
+    if (conn && conn.removeEventListener) {
+      conn.removeEventListener('change', handleConnChange);
+    }
+    if (autoRetryTimer) {
+      clearTimeout(autoRetryTimer);
+    }
   };
 }

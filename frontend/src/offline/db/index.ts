@@ -6,6 +6,8 @@
  * Zero main-thread blocking, handles low-memory budgets without OOM crashes.
  */
 
+import { formatByteSize } from '../compression';
+
 export type PendingUpdateStatus = 'QUEUED' | 'SYNCING' | 'SYNCED' | 'ERROR';
 
 export interface PendingUpdateRecord {
@@ -34,6 +36,15 @@ export interface PendingUpdateRecord {
     goodQuantity: number;
     rejectedQuantity: number;
   }[];
+}
+
+export interface StorageQuotaInfo {
+  usedBytes: number;
+  quotaBytes: number;
+  percentUsed: number;
+  isLowStorage: boolean;
+  usedLabel: string;
+  quotaLabel: string;
 }
 
 const DB_NAME = 'threadflow_offline_store';
@@ -139,7 +150,33 @@ export async function updatePendingStatus(
 }
 
 /**
- * Remove record on successful synchronization (HTTP 200/201)
+ * Reset pending record back to QUEUED for retry
+ */
+export async function resetPendingStatus(idempotencyKey: string): Promise<void> {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const getReq = store.get(idempotencyKey);
+
+    getReq.onsuccess = () => {
+      const record: PendingUpdateRecord | undefined = getReq.result;
+      if (!record) return resolve();
+
+      record.status = 'QUEUED';
+      record.lastError = null;
+
+      const putReq = store.put(record);
+      putReq.onsuccess = () => resolve();
+      putReq.onerror = () => reject(putReq.error);
+    };
+
+    getReq.onerror = () => reject(getReq.error);
+  });
+}
+
+/**
+ * Remove record on successful synchronization (HTTP 200/201) or discard
  */
 export async function removePendingUpdate(idempotencyKey: string): Promise<void> {
   const db = await openDatabase();
@@ -154,6 +191,13 @@ export async function removePendingUpdate(idempotencyKey: string): Promise<void>
 }
 
 /**
+ * Alias for explicit user discard action
+ */
+export async function deletePendingUpdate(idempotencyKey: string): Promise<void> {
+  return removePendingUpdate(idempotencyKey);
+}
+
+/**
  * Get count of pending items waiting to sync
  */
 export async function getPendingQueueCount(): Promise<number> {
@@ -163,6 +207,31 @@ export async function getPendingQueueCount(): Promise<number> {
   } catch {
     return 0;
   }
+}
+
+/**
+ * Query browser storage quota and memory usage estimate
+ */
+export async function getStorageQuotaInfo(): Promise<StorageQuotaInfo | null> {
+  if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.estimate) {
+    try {
+      const estimate = await navigator.storage.estimate();
+      const used = estimate.usage || 0;
+      const quota = estimate.quota || 0;
+      const percentUsed = quota > 0 ? Math.round((used / quota) * 100) : 0;
+      return {
+        usedBytes: used,
+        quotaBytes: quota,
+        percentUsed,
+        isLowStorage: percentUsed > 85,
+        usedLabel: formatByteSize(used),
+        quotaLabel: formatByteSize(quota),
+      };
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 /**
@@ -199,6 +268,62 @@ export async function getCachedSupervisorWork(cacheKey: string): Promise<any | n
       req.onerror = () => reject(req.error);
     });
   } catch {
+    return null;
+  }
+}
+
+/**
+ * Apply optimistic update to local cached work data for 0ms floor latency
+ */
+export async function applyOptimisticFloorUpdate(
+  cacheKey: string,
+  update: {
+    orderId: string;
+    goodQty: number;
+    rejectedQty: number;
+    sizeBreakdownLines?: { orderLineId: string; goodQuantity: number }[];
+  }
+): Promise<any | null> {
+  try {
+    const cached = await getCachedSupervisorWork(cacheKey);
+    if (!cached || !Array.isArray(cached.orders)) return null;
+
+    const order = cached.orders.find((o: any) => o.orderId === update.orderId);
+    if (order && order.activeMilestone) {
+      order.activeMilestone.completedQuantity += update.goodQty;
+      order.activeMilestone.remainingQuantity = Math.max(
+        0,
+        order.activeMilestone.targetQuantity - order.activeMilestone.completedQuantity
+      );
+      order.activeMilestone.progressPct = Math.min(
+        100,
+        Math.round(
+          (order.activeMilestone.completedQuantity /
+            Math.max(1, order.activeMilestone.targetQuantity)) *
+            100
+        )
+      );
+
+      // Optimistically update order lines if size breakdown provided
+      if (update.sizeBreakdownLines && Array.isArray(order.orderLines)) {
+        update.sizeBreakdownLines.forEach((line) => {
+          const matchLine = order.orderLines.find((ol: any) => ol.id === line.orderLineId);
+          if (matchLine) {
+            matchLine.completedQty += line.goodQuantity;
+          }
+        });
+      }
+
+      // Mark order with optimistic sync indicator
+      order.hasOptimisticPending = true;
+      order.optimisticPendingQty = (order.optimisticPendingQty || 0) + update.goodQty;
+
+      await cacheSupervisorWork(cacheKey, cached);
+      return cached;
+    }
+    return cached;
+  } catch (err) {
+    console.warn('[DB] Failed to apply optimistic update:', err);
     return null;
   }
 }

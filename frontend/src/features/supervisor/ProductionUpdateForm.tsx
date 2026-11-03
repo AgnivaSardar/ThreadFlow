@@ -334,6 +334,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             issueCategory: selectedChip?.category || null,
             photoFile: rawPhotoFile,
             sizeBreakdownLines,
+            cacheKey: `work_${order.unit?.id || 'default'}`,
           });
           triggerHaptic(80);
           onSuccess(
@@ -358,6 +359,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           issueCategory: selectedChip?.category || null,
           photoFile: rawPhotoFile,
           sizeBreakdownLines,
+          cacheKey: `work_${order.unit?.id || 'default'}`,
         });
         triggerHaptic(80);
         onSuccess(
