@@ -165,67 +165,85 @@ export const AuditPage: React.FC = () => {
     { value: 'BUYER', label: isTa ? 'வெளிநாட்டு வாங்குபவர்' : 'Foreign Buyer' },
   ];
 
-  // Helper for rendering pagination numbers
+  // Helper for rendering pagination numbers: 1 2 3 ... [last]
   const renderPaginationButtons = () => {
+    if (totalPages <= 1) return null;
     const buttons = [];
-    const maxButtons = 7;
-    let startPage = Math.max(1, page - Math.floor(maxButtons / 2));
-    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
 
-    if (endPage - startPage + 1 < maxButtons) {
-      startPage = Math.max(1, endPage - maxButtons + 1);
-    }
-
-    if (startPage > 1) {
-      buttons.push(
-        <button
-          key={1}
-          type="button"
-          onClick={() => setPage(1)}
-          className={`w-7 h-7 rounded-lg text-xs font-semibold cursor-pointer transition ${
-            page === 1 ? 'bg-[#0C2D48] text-white shadow-xs' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
-          }`}
-        >
-          1
-        </button>
-      );
-      if (startPage > 2) {
-        buttons.push(<span key="ellipsis-start" className="text-slate-400 text-xs px-0.5">...</span>);
+    if (totalPages <= 5) {
+      for (let p = 1; p <= totalPages; p++) {
+        buttons.push(
+          <button
+            key={p}
+            type="button"
+            onClick={() => setPage(p)}
+            className={`w-7 h-7 rounded-lg text-xs font-bold cursor-pointer transition flex items-center justify-center ${
+              page === p
+                ? 'bg-[#0C2D48] text-white shadow-xs'
+                : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+            }`}
+          >
+            {p}
+          </button>
+        );
       }
+      return buttons;
     }
 
-    for (let p = startPage; p <= endPage; p++) {
+    // Fixed first three pages: 1, 2, 3
+    [1, 2, 3].forEach((p) => {
       buttons.push(
         <button
           key={p}
           type="button"
           onClick={() => setPage(p)}
-          className={`w-7 h-7 rounded-lg text-xs font-semibold cursor-pointer transition ${
-            page === p ? 'bg-[#0C2D48] text-white shadow-xs font-bold' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+          className={`w-7 h-7 rounded-lg text-xs font-bold cursor-pointer transition flex items-center justify-center ${
+            page === p
+              ? 'bg-[#0C2D48] text-white shadow-xs'
+              : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
           }`}
         >
           {p}
         </button>
       );
-    }
+    });
 
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        buttons.push(<span key="ellipsis-end" className="text-slate-400 text-xs px-0.5">...</span>);
+    if (page > 3 && page < totalPages) {
+      if (page > 4) {
+        buttons.push(<span key="ellip-mid-start" className="text-slate-500 text-xs font-bold px-1">...</span>);
       }
       buttons.push(
         <button
-          key={totalPages}
+          key={page}
           type="button"
-          onClick={() => setPage(totalPages)}
-          className={`w-7 h-7 rounded-lg text-xs font-semibold cursor-pointer transition ${
-            page === totalPages ? 'bg-[#0C2D48] text-white shadow-xs' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
-          }`}
+          onClick={() => setPage(page)}
+          className="w-7 h-7 rounded-lg text-xs font-bold cursor-pointer transition flex items-center justify-center bg-[#0C2D48] text-white shadow-xs"
         >
-          {totalPages}
+          {page}
         </button>
       );
+      if (page < totalPages - 1) {
+        buttons.push(<span key="ellip-mid-end" className="text-slate-500 text-xs font-bold px-1">...</span>);
+      }
+    } else {
+      buttons.push(<span key="ellip-end" className="text-slate-500 text-xs font-bold px-1">...</span>);
     }
+
+    // Last page
+    buttons.push(
+      <button
+        key={totalPages}
+        type="button"
+        onClick={() => setPage(totalPages)}
+        className={`w-7 h-7 rounded-lg text-xs font-bold cursor-pointer transition flex items-center justify-center ${
+          page === totalPages
+            ? 'bg-[#0C2D48] text-white shadow-xs'
+            : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+        }`}
+      >
+        {totalPages}
+      </button>
+    );
 
     return buttons;
   };
@@ -298,13 +316,13 @@ export const AuditPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Audit Trail Table - Scrollable on mobile, Fixed on desktop */}
+      {/* 3. Audit Trail Table - Fixed Layout, No Horizontal Scroll, Truncate Overflows */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="w-full overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[680px]">
+        <div className="w-full overflow-hidden">
+          <table className="w-full text-left text-xs table-fixed">
             <colgroup>
-              <col className="w-[14%]" />
-              <col className="w-[18%]" />
+              <col className="w-[15%]" />
+              <col className="w-[17%]" />
               <col className="w-[15%]" />
               <col className="w-[14%]" />
               <col className="w-[15%]" />
@@ -362,8 +380,8 @@ export const AuditPage: React.FC = () => {
                         {ev.userRole}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-slate-600 truncate" title={ensureEnglishNote(ev.notes)}>
-                      {ensureEnglishNote(ev.notes)}
+                    <td className="py-2.5 px-3 text-slate-600 max-w-0 truncate" title={ensureEnglishNote(ev.notes)}>
+                      <span className="block truncate">{ensureEnglishNote(ev.notes)}</span>
                     </td>
                   </tr>
                 ))
@@ -383,10 +401,10 @@ export const AuditPage: React.FC = () => {
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 cursor-pointer transition"
+              className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white text-slate-700 shadow-2xs cursor-pointer transition flex items-center justify-center"
               title="Previous Page"
             >
-              <ChevronLeft className="w-3.5 h-3.5" />
+              <ChevronLeft className="w-4 h-4 stroke-[2.5] text-slate-800" />
             </button>
 
             {renderPaginationButtons()}
@@ -395,10 +413,10 @@ export const AuditPage: React.FC = () => {
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 cursor-pointer transition"
+              className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white text-slate-700 shadow-2xs cursor-pointer transition flex items-center justify-center"
               title="Next Page"
             >
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-4 h-4 stroke-[2.5] text-slate-800" />
             </button>
           </div>
         </div>
