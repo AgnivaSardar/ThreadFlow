@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { apiRequest } from '../services/api';
 import { useTamilSpeechRecognition } from '../hooks/useTamilSpeechRecognition';
 import {
+  Sparkle,
   Sparkles,
   X,
   Send,
@@ -178,10 +179,7 @@ export const AIChatbot: React.FC = () => {
           {isOpen ? (
             <X className="w-6 h-6 stroke-[2.5]" />
           ) : (
-            <div className="relative">
-              <Sparkles className="w-7 h-7 text-white animate-pulse" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white ring-2 ring-emerald-300/60" />
-            </div>
+            <Sparkle className="w-7 h-7 text-white" />
           )}
         </button>
       </div>
