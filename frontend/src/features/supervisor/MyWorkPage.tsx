@@ -56,6 +56,7 @@ import {
   Trash2,
   RotateCcw,
   AlertTriangle,
+  ExternalLink,
 } from 'lucide-react';
 
 export const MyWorkPage: React.FC = () => {
@@ -425,9 +426,11 @@ export const MyWorkPage: React.FC = () => {
                       {/* Top Header Bar Styled with Dark Navy Matching Table Headers */}
                       <div className="bg-[#0C2D48] text-white px-4 py-2.5 flex items-center justify-between border-b border-[#143D60] gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-mono font-black text-sky-200 bg-white/10 px-2 py-0.5 rounded border border-white/20 text-xs shrink-0">
-                            {order.poNumber}
+                          <span className="font-mono text-sm font-extrabold text-sky-400 inline-flex items-center gap-1 shrink-0">
+                            <span>{order.poNumber}</span>
+                            <ExternalLink className="w-3.5 h-3.5 text-sky-400" />
                           </span>
+                          <span className="text-white/40 font-light">•</span>
                           <span className="font-bold text-white text-xs sm:text-sm truncate">
                             {primaryStyleName}
                           </span>

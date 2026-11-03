@@ -14,6 +14,7 @@ import {
   RefreshCw,
   TrendingUp,
   AlertTriangle,
+  ExternalLink,
 } from 'lucide-react';
 
 interface WeeklySummaryData {
@@ -330,7 +331,12 @@ export const ReportsPage: React.FC = () => {
               ) : (
                 data.orders.map((o) => (
                   <tr key={o.id} className="even:bg-slate-50/80 odd:bg-white hover:bg-sky-50/60 transition">
-                    <td className="py-2.5 px-3 font-mono font-bold text-slate-900">{o.poNumber}</td>
+                    <td className="py-2.5 px-3">
+                      <span className="font-mono text-xs font-extrabold text-sky-700 inline-flex items-center gap-1">
+                        <span>{o.poNumber}</span>
+                        <ExternalLink className="w-3 h-3 text-sky-500" />
+                      </span>
+                    </td>
                     <td className="py-2.5 px-3 font-semibold text-slate-800">{o.style}</td>
                     <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">{o.totalQuantity.toLocaleString()} pcs</td>
                     <td className="py-2.5 px-3 whitespace-nowrap text-slate-600">

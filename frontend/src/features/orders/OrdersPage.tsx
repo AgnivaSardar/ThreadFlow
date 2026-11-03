@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  ExternalLink,
 } from 'lucide-react';
 import { OrderListItem, Buyer, Unit, RiskLevel, PaginationMeta } from '../../types';
 import { apiRequest } from '../../services/api';
@@ -512,11 +513,12 @@ export const OrdersPage: React.FC = () => {
                       <td className="py-3 px-4">
                         <Link
                           to={`/orders/${order.id}`}
-                          className="font-mono text-xs font-bold text-sky-700 hover:text-sky-900 hover:underline block"
+                          className="font-mono text-xs font-extrabold text-sky-700 hover:text-sky-900 inline-flex items-center gap-1 group/link mb-0.5"
                         >
-                          {order.poNumber}
+                          <span>{order.poNumber}</span>
+                          <ExternalLink className="w-3 h-3 text-sky-500 group-hover/link:translate-x-0.5 transition-transform" />
                         </Link>
-                        <span className="text-xs font-medium text-slate-800 line-clamp-1">
+                        <span className="text-xs font-medium text-slate-800 line-clamp-1 block">
                           {order.style}
                         </span>
                       </td>

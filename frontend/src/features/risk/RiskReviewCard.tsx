@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Sparkles,
   ShieldCheck,
@@ -9,6 +10,7 @@ import {
   User,
   Loader2,
   Calendar,
+  ExternalLink,
 } from 'lucide-react';
 import { RiskAlertItem } from '../../types';
 import { apiRequest } from '../../services/api';
@@ -195,9 +197,14 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
       {/* Top Header Bar Styled with Dark Navy Matching Sidebar & Table Headers */}
       <div className="px-4 py-2.5 bg-[#0C2D48] text-white border-b border-[#143D60] flex flex-wrap items-center justify-between gap-2 text-xs">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono font-black text-sky-200 bg-white/10 px-2 py-0.5 rounded border border-white/20">
-            {alert.poNumber}
-          </span>
+          <Link
+            to={`/orders/${alert.orderId}`}
+            className="font-mono text-sm font-extrabold text-sky-400 hover:text-sky-200 transition inline-flex items-center gap-1"
+          >
+            <span>{alert.poNumber}</span>
+            <ExternalLink className="w-3.5 h-3.5 text-sky-400" />
+          </Link>
+          <span className="text-white/40">•</span>
           <span className="font-bold text-white">{alert.style.split(' (')[0].split(' - ')[0]}</span>
           <span className="text-white/40">•</span>
           <span className="font-medium text-sky-100">{alert.buyer.name}</span>

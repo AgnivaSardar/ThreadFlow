@@ -28,6 +28,7 @@ import {
   Sparkles,
   Printer,
   Download,
+  ExternalLink,
 } from 'lucide-react';
 import { exportOrdersToCsv } from '../reports/exportService';
 import { WeeklyReportPrintModal } from '../reports/WeeklyReportPrintModal';
@@ -626,9 +627,11 @@ export const BuyerPortalPage: React.FC = () => {
                   {/* Order Header Bar Styled with Dark Navy */}
                   <div className="px-4 py-3 bg-[#0C2D48] text-white border-b border-[#143D60] flex flex-wrap items-center justify-between gap-2.5 text-xs">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono font-black text-sky-200 bg-white/10 px-2 py-0.5 rounded border border-white/20">
-                        {order.poNumber}
+                      <span className="font-mono text-sm font-extrabold text-sky-400 inline-flex items-center gap-1 cursor-default">
+                        <span>{order.poNumber}</span>
+                        <ExternalLink className="w-3.5 h-3.5 text-sky-400" />
                       </span>
+                      <span className="text-white/40">•</span>
                       <span className="font-bold text-white">{order.style.split(' (')[0].split(' - ')[0]}</span>
                       <span className="text-white/40">•</span>
                       <span className="font-medium text-sky-100">

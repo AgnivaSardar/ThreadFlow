@@ -671,7 +671,7 @@ export const RiskPage: React.FC = () => {
                       <div className="flex items-center gap-2 flex-wrap">
                         <Link
                           to={`/orders/${item.orderId}`}
-                          className="font-mono text-sm font-extrabold text-sky-300 hover:text-white transition flex items-center gap-1"
+                          className="font-mono text-sm font-extrabold text-sky-400 hover:text-sky-200 transition inline-flex items-center gap-1"
                         >
                           <span>{item.poNumber}</span>
                           <ExternalLink className="w-3.5 h-3.5 text-sky-400" />
