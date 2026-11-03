@@ -16,6 +16,7 @@ import {
 import { ShowYourMathCard } from './ShowYourMathCard';
 import { RiskReviewCard } from './RiskReviewCard';
 import { CustomSelect, Option } from '../../components/CustomSelect';
+import { Language } from '../supervisor/supervisorTranslations';
 import {
   AlertTriangle,
   RefreshCw,
@@ -26,26 +27,133 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Plane,
   ShieldAlert,
-  Eye,
-  EyeOff,
-  Clock,
   TrendingUp,
-  Sparkles,
 } from 'lucide-react';
 
-const STAGE_LABELS: Record<Stage, string> = {
-  KNITTING: 'Knitting',
-  DYEING_WASHING: 'Dyeing & Washing',
-  PRINTING: 'Printing & Embroidery',
-  CUTTING: 'Fabric Cutting',
-  STITCHING: 'Assembly & Stitching',
-  CHECKING: 'Quality Checking',
-  FINISHING: 'Finishing & Packing',
+const STAGE_LABELS_BILINGUAL: Record<Stage, { en: string; ta: string }> = {
+  KNITTING: { en: 'Knitting', ta: 'பின்னல் (Knitting)' },
+  DYEING_WASHING: { en: 'Dyeing & Washing', ta: 'சாயமிடுதல் & சலவை (Dyeing & Washing)' },
+  PRINTING: { en: 'Printing & Embroidery', ta: 'அச்சிடுதல் & எம்பிராய்டரி (Printing & Embroidery)' },
+  CUTTING: { en: 'Fabric Cutting', ta: 'துணி வெட்டுதல் (Fabric Cutting)' },
+  STITCHING: { en: 'Assembly & Stitching', ta: 'தையல் & இணைத்தல் (Assembly & Stitching)' },
+  CHECKING: { en: 'Quality Checking', ta: 'தர பரிசோதனை (Quality Checking)' },
+  FINISHING: { en: 'Finishing & Packing', ta: 'இறுதி முடித்தல் & பேக்கிங் (Finishing & Packing)' },
+};
+
+const RISK_PAGE_I18N = {
+  en: {
+    pageTitle: 'Risk & Delays Intelligence',
+    pageSubtitle: 'Human-in-the-loop review gate, operational problem triage, and throughput monitoring',
+    factoryAtRisk: 'Factory At-Risk',
+    refreshAll: 'Refresh All',
+    tabIssueReview: 'Issue Review',
+    tabRunRatePace: 'Run-Rate Pace',
+    // Sub-filters for Review Gate
+    filterPendingReview: 'Pending Review',
+    filterInformedToBuyer: 'Informed to Buyer',
+    filterHandledInternally: 'Handled Internally',
+    filterAllOperationalAlerts: 'All Operational Alerts',
+    showingAlerts: (count: number) => `Showing ${count} operational alerts`,
+    loadingAlerts: 'Loading alert triage cards...',
+    noAlertsTitle: 'No Alerts in this Category',
+    noAlertsSubtitle: 'All production alerts in this review status have been handled. Switch filter tabs or refresh to view other items.',
+    // Run-rate KPIs
+    kpiMonitoredOrders: 'Monitored Orders',
+    kpiCriticalDeficit: 'Critical Deficit',
+    kpiBufferCaution: 'Buffer Caution',
+    kpiOnTrack: 'On-Track',
+    // Run-rate filters
+    filterAll: 'All',
+    filterAllRisks: 'All Risks',
+    filterCriticalDeficit: 'Critical Deficit',
+    filterBufferCaution: 'Buffer Caution',
+    filterOnTrack: 'On Track',
+    filterToggle: 'Filters',
+    searchPlaceholder: 'Search PO number or garment style...',
+    labelBuyer: 'Foreign Buyer',
+    labelUnit: 'Production Unit',
+    labelStage: 'Production Stage',
+    allBuyers: 'All Foreign Buyers',
+    allUnits: 'All Production Units',
+    allStages: 'All 7 TNA Stages',
+    subcontract: 'Subcontract',
+    inHouse: 'In-House',
+    evaluatingRunRates: 'Evaluating production run-rates...',
+    noOrdersMatch: 'No Orders Match Current Filters',
+    noOrdersMatchSub: 'Try adjusting your search criteria or resetting filters.',
+    stagePrefix: 'Stage',
+    completedBadge: 'Completed',
+    exFactoryLabel: 'Ex-Factory',
+    daysLeft: (d: number) => `${d}d left`,
+    showingOrdersPagination: (from: number, to: number, total: number) => `Showing ${from} to ${to} of ${total} monitored orders`,
+  },
+  ta: {
+    pageTitle: 'ஆபத்து & தாமத நுண்ணறிவு',
+    pageSubtitle: 'மனித மதிப்பாய்வு வாயில், செயல்பாட்டு பிரச்சனை வகைப்பாடு மற்றும் உற்பத்தி வேகக் கண்காணிப்பு',
+    factoryAtRisk: 'தொழிற்சாலை நிதி ஆபத்து',
+    refreshAll: 'அனைத்தும் புதுப்பி',
+    tabIssueReview: 'பிரச்சனை மதிப்பாய்வு',
+    tabRunRatePace: 'உற்பத்தி வேகம்',
+    // Sub-filters for Review Gate
+    filterPendingReview: 'மதிப்பாய்வு நிலுவை',
+    filterInformedToBuyer: 'வாங்குபவருக்கு தெரிவிக்கப்பட்டது',
+    filterHandledInternally: 'உள்ளகமாக கையாளப்பட்டது',
+    filterAllOperationalAlerts: 'அனைத்து செயல்பாட்டு எச்சரிக்கைகள்',
+    showingAlerts: (count: number) => `${count} செயல்பாட்டு எச்சரிக்கைகள் காட்டப்படுகின்றன`,
+    loadingAlerts: 'எச்சரிக்கை அட்டைகள் ஏற்றப்படுகின்றன...',
+    noAlertsTitle: 'இந்த வகையில் எச்சரிக்கைகள் இல்லை',
+    noAlertsSubtitle: 'இந்த மதிப்பாய்வு நிலையில் உள்ள அனைத்து உற்பத்தி எச்சரிக்கைகளும் கையாளப்பட்டுவிட்டன. பிறவற்றைக் காண வடிகட்டியை மாற்றவும்.',
+    // Run-rate KPIs
+    kpiMonitoredOrders: 'கண்காணிக்கப்படும் ஆர்டர்கள்',
+    kpiCriticalDeficit: 'கடுமையான பற்றாக்குறை',
+    kpiBufferCaution: 'பாதுகாப்பு எச்சரிக்கை',
+    kpiOnTrack: 'சரியான பாதையில்',
+    // Run-rate filters
+    filterAll: 'அனைத்தும்',
+    filterAllRisks: 'அனைத்து ஆபத்துகள்',
+    filterCriticalDeficit: 'கடுமையான பற்றாக்குறை',
+    filterBufferCaution: 'பாதுகாப்பு எச்சரிக்கை',
+    filterOnTrack: 'சரியான பாதை',
+    filterToggle: 'வடிகட்டிகள்',
+    searchPlaceholder: 'PO எண் அல்லது ஆடை ஸ்டைலைத் தேடவும்...',
+    labelBuyer: 'வெளிநாட்டு வாங்குபவர்',
+    labelUnit: 'உற்பத்தி பிரிவு',
+    labelStage: 'உற்பத்தி நிலை',
+    allBuyers: 'அனைத்து வெளிநாட்டு வாங்குபவர்கள்',
+    allUnits: 'அனைத்து உற்பத்தி பிரிவுகள்',
+    allStages: 'அனைத்து 7 TNA நிலைகள்',
+    subcontract: 'துணை ஒப்பந்தம்',
+    inHouse: 'சொந்த ஆலை',
+    evaluatingRunRates: 'உற்பத்தி ஓட்ட விகிதங்கள் கணக்கிடப்படுகின்றன...',
+    noOrdersMatch: 'பொருந்தும் ஆர்டர்கள் எதுவும் இல்லை',
+    noOrdersMatchSub: 'தேடல் அளவுகோல்களை மாற்றவும் அல்லது வடிகட்டிகளை மீட்டமைக்கவும்.',
+    stagePrefix: 'நிலை',
+    completedBadge: 'முடிந்தது',
+    exFactoryLabel: 'தொழிற்சாலை வெளியேறும் தேதி',
+    daysLeft: (d: number) => `${d} நாட்கள் மீதம்`,
+    showingOrdersPagination: (from: number, to: number, total: number) => `${total} ஆர்டர்களில் ${from} முதல் ${to} வரை காட்டப்படுகின்றன`,
+  },
 };
 
 export const RiskPage: React.FC = () => {
+  // Bilingual Language State
+  const [lang, setLang] = useState<Language>(
+    (localStorage.getItem('threadflow_lang') as Language) || 'en'
+  );
+
+  useEffect(() => {
+    const handleLangChange = (e: any) => {
+      if (e.detail?.lang) {
+        setLang(e.detail.lang);
+      }
+    };
+    window.addEventListener('threadflow-lang-change', handleLangChange);
+    return () => window.removeEventListener('threadflow-lang-change', handleLangChange);
+  }, []);
+
+  const t = RISK_PAGE_I18N[lang] || RISK_PAGE_I18N.en;
+
   const [risks, setRisks] = useState<RiskItem[]>([]);
   const [summary, setSummary] = useState<RiskSummary>({
     totalMonitoredOrders: 0,
@@ -59,7 +167,7 @@ export const RiskPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Feature 10: Human-in-the-Loop Review Gate state
+  // Tab State: Issue Review vs Run-Rate Pace
   const [activeTab, setActiveTab] = useState<'REVIEW_GATE' | 'RUN_RATE'>('REVIEW_GATE');
   const [alerts, setAlerts] = useState<RiskAlertItem[]>([]);
   const [alertSummary, setAlertSummary] = useState<RiskAlertSummary | null>(null);
@@ -99,7 +207,7 @@ export const RiskPage: React.FC = () => {
     fetchRisks();
   };
 
-  // Filters
+  // Filters for Run-rate Tab
   const [riskLevelFilter, setRiskLevelFilter] = useState<'ALL' | RiskLevel>('ALL');
   const [buyerFilter, setBuyerFilter] = useState<string>('ALL');
   const [unitFilter, setUnitFilter] = useState<string>('ALL');
@@ -204,7 +312,7 @@ export const RiskPage: React.FC = () => {
   );
 
   const buyerOptions: Option[] = [
-    { value: 'ALL', label: 'All Foreign Buyers' },
+    { value: 'ALL', label: t.allBuyers },
     ...buyers.map((b) => ({
       value: b.id,
       label: b.name,
@@ -213,42 +321,33 @@ export const RiskPage: React.FC = () => {
   ];
 
   const unitOptions: Option[] = [
-    { value: 'ALL', label: 'All Production Units' },
+    { value: 'ALL', label: t.allUnits },
     ...units.map((u) => ({
       value: u.id,
       label: u.name,
-      badge: u.type === 'SUBCONTRACTOR' ? 'Subcontract' : 'In-House',
+      badge: u.type === 'SUBCONTRACTOR' ? t.subcontract : t.inHouse,
     })),
   ];
 
   const stageOptions: Option[] = [
-    { value: 'ALL', label: 'All 7 TNA Stages' },
-    ...Object.entries(STAGE_LABELS).map(([key, label]) => ({
+    { value: 'ALL', label: t.allStages },
+    ...Object.entries(STAGE_LABELS_BILINGUAL).map(([key, item]) => ({
       value: key,
-      label,
+      label: item[lang] || item.en,
     })),
   ];
 
   return (
     <div className="space-y-4 pb-12 animate-in fade-in duration-200">
-      {/* Header Bar with Unified Factory At-Risk Amount */}
+      {/* Top Header Bar: Title on Left, Refresh All on Right */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3 flex-wrap">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-              Risk & Delays Intelligence
-            </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Human-in-the-loop review gate, operational problem triage, and throughput monitoring
-            </p>
-          </div>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-black shadow-3xs">
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-            <span className="text-slate-600 font-bold uppercase text-[10px]">Factory At-Risk:</span>
-            <span className="font-mono text-sm font-black text-rose-700">
-              ₹{(summary.totalExposureRupees || alertSummary?.totalAtRiskRupees || 0).toLocaleString()}
-            </span>
-          </div>
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            {t.pageTitle}
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {t.pageSubtitle}
+          </p>
         </div>
 
         <button
@@ -259,46 +358,52 @@ export const RiskPage: React.FC = () => {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shadow-2xs transition cursor-pointer self-start sm:self-auto"
         >
           <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
-          <span>Refresh All</span>
+          <span>{t.refreshAll}</span>
         </button>
       </div>
 
-      {/* Middle-Justified & Aligned Tab Switcher */}
-      <div className="flex items-center justify-center gap-3 my-3">
-        <button
-          type="button"
-          onClick={() => setActiveTab('REVIEW_GATE')}
-          className={`px-5 py-2.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-2 ${
-            activeTab === 'REVIEW_GATE'
-              ? 'bg-[#0C2D48] text-white shadow-md'
-              : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs'
-          }`}
-        >
-          <ShieldAlert className="w-4 h-4 text-sky-400" />
-          <span>Human-in-the-Loop Review Gate</span>
-          {(alertSummary?.totalPendingReview || 0) > 0 && (
-            <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-900 text-[10px] font-black animate-pulse">
-              {alertSummary?.totalPendingReview}
-            </span>
-          )}
-        </button>
+      {/* Single Horizontal Toolbar: Short Buttons on Left, Factory At-Risk on Right */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+        {/* Short Professional Tab Buttons (Light Theme Active State, No Numbers) */}
+        <div className="inline-flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab('REVIEW_GATE')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
+              activeTab === 'REVIEW_GATE'
+                ? 'bg-sky-100 text-sky-900 border-2 border-sky-600 shadow-xs'
+                : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs'
+            }`}
+          >
+            <ShieldAlert className={`w-4 h-4 ${activeTab === 'REVIEW_GATE' ? 'text-sky-700' : 'text-slate-500'}`} />
+            <span>{t.tabIssueReview}</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('RUN_RATE')}
-          className={`px-5 py-2.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-2 ${
-            activeTab === 'RUN_RATE'
-              ? 'bg-[#0C2D48] text-white shadow-md'
-              : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs'
-          }`}
-        >
-          <TrendingUp className="w-4 h-4 text-sky-400" />
-          <span>Run-Rate Throughput Engine</span>
-          <span className="text-[11px] opacity-75">({sortedRisks.length})</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('RUN_RATE')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
+              activeTab === 'RUN_RATE'
+                ? 'bg-sky-100 text-sky-900 border-2 border-sky-600 shadow-xs'
+                : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs'
+            }`}
+          >
+            <TrendingUp className={`w-4 h-4 ${activeTab === 'RUN_RATE' ? 'text-sky-700' : 'text-slate-500'}`} />
+            <span>{t.tabRunRatePace}</span>
+          </button>
+        </div>
+
+        {/* Unified Factory At-Risk Badge (Horizontal Right) */}
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-black shadow-3xs self-start sm:self-auto">
+          <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+          <span className="text-slate-600 font-bold uppercase text-[10px] tracking-wide">{t.factoryAtRisk}:</span>
+          <span className="font-mono text-sm font-black text-rose-700">
+            ₹{(summary.totalExposureRupees || alertSummary?.totalAtRiskRupees || 0).toLocaleString()}
+          </span>
+        </div>
       </div>
 
-      {/* TAB 1: HUMAN-IN-THE-LOOP REVIEW GATE */}
+      {/* TAB 1: ISSUE REVIEW (Review Gate) */}
       {activeTab === 'REVIEW_GATE' && (
         <div className="space-y-4">
           {/* Status Sub-Filters for Review Gate */}
@@ -306,10 +411,10 @@ export const RiskPage: React.FC = () => {
             <div className="inline-flex p-1 bg-slate-100 rounded-xl gap-1">
               {(
                 [
-                  { id: 'PENDING_REVIEW', label: 'Pending Review', count: alertSummary?.totalPendingReview },
-                  { id: 'CONFIRMED', label: 'Informed to Buyer', count: alertSummary?.totalConfirmed },
-                  { id: 'OVERRIDDEN', label: 'Handled Internally', count: alertSummary?.totalOverridden },
-                  { id: 'ALL', label: 'All Operational Alerts', count: undefined },
+                  { id: 'PENDING_REVIEW', label: t.filterPendingReview, count: alertSummary?.totalPendingReview },
+                  { id: 'CONFIRMED', label: t.filterInformedToBuyer, count: alertSummary?.totalConfirmed },
+                  { id: 'OVERRIDDEN', label: t.filterHandledInternally, count: alertSummary?.totalOverridden },
+                  { id: 'ALL', label: t.filterAllOperationalAlerts, count: undefined },
                 ] as const
               ).map((tab) => (
                 <button
@@ -339,7 +444,7 @@ export const RiskPage: React.FC = () => {
             </div>
 
             <span className="text-xs text-slate-500 font-semibold">
-              Showing <strong>{alerts.length}</strong> operational alerts
+              {t.showingAlerts(alerts.length)}
             </span>
           </div>
 
@@ -347,16 +452,16 @@ export const RiskPage: React.FC = () => {
           {alertsLoading ? (
             <div className="p-10 text-center bg-white rounded-2xl border border-slate-200">
               <div className="w-7 h-7 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-              <p className="text-xs text-slate-500 font-semibold">Loading alert triage cards...</p>
+              <p className="text-xs text-slate-500 font-semibold">{t.loadingAlerts}</p>
             </div>
           ) : alerts.length === 0 ? (
             <div className="p-10 text-center bg-white rounded-2xl border border-slate-200 space-y-2">
               <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-2">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
-              <h4 className="text-sm font-bold text-slate-800">No Alerts in this Category</h4>
+              <h4 className="text-sm font-bold text-slate-800">{t.noAlertsTitle}</h4>
               <p className="text-xs text-slate-500 max-w-md mx-auto">
-                All production alerts in this review status have been handled. Switch filter tabs or refresh to view other items.
+                {t.noAlertsSubtitle}
               </p>
             </div>
           ) : (
@@ -366,6 +471,7 @@ export const RiskPage: React.FC = () => {
                   key={alert.id}
                   alert={alert}
                   onAlertUpdated={handleAlertUpdated}
+                  lang={lang}
                 />
               ))}
             </div>
@@ -373,14 +479,14 @@ export const RiskPage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 2: RUN-RATE THROUGHPUT ENGINE */}
+      {/* TAB 2: RUN-RATE PACE (Run-Rate Throughput Engine) */}
       {activeTab === 'RUN_RATE' && (
         <div className="space-y-4">
-          {/* KPI Metric Cards (Compact 5-Card Grid) */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+          {/* KPI Metric Cards (Clean 4-Card Grid - Financial Exposure Removed) */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
               <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Monitored Orders
+                {t.kpiMonitoredOrders}
               </div>
               <div className="text-lg font-bold text-slate-800 mt-0.5 font-mono">
                 {summary.totalMonitoredOrders}
@@ -390,7 +496,7 @@ export const RiskPage: React.FC = () => {
             <div className="bg-white p-3 rounded-xl border border-rose-200 shadow-xs">
               <div className="text-[10px] font-bold uppercase tracking-wider text-rose-500 flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-                Critical Deficit
+                {t.kpiCriticalDeficit}
               </div>
               <div className="text-lg font-bold text-rose-700 mt-0.5 font-mono">{summary.redCount}</div>
             </div>
@@ -398,7 +504,7 @@ export const RiskPage: React.FC = () => {
             <div className="bg-white p-3 rounded-xl border border-amber-200 shadow-xs">
               <div className="text-[10px] font-bold uppercase tracking-wider text-amber-600 flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                Buffer Caution
+                {t.kpiBufferCaution}
               </div>
               <div className="text-lg font-bold text-amber-700 mt-0.5 font-mono">{summary.amberCount}</div>
             </div>
@@ -406,22 +512,13 @@ export const RiskPage: React.FC = () => {
             <div className="bg-white p-3 rounded-xl border border-emerald-200 shadow-xs">
               <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                On-Track
+                {t.kpiOnTrack}
               </div>
               <div className="text-lg font-bold text-emerald-700 mt-0.5 font-mono">{summary.greenCount}</div>
             </div>
-
-            <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs col-span-2 sm:col-span-1 lg:col-span-1">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Financial Exposure
-              </div>
-              <div className="text-lg font-bold text-slate-900 mt-0.5 font-mono truncate">
-                ₹{summary.totalExposureRupees.toLocaleString()}
-              </div>
-            </div>
           </div>
 
-          {/* Filter Toolbar (Relative on mobile so it never covers content when scrolling; Sticky on sm+) */}
+          {/* Filter Toolbar */}
           <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs space-y-2.5 relative sm:sticky sm:top-0 z-30">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
               {/* Status Segmented Buttons & Mobile Filter Toggle */}
@@ -440,15 +537,15 @@ export const RiskPage: React.FC = () => {
                     >
                       {lvl === 'ALL' ? (
                         <>
-                          <span className="sm:hidden">All</span>
-                          <span className="hidden sm:inline">All Risks</span>
+                          <span className="sm:hidden">{t.filterAll}</span>
+                          <span className="hidden sm:inline">{t.filterAllRisks}</span>
                         </>
                       ) : lvl === 'RED' ? (
-                        'Critical Deficit'
+                        t.filterCriticalDeficit
                       ) : lvl === 'AMBER' ? (
-                        'Buffer Caution'
+                        t.filterBufferCaution
                       ) : lvl === 'GREEN' ? (
-                        'On Track'
+                        t.filterOnTrack
                       ) : (
                         lvl
                       )}
@@ -464,7 +561,7 @@ export const RiskPage: React.FC = () => {
                   title="Toggle dropdown filters"
                 >
                   <Filter className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Filters</span>
+                  <span>{t.filterToggle}</span>
                   {(buyerFilter !== 'ALL' || unitFilter !== 'ALL' || stageFilter !== 'ALL') && (
                     <span className="w-4 h-4 rounded-full bg-sky-600 text-white text-[10px] flex items-center justify-center font-bold">
                       {(buyerFilter !== 'ALL' ? 1 : 0) + (unitFilter !== 'ALL' ? 1 : 0) + (stageFilter !== 'ALL' ? 1 : 0)}
@@ -480,17 +577,17 @@ export const RiskPage: React.FC = () => {
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search PO number or garment style..."
+                  placeholder={t.searchPlaceholder}
                   className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
                 />
               </form>
             </div>
 
-            {/* Custom Select Filters (Collapsible on mobile to maximize viewport, visible on sm+) */}
+            {/* Custom Select Filters */}
             <div className={`grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-slate-100 text-xs ${isMobileFilterExpanded ? 'block' : 'hidden sm:grid'}`}>
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Foreign Buyer
+                  {t.labelBuyer}
                 </label>
                 <CustomSelect
                   value={buyerFilter}
@@ -501,7 +598,7 @@ export const RiskPage: React.FC = () => {
 
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Production Unit
+                  {t.labelUnit}
                 </label>
                 <CustomSelect
                   value={unitFilter}
@@ -512,7 +609,7 @@ export const RiskPage: React.FC = () => {
 
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Production Stage
+                  {t.labelStage}
                 </label>
                 <CustomSelect
                   value={stageFilter}
@@ -523,182 +620,192 @@ export const RiskPage: React.FC = () => {
             </div>
           </div>
 
-      {/* Main Content: List of Orders with Compact Cards */}
-      {loading ? (
-        <div className="p-10 text-center bg-white rounded-2xl border border-slate-200">
-          <div className="w-7 h-7 border-3 border-sky-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-          <p className="text-xs text-slate-500 font-semibold">Evaluating production run-rates...</p>
-        </div>
-      ) : error ? (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-xs flex items-center gap-2.5">
-          <AlertTriangle className="w-4 h-4 shrink-0" />
-          <span>{error}</span>
-        </div>
-      ) : sortedRisks.length === 0 ? (
-        <div className="p-10 text-center bg-white rounded-2xl border border-slate-200 space-y-2">
-          <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
-            <Filter className="w-5 h-5" />
-          </div>
-          <h4 className="text-sm font-bold text-slate-800">No Orders Match Current Filters</h4>
-          <p className="text-xs text-slate-500 max-w-md mx-auto">
-            Try adjusting your search criteria or resetting filters.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {paginatedRisks.map((item) => {
-            const isCompleted = Boolean(
-              item.isCompleted ||
-              item.requiredDailyRate === 0 ||
-              item.mathBreakdown?.remainingPieces === 0
-            );
-
-            return (
-              <div
-                key={item.orderId}
-                className={`bg-white rounded-xl border shadow-xs overflow-hidden transition ${
-                  isCompleted
-                    ? 'border-emerald-200/90 bg-emerald-50/10'
-                    : item.riskLevel === 'RED'
-                    ? 'border-rose-200 hover:border-rose-300'
-                    : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                {/* Order Header Summary (Compact) */}
-                <div className="px-3.5 sm:px-4 py-2 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 bg-slate-50/70">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Link
-                      to={`/orders/${item.orderId}`}
-                      className="font-mono text-sm font-extrabold text-[#0C2D48] hover:text-sky-600 transition flex items-center gap-1"
-                    >
-                      <span>{item.poNumber}</span>
-                      <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-                    </Link>
-                    <span className="text-slate-300 font-light">•</span>
-                    <span className="text-sm font-bold text-slate-900">{item.style}</span>
-                    <span className="text-slate-300 font-light">•</span>
-                    <span className="text-xs text-slate-500 font-medium">
-                      {item.buyer?.name} ({item.unit?.name})
-                    </span>
-                    <span className="text-slate-300 font-light">•</span>
-                    <span className="text-[11px] font-semibold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
-                      Stage: {STAGE_LABELS[item.activeStage] || item.activeStage}
-                    </span>
-
-                    {/* Status Badge Tag */}
-                    {isCompleted ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-700" />
-                        Completed
-                      </span>
-                    ) : item.riskLevel === 'RED' ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded-full border border-rose-300">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" />
-                        Critical Deficit ({item.varianceQtyPerDay} pcs/d)
-                      </span>
-                    ) : item.riskLevel === 'AMBER' ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
-                        Buffer Caution
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                        On-Track (+{item.varianceQtyPerDay} pcs/d)
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2.5 self-end sm:self-auto">
-                    <div className="text-xs text-slate-500">
-                      Ex-Factory:{' '}
-                      <strong className="text-slate-800 font-semibold">
-                        {new Date(item.exFactoryDate).toLocaleDateString('en-GB', {
-                          day: '2-digit',
-                          month: 'short',
-                        })}
-                      </strong>{' '}
-                      <span className="text-amber-700 font-bold">({item.workingDaysLeft}d left)</span>
-                    </div>
-
-                    <Link
-                      to={`/orders/${item.orderId}`}
-                      className="p-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition"
-                      title="View order"
-                    >
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Embedded Compact Show-Your-Math Formula Card */}
-                <div className="p-3">
-                  <ShowYourMathCard
-                    mathBreakdown={item.mathBreakdown}
-                    riskLevel={item.riskLevel}
-                    isCompleted={isCompleted}
-                    differencePill={item.differencePill}
-                    requiredDailyRate={item.requiredDailyRate}
-                    actualRollingRate={item.actualRollingRate}
-                    varianceQtyPerDay={item.varianceQtyPerDay}
-                    daysLate={item.daysLate}
-                    projectedCompletionDate={item.projectedCompletionDate}
-                    financialExposureRupees={item.financialExposureRupees}
-                    poNumber={item.poNumber}
-                    styleName={item.style}
-                    stageName={STAGE_LABELS[item.activeStage] || item.activeStage}
-                  />
-                </div>
+          {/* Main Content: List of Orders with Compact Cards */}
+          {loading ? (
+            <div className="p-10 text-center bg-white rounded-2xl border border-slate-200">
+              <div className="w-7 h-7 border-3 border-sky-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <p className="text-xs text-slate-500 font-semibold">{t.evaluatingRunRates}</p>
+            </div>
+          ) : error ? (
+            <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-xs flex items-center gap-2.5">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          ) : sortedRisks.length === 0 ? (
+            <div className="p-10 text-center bg-white rounded-2xl border border-slate-200 space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
+                <Filter className="w-5 h-5" />
               </div>
-            );
-          })}
+              <h4 className="text-sm font-bold text-slate-800">{t.noOrdersMatch}</h4>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">
+                {t.noOrdersMatchSub}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {paginatedRisks.map((item) => {
+                const isCompleted = Boolean(
+                  item.isCompleted ||
+                  item.requiredDailyRate === 0 ||
+                  item.mathBreakdown?.remainingPieces === 0
+                );
 
-          {/* Pagination Controls for Monitored Orders */}
-          {sortedRisks.length > pageSize && (
-            <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-              <span className="text-slate-500 font-medium">
-                Showing {(currentPage - 1) * pageSize + 1} to{' '}
-                {Math.min(currentPage * pageSize, sortedRisks.length)} of{' '}
-                {sortedRisks.length} monitored orders
-              </span>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage <= 1}
-                  className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
-                  title="Previous page"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
+                const stageNameLocalized =
+                  STAGE_LABELS_BILINGUAL[item.activeStage]?.[lang] ||
+                  STAGE_LABELS_BILINGUAL[item.activeStage]?.en ||
+                  item.activeStage;
 
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setCurrentPage(p)}
-                    className={`w-7 h-7 text-xs font-bold rounded-lg transition cursor-pointer ${
-                      p === currentPage
-                        ? 'bg-[#0C2D48] text-white shadow-xs'
-                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                return (
+                  <div
+                    key={item.orderId}
+                    className={`bg-white rounded-xl border shadow-xs overflow-hidden transition ${
+                      isCompleted
+                        ? 'border-emerald-200/90 bg-emerald-50/10'
+                        : item.riskLevel === 'RED'
+                        ? 'border-rose-200 hover:border-rose-300'
+                        : 'border-slate-200 hover:border-slate-300'
                     }`}
                   >
-                    {p}
-                  </button>
-                ))}
+                    {/* Order Header Summary */}
+                    <div className="px-3.5 sm:px-4 py-2 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 bg-slate-50/70">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Link
+                          to={`/orders/${item.orderId}`}
+                          className="font-mono text-sm font-extrabold text-[#0C2D48] hover:text-sky-600 transition flex items-center gap-1"
+                        >
+                          <span>{item.poNumber}</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                        </Link>
+                        <span className="text-slate-300 font-light">•</span>
+                        <span className="text-sm font-bold text-slate-900">{item.style}</span>
+                        <span className="text-slate-300 font-light">•</span>
+                        <span className="text-xs text-slate-500 font-medium">
+                          {item.buyer?.name} ({item.unit?.name})
+                        </span>
+                        <span className="text-slate-300 font-light">•</span>
+                        <span className="text-[11px] font-semibold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                          {t.stagePrefix}: {stageNameLocalized}
+                        </span>
 
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage >= totalPages}
-                  className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
-                  title="Next page"
-                >
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+                        {/* Status Badge Tag */}
+                        {isCompleted ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-700" />
+                            {t.completedBadge}
+                          </span>
+                        ) : item.riskLevel === 'RED' ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded-full border border-rose-300">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" />
+                            {t.kpiCriticalDeficit} ({item.varianceQtyPerDay} pcs/d)
+                          </span>
+                        ) : item.riskLevel === 'AMBER' ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
+                            {t.kpiBufferCaution}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            {t.kpiOnTrack} (+{item.varianceQtyPerDay} pcs/d)
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                        <div className="text-xs text-slate-500">
+                          {t.exFactoryLabel}:{' '}
+                          <strong className="text-slate-800 font-semibold">
+                            {new Date(item.exFactoryDate).toLocaleDateString(
+                              lang === 'ta' ? 'ta-IN' : 'en-GB',
+                              {
+                                day: '2-digit',
+                                month: 'short',
+                              }
+                            )}
+                          </strong>{' '}
+                          <span className="text-amber-700 font-bold">({t.daysLeft(item.workingDaysLeft)})</span>
+                        </div>
+
+                        <Link
+                          to={`/orders/${item.orderId}`}
+                          className="p-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition"
+                          title="View order"
+                        >
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* Embedded Compact Show-Your-Math Formula Card */}
+                    <div className="p-3">
+                      <ShowYourMathCard
+                        mathBreakdown={item.mathBreakdown}
+                        riskLevel={item.riskLevel}
+                        isCompleted={isCompleted}
+                        differencePill={item.differencePill}
+                        requiredDailyRate={item.requiredDailyRate}
+                        actualRollingRate={item.actualRollingRate}
+                        varianceQtyPerDay={item.varianceQtyPerDay}
+                        daysLate={item.daysLate}
+                        projectedCompletionDate={item.projectedCompletionDate}
+                        financialExposureRupees={item.financialExposureRupees}
+                        poNumber={item.poNumber}
+                        styleName={item.style}
+                        stageName={stageNameLocalized}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Pagination Controls for Monitored Orders */}
+              {sortedRisks.length > pageSize && (
+                <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                  <span className="text-slate-500 font-medium">
+                    {t.showingOrdersPagination(
+                      (currentPage - 1) * pageSize + 1,
+                      Math.min(currentPage * pageSize, sortedRisks.length),
+                      sortedRisks.length
+                    )}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage <= 1}
+                      className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
+                      title="Previous page"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setCurrentPage(p)}
+                        className={`w-7 h-7 text-xs font-bold rounded-lg transition cursor-pointer ${
+                          p === currentPage
+                            ? 'bg-[#0C2D48] text-white shadow-xs'
+                            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage >= totalPages}
+                      className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
+                      title="Next page"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
         </div>
       )}
     </div>
