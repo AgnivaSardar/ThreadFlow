@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuthStore } from '../auth/authStore';
 import { apiRequest } from '../../services/api';
 import {
@@ -257,6 +257,29 @@ export const MyWorkPage: React.FC = () => {
     setIsQueueDrawerOpen(true);
   };
 
+  // Sort: active floor jobs first, completed jobs pushed down totally to the bottom
+  const sortedOrders = useMemo(() => {
+    if (!workData?.orders) return [];
+    return [...workData.orders].sort((a, b) => {
+      const aCompleted = Boolean(
+        !a.activeMilestone ||
+        a.activeMilestone.remainingQuantity === 0 ||
+        a.activeMilestone.completedQuantity >= a.activeMilestone.targetQuantity ||
+        (a as any).isCompleted
+      );
+      const bCompleted = Boolean(
+        !b.activeMilestone ||
+        b.activeMilestone.remainingQuantity === 0 ||
+        b.activeMilestone.completedQuantity >= b.activeMilestone.targetQuantity ||
+        (b as any).isCompleted
+      );
+
+      if (aCompleted && !bCompleted) return 1;
+      if (!aCompleted && bCompleted) return -1;
+      return 0;
+    });
+  }, [workData?.orders]);
+
   return (
     <div className="space-y-6 w-full animate-in fade-in duration-300">
       {/* Floating Toast Message */}
@@ -347,8 +370,15 @@ export const MyWorkPage: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {workData?.orders.map((order) => {
+                {sortedOrders.map((order) => {
                   const activeStage = order.activeMilestone;
+                  const isCompleted = Boolean(
+                    !activeStage ||
+                    activeStage.remainingQuantity === 0 ||
+                    activeStage.completedQuantity >= activeStage.targetQuantity ||
+                    (order as any).isCompleted
+                  );
+
                   const stageLabel = activeStage
                     ? STAGE_TRANSLATIONS[activeStage.stage]?.[lang] || activeStage.stage
                     : (lang === 'ta' ? 'முடிந்தது' : 'Done');
@@ -367,6 +397,8 @@ export const MyWorkPage: React.FC = () => {
                       className={`bg-white rounded-2xl p-5 border transition-all cursor-pointer shadow-2xs hover:shadow-md relative overflow-hidden flex flex-col justify-between group ${
                         isSelected
                           ? 'border-amber-500 ring-2 ring-amber-400/50 shadow-md'
+                          : isCompleted
+                          ? 'border-emerald-200/90 bg-emerald-50/10 hover:border-emerald-300'
                           : 'border-slate-200/90 hover:border-slate-300'
                       }`}
                     >
@@ -374,10 +406,17 @@ export const MyWorkPage: React.FC = () => {
                         {/* Top Metadata Row */}
                         <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                           <div className="flex items-center gap-1.5">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-900 border border-blue-200/80">
-                              <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
-                              {stageLabel}
-                            </span>
+                            {isCompleted ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-300">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                {lang === 'ta' ? 'முடிந்தது' : 'Completed'} ({stageLabel})
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-900 border border-blue-200/80">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+                                {stageLabel}
+                              </span>
+                            )}
                             {/* Optimistic Local Indicator */}
                             {isOptimistic && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-900 border border-amber-300 animate-pulse">
@@ -492,14 +531,21 @@ export const MyWorkPage: React.FC = () => {
 
                       {/* Bottom Action Footer */}
                       <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                        <span className="text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/60">
-                          {t.remainingPcs}: {activeStage?.remainingQuantity.toLocaleString()} {t.pieces}
-                        </span>
+                        {isCompleted ? (
+                          <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-300 flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            Completed (0 pcs left)
+                          </span>
+                        ) : (
+                          <span className="text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/60">
+                            {t.remainingPcs}: {activeStage?.remainingQuantity.toLocaleString()} {t.pieces}
+                          </span>
+                        )}
                         <button
                           type="button"
                           className="inline-flex items-center gap-1 text-xs font-black text-sky-700 group-hover:text-sky-900 group-hover:translate-x-0.5 transition-all cursor-pointer"
                         >
-                          <span>{t.logOutput}</span>
+                          <span>{isCompleted ? 'View / Log' : t.logOutput}</span>
                           <ChevronRight className="w-4 h-4" />
                         </button>
                       </div>

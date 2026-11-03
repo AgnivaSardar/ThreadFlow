@@ -21,6 +21,8 @@ import {
   MessageSquare,
   Sparkles,
   Maximize2,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { OrderDetail, UpdateExFactoryDatePayload, RiskEvaluationResult } from '../../types';
 import { apiRequest } from '../../services/api';
@@ -53,6 +55,24 @@ export const OrderDetailPage: React.FC = () => {
     supervisorName?: string;
     date?: string;
   } | null>(null);
+
+  // Pagination states for Floor Updates Log table and Order Audit History
+  const [logPage, setLogPage] = useState(1);
+  const logLimit = 5;
+  const [auditPage, setAuditPage] = useState(1);
+  const auditLimit = 5;
+
+  const totalLogPages = Math.ceil((order?.productionUpdates?.length || 0) / logLimit) || 1;
+  const paginatedLogs = (order?.productionUpdates || []).slice(
+    (logPage - 1) * logLimit,
+    logPage * logLimit
+  );
+
+  const totalAuditPages = Math.ceil((order?.auditEvents?.length || 0) / auditLimit) || 1;
+  const paginatedAuditEvents = (order?.auditEvents || []).slice(
+    (auditPage - 1) * auditLimit,
+    auditPage * auditLimit
+  );
 
   const fetchRiskEvaluation = async (orderId: string, milestoneId: string) => {
     try {
@@ -397,7 +417,7 @@ export const OrderDetailPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {order.productionUpdates.map((update) => {
+                {paginatedLogs.map((update) => {
                   const classification = update.issueClassification;
                   const hasPhotos = update.photos && update.photos.length > 0;
                   const noteText = update.notes || '';
@@ -543,6 +563,53 @@ export const OrderDetailPage: React.FC = () => {
             </table>
           </div>
         )}
+
+        {/* Pagination Controls for Shift Production Updates */}
+        {order.productionUpdates && order.productionUpdates.length > logLimit && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pt-3 border-t border-slate-100 text-xs">
+            <span className="text-slate-500 font-medium">
+              Showing {(logPage - 1) * logLimit + 1} to{' '}
+              {Math.min(logPage * logLimit, order.productionUpdates.length)} of{' '}
+              {order.productionUpdates.length} shift logs
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setLogPage((p) => Math.max(1, p - 1))}
+                disabled={logPage <= 1}
+                className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
+                title="Previous page"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+
+              {Array.from({ length: totalLogPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setLogPage(p)}
+                  className={`w-6 h-6 text-xs font-bold rounded-md transition cursor-pointer ${
+                    p === logPage
+                      ? 'bg-[#0C2D48] text-white shadow-xs'
+                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => setLogPage((p) => Math.min(totalLogPages, p + 1))}
+                disabled={logPage >= totalLogPages}
+                className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
+                title="Next page"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Order Change History Table */}
@@ -570,7 +637,7 @@ export const OrderDetailPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-normal">
-              {order.auditEvents.map((ev) => {
+              {paginatedAuditEvents.map((ev) => {
                 let prev = '-';
                 let next = '-';
                 try {
@@ -649,6 +716,53 @@ export const OrderDetailPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls for Order Change History */}
+        {order.auditEvents && order.auditEvents.length > auditLimit && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pt-3 border-t border-slate-100 text-xs">
+            <span className="text-slate-500 font-medium">
+              Showing {(auditPage - 1) * auditLimit + 1} to{' '}
+              {Math.min(auditPage * auditLimit, order.auditEvents.length)} of{' '}
+              {order.auditEvents.length} recorded changes
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setAuditPage((p) => Math.max(1, p - 1))}
+                disabled={auditPage <= 1}
+                className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
+                title="Previous page"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+
+              {Array.from({ length: totalAuditPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setAuditPage(p)}
+                  className={`w-6 h-6 text-xs font-bold rounded-md transition cursor-pointer ${
+                    p === auditPage
+                      ? 'bg-[#0C2D48] text-white shadow-xs'
+                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => setAuditPage((p) => Math.min(totalAuditPages, p + 1))}
+                disabled={auditPage >= totalAuditPages}
+                className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
+                title="Next page"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Date Alteration Modal with Reason Code Prompt */}

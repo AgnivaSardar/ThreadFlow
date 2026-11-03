@@ -9,7 +9,7 @@ export type Stage =
   | 'CHECKING'
   | 'FINISHING';
 
-export type RiskLevel = 'GREEN' | 'AMBER' | 'RED';
+export type RiskLevel = 'GREEN' | 'AMBER' | 'RED' | 'COMPLETED';
 
 export type ApprovalStatus = 'PENDING_REVIEW' | 'CONFIRMED' | 'OVERRIDDEN';
 
@@ -401,6 +401,7 @@ export interface SupervisorWorkOrderItem {
   buyer: { id: string; name: string; code: string };
   unit: { id: string; name: string; code: string };
   activeMilestone: SupervisorActiveMilestone | null;
+  isCompleted?: boolean;
   milestones: {
     id: string;
     stage: Stage;

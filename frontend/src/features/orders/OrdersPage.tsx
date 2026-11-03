@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Plus,
@@ -49,7 +49,7 @@ export const OrdersPage: React.FC = () => {
   });
 
   // Sticky Filters
-  const [statusFilter, setStatusFilter] = useState<'ALL' | RiskLevel>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | RiskLevel | 'COMPLETED'>('ALL');
   const [buyerFilter, setBuyerFilter] = useState<string>('ALL');
   const [unitFilter, setUnitFilter] = useState<string>('ALL');
   const [shipWeekFilter, setShipWeekFilter] = useState<string>('ALL');
@@ -123,7 +123,7 @@ export const OrdersPage: React.FC = () => {
     fetchOrders();
   };
 
-  const handleStatusChange = (status: 'ALL' | RiskLevel) => {
+  const handleStatusChange = (status: 'ALL' | RiskLevel | 'COMPLETED') => {
     setStatusFilter(status);
     setPage(1);
   };
@@ -142,6 +142,23 @@ export const OrdersPage: React.FC = () => {
     setShipWeekFilter(val);
     setPage(1);
   };
+
+  const sortedOrders = useMemo(() => {
+    return [...orders].sort((a, b) => {
+      const aCompleted = Boolean(
+        a.healthStatus === 'COMPLETED' ||
+        (a.activeStage === 'FINISHING' && a.activeStageProgressPct >= 100)
+      );
+      const bCompleted = Boolean(
+        b.healthStatus === 'COMPLETED' ||
+        (b.activeStage === 'FINISHING' && b.activeStageProgressPct >= 100)
+      );
+
+      if (aCompleted && !bCompleted) return 1;
+      if (!aCompleted && bCompleted) return -1;
+      return 0;
+    });
+  }, [orders]);
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-';
@@ -292,33 +309,40 @@ export const OrdersPage: React.FC = () => {
       {/* Filter Bar (Relative on mobile so it never covers content when scrolling; Sticky on sm+) */}
       <div className="relative sm:sticky sm:top-0 z-10 bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-xs space-y-3">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 sm:gap-3">
-          {/* Status Tabs (RED / AMBER / GREEN) & Mobile Filter Toggle */}
+          {/* Status Tabs (Actual Terms: Critical Deficit / Buffer Caution / On Track / Completed) */}
           <div className="flex items-center justify-between gap-1.5">
             <div className="flex items-center gap-1 sm:gap-1.5 p-1 bg-slate-100 rounded-xl overflow-x-auto no-scrollbar">
-              {(['ALL', 'GREEN', 'AMBER', 'RED'] as const).map((s) => (
+              {(
+                [
+                  { key: 'ALL', label: 'All Orders', shortLabel: 'All', dot: '' },
+                  { key: 'RED', label: 'Critical Deficit', shortLabel: 'Critical', dot: 'bg-rose-500' },
+                  { key: 'AMBER', label: 'Buffer Caution', shortLabel: 'Caution', dot: 'bg-amber-500' },
+                  { key: 'GREEN', label: 'On Track', shortLabel: 'On Track', dot: 'bg-emerald-500' },
+                  { key: 'COMPLETED', label: 'Completed', shortLabel: 'Completed', dot: 'bg-emerald-600' },
+                ] as const
+              ).map((tab) => (
                 <button
-                  key={s}
-                  onClick={() => handleStatusChange(s)}
-                  className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
-                    statusFilter === s
-                      ? s === 'RED'
+                  key={tab.key}
+                  onClick={() => handleStatusChange(tab.key)}
+                  className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                    statusFilter === tab.key
+                      ? tab.key === 'RED'
                         ? 'bg-rose-600 text-white shadow-xs'
-                        : s === 'AMBER'
+                        : tab.key === 'AMBER'
                         ? 'bg-amber-500 text-slate-950 shadow-xs'
-                        : s === 'GREEN'
+                        : tab.key === 'GREEN'
                         ? 'bg-emerald-600 text-white shadow-xs'
+                        : tab.key === 'COMPLETED'
+                        ? 'bg-emerald-700 text-white shadow-xs'
                         : 'bg-white text-slate-900 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {s === 'ALL' ? (
-                    <>
-                      <span className="sm:hidden">All</span>
-                      <span className="hidden sm:inline">All Orders</span>
-                    </>
-                  ) : (
-                    s
+                  {tab.dot && statusFilter !== tab.key && (
+                    <span className={`w-1.5 h-1.5 rounded-full ${tab.dot}`} />
                   )}
+                  <span className="sm:hidden">{tab.shortLabel}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
                 </button>
               ))}
             </div>
@@ -451,14 +475,22 @@ export const OrdersPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-normal">
-                {orders.map((order) => {
+                {sortedOrders.map((order: OrderListItem) => {
                   const isSelected = selectedOrderIds.includes(order.id);
+                  const isCompleted =
+                    order.healthStatus === 'COMPLETED' ||
+                    (order.activeStage === 'FINISHING' && order.activeStageProgressPct >= 100);
+
                   return (
                     <tr
                       key={order.id}
                       onClick={() => navigate(`/orders/${order.id}`)}
                       className={`transition group cursor-pointer select-none ${
-                        isSelected ? 'bg-sky-50/80 hover:bg-sky-50' : 'hover:bg-sky-50/50'
+                        isSelected
+                          ? 'bg-sky-50/80 hover:bg-sky-50'
+                          : isCompleted
+                          ? 'bg-slate-50/50 hover:bg-slate-100/60'
+                          : 'hover:bg-sky-50/50'
                       }`}
                     >
                       {/* Checkbox Column */}
@@ -573,7 +605,7 @@ export const OrdersPage: React.FC = () => {
 
                       {/* Status Badge */}
                       <td className="py-3 px-4 text-center whitespace-nowrap">
-                        <StatusBadge status={order.healthStatus} size="sm" />
+                        <StatusBadge status={isCompleted ? 'COMPLETED' : order.healthStatus} size="sm" />
                       </td>
 
                       {/* Action */}

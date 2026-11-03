@@ -20,6 +20,8 @@ import {
   Filter,
   ChevronDown,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 const STAGE_LABELS: Record<Stage, string> = {
@@ -140,6 +142,20 @@ export const RiskPage: React.FC = () => {
       return b.financialExposureRupees - a.financialExposureRupees;
     });
   }, [risks]);
+
+  // Client-side pagination for Monitored Orders
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const pageSize = 5;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [riskLevelFilter, buyerFilter, unitFilter, stageFilter, searchTerm]);
+
+  const totalPages = Math.ceil(sortedRisks.length / pageSize) || 1;
+  const paginatedRisks = sortedRisks.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   const buyerOptions: Option[] = [
     { value: 'ALL', label: 'All Foreign Buyers' },
@@ -266,6 +282,12 @@ export const RiskPage: React.FC = () => {
                       <span className="sm:hidden">All</span>
                       <span className="hidden sm:inline">All Risks</span>
                     </>
+                  ) : lvl === 'RED' ? (
+                    'Critical Deficit'
+                  ) : lvl === 'AMBER' ? (
+                    'Buffer Caution'
+                  ) : lvl === 'GREEN' ? (
+                    'On Track'
                   ) : lvl === 'COMPLETED' ? (
                     'Completed'
                   ) : (
@@ -365,7 +387,7 @@ export const RiskPage: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {sortedRisks.map((item) => {
+          {paginatedRisks.map((item) => {
             const isCompleted = Boolean(
               item.isCompleted ||
               item.requiredDailyRate === 0 ||
@@ -469,6 +491,53 @@ export const RiskPage: React.FC = () => {
               </div>
             );
           })}
+
+          {/* Pagination Controls for Monitored Orders */}
+          {sortedRisks.length > pageSize && (
+            <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+              <span className="text-slate-500 font-medium">
+                Showing {(currentPage - 1) * pageSize + 1} to{' '}
+                {Math.min(currentPage * pageSize, sortedRisks.length)} of{' '}
+                {sortedRisks.length} monitored orders
+              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
+                  title="Previous page"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setCurrentPage(p)}
+                    className={`w-7 h-7 text-xs font-bold rounded-lg transition cursor-pointer ${
+                      p === currentPage
+                        ? 'bg-[#0C2D48] text-white shadow-xs'
+                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages}
+                  className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
+                  title="Next page"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

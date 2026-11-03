@@ -163,7 +163,26 @@ export class ProductionService {
           completedQty: l.completedQty,
         })),
         overallProgress,
+        isCompleted: !activeMilestone || activeMilestone.completedQuantity >= activeMilestone.targetQuantity,
       };
+    });
+
+    // Push completed orders to the bottom
+    workItems.sort((a, b) => {
+      const aCompleted = Boolean(
+        !a.activeMilestone ||
+        a.activeMilestone.remainingQuantity === 0 ||
+        a.activeMilestone.completedQuantity >= a.activeMilestone.targetQuantity
+      );
+      const bCompleted = Boolean(
+        !b.activeMilestone ||
+        b.activeMilestone.remainingQuantity === 0 ||
+        b.activeMilestone.completedQuantity >= b.activeMilestone.targetQuantity
+      );
+
+      if (aCompleted && !bCompleted) return 1;
+      if (!aCompleted && bCompleted) return -1;
+      return new Date(a.exFactoryDate).getTime() - new Date(b.exFactoryDate).getTime();
     });
 
     const recentUpdates = await prisma.productionUpdate.findMany({

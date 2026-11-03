@@ -16,21 +16,50 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, label, size = 
   let dot = 'bg-slate-400';
   let displayLabel = label || norm;
 
-  if (norm === 'GREEN' || norm === 'CONFIRMED' || norm === 'ACTIVE' || norm === 'ON_TRACK') {
+  if (norm === 'COMPLETED' || norm === 'COMPLETE') {
+    bg = 'bg-emerald-100';
+    text = 'text-emerald-900';
+    border = 'border-emerald-300';
+    dot = 'bg-emerald-600';
+    displayLabel = label || 'Completed';
+  } else if (
+    norm === 'GREEN' ||
+    norm === 'CONFIRMED' ||
+    norm === 'ACTIVE' ||
+    norm === 'ON_TRACK' ||
+    norm === 'ON TRACK'
+  ) {
     bg = 'bg-emerald-50';
     text = 'text-emerald-700';
     border = 'border-emerald-200';
     dot = 'bg-emerald-500';
-  } else if (norm === 'AMBER' || norm === 'PENDING_REVIEW' || norm === 'DELAYED' || norm === 'LOW_STOCK') {
+    displayLabel = label || (norm === 'GREEN' ? 'On Track' : displayLabel);
+  } else if (
+    norm === 'AMBER' ||
+    norm === 'PENDING_REVIEW' ||
+    norm === 'DELAYED' ||
+    norm === 'LOW_STOCK' ||
+    norm === 'BUFFER_CAUTION' ||
+    norm === 'BUFFER CAUTION'
+  ) {
     bg = 'bg-amber-50';
     text = 'text-amber-800';
     border = 'border-amber-200';
     dot = 'bg-amber-500';
-  } else if (norm === 'RED' || norm === 'OVERDUE' || norm === 'CRITICAL' || norm === 'OUT_OF_STOCK') {
+    displayLabel = label || (norm === 'AMBER' ? 'Buffer Caution' : displayLabel);
+  } else if (
+    norm === 'RED' ||
+    norm === 'OVERDUE' ||
+    norm === 'CRITICAL' ||
+    norm === 'OUT_OF_STOCK' ||
+    norm === 'CRITICAL_DEFICIT' ||
+    norm === 'CRITICAL DEFICIT'
+  ) {
     bg = 'bg-rose-50';
     text = 'text-rose-700';
     border = 'border-rose-200';
     dot = 'bg-rose-500';
+    displayLabel = label || (norm === 'RED' ? 'Critical Deficit' : displayLabel);
   } else if (norm === 'OVERRIDDEN' || norm === 'IN_PROGRESS' || norm === 'IN_STOCK') {
     bg = 'bg-sky-50';
     text = 'text-sky-700';

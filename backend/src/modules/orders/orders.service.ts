@@ -629,11 +629,17 @@ export class OrdersService {
         workingDaysLeft = 0;
       }
 
-      // Health status based on risk warnings, buffer compression, or completion
+      // Health status based on completion, risk warnings, or buffer compression
       const latestWarning = order.riskWarnings[0];
-      let healthStatus: 'GREEN' | 'AMBER' | 'RED' = 'GREEN';
-      if (latestWarning) {
-        healthStatus = latestWarning.riskLevel;
+      const isCompleted =
+        (activeMilestone?.stage === 'FINISHING' && activeMilestone.completedQuantity >= activeMilestone.targetQuantity) ||
+        (overallCompletionPct >= 100);
+
+      let healthStatus: 'GREEN' | 'AMBER' | 'RED' | 'COMPLETED' = 'GREEN';
+      if (isCompleted) {
+        healthStatus = 'COMPLETED';
+      } else if (latestWarning) {
+        healthStatus = latestWarning.riskLevel as any;
       } else if (bufferCompressionDays >= 3 || (workingDaysLeft <= 5 && overallCompletionPct < 80)) {
         healthStatus = 'RED';
       } else if (bufferCompressionDays > 0 || (workingDaysLeft <= 10 && overallCompletionPct < 50)) {
@@ -674,6 +680,15 @@ export class OrdersService {
         orderLines: order.orderLines,
         milestones: order.milestones,
       };
+    });
+
+    // Sort: active orders first, completed orders pushed down to the very bottom
+    mapped.sort((a, b) => {
+      const aCompleted = a.healthStatus === 'COMPLETED';
+      const bCompleted = b.healthStatus === 'COMPLETED';
+      if (aCompleted && !bCompleted) return 1;
+      if (!aCompleted && bCompleted) return -1;
+      return new Date(a.exFactoryDate).getTime() - new Date(b.exFactoryDate).getTime();
     });
 
     // Filter by shipWeek if requested
