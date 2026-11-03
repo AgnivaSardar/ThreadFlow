@@ -1,27 +1,15 @@
 import React, { useState } from 'react';
 import {
-  Mic,
-  Volume2,
   Sparkles,
   ShieldAlert,
   ShieldCheck,
   Eye,
   EyeOff,
   CheckCircle2,
-  XCircle,
-  AlertTriangle,
   Clock,
-  ArrowRight,
-  TrendingDown,
-  Layers,
-  Building,
   User,
-  Calendar,
-  DollarSign,
   Loader2,
-  FileText,
-  ChevronDown,
-  ChevronUp,
+  Building,
 } from 'lucide-react';
 import { RiskAlertItem } from '../../types';
 import { apiRequest } from '../../services/api';
@@ -35,16 +23,11 @@ interface RiskReviewCardProps {
 export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
   alert,
   onAlertUpdated,
-  compact = false,
 }) => {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isOverriding, setIsOverriding] = useState(false);
   const [mitigationPlan, setMitigationPlan] = useState(alert.mitigationPlan || '');
   const [resolutionReason, setResolutionReason] = useState('');
-  const [actionType, setActionType] = useState('AUTHORIZE_OVERTIME');
-  const [estimatedCost, setEstimatedCost] = useState<number>(18000);
-  const [addedDailyCapacity, setAddedDailyCapacity] = useState<number>(150);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -52,6 +35,14 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
   const isPending = alert.approvalStatus === 'PENDING_REVIEW';
   const isConfirmed = alert.approvalStatus === 'CONFIRMED';
   const isOverridden = alert.approvalStatus === 'OVERRIDDEN';
+
+  // Get clean English note (never Tamil)
+  const cleanEnglishNote =
+    (alert.floorIssue as any)?.cleanEnglishNote ||
+    alert.floorIssue?.translatedText ||
+    'Floor operational issue reported during shift.';
+
+  const categoryName = (alert.floorIssue?.category || 'MACHINE_BREAKDOWN').replace(/_/g, ' ');
 
   // AI draft generator for buyer note
   const handleGenerateAiDraft = async () => {
@@ -72,7 +63,7 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
     }
   };
 
-  // Submit confirmation
+  // Submit confirmation for buyer view
   const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!mitigationPlan.trim()) {
@@ -82,15 +73,12 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
     setIsSubmitting(true);
     setErrorMessage(null);
     try {
-      const res = await apiRequest<{ success: boolean; data: any }>(
+      await apiRequest<{ success: boolean; data: any }>(
         `/risk/alerts/${alert.id}/confirm`,
         {
           method: 'POST',
           body: JSON.stringify({
             mitigationPlan: mitigationPlan.trim(),
-            actionType,
-            addedDailyCapacity: Number(addedDailyCapacity),
-            estimatedCostRupees: Number(estimatedCost),
           }),
         }
       );
@@ -121,7 +109,7 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
     setIsSubmitting(true);
     setErrorMessage(null);
     try {
-      const res = await apiRequest<{ success: boolean; data: any }>(
+      await apiRequest<{ success: boolean; data: any }>(
         `/risk/alerts/${alert.id}/override`,
         {
           method: 'POST',
@@ -151,207 +139,132 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
     <div
       className={`bg-white rounded-2xl border transition-all shadow-xs overflow-hidden ${
         isPending
-          ? 'border-amber-200/90 hover:border-amber-300'
+          ? 'border-amber-200/80 hover:border-amber-300'
           : isConfirmed
-          ? 'border-emerald-200/80 bg-emerald-50/10'
-          : 'border-slate-200 bg-slate-50/40'
+          ? 'border-emerald-200/80 bg-emerald-50/15'
+          : 'border-slate-200 bg-slate-50/50'
       }`}
     >
-      {/* Top Banner / Order Context Row */}
-      <div className="px-4 py-3 bg-slate-50/80 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2.5">
+      {/* Top Header Bar */}
+      <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono font-black text-xs px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-slate-800 shadow-3xs">
+          <span className="font-mono font-black text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
             {alert.poNumber}
           </span>
-          <span className="text-xs font-bold text-slate-900">{alert.style}</span>
-          <span className="text-xs text-slate-400">•</span>
-          <span className="text-xs font-semibold text-slate-600">{alert.buyer.name}</span>
-          <span className="text-xs px-2 py-0.5 rounded-md font-extrabold uppercase bg-indigo-50 text-indigo-700 border border-indigo-200/70 text-[10px]">
-            {alert.stage}
+          <span className="font-bold text-slate-800">{alert.style}</span>
+          <span className="text-slate-300">•</span>
+          <span className="font-medium text-slate-600">{alert.buyer.name}</span>
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-sky-50 text-sky-800 border border-sky-200">
+            {alert.stage.replace(/_/g, ' ')}
           </span>
         </div>
 
-        {/* Status / Visibility Badges */}
-        <div className="flex items-center gap-2">
+        {/* Status Badge */}
+        <div>
           {isPending && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
               <Clock className="w-3.5 h-3.5 text-amber-700" />
-              Pending Merchandiser Review
+              Pending Review
             </span>
           )}
           {isConfirmed && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-300">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
               <Eye className="w-3.5 h-3.5 text-emerald-700" />
-              Buyer Visible (Mitigated)
+              Buyer Informed
             </span>
           )}
           {isOverridden && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black bg-slate-200 text-slate-800 border border-slate-300">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700 border border-slate-300">
               <EyeOff className="w-3.5 h-3.5 text-slate-600" />
-              Internal Only (Overridden)
+              Handled Internally
             </span>
           )}
-
-          <span
-            className={`text-xs font-mono font-black px-2 py-0.5 rounded-md border ${
-              alert.riskLevel === 'RED'
-                ? 'bg-rose-50 text-rose-700 border-rose-200'
-                : alert.riskLevel === 'AMBER'
-                ? 'bg-amber-50 text-amber-700 border-amber-200'
-                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-            }`}
-          >
-            {alert.riskLevel === 'RED' ? 'DEFICIT' : alert.riskLevel === 'AMBER' ? 'BUFFER RISK' : 'ON-TRACK'}
-          </span>
         </div>
       </div>
 
-      {/* 3-Column Side-by-Side Review Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
-        {/* COLUMN 1 (Left): Raw Floor Voice / Tamil Transcript */}
-        <div className="lg:col-span-4 p-4 space-y-3 bg-slate-50/30">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-              <Mic className="w-3.5 h-3.5 text-rose-500" />
-              Floor Audio & Raw Note
+      {/* Main Content: Clean 2-Column Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-slate-100 p-4 gap-4 md:gap-0">
+        {/* Left Column: Reported Floor Issue (Clean English Only) */}
+        <div className="md:col-span-6 md:pr-5 space-y-2.5">
+          <div className="flex items-center justify-between text-xs text-slate-500">
+            <span className="font-bold text-slate-800 flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-slate-400" />
+              {alert.floorIssue?.supervisorName || 'Floor Supervisor'}
             </span>
-            <span className="text-[10px] font-bold text-slate-400 bg-white px-2 py-0.5 rounded border border-slate-200">
-              {alert.floorIssue?.shift || 'DAY'} • {alert.floorIssue?.machineLine || 'Line 1'}
+            <span className="text-[11px] font-semibold text-slate-400">
+              {alert.floorIssue?.shift || 'DAY'} Shift • {alert.floorIssue?.machineLine || 'Line 1'}
             </span>
           </div>
 
-          <div className="p-3 bg-white rounded-xl border border-rose-100 shadow-3xs space-y-1.5">
-            <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
-              <span className="flex items-center gap-1 text-slate-700 font-bold">
-                <User className="w-3 h-3 text-slate-400" />
-                {alert.floorIssue?.supervisorName || 'Floor Supervisor'}
-              </span>
-              <span>{alert.floorIssue ? new Date(alert.floorIssue.loggedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Logged'}</span>
-            </div>
-
-            <p className="text-xs text-rose-950 font-semibold leading-relaxed bg-rose-50/50 p-2.5 rounded-lg border border-rose-200/60 font-sans">
-              "{alert.floorIssue?.rawTamilText || 'வழக்கமான உற்பத்தி பதிவு செய்யப்பட்டது'}"
-            </p>
+          <div>
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200">
+              {categoryName}
+            </span>
           </div>
 
-          <div className="text-[11px] text-slate-500 space-y-1">
-            <div className="flex items-center justify-between">
-              <span>Required Pace:</span>
-              <span className="font-mono font-bold text-slate-800">{alert.requiredDailyRate.toLocaleString()} pcs/day</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Actual 3-Day Rolling:</span>
-              <span className="font-mono font-bold text-slate-800">{alert.actualRollingRate.toLocaleString()} pcs/day</span>
-            </div>
+          {/* Clean English Note */}
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-xs text-slate-800 leading-relaxed font-medium">
+            "{cleanEnglishNote}"
           </div>
         </div>
 
-        {/* COLUMN 2 (Center): AI Classification & Clean Translation */}
-        <div className="lg:col-span-4 p-4 space-y-3 bg-white">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-              AI Operational Triage
-            </span>
-            {alert.floorIssue && (
-              <span className="text-[10px] font-extrabold px-2 py-0.5 bg-indigo-50 text-indigo-800 rounded-full border border-indigo-200">
-                {Math.round(alert.floorIssue.confidenceScore * 100)}% Confidence
-              </span>
-            )}
-          </div>
-
-          {/* AI Category Pill */}
+        {/* Right Column: Buyer Notification Decision */}
+        <div className="md:col-span-6 md:pl-5 space-y-3 flex flex-col justify-between">
           <div>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black bg-indigo-600 text-white shadow-3xs uppercase tracking-wide">
-              {alert.floorIssue?.category || 'PROCESS_DELAY'}
-            </span>
-          </div>
-
-          {/* Clean English Translation */}
-          <div className="p-3 bg-indigo-50/40 rounded-xl border border-indigo-100/80">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-900 mb-1">
-              Clean English Translation
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                Buyer Notification Decision
+              </span>
             </div>
-            <p className="text-xs text-slate-800 leading-relaxed font-medium">
-              {alert.floorIssue?.translatedText || 'Floor operations proceeding with monitored pacing.'}
+            <p className="text-[11px] text-slate-500 mb-2">
+              Decide whether this operational problem requires international buyer notification or can be resolved internally within factory buffers.
             </p>
-          </div>
 
-          {/* Deficit Impact Stat Box */}
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <div className="p-2 bg-slate-50 rounded-lg border border-slate-100 text-center">
-              <div className="text-[10px] text-slate-500 font-bold uppercase">Rate Variance</div>
-              <div className="text-sm font-black font-mono text-rose-600">
-                {alert.varianceQtyPerDay > 0 ? `+${alert.varianceQtyPerDay}` : alert.varianceQtyPerDay} pcs/d
-              </div>
-            </div>
-            <div className="p-2 bg-slate-50 rounded-lg border border-slate-100 text-center">
-              <div className="text-[10px] text-slate-500 font-bold uppercase">Days Late</div>
-              <div className="text-sm font-black font-mono text-amber-700">
-                +{alert.daysLate}d
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* COLUMN 3 (Right): Merchandiser Action Gate */}
-        <div className="lg:col-span-4 p-4 space-y-3 bg-slate-50/30 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <ShieldAlert className="w-3.5 h-3.5 text-sky-700" />
-                Merchandiser Action Gate
-              </span>
-              <span className="text-xs font-black font-mono text-slate-900">
-                ₹{alert.financialExposureRupees.toLocaleString()} At Risk
-              </span>
-            </div>
-
-            {/* If Already Confirmed or Overridden: show review outcome */}
+            {/* Resolved state: Confirmed */}
             {isConfirmed && (
-              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 space-y-1.5">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900">
+              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 space-y-1.5 text-xs">
+                <div className="flex items-center gap-1.5 font-bold text-emerald-900">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Confirmed for Buyer Visibility</span>
+                  <span>Notified to Buyer with Mitigation Note:</span>
                 </div>
-                <p className="text-xs text-emerald-950 font-medium italic bg-white/80 p-2 rounded-lg border border-emerald-200/60">
+                <p className="text-slate-700 italic bg-white/90 p-2 rounded-lg border border-emerald-200/60 leading-relaxed">
                   "{alert.mitigationPlan}"
                 </p>
-                <div className="text-[10px] text-emerald-700 font-semibold flex items-center justify-between">
-                  <span>Reviewed by Merchandiser</span>
-                  <span>{alert.reviewedAt ? new Date(alert.reviewedAt).toLocaleDateString() : 'Confirmed'}</span>
+                <div className="text-[10px] text-slate-400 text-right">
+                  Reviewed by Merchandiser • {alert.reviewedAt ? new Date(alert.reviewedAt).toLocaleDateString() : 'Confirmed'}
                 </div>
               </div>
             )}
 
+            {/* Resolved state: Overridden */}
             {isOverridden && (
-              <div className="p-3 bg-slate-100 rounded-xl border border-slate-200 space-y-1.5">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+              <div className="p-3 bg-slate-100 rounded-xl border border-slate-200 space-y-1.5 text-xs">
+                <div className="flex items-center gap-1.5 font-bold text-slate-800">
                   <ShieldCheck className="w-4 h-4 text-slate-600 shrink-0" />
-                  <span>Resolved Internally (Protected)</span>
+                  <span>Handled Internally (Buyer Protected):</span>
                 </div>
-                <p className="text-xs text-slate-700 italic bg-white p-2 rounded-lg border border-slate-200">
+                <p className="text-slate-600 italic bg-white p-2 rounded-lg border border-slate-200 leading-relaxed">
                   "{alert.mitigationPlan}"
                 </p>
-                <div className="text-[10px] text-slate-500 font-medium">
-                  Never visible to international buyer • Managed within factory buffer
+                <div className="text-[10px] text-slate-400 text-right">
+                  Hidden from buyer portal • Managed within factory line buffers
                 </div>
               </div>
             )}
 
-            {/* If Pending: Action Buttons */}
+            {/* Pending State: Two Clear Buttons */}
             {isPending && !isConfirming && !isOverriding && (
-              <div className="space-y-2 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => {
                     setIsConfirming(true);
                     setIsOverriding(false);
                   }}
-                  className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl text-xs font-black shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <Eye className="w-4 h-4" />
-                  <span>Confirm for Buyer View</span>
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Inform Buyer</span>
                 </button>
 
                 <button
@@ -360,10 +273,10 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
                     setIsOverriding(true);
                     setIsConfirming(false);
                   }}
-                  className="w-full py-2.5 px-3 bg-white hover:bg-slate-100 active:scale-98 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold shadow-3xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="py-2.5 px-3 bg-white hover:bg-slate-100 active:scale-98 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold shadow-3xs transition flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <EyeOff className="w-4 h-4 text-slate-500" />
-                  <span>Internal Override (Hide from Buyer)</span>
+                  <EyeOff className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Keep Internal</span>
                 </button>
               </div>
             )}
@@ -376,11 +289,11 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
             )}
           </div>
 
-          {/* CONFIRMATION INLINE COMPOSER */}
+          {/* CONFIRM / INFORM BUYER COMPOSER */}
           {isConfirming && (
-            <form onSubmit={handleConfirm} className="p-3 bg-white rounded-xl border border-emerald-300 space-y-2.5 mt-2 animate-in fade-in">
+            <form onSubmit={handleConfirm} className="p-3 bg-white rounded-xl border border-emerald-300 space-y-2 mt-2 animate-in fade-in">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-emerald-900">Buyer Mitigation Note</span>
+                <span className="text-xs font-black text-emerald-900">Mitigation Note for Buyer</span>
                 <button
                   type="button"
                   onClick={handleGenerateAiDraft}
@@ -395,43 +308,18 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
               <textarea
                 value={mitigationPlan}
                 onChange={(e) => setMitigationPlan(e.target.value)}
-                placeholder="Compose a reassuring, professional note explaining recovery plan to buyer..."
-                rows={3}
+                placeholder="Compose a reassuring, professional note explaining the operational mitigation to the buyer..."
+                rows={2}
                 className="w-full p-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/50 bg-slate-50 text-slate-800"
               />
 
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">Mitigation Action</label>
-                  <select
-                    value={actionType}
-                    onChange={(e) => setActionType(e.target.value)}
-                    className="w-full mt-0.5 p-1.5 border border-slate-200 rounded-lg text-xs font-medium bg-white"
-                  >
-                    <option value="AUTHORIZE_OVERTIME">Authorize Overtime</option>
-                    <option value="ADD_STITCHING_LINE">Add Extra Line</option>
-                    <option value="SPLIT_SUBCONTRACT">Subcontract Assist</option>
-                    <option value="AIR_FREIGHT_ABSORB">Factory Air Freight</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">Internal Cost (₹)</label>
-                  <input
-                    type="number"
-                    value={estimatedCost}
-                    onChange={(e) => setEstimatedCost(Number(e.target.value))}
-                    className="w-full mt-0.5 p-1.5 border border-slate-200 rounded-lg text-xs font-medium bg-white"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-center gap-2 pt-0.5">
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Confirming...' : 'Publish to Buyer'}
+                  {isSubmitting ? 'Sending...' : 'Publish to Buyer'}
                 </button>
                 <button
                   type="button"
@@ -444,14 +332,14 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
             </form>
           )}
 
-          {/* OVERRIDE INLINE COMPOSER */}
+          {/* INTERNAL OVERRIDE COMPOSER */}
           {isOverriding && (
             <form onSubmit={handleOverride} className="p-3 bg-white rounded-xl border border-slate-300 space-y-2 mt-2 animate-in fade-in">
-              <span className="text-xs font-black text-slate-800">Internal Override Reason</span>
+              <span className="text-xs font-black text-slate-800">Internal Resolution Note</span>
               <textarea
                 value={resolutionReason}
                 onChange={(e) => setResolutionReason(e.target.value)}
-                placeholder="Explain why this issue is handled internally and safe to hide from buyer..."
+                placeholder="Explain how this problem was handled internally (e.g. backup generator used, needle replaced)..."
                 rows={2}
                 className="w-full p-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50 text-slate-800"
               />
@@ -467,20 +355,20 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setResolutionReason('Technical issue resolved; auxiliary capacity mobilized.')}
+                  onClick={() => setResolutionReason('Resolved on floor; maintenance completed.')}
                   className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-200 cursor-pointer"
                 >
                   Resolved on floor
                 </button>
               </div>
 
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-center gap-2 pt-0.5">
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Overriding...' : 'Save Internal Override'}
+                  {isSubmitting ? 'Saving...' : 'Save Internal Resolution'}
                 </button>
                 <button
                   type="button"

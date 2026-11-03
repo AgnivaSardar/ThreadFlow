@@ -231,15 +231,24 @@ export const RiskPage: React.FC = () => {
 
   return (
     <div className="space-y-4 pb-12 animate-in fade-in duration-200">
-      {/* Header Bar */}
+      {/* Header Bar with Unified Factory At-Risk Amount */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            Risk & Delays Intelligence
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Human-in-the-loop review gate, throughput monitoring, and financial delay exposure
-          </p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              Risk & Delays Intelligence
+            </h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Human-in-the-loop review gate, operational problem triage, and throughput monitoring
+            </p>
+          </div>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-black shadow-3xs">
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+            <span className="text-slate-600 font-bold uppercase text-[10px]">Factory At-Risk:</span>
+            <span className="font-mono text-sm font-black text-rose-700">
+              ₹{(summary.totalExposureRupees || alertSummary?.totalAtRiskRupees || 0).toLocaleString()}
+            </span>
+          </div>
         </div>
 
         <button
@@ -254,103 +263,18 @@ export const RiskPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Feature 10: Executive Financial Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-5 sm:p-6 text-white shadow-xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-5">
-        <div className="space-y-1.5 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[11px] font-black uppercase tracking-wider">
-            <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
-            Executive Financial Exposure
-          </div>
-          <div className="text-2xl sm:text-4xl font-black font-mono tracking-tight text-white flex items-baseline gap-2.5">
-            <span>₹{(alertSummary?.totalAtRiskRupees || summary.totalExposureRupees || 0).toLocaleString()}</span>
-            <span className="text-xs sm:text-sm font-bold text-rose-300/80 uppercase tracking-wider">
-              At Risk Across Factory
-            </span>
-          </div>
-          <p className="text-xs text-slate-300 leading-relaxed">
-            Total financial exposure across {alertSummary?.ordersAtRiskCount || summary.redCount + summary.amberCount} orders with active rate deficits. The Human-in-the-Loop gate ensures raw floor panic and colloquial Tamil notes never reach international buyers without merchandiser review.
-          </p>
-        </div>
-
-        {/* Quick Triage Counters */}
-        <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('REVIEW_GATE');
-              setAlertStatusFilter('PENDING_REVIEW');
-            }}
-            className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition flex items-center justify-between gap-3 cursor-pointer ${
-              activeTab === 'REVIEW_GATE' && alertStatusFilter === 'PENDING_REVIEW'
-                ? 'bg-amber-500 text-slate-900 border-amber-400 shadow-md font-black'
-                : 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/40 text-amber-200'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-amber-400" />
-              <span>Pending Review</span>
-            </span>
-            <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-900 text-xs font-black font-mono">
-              {alertSummary?.totalPendingReview || 0}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('REVIEW_GATE');
-              setAlertStatusFilter('CONFIRMED');
-            }}
-            className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition flex items-center justify-between gap-3 cursor-pointer ${
-              activeTab === 'REVIEW_GATE' && alertStatusFilter === 'CONFIRMED'
-                ? 'bg-emerald-600 text-white border-emerald-500 shadow-md font-black'
-                : 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40 text-emerald-200'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <Eye className="w-4 h-4 text-emerald-400" />
-              <span>Buyer Confirmed</span>
-            </span>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-black font-mono">
-              {alertSummary?.totalConfirmed || 0}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('REVIEW_GATE');
-              setAlertStatusFilter('OVERRIDDEN');
-            }}
-            className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition flex items-center justify-between gap-3 cursor-pointer ${
-              activeTab === 'REVIEW_GATE' && alertStatusFilter === 'OVERRIDDEN'
-                ? 'bg-slate-700 text-white border-slate-600 shadow-md font-black'
-                : 'bg-slate-800 hover:bg-slate-700/80 border-slate-700 text-slate-300'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <EyeOff className="w-4 h-4 text-slate-400" />
-              <span>Internal Overrides</span>
-            </span>
-            <span className="px-2 py-0.5 rounded-full bg-slate-700 text-slate-200 text-xs font-black font-mono">
-              {alertSummary?.totalOverridden || 0}
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {/* Tab Switcher: Human-in-the-Loop Review Gate vs Run-Rate Engine */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-1">
+      {/* Middle-Justified & Aligned Tab Switcher */}
+      <div className="flex items-center justify-center gap-3 my-3">
         <button
           type="button"
           onClick={() => setActiveTab('REVIEW_GATE')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-2 ${
+          className={`px-5 py-2.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-2 ${
             activeTab === 'REVIEW_GATE'
-              ? 'bg-indigo-600 text-white shadow-xs'
-              : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'
+              ? 'bg-[#0C2D48] text-white shadow-md'
+              : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs'
           }`}
         >
-          <ShieldAlert className="w-4 h-4" />
+          <ShieldAlert className="w-4 h-4 text-sky-400" />
           <span>Human-in-the-Loop Review Gate</span>
           {(alertSummary?.totalPendingReview || 0) > 0 && (
             <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-900 text-[10px] font-black animate-pulse">
@@ -362,13 +286,13 @@ export const RiskPage: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab('RUN_RATE')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-2 ${
+          className={`px-5 py-2.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-2 ${
             activeTab === 'RUN_RATE'
-              ? 'bg-indigo-600 text-white shadow-xs'
-              : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'
+              ? 'bg-[#0C2D48] text-white shadow-md'
+              : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs'
           }`}
         >
-          <TrendingUp className="w-4 h-4" />
+          <TrendingUp className="w-4 h-4 text-sky-400" />
           <span>Run-Rate Throughput Engine</span>
           <span className="text-[11px] opacity-75">({sortedRisks.length})</span>
         </button>
@@ -383,9 +307,9 @@ export const RiskPage: React.FC = () => {
               {(
                 [
                   { id: 'PENDING_REVIEW', label: 'Pending Review', count: alertSummary?.totalPendingReview },
-                  { id: 'CONFIRMED', label: 'Confirmed (Buyer Visible)', count: alertSummary?.totalConfirmed },
-                  { id: 'OVERRIDDEN', label: 'Internally Overridden', count: alertSummary?.totalOverridden },
-                  { id: 'ALL', label: 'All Alerts', count: undefined },
+                  { id: 'CONFIRMED', label: 'Informed to Buyer', count: alertSummary?.totalConfirmed },
+                  { id: 'OVERRIDDEN', label: 'Handled Internally', count: alertSummary?.totalOverridden },
+                  { id: 'ALL', label: 'All Operational Alerts', count: undefined },
                 ] as const
               ).map((tab) => (
                 <button
@@ -415,7 +339,7 @@ export const RiskPage: React.FC = () => {
             </div>
 
             <span className="text-xs text-slate-500 font-semibold">
-              Showing <strong>{alerts.length}</strong> alerts requiring triage
+              Showing <strong>{alerts.length}</strong> operational alerts
             </span>
           </div>
 

@@ -350,6 +350,51 @@ export class RiskService {
   }
 
   /**
+   * Helper to ensure operational floor notes are always presented in clean, professional English
+   * without leaking raw colloquial Tamil or Tanglish into merchandiser or buyer views.
+   */
+  static resolveCleanEnglishNote(translated: string | null | undefined, raw: string | null | undefined): string {
+    if (translated && !/[\u0B80-\u0BFF]/.test(translated) && translated.trim().length > 0) {
+      return translated.trim();
+    }
+
+    const source = raw || translated || '';
+    if (!source) return 'Operational floor issue reported during shift.';
+
+    const englishTagMatch = source.match(/\[English:\s*([^\]]+)\]/i);
+    if (englishTagMatch && englishTagMatch[1]) {
+      return englishTagMatch[1].trim();
+    }
+
+    const lower = source.toLowerCase();
+    if (lower.includes('ஊசி') || lower.includes('மோட்டார்') || lower.includes('needle') || lower.includes('motor')) {
+      return 'Stitching machine motor stopped due to a broken needle.';
+    }
+    if (lower.includes('மின்வெட்டு') || lower.includes('மின் தடை') || lower.includes('power outage')) {
+      return 'Grid power failure caused line stoppage; auxiliary generator deployed.';
+    }
+    if (lower.includes('ஜெனரேட்டர்') || lower.includes('generator')) {
+      return 'Generator startup delay reported during power interruption.';
+    }
+    if (lower.includes('துணி') || lower.includes('fabric')) {
+      return 'Fabric quality defect identified; affected lot isolated for inspection.';
+    }
+    if (lower.includes('பிராப்ளம்') || lower.includes('ஸ்டிச்சிங்')) {
+      return 'Technical machine issue reported in stitching unit.';
+    }
+    if (lower.includes('ஒட்டு') || lower.includes('subcontract')) {
+      return 'Operations experienced delays from the subcontractor unit.';
+    }
+
+    const nonTamil = source.replace(/[\u0B80-\u0BFF]/g, '').trim();
+    if (nonTamil.length > 5) {
+      return nonTamil;
+    }
+
+    return 'Technical floor stoppage reported and logged by supervisor.';
+  }
+
+  /**
    * Feature 10: Human-in-the-Loop Review Gate
    * Retrieves alerts for merchandiser triage: Raw floor voice/text, AI classification,
    * risk metrics, and buyer-visibility approval status.
@@ -485,16 +530,23 @@ export class RiskService {
           mitigationActions: w.mitigationActions,
           createdAt: w.createdAt,
           updatedAt: w.updatedAt,
-          // Floor context (Tamil voice/text & AI classification)
+          // Floor context (Clean English note & operational category)
           floorIssue: update
             ? {
                 productionUpdateId: update.id,
                 shift: update.shift,
                 machineLine: update.machineLine,
                 supervisorName: update.supervisor?.name || 'Floor Supervisor',
+                cleanEnglishNote: RiskService.resolveCleanEnglishNote(
+                  update.issueClassification?.translatedText || update.notes,
+                  update.issueClassification?.rawTamilText
+                ),
                 rawTamilText: update.issueClassification?.rawTamilText || update.notes || null,
-                translatedText: update.issueClassification?.translatedText || update.notes || null,
-                category: update.issueClassification?.category || 'OTHER',
+                translatedText: RiskService.resolveCleanEnglishNote(
+                  update.issueClassification?.translatedText || update.notes,
+                  update.issueClassification?.rawTamilText
+                ),
+                category: update.issueClassification?.category || 'MACHINE_BREAKDOWN',
                 confidenceScore: update.issueClassification?.confidenceScore ?? 0.85,
                 classifiedBy: update.issueClassification?.classifiedBy || 'AI',
                 loggedAt: update.clientEventAt,
@@ -528,19 +580,14 @@ export class RiskService {
       (w) => w.approvalStatus === ApprovalStatus.OVERRIDDEN
     );
 
-    const ordersAtRiskSet = new Set(
-      allActiveWarnings
-        .filter((w) => w.riskLevel === RiskLevel.RED || w.riskLevel === RiskLevel.AMBER)
-        .map((w) => w.orderId)
-    );
-
-    const totalExposureRupees = allActiveWarnings
-      .filter((w) => w.riskLevel === RiskLevel.RED || w.riskLevel === RiskLevel.AMBER)
-      .reduce((sum, w) => sum + w.financialExposureRupees, 0);
+    // Use active risk list summary so financial exposure is 100% unified with Run-Rate Engine
+    const activeRiskList = await RiskService.listActiveRisks({}, user);
+    const totalExposureRupees = activeRiskList.summary.totalExposureRupees;
+    const ordersAtRiskCount = activeRiskList.summary.redCount + activeRiskList.summary.amberCount;
 
     const summary = {
       totalAtRiskRupees: totalExposureRupees,
-      ordersAtRiskCount: ordersAtRiskSet.size,
+      ordersAtRiskCount,
       totalPendingReview: pendingReviewWarnings.length,
       totalConfirmed: confirmedWarnings.length,
       totalOverridden: overriddenWarnings.length,
@@ -754,13 +801,16 @@ export class RiskService {
     });
 
     const stageName = alert.milestone.stage.replace(/_/g, ' ').toLowerCase();
-    const cleanIssue = latestUpdate?.issueClassification?.translatedText || latestUpdate?.notes || 'a brief floor pacing variance';
+    const cleanIssue = RiskService.resolveCleanEnglishNote(
+      latestUpdate?.issueClassification?.translatedText || latestUpdate?.notes,
+      latestUpdate?.issueClassification?.rawTamilText
+    );
     const variance = Math.abs(Math.round(alert.varianceQtyPerDay));
     const daysLate = alert.daysLate;
 
     let draftText = '';
     if (daysLate > 0) {
-      draftText = `During operations in the ${stageName} stage, ${cleanIssue.toLowerCase()} created a temporary throughput variance of ~${variance.toLocaleString()} pcs/day. Our factory management has mobilized auxiliary line capacity and scheduled a 1.5-hour evening shift extension to recover the pace. We anticipate catching up within 48 hours and preserving the scheduled delivery date.`;
+      draftText = `During operations in the ${stageName} stage, ${cleanIssue.toLowerCase()} Our factory management has mobilized auxiliary line capacity and scheduled a 1.5-hour evening shift extension to recover the pace. We anticipate catching up within 48 hours and preserving the scheduled delivery date.`;
     } else {
       draftText = `A brief technical pause occurred in ${stageName} (${cleanIssue.toLowerCase()}). Our downstream buffer absorbs this adjustment with zero impact to the promised ex-factory shipment schedule.`;
     }
