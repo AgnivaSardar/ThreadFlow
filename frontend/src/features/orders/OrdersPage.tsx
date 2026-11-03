@@ -17,6 +17,7 @@ import {
   ChevronRight,
   ChevronDown,
   ExternalLink,
+  Check,
 } from 'lucide-react';
 import { OrderListItem, Buyer, Unit, RiskLevel, PaginationMeta } from '../../types';
 import { apiRequest } from '../../services/api';
@@ -375,7 +376,7 @@ export const OrdersPage: React.FC = () => {
 
           {/* Quick Search */}
           <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               type="text"
               value={searchTerm}
@@ -460,17 +461,23 @@ export const OrdersPage: React.FC = () => {
         <div className="space-y-4">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs min-w-[760px]">
+              <table className="w-full text-left text-xs min-w-[720px]">
               <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
                 <tr>
                   <th className="py-3.5 px-3 text-center w-10">
-                    <input
-                      type="checkbox"
-                      checked={orders.length > 0 && selectedOrderIds.length === orders.length}
-                      onChange={toggleSelectAll}
-                      className="rounded border-white/30 bg-white/20 text-sky-400 focus:ring-sky-400 cursor-pointer"
+                    <div
+                      onClick={toggleSelectAll}
+                      className={`w-4 h-4 rounded border transition-all flex items-center justify-center cursor-pointer mx-auto ${
+                        orders.length > 0 && selectedOrderIds.length === orders.length
+                          ? 'bg-amber-400 border-amber-400 text-slate-950 shadow-2xs'
+                          : 'bg-white/20 border-white/40 hover:border-white'
+                      }`}
                       title="Select all orders on this page"
-                    />
+                    >
+                      {orders.length > 0 && selectedOrderIds.length === orders.length && (
+                        <Check className="w-3 h-3 stroke-[3]" />
+                      )}
+                    </div>
                   </th>
                   <th className="py-3.5 px-4 text-slate-100">{t.orders.poAndStyle}</th>
                   <th className="py-3.5 px-4 text-slate-100">{t.orders.buyerAndMarket}</th>
@@ -479,7 +486,6 @@ export const OrdersPage: React.FC = () => {
                   <th className="py-3.5 px-4 text-slate-100">{t.orders.activeStageProgress}</th>
                   <th className="py-3.5 px-4 text-slate-100">{t.common.exFactory}</th>
                   <th className="py-3.5 px-4 text-center text-slate-100">{t.orders.statusCol}</th>
-                  <th className="py-3.5 px-4 text-right text-slate-100">{t.orders.actionCol}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-normal">
@@ -494,22 +500,38 @@ export const OrdersPage: React.FC = () => {
                       key={order.id}
                       onClick={() => navigate(`/orders/${order.id}`)}
                       className={`transition group cursor-pointer select-none ${
-                        isSelected
+                        isCompleted
+                          ? 'bg-slate-100/90 hover:bg-slate-200/90 border-l-4 border-l-emerald-600 font-medium'
+                          : isSelected
                           ? 'bg-sky-100/90 hover:bg-sky-100'
                           : 'even:bg-slate-50/80 odd:bg-white hover:bg-sky-50/60'
                       }`}
                     >
-                      {/* Checkbox Column */}
+                      {/* Checkbox Column - Removed for Completed Orders */}
                       <td
                         className="py-3 px-3 text-center"
-                        onClick={(e) => toggleSelectOrder(order.id, e)}
+                        onClick={(e) => {
+                          if (!isCompleted) toggleSelectOrder(order.id, e);
+                        }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => {}}
-                          className="rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
-                        />
+                        {isCompleted ? (
+                          <div
+                            className="w-4 h-4 mx-auto flex items-center justify-center text-emerald-700 text-[11px] font-black"
+                            title="Order Completed"
+                          >
+                            ✓
+                          </div>
+                        ) : (
+                          <div
+                            className={`w-4 h-4 rounded border transition-all flex items-center justify-center cursor-pointer mx-auto ${
+                              isSelected
+                                ? 'bg-[#0C2D48] border-[#0C2D48] text-white shadow-2xs'
+                                : 'bg-white border-slate-300 hover:border-sky-500'
+                            }`}
+                          >
+                            {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                          </div>
+                        )}
                       </td>
 
                       {/* PO & Style */}
@@ -528,7 +550,9 @@ export const OrdersPage: React.FC = () => {
 
                       {/* Buyer */}
                       <td className="py-3 px-4">
-                        <div className="font-semibold text-slate-800">{order.buyer.name}</div>
+                        <div className="font-semibold text-slate-800">
+                          {order.buyer.name.replace(/\s*\([^)]*\)$/, '')}
+                        </div>
                         <div className="text-[11px] text-slate-500 flex items-center gap-1">
                           <Building2 className="w-3 h-3 text-slate-400" />
                           {order.buyer.code} • {order.buyer.country || 'Europe'}
@@ -613,16 +637,6 @@ export const OrdersPage: React.FC = () => {
                       {/* Status Badge */}
                       <td className="py-3 px-4 text-center whitespace-nowrap">
                         <StatusBadge status={isCompleted ? 'COMPLETED' : order.healthStatus} size="sm" />
-                      </td>
-
-                      {/* Action */}
-                      <td className="py-3 px-4 text-right whitespace-nowrap">
-                        <Link
-                          to={`/orders/${order.id}`}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 transition"
-                        >
-                          {isTa ? 'TNA விவரம்' : 'TNA Detail'} <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
                       </td>
                     </tr>
                   );

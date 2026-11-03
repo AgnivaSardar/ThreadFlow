@@ -572,60 +572,133 @@ export const ReportsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Milestone Health & On-Time Confidence Gauge */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col justify-between space-y-3">
-          <div className="border-b border-slate-100 pb-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-              {t.reports.scheduleHealth}
-            </h3>
-            <p className="text-[11px] text-slate-400">
-              {data?.metrics.totalOrders || 0} {t.reports.riskClassification}
-            </p>
+        {/* Milestone Health & On-Time Confidence Pie Chart */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between space-y-4">
+          <div className="border-b border-slate-100 pb-2 flex items-center justify-between">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                {t.reports.scheduleHealth}
+              </h3>
+              <p className="text-[11px] text-slate-400">
+                {data?.metrics.totalOrders || 0} {t.reports.riskClassification}
+              </p>
+            </div>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              {data?.metrics.onTimeConfidencePercent || 92}% {t.reports.overallConfidence}
+            </span>
           </div>
 
-          <div className="space-y-3 my-auto">
-            <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5 font-semibold text-emerald-800">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                {t.reports.onTrack}
-              </span>
-              <span className="font-mono font-bold text-slate-900">{data?.milestoneHealth.onTrack || 84}%</span>
-            </div>
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-emerald-500 rounded-full"
-                style={{ width: `${data?.milestoneHealth.onTrack || 84}%` }}
-              />
-            </div>
+          {/* SVG Donut / Pie Chart with Radial Separators & Centered Metric */}
+          {(() => {
+            const onTrack = data?.milestoneHealth.onTrack || 84;
+            const minorBuffer = data?.milestoneHealth.minorBuffer || 12;
+            const criticalDeficit = data?.milestoneHealth.criticalDeficit || 4;
+            const total = onTrack + minorBuffer + criticalDeficit || 100;
 
-            <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5 font-semibold text-amber-800">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                {t.reports.minorBuffer}
-              </span>
-              <span className="font-mono font-bold text-slate-900">{data?.milestoneHealth.minorBuffer || 12}%</span>
-            </div>
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-amber-400 rounded-full"
-                style={{ width: `${data?.milestoneHealth.minorBuffer || 12}%` }}
-              />
-            </div>
+            const a1 = (onTrack / total) * 360;
+            const a2 = a1 + (minorBuffer / total) * 360;
+            const a3 = 360;
 
-            <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5 font-semibold text-rose-800">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-                {t.reports.criticalDeficit}
-              </span>
-              <span className="font-mono font-bold text-slate-900">{data?.milestoneHealth.criticalDeficit || 4}%</span>
-            </div>
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-rose-500 rounded-full"
-                style={{ width: `${data?.milestoneHealth.criticalDeficit || 4}%` }}
-              />
-            </div>
-          </div>
+            const cx = 100;
+            const cy = 100;
+            const rOuter = 82;
+            const rInner = 54;
+
+            const polarToCartesian = (angleDeg: number, r: number) => {
+              const rad = ((angleDeg - 90) * Math.PI) / 180.0;
+              return {
+                x: cx + r * Math.cos(rad),
+                y: cy + r * Math.sin(rad),
+              };
+            };
+
+            const makeArc = (startDeg: number, endDeg: number) => {
+              // Clamp tiny delta to avoid full circle singularity
+              const sweep = Math.min(endDeg - startDeg, 359.99);
+              if (sweep <= 0.5) return '';
+              const actualEnd = startDeg + sweep;
+              const p1 = polarToCartesian(startDeg, rOuter);
+              const p2 = polarToCartesian(actualEnd, rOuter);
+              const p3 = polarToCartesian(actualEnd, rInner);
+              const p4 = polarToCartesian(startDeg, rInner);
+              const largeArc = sweep > 180 ? 1 : 0;
+              return `M ${p1.x} ${p1.y} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${rInner} ${rInner} 0 ${largeArc} 0 ${p4.x} ${p4.y} Z`;
+            };
+
+            return (
+              <div className="flex flex-col items-center justify-center my-auto space-y-4">
+                <div className="relative w-44 h-44 flex items-center justify-center">
+                  <svg viewBox="0 0 200 200" className="w-full h-full transform -rotate-90 drop-shadow-xs">
+                    {/* Slices with clear white separators */}
+                    <path
+                      d={makeArc(0, a1)}
+                      fill="#10B981"
+                      stroke="#FFFFFF"
+                      strokeWidth="3.5"
+                      className="transition-all duration-300 hover:opacity-90 cursor-pointer"
+                    >
+                      <title>{`${t.reports.onTrack}: ${onTrack}%`}</title>
+                    </path>
+                    <path
+                      d={makeArc(a1, a2)}
+                      fill="#F59E0B"
+                      stroke="#FFFFFF"
+                      strokeWidth="3.5"
+                      className="transition-all duration-300 hover:opacity-90 cursor-pointer"
+                    >
+                      <title>{`${t.reports.minorBuffer}: ${minorBuffer}%`}</title>
+                    </path>
+                    <path
+                      d={makeArc(a2, a3)}
+                      fill="#F43F5E"
+                      stroke="#FFFFFF"
+                      strokeWidth="3.5"
+                      className="transition-all duration-300 hover:opacity-90 cursor-pointer"
+                    >
+                      <title>{`${t.reports.criticalDeficit}: ${criticalDeficit}%`}</title>
+                    </path>
+                  </svg>
+
+                  {/* Centered Hub */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+                    <span className="text-2xl font-black font-mono tracking-tight text-[#0C2D48]">
+                      {data?.metrics.onTimeConfidencePercent || 92}%
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      On-Time
+                    </span>
+                  </div>
+                </div>
+
+                {/* Legend with Counts and Percentages */}
+                <div className="w-full grid grid-cols-3 gap-1.5 text-center pt-1 border-t border-slate-100">
+                  <div className="p-1.5 rounded-xl bg-emerald-50/60 border border-emerald-100 flex flex-col items-center">
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-800">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                      {t.reports.onTrack}
+                    </span>
+                    <span className="font-mono text-xs font-black text-emerald-900 mt-0.5">{onTrack}%</span>
+                  </div>
+
+                  <div className="p-1.5 rounded-xl bg-amber-50/60 border border-amber-100 flex flex-col items-center">
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-amber-800">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                      {t.reports.minorBuffer}
+                    </span>
+                    <span className="font-mono text-xs font-black text-amber-900 mt-0.5">{minorBuffer}%</span>
+                  </div>
+
+                  <div className="p-1.5 rounded-xl bg-rose-50/60 border border-rose-100 flex flex-col items-center">
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-rose-800">
+                      <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                      {t.reports.criticalDeficit}
+                    </span>
+                    <span className="font-mono text-xs font-black text-rose-900 mt-0.5">{criticalDeficit}%</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-[11px] text-slate-600 flex items-center justify-between">
             <span className="font-medium">{t.reports.overallConfidence}</span>

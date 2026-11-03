@@ -12,12 +12,15 @@ import {
   X,
   Activity,
   Clock,
+  Calendar as CalendarIcon,
+  CheckSquare,
 } from 'lucide-react';
 import { useAuthStore } from '../features/auth/authStore';
 import {
   Language,
   SUPERVISOR_I18N,
 } from '../features/supervisor/supervisorTranslations';
+import { WorkScheduleModal } from './WorkScheduleModal';
 
 interface SidebarProps {
   isMobileOpen?: boolean;
@@ -30,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const navigate = useNavigate();
   const { user, logout, hasRole } = useAuthStore();
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [lang, setLang] = useState<Language>(
     (localStorage.getItem('threadflow_lang') as Language) ||
       (user?.languagePreference === 'ta' ? 'ta' : 'en')
@@ -181,36 +185,52 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Bottom Section */}
         <div className="p-3 space-y-3">
-          {/* Live Floor Shift & Operations Hub Widget */}
-          <div className="rounded-2xl p-3.5 bg-gradient-to-br from-[#103859] to-[#0A2338] border border-sky-400/20 text-white shadow-lg relative overflow-hidden">
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs font-bold text-white tracking-wide">Live Shift Status</span>
+          {/* Mini Calendar & Daily Work Tracker Widget */}
+          <div
+            onClick={() => setIsScheduleModalOpen(true)}
+            className="rounded-2xl p-3 bg-gradient-to-br from-[#103859] to-[#0A2338] border border-sky-400/25 text-white shadow-lg relative overflow-hidden group cursor-pointer hover:border-amber-400/40 transition-all active:scale-[0.98]"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-amber-400/15 border border-amber-400/30 flex flex-col items-center justify-center text-amber-300">
+                  <span className="text-[9px] font-black leading-none">NOV</span>
+                  <span className="text-xs font-black font-mono leading-none mt-0.5">04</span>
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-white tracking-wide">
+                    Work Calendar
+                  </div>
+                  <div className="text-[10px] text-sky-200/70">
+                    {user?.role === 'SUPERVISOR'
+                      ? 'Floor Duties & Logs'
+                      : user?.role === 'BUYER'
+                      ? 'Inspections & Approvals'
+                      : 'Milestones & Triages'}
+                  </div>
+                </div>
               </div>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                ACTIVE
+
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 shrink-0">
+                TODAY
               </span>
             </div>
-            <div className="text-[11px] font-medium text-sky-100 flex items-center gap-1.5 mb-1">
-              <Clock className="w-3 h-3 text-sky-300 shrink-0" />
-              <span>Day Shift (06:00 - 14:00 IST)</span>
+
+            <div className="pt-2 border-t border-sky-500/20 flex items-center justify-between text-[11px] text-sky-100">
+              <span className="flex items-center gap-1.5 font-medium text-sky-200">
+                <CheckSquare className="w-3.5 h-3.5 text-amber-400" />
+                <span>Track Daily Tasks</span>
+              </span>
+              <span className="text-[10px] font-bold text-amber-300 group-hover:translate-x-0.5 transition-transform">
+                Open &rarr;
+              </span>
             </div>
-            <p className="text-[10px] text-sky-200/70 mb-2.5">
-              Unit 1, Unit 2 & Subcontractors operational
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                if (onCloseMobile) onCloseMobile();
-                navigate('/floor-work');
-              }}
-              className="w-full py-1.5 px-3 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-lg text-xs font-bold shadow transition-all cursor-pointer text-center flex items-center justify-center gap-1.5"
-            >
-              <Factory className="w-3.5 h-3.5" />
-              <span>View Floor Work</span>
-            </button>
           </div>
+
+          {/* Work Schedule Modal */}
+          <WorkScheduleModal
+            isOpen={isScheduleModalOpen}
+            onClose={() => setIsScheduleModalOpen(false)}
+          />
 
           {/* Logout Action Bar */}
           <div className="pt-2 border-t border-[#143D60]/60">

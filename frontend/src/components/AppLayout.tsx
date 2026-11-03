@@ -7,6 +7,7 @@ import { syncServerTime, getAuthoritativeServerDate } from '../services/api';
 import { UserMenuDropdown } from './UserMenuDropdown';
 import { OfflineQueueDrawer } from './OfflineQueueDrawer';
 import { AIChatbot } from './AIChatbot';
+import { NotificationPopover } from './NotificationPopover';
 import {
   getPendingOfflineCount,
 } from '../offline/queue/queue';
@@ -229,6 +230,9 @@ export const AppLayout: React.FC = () => {
               <Languages className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-600 shrink-0" />
               <span className="text-[10px] sm:text-[11px] font-black">{lang === 'ta' ? 'தமிழ்' : 'EN'}</span>
             </button>
+
+            {/* User-Scoped Notification Center */}
+            <NotificationPopover />
 
             {/* User Profile Avatar with Dropdown */}
             {user && (

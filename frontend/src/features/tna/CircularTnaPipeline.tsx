@@ -78,8 +78,10 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
   const activeIndex = sorted.findIndex((m) => m.stage === currentStage);
   const initialIndex = activeIndex >= 0 ? activeIndex : 0;
   const [selectedIndex, setSelectedIndex] = useState<number>(initialIndex);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  const selectedMilestone = sorted[selectedIndex] || sorted[0];
+  const displayIndex = hoveredIndex !== null ? hoveredIndex : selectedIndex;
+  const selectedMilestone = sorted[displayIndex] || sorted[0];
   const selectedMeta = selectedMilestone
     ? STAGE_METADATA[selectedMilestone.stage]
     : STAGE_METADATA.KNITTING;
@@ -95,10 +97,11 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
     return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
   };
 
-  // Math for 7-Segment SVG Circular Gauge
+  // Math for 7-Segment SVG Circular Gauge with distinct gap and separators
   const R = 105;
   const C = 2 * Math.PI * R; // ~659.73
-  const segmentLength = (C / 7) - 6; // ~88.25 with 6px gap
+  const gapPx = 8;
+  const segmentLength = (C / 7) - gapPx;
 
   return (
     <div className="w-full bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
@@ -151,6 +154,7 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
                 const isCompleted = pct >= 100;
                 const isActive = ms.stage === currentStage;
                 const isSelected = selectedIndex === idx;
+                const isHovered = hoveredIndex === idx;
 
                 let strokeColor = '#E2E8F0'; // Pending
                 if (ms.isCriticalPathBottleneck) {
@@ -161,8 +165,8 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
                   strokeColor = '#F59E0B'; // In Progress
                 }
 
-                // Calculate dash offset for 7 segments
-                const dashOffset = -(idx * (C / 7));
+                // Calculate dash offset for 7 segments with centering gap
+                const dashOffset = -(idx * (C / 7)) - (gapPx / 2);
 
                 return (
                   <circle
@@ -172,22 +176,54 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
                     r={R}
                     fill="none"
                     stroke={strokeColor}
-                    strokeWidth={isSelected ? 26 : 20}
+                    strokeWidth={isSelected ? 26 : isHovered ? 24 : 20}
                     strokeDasharray={`${segmentLength} ${C - segmentLength}`}
                     strokeDashoffset={dashOffset}
                     strokeLinecap="round"
                     onClick={() => setSelectedIndex(idx)}
+                    onMouseEnter={() => setHoveredIndex(idx)}
+                    onMouseLeave={() => setHoveredIndex(null)}
                     className="cursor-pointer transition-all duration-200 hover:opacity-90"
                     style={{
-                      filter: isSelected ? 'drop-shadow(0 0 6px rgba(12, 45, 72, 0.25))' : 'none',
+                      filter: isSelected
+                        ? 'drop-shadow(0 0 8px rgba(12, 45, 72, 0.35))'
+                        : isHovered
+                        ? 'drop-shadow(0 0 5px rgba(2, 132, 199, 0.3))'
+                        : 'none',
                     }}
+                  />
+                );
+              })}
+
+              {/* Crisp Radial White Dividers radiating between every stage */}
+              {Array.from({ length: 7 }).map((_, i) => {
+                const angleDeg = (i * 360) / 7;
+                const angleRad = (angleDeg * Math.PI) / 180;
+                const rInner = R - 13;
+                const rOuter = R + 13;
+                const x1 = 130 + rInner * Math.cos(angleRad);
+                const y1 = 130 + rInner * Math.sin(angleRad);
+                const x2 = 130 + rOuter * Math.cos(angleRad);
+                const y2 = 130 + rOuter * Math.sin(angleRad);
+
+                return (
+                  <line
+                    key={`divider-${i}`}
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    stroke="#FFFFFF"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    className="pointer-events-none"
                   />
                 );
               })}
             </svg>
 
-            {/* Inner Circular Hub Details */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+            {/* Inner Circular Hub Details (pointer-events-none so hover/clicks pass to SVG) */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 pointer-events-none">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 Pipeline Health
               </span>
@@ -204,7 +240,11 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
           </div>
 
           <span className="text-[11px] text-slate-400 mt-2 font-medium">
-            Click any segment to inspect stage lead time & progress
+            {hoveredIndex !== null ? (
+              <span className="text-sky-700 font-semibold">Click to inspect this stage</span>
+            ) : (
+              'Click any segment to inspect stage lead time & progress'
+            )}
           </span>
         </div>
 
