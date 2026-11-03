@@ -195,19 +195,19 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
       }`}
     >
       {/* Top Header Bar Styled with Dark Navy Matching Sidebar & Table Headers */}
-      <div className="px-4 py-2.5 bg-[#0C2D48] text-white border-b border-[#143D60] flex flex-wrap items-center justify-between gap-2 text-xs">
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="px-3 sm:px-4 py-2.5 bg-[#0C2D48] text-white border-b border-[#143D60] flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
           <Link
             to={`/orders/${alert.orderId}`}
-            className="font-mono text-sm font-extrabold text-sky-400 hover:text-sky-200 transition inline-flex items-center gap-1"
+            className="font-mono text-sm font-extrabold text-sky-400 hover:text-sky-200 transition inline-flex items-center gap-1 shrink-0"
           >
             <span>{alert.poNumber}</span>
             <ExternalLink className="w-3.5 h-3.5 text-sky-400" />
           </Link>
           <span className="text-white/40">•</span>
-          <span className="font-bold text-white">{alert.style.split(' (')[0].split(' - ')[0]}</span>
-          <span className="text-white/40">•</span>
-          <span className="font-medium text-sky-100">{alert.buyer.name}</span>
+          <span className="font-bold text-white truncate max-w-[160px] sm:max-w-none">{alert.style.split(' (')[0].split(' - ')[0]}</span>
+          <span className="text-white/40 hidden sm:inline">•</span>
+          <span className="font-medium text-sky-100 hidden sm:inline">{alert.buyer.name}</span>
           <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-sky-900/90 text-sky-200 border border-sky-600/80">
             {alert.stage.replace(/_/g, ' ')}
           </span>
@@ -242,7 +242,7 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
       </div>
 
       {/* Main Content: Clean 2-Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-slate-100 p-4 gap-4 md:gap-0">
+      <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-slate-100 p-3 sm:p-4 gap-4 md:gap-0">
         {/* Left Column: Reported Floor Issue (Clean English Note & Supervisor Info) */}
         <div className="md:col-span-6 md:pr-5 space-y-2.5">
           <div className="flex items-center justify-between text-xs text-slate-500 flex-wrap gap-1">

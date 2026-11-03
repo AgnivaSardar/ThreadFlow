@@ -365,11 +365,11 @@ export const RiskPage: React.FC = () => {
       {/* Single Horizontal Toolbar: Short Buttons on Left, Factory At-Risk on Right */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
         {/* Short Professional Tab Buttons (Light Theme Active State, No Numbers) */}
-        <div className="inline-flex items-center gap-2">
+        <div className="inline-flex items-center gap-2 max-w-full overflow-x-auto no-scrollbar pb-0.5">
           <button
             type="button"
             onClick={() => setActiveTab('REVIEW_GATE')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
+            className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 whitespace-nowrap shrink-0 ${
               activeTab === 'REVIEW_GATE'
                 ? 'bg-sky-100 text-sky-900 border-2 border-sky-600 shadow-xs'
                 : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs'
@@ -382,7 +382,7 @@ export const RiskPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('RUN_RATE')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
+            className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 whitespace-nowrap shrink-0 ${
               activeTab === 'RUN_RATE'
                 ? 'bg-sky-100 text-sky-900 border-2 border-sky-600 shadow-xs'
                 : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs'
@@ -394,7 +394,7 @@ export const RiskPage: React.FC = () => {
         </div>
 
         {/* Unified Factory At-Risk Badge (Horizontal Right) */}
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-black shadow-3xs self-start sm:self-auto">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-black shadow-3xs self-start sm:self-auto shrink-0">
           <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
           <span className="text-slate-600 font-bold uppercase text-[10px] tracking-wide">{t.factoryAtRisk}:</span>
           <span className="font-mono text-sm font-black text-rose-700">
@@ -405,10 +405,10 @@ export const RiskPage: React.FC = () => {
 
       {/* TAB 1: ISSUE REVIEW (Review Gate) */}
       {activeTab === 'REVIEW_GATE' && (
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {/* Status Sub-Filters for Review Gate */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
-            <div className="inline-flex p-1 bg-slate-100 rounded-xl gap-1">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200 shadow-xs min-w-0">
+            <div className="flex items-center p-1 bg-slate-100 rounded-xl gap-1 overflow-x-auto no-scrollbar max-w-full">
               {(
                 [
                   { id: 'PENDING_REVIEW', label: t.filterPendingReview, count: alertSummary?.totalPendingReview },
@@ -421,7 +421,7 @@ export const RiskPage: React.FC = () => {
                   key={tab.id}
                   type="button"
                   onClick={() => setAlertStatusFilter(tab.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                     alertStatusFilter === tab.id
                       ? 'bg-white text-slate-900 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
@@ -443,7 +443,7 @@ export const RiskPage: React.FC = () => {
               ))}
             </div>
 
-            <span className="text-xs text-slate-500 font-semibold">
+            <span className="text-xs text-slate-500 font-semibold shrink-0">
               {t.showingAlerts(alerts.length)}
             </span>
           </div>

@@ -467,8 +467,8 @@ export const BuyerPortalPage: React.FC = () => {
           </div>
 
           {/* Custom Dropdowns */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <div className="w-40 sm:w-44">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:flex items-center gap-2.5 w-full md:w-auto">
+            <div className="w-full sm:w-44">
               <CustomSelect
                 value={statusFilter}
                 options={statusOptions}
@@ -477,7 +477,7 @@ export const BuyerPortalPage: React.FC = () => {
               />
             </div>
 
-            <div className="w-48 sm:w-52">
+            <div className="w-full sm:w-52">
               <CustomSelect
                 value={stageFilter}
                 options={stageOptions}
@@ -798,7 +798,7 @@ export const BuyerPortalPage: React.FC = () => {
                       </div>
 
                       {/* Response Input Bar */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                         <input
                           type="text"
                           placeholder={t.buyer.feedbackPlaceholder}
@@ -815,7 +815,7 @@ export const BuyerPortalPage: React.FC = () => {
                               handlePostFeedback(order.id);
                             }
                           }}
-                          className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 transition"
+                          className="flex-1 min-w-0 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 transition"
                         />
 
                         <button
@@ -825,7 +825,7 @@ export const BuyerPortalPage: React.FC = () => {
                             submittingOrderId === order.id ||
                             !(feedbackInputs[order.id] && feedbackInputs[order.id].trim())
                           }
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#0C2D48] hover:bg-[#143D60] text-white rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                          className="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#0C2D48] hover:bg-[#143D60] text-white rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
                         >
                           {submittingOrderId === order.id ? (
                             <>

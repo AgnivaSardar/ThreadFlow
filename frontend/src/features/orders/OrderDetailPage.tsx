@@ -139,6 +139,18 @@ export const OrderDetailPage: React.FC = () => {
     fetchOrderDetail();
   }, [id]);
 
+  // Handle Escape key to close open modals
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (selectedImageModal) setSelectedImageModal(null);
+        if (isDateModalOpen) setIsDateModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedImageModal, isDateModalOpen]);
+
   const handleDateChangeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id) return;
@@ -510,123 +522,93 @@ export const OrderDetailPage: React.FC = () => {
             </p>
           </div>
         ) : (
-          /* Floor Shift Production Updates Table (High Density, Fixed-Width Responsive - No Horizontal Scroll) */
-          <div className="w-full rounded-xl border border-slate-200 overflow-hidden bg-white shadow-2xs">
-            <table className="w-full table-fixed text-left text-xs border-collapse">
-              <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
-                <tr>
-                  <th className="py-2.5 px-2 w-[10%] text-slate-100">Date / Time</th>
-                  <th className="py-2.5 px-1.5 w-[7%] text-slate-100">Stage</th>
-                  <th className="py-2.5 px-2 w-[9%] text-slate-100">Shift · Line</th>
-                  <th className="py-2.5 px-1 w-[6%] text-right text-slate-100">Output</th>
-                  <th className="py-2.5 px-2 w-[16%] whitespace-nowrap text-slate-100">Issue Reason</th>
-                  <th className="py-2.5 px-2 w-[9%] text-slate-100">Logged By</th>
-                  <th className="py-2.5 px-1 w-[4%] text-center text-slate-100">Photo</th>
-                  <th className="py-2.5 px-3 w-[39%] text-slate-100">Supervisor Note & AI Summary</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {paginatedLogs.map((update) => {
-                  const classification = update.issueClassification;
-                  const hasPhotos = update.photos && update.photos.length > 0;
-                  const noteText = update.notes || '';
-                  const hasNote = Boolean(noteText.trim());
+          <div className="w-full space-y-3">
+            {/* Mobile View: High-Readability Native Cards (Hidden on md+) */}
+            <div className="md:hidden space-y-2.5">
+              {paginatedLogs.map((update) => {
+                const classification = update.issueClassification;
+                const hasPhotos = update.photos && update.photos.length > 0;
+                const noteText = update.notes || '';
+                const hasNote = Boolean(noteText.trim());
 
-                  const eventDate = new Date(update.clientEventAt);
-                  const dateStr = eventDate.toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: 'short',
-                  });
-                  const timeStr = eventDate.toLocaleTimeString(undefined, {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true,
-                  });
+                const eventDate = new Date(update.clientEventAt);
+                const dateStr = eventDate.toLocaleDateString('en-GB', {
+                  day: '2-digit',
+                  month: 'short',
+                });
+                const timeStr = eventDate.toLocaleTimeString(undefined, {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true,
+                });
 
-                  const lineName = (update.machineLine || 'Line 1')
-                    .replace('UNIT_3 Floor Line', 'U3 Line')
-                    .replace('Floor Line', 'Line')
-                    .trim();
+                const lineName = (update.machineLine || 'Line 1')
+                  .replace('UNIT_3 Floor Line', 'U3 Line')
+                  .replace('Floor Line', 'Line')
+                  .trim();
 
-                  const supervisorName = update.supervisor?.name
-                    ? update.supervisor.name
-                        .replace(' Floor Supervisor', '')
-                        .replace(' Merchandiser', ' (M)')
-                    : 'Supervisor';
+                const supervisorName = update.supervisor?.name
+                  ? update.supervisor.name
+                      .replace(' Floor Supervisor', '')
+                      .replace(' Merchandiser', ' (M)')
+                  : 'Supervisor';
 
-                  return (
-                    <tr
-                      key={update.id}
-                      className="even:bg-slate-50/80 odd:bg-white hover:bg-sky-50/60 transition-colors align-top"
-                    >
-                      {/* 1. Date & Time (Stacked for maximum horizontal savings) */}
-                      <td className="py-2 px-2 font-mono leading-tight">
-                        <div className="font-semibold text-slate-800 text-[11px] whitespace-nowrap">
-                          {dateStr}
-                        </div>
-                        <div className="text-[10px] text-slate-400 whitespace-nowrap">
-                          {timeStr}
-                        </div>
-                      </td>
+                const cleanNote = (() => {
+                  if (noteText.includes('[English:')) {
+                    const parts = noteText.split('[English:');
+                    return parts[1]?.replace(/\]$/, '').trim() || parts[0].trim();
+                  }
+                  if (classification?.translatedText) {
+                    return classification.translatedText;
+                  }
+                  return noteText;
+                })();
 
-                      {/* 2. Stage */}
-                      <td className="py-2 px-1.5">
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-900 text-white inline-block max-w-full truncate" title={update.stage}>
-                          {update.stage.replace(/_/g, ' ')}
-                        </span>
-                      </td>
+                return (
+                  <div
+                    key={update.id}
+                    className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-2 text-xs"
+                  >
+                    {/* Header Row: Date/Time + Stage */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-700 font-semibold">
+                        <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span>{dateStr}, {timeStr}</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-[#0C2D48] text-white">
+                        {update.stage.replace(/_/g, ' ')}
+                      </span>
+                    </div>
 
-                      {/* 3. Shift & Machine Line */}
-                      <td className="py-2 px-2 text-[11px] leading-tight">
-                        <span className="text-slate-800 font-bold whitespace-nowrap">
-                          {update.shift || 'DAY'}
-                        </span>
-                        <span className="text-slate-400 mx-0.5">·</span>
-                        <span
-                          className="text-slate-600 font-medium truncate inline-block max-w-[65px] align-bottom"
-                          title={update.machineLine || ''}
-                        >
-                          {lineName}
-                        </span>
-                      </td>
-
-                      {/* 4. Output Qty (Narrowed) */}
-                      <td className="py-2 px-1 text-right">
-                        <span className="inline-flex items-center font-mono font-bold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200 text-[10px] whitespace-nowrap">
-                          +{update.goodQuantity.toLocaleString()}
+                    {/* Output & Line Row */}
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
+                      <div className="text-slate-600 font-medium text-[11px]">
+                        <span className="font-bold text-slate-800">{update.shift || 'DAY'}</span> · {lineName}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="inline-flex items-center font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-xs">
+                          +{update.goodQuantity.toLocaleString()} pcs
                         </span>
                         {update.rejectedQuantity > 0 && (
-                          <div className="text-[9px] text-rose-600 font-semibold leading-none mt-0.5 whitespace-nowrap">
+                          <span className="inline-flex items-center font-mono font-semibold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200 text-[10px]">
                             {update.rejectedQuantity} rej
-                          </div>
-                        )}
-                      </td>
-
-                      {/* 5. Issue Category (Clean text without yellow capsule or emoji, increased width) */}
-                      <td className="py-2 px-2 whitespace-nowrap">
-                        {classification ? (
-                          <span
-                            className="text-[11px] font-semibold text-slate-700 whitespace-nowrap"
-                            title={`${classification.category.replace(/_/g, ' ')} (${Math.round(classification.confidenceScore * 100)}%)`}
-                          >
-                            {classification.category.replace(/_/g, ' ')}
                           </span>
-                        ) : (
-                          <span className="text-slate-300 font-mono text-[11px]">—</span>
                         )}
-                      </td>
+                      </div>
+                    </div>
 
-                      {/* 6. Supervisor */}
-                      <td
-                        className="py-2 px-2 text-slate-700 font-semibold text-[11px] truncate whitespace-nowrap"
-                        title={update.supervisor?.name || ''}
-                      >
-                        {supervisorName}
-                      </td>
+                    {/* Metadata: Category & Supervisor */}
+                    <div className="flex items-center justify-between gap-2 text-[11px]">
+                      {classification ? (
+                        <span className="px-2 py-0.5 rounded font-bold text-[10px] uppercase bg-amber-50 text-amber-800 border border-amber-200 truncate max-w-[170px]">
+                          {classification.category.replace(/_/g, ' ')}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-[10px]">Normal Shift Output</span>
+                      )}
 
-                      {/* 7. Photo Evidence */}
-                      <td className="py-2 px-1 text-center whitespace-nowrap">
-                        {hasPhotos ? (
+                      <div className="flex items-center gap-2">
+                        {hasPhotos && (
                           <button
                             type="button"
                             onClick={() =>
@@ -637,43 +619,184 @@ export const OrderDetailPage: React.FC = () => {
                                 date: new Date(update.clientEventAt).toLocaleString(),
                               })
                             }
-                            className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-[10px] font-bold transition cursor-pointer"
-                            title="View photo evidence"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 text-[10px] font-bold"
                           >
-                            <Camera className="w-2.5 h-2.5 text-sky-600" />
-                            <span>{update.photos.length}</span>
+                            <Camera className="w-3 h-3 text-sky-600" />
+                            <span>{update.photos.length} Photo{update.photos.length > 1 ? 's' : ''}</span>
                           </button>
-                        ) : (
-                          <span className="text-slate-300 font-mono text-[11px]">—</span>
                         )}
-                      </td>
+                        <span className="text-slate-500 font-medium text-[10px]">By {supervisorName}</span>
+                      </div>
+                    </div>
 
-                      {/* 8. Supervisor Notes (English Translation Only) */}
-                      <td className="py-2 px-3">
-                        {hasNote || classification?.translatedText ? (
-                          <div className="text-[11px] text-slate-900 break-words whitespace-normal font-medium leading-snug">
-                            {(() => {
-                              // If note has [English: ...], display only the clean English inside
-                              if (noteText.includes('[English:')) {
-                                const parts = noteText.split('[English:');
-                                return parts[1]?.replace(/\]$/, '').trim() || parts[0].trim();
-                              }
-                              // If AI translated text exists, prefer the English translation
-                              if (classification?.translatedText) {
-                                return classification.translatedText;
-                              }
-                              return noteText;
-                            })()}
+                    {/* Note Box */}
+                    {(hasNote || classification?.translatedText) && (
+                      <div className="p-2 bg-slate-50 rounded-lg border border-slate-200/80 text-[11px] text-slate-800 leading-snug">
+                        "{cleanNote}"
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View (Scrollable horizontally if screen narrows, hidden on mobile) */}
+            <div className="hidden md:block w-full rounded-xl border border-slate-200 overflow-x-auto bg-white shadow-2xs">
+              <table className="w-full text-left text-xs min-w-[700px] border-collapse">
+                <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
+                  <tr>
+                    <th className="py-2.5 px-3 text-slate-100">Date / Time</th>
+                    <th className="py-2.5 px-2 text-slate-100">Stage</th>
+                    <th className="py-2.5 px-2 text-slate-100">Shift · Line</th>
+                    <th className="py-2.5 px-2 text-right text-slate-100">Output</th>
+                    <th className="py-2.5 px-3 text-slate-100">Issue Reason</th>
+                    <th className="py-2.5 px-2 text-slate-100">Logged By</th>
+                    <th className="py-2.5 px-2 text-center text-slate-100">Photo</th>
+                    <th className="py-2.5 px-3 text-slate-100">Supervisor Note & AI Summary</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {paginatedLogs.map((update) => {
+                    const classification = update.issueClassification;
+                    const hasPhotos = update.photos && update.photos.length > 0;
+                    const noteText = update.notes || '';
+                    const hasNote = Boolean(noteText.trim());
+
+                    const eventDate = new Date(update.clientEventAt);
+                    const dateStr = eventDate.toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                    });
+                    const timeStr = eventDate.toLocaleTimeString(undefined, {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true,
+                    });
+
+                    const lineName = (update.machineLine || 'Line 1')
+                      .replace('UNIT_3 Floor Line', 'U3 Line')
+                      .replace('Floor Line', 'Line')
+                      .trim();
+
+                    const supervisorName = update.supervisor?.name
+                      ? update.supervisor.name
+                          .replace(' Floor Supervisor', '')
+                          .replace(' Merchandiser', ' (M)')
+                      : 'Supervisor';
+
+                    return (
+                      <tr
+                        key={update.id}
+                        className="even:bg-slate-50/80 odd:bg-white hover:bg-sky-50/60 transition-colors align-top"
+                      >
+                        {/* 1. Date & Time */}
+                        <td className="py-2 px-3 font-mono leading-tight whitespace-nowrap">
+                          <div className="font-semibold text-slate-800 text-[11px]">
+                            {dateStr}
                           </div>
-                        ) : (
-                          <span className="text-slate-400 italic text-[11px]">No notes</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                          <div className="text-[10px] text-slate-400">
+                            {timeStr}
+                          </div>
+                        </td>
+
+                        {/* 2. Stage */}
+                        <td className="py-2 px-2 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-900 text-white inline-block" title={update.stage}>
+                            {update.stage.replace(/_/g, ' ')}
+                          </span>
+                        </td>
+
+                        {/* 3. Shift & Machine Line */}
+                        <td className="py-2 px-2 text-[11px] leading-tight whitespace-nowrap">
+                          <span className="text-slate-800 font-bold">
+                            {update.shift || 'DAY'}
+                          </span>
+                          <span className="text-slate-400 mx-1">·</span>
+                          <span className="text-slate-600 font-medium" title={update.machineLine || ''}>
+                            {lineName}
+                          </span>
+                        </td>
+
+                        {/* 4. Output Qty */}
+                        <td className="py-2 px-2 text-right whitespace-nowrap">
+                          <span className="inline-flex items-center font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 text-[10px]">
+                            +{update.goodQuantity.toLocaleString()}
+                          </span>
+                          {update.rejectedQuantity > 0 && (
+                            <div className="text-[9px] text-rose-600 font-semibold leading-none mt-0.5">
+                              {update.rejectedQuantity} rej
+                            </div>
+                          )}
+                        </td>
+
+                        {/* 5. Issue Category */}
+                        <td className="py-2 px-3 whitespace-nowrap">
+                          {classification ? (
+                            <span
+                              className="text-[11px] font-semibold text-slate-700"
+                              title={`${classification.category.replace(/_/g, ' ')} (${Math.round(classification.confidenceScore * 100)}%)`}
+                            >
+                              {classification.category.replace(/_/g, ' ')}
+                            </span>
+                          ) : (
+                            <span className="text-slate-300 font-mono text-[11px]">—</span>
+                          )}
+                        </td>
+
+                        {/* 6. Supervisor */}
+                        <td className="py-2 px-2 text-slate-700 font-semibold text-[11px] whitespace-nowrap">
+                          {supervisorName}
+                        </td>
+
+                        {/* 7. Photo Evidence */}
+                        <td className="py-2 px-2 text-center whitespace-nowrap">
+                          {hasPhotos ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSelectedImageModal({
+                                  url: update.photos[0].s3Url,
+                                  stage: update.stage,
+                                  supervisorName: update.supervisor?.name,
+                                  date: new Date(update.clientEventAt).toLocaleString(),
+                                })
+                              }
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-[10px] font-bold transition cursor-pointer"
+                              title="View photo evidence"
+                            >
+                              <Camera className="w-2.5 h-2.5 text-sky-600" />
+                              <span>{update.photos.length}</span>
+                            </button>
+                          ) : (
+                            <span className="text-slate-300 font-mono text-[11px]">—</span>
+                          )}
+                        </td>
+
+                        {/* 8. Supervisor Notes */}
+                        <td className="py-2 px-3">
+                          {hasNote || classification?.translatedText ? (
+                            <div className="text-[11px] text-slate-900 break-words whitespace-normal font-medium leading-snug">
+                              {(() => {
+                                if (noteText.includes('[English:')) {
+                                  const parts = noteText.split('[English:');
+                                  return parts[1]?.replace(/\]$/, '').trim() || parts[0].trim();
+                                }
+                                if (classification?.translatedText) {
+                                  return classification.translatedText;
+                                }
+                                return noteText;
+                              })()}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 italic text-[11px]">No notes</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -890,27 +1013,27 @@ export const OrderDetailPage: React.FC = () => {
 
       {/* Date Alteration Modal with Reason Code Prompt */}
       {isDateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
           <div
             style={{ colorScheme: 'light' }}
-            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden text-slate-900"
+            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg max-h-[92vh] overflow-hidden text-slate-900 flex flex-col"
           >
-            <div className="bg-[#0C2D48] px-6 py-4 text-white flex items-center justify-between">
+            <div className="bg-[#0C2D48] px-5 sm:px-6 py-3.5 sm:py-4 text-white flex items-center justify-between shrink-0">
               <div>
-                <h3 className="text-base font-bold text-white">Shift Ex-Factory Delivery Date</h3>
-                <p className="text-xs text-sky-200/80">
+                <h3 className="text-sm sm:text-base font-bold text-white">Shift Ex-Factory Delivery Date</h3>
+                <p className="text-[11px] sm:text-xs text-sky-200/80">
                   Delivery schedule shift and compliance logging
                 </p>
               </div>
               <button
                 onClick={() => setIsDateModalOpen(false)}
-                className="text-sky-200 hover:text-white p-1 rounded-lg hover:bg-white/10"
+                className="text-sky-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleDateChangeSubmit} className="p-6 space-y-4 bg-white text-slate-900">
+            <form onSubmit={handleDateChangeSubmit} className="p-4 sm:p-6 space-y-4 bg-white text-slate-900 overflow-y-auto flex-1">
               {modalError && (
                 <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0" />

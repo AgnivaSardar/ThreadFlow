@@ -193,9 +193,9 @@ export const AppLayout: React.FC = () => {
               </button>
             )}
 
-            {/* Real Network Status Badge (Unclickable - solely reflects actual network connection) */}
+            {/* Real Network Status Badge (Hidden on mobile when online to prevent header cramping; only shown when offline) */}
             <div
-              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-bold shadow-2xs select-none cursor-default ${
+              className={`${!isOnline ? 'inline-flex' : 'hidden sm:inline-flex'} items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-bold shadow-2xs select-none cursor-default ${
                 !isOnline
                   ? 'bg-rose-50 text-rose-800 border border-rose-300'
                   : 'bg-emerald-50 text-emerald-900 border border-emerald-300'
@@ -250,7 +250,7 @@ export const AppLayout: React.FC = () => {
 
         {/* Scrollable Content Container with Soft Subtle Textile Watermark (Decreased Opacity & Contrast) */}
         <main
-          className="flex-1 overflow-y-auto w-full smooth-scroll bg-[#F1F5F9]"
+          className="flex-1 overflow-y-auto overflow-x-hidden w-full smooth-scroll bg-[#F1F5F9]"
           style={{
             backgroundImage: "linear-gradient(rgba(241, 245, 249, 0.82), rgba(241, 245, 249, 0.82)), url('/images/threadflow-bg.jpg')",
             backgroundSize: 'cover',
@@ -259,7 +259,7 @@ export const AppLayout: React.FC = () => {
             backgroundRepeat: 'no-repeat',
           }}
         >
-          <div className="p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+          <div className="p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto min-w-0">
             <Outlet />
           </div>
         </main>

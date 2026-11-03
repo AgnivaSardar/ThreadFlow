@@ -306,8 +306,8 @@ export const ReportsPage: React.FC = () => {
 
       {/* 2. Partner & Calendar Week Selection Bar */}
       <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 w-full sm:w-auto flex-wrap">
-          <div className="w-56">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:flex items-center gap-2.5 w-full md:w-auto">
+          <div className="w-full sm:w-56">
             <CustomSelect
               value={selectedBuyerId}
               options={buyerOptions}
@@ -316,7 +316,7 @@ export const ReportsPage: React.FC = () => {
             />
           </div>
 
-          <div className="w-64">
+          <div className="w-full sm:w-64">
             <CustomSelect
               value={selectedWeek}
               options={weekOptions}
@@ -648,7 +648,7 @@ export const ReportsPage: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs min-w-[700px]">
             <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
               <tr>
                 <th className="py-2.5 px-3 text-slate-100">{t.reports.poNumber}</th>

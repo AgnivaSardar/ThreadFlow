@@ -270,8 +270,8 @@ export const AuditPage: React.FC = () => {
             />
           </form>
 
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <div className="w-44">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:flex items-center gap-2.5 w-full md:w-auto">
+            <div className="w-full sm:w-44">
               <CustomSelect
                 value={actionFilter}
                 options={actionOptions}
@@ -283,7 +283,7 @@ export const AuditPage: React.FC = () => {
               />
             </div>
 
-            <div className="w-40">
+            <div className="w-full sm:w-40">
               <CustomSelect
                 value={roleFilter}
                 options={roleOptions}
@@ -298,10 +298,10 @@ export const AuditPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Audit Trail Table - Fixed Width, Completely Unscrollable Horizontally */}
+      {/* 3. Audit Trail Table - Scrollable on mobile, Fixed on desktop */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="w-full">
-          <table className="w-full table-fixed text-left text-xs">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-left text-xs min-w-[680px]">
             <colgroup>
               <col className="w-[14%]" />
               <col className="w-[18%]" />

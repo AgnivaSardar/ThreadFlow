@@ -18,6 +18,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !user) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,20 +62,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
       <div
         style={{ colorScheme: 'light' }}
-        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden text-slate-900"
+        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md max-h-[92vh] overflow-hidden text-slate-900 flex flex-col"
       >
         {/* Header */}
-        <div className="bg-[#0C2D48] px-6 py-4 text-white flex items-center justify-between">
+        <div className="bg-[#0C2D48] px-5 sm:px-6 py-3.5 sm:py-4 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-amber-300 font-bold">
               <UserIcon className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">My Account Profile</h3>
-              <p className="text-xs text-sky-200/80">View and edit personal details and preferences</p>
+              <h3 className="text-sm sm:text-base font-bold text-white">My Account Profile</h3>
+              <p className="text-[11px] sm:text-xs text-sky-200/80">View and edit personal details and preferences</p>
             </div>
           </div>
           <button
