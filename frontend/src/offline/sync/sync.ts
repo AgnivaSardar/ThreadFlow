@@ -3,6 +3,7 @@ import {
   getAllPendingUpdates,
   removePendingUpdate,
   updatePendingStatus,
+  resetPendingStatus,
   PendingUpdateRecord,
 } from '../db';
 import { isEffectiveOnline } from '../queue/queue';
@@ -149,7 +150,7 @@ async function syncSingleRecord(item: PendingUpdateRecord): Promise<{ success: b
  * Flush all queued updates from IndexedDB `pending_updates` to the server.
  * Prioritizes bulk batch ingestion (`POST /production/updates/bulk`) to minimize network roundtrips.
  */
-export async function syncOfflineQueue(): Promise<SyncResult> {
+export async function syncOfflineQueue(force: boolean = false): Promise<SyncResult> {
   const result: SyncResult = {
     total: 0,
     synced: 0,
@@ -161,17 +162,26 @@ export async function syncOfflineQueue(): Promise<SyncResult> {
     return result;
   }
 
-  if (!isEffectiveOnline()) {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
     return result;
   }
 
   const items = await getAllPendingUpdates();
   const pendingItems = items.filter(
-    (i) => i.status === 'QUEUED' || (i.status === 'ERROR' && (i.retryCount || 0) < 3)
+    (i) => i.status === 'QUEUED' || (force ? true : i.status === 'ERROR' && (i.retryCount || 0) < 3)
   );
 
   if (pendingItems.length === 0) {
     return result;
+  }
+
+  // If force retry is requested by user, reset items to QUEUED so backend re-attempts them
+  if (force) {
+    for (const item of pendingItems) {
+      if (item.status === 'ERROR') {
+        await resetPendingStatus(item.idempotencyKey);
+      }
+    }
   }
 
   isSyncing = true;

@@ -6,9 +6,6 @@ import { Clock, Menu, Wifi, WifiOff, RefreshCw, Languages } from 'lucide-react';
 import { syncServerTime, getAuthoritativeServerDate } from '../services/api';
 import { UserMenuDropdown } from './UserMenuDropdown';
 import {
-  isEffectiveOnline,
-  isOfflineSimulated,
-  setOfflineSimulated,
   getPendingOfflineCount,
 } from '../offline/queue/queue';
 import {
@@ -28,8 +25,7 @@ export const AppLayout: React.FC = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Network & Sync states in Main Header
-  const [isOnline, setIsOnline] = useState(isEffectiveOnline());
-  const [isSimulated, setIsSimulated] = useState(isOfflineSimulated());
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -72,8 +68,7 @@ export const AppLayout: React.FC = () => {
     const cleanupSync = registerOfflineSyncListeners();
 
     const handleNetworkChange = () => {
-      setIsOnline(isEffectiveOnline());
-      setIsSimulated(isOfflineSimulated());
+      setIsOnline(typeof navigator !== 'undefined' ? navigator.onLine : true);
       refreshPending();
     };
 
@@ -99,23 +94,14 @@ export const AppLayout: React.FC = () => {
     };
   }, [refreshPending]);
 
-  // Toggle Offline Simulation from Main Dashboard Header
-  const handleToggleSimulation = () => {
-    const nextVal = !isSimulated;
-    setOfflineSimulated(nextVal);
-    setIsSimulated(nextVal);
-    setIsOnline(isEffectiveOnline());
-    if (!nextVal) {
-      setTimeout(() => syncOfflineQueue(), 300);
-    }
-  };
-
-  // Manual Trigger Sync from Main Dashboard Header
+  // Manual Trigger Sync & Open Drawer from Main Dashboard Header
   const handleManualSync = async () => {
-    if (!isEffectiveOnline()) return;
+    // Open the drawer immediately so user has full visibility and can discard/retry
+    window.dispatchEvent(new CustomEvent('threadflow-open-queue-drawer'));
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
     setIsSyncing(true);
     try {
-      await syncOfflineQueue();
+      await syncOfflineQueue(true);
     } finally {
       setIsSyncing(false);
       refreshPending();
@@ -184,44 +170,33 @@ export const AppLayout: React.FC = () => {
           {/* Right: Online/Offline Badge + Language Toggle + User Avatar Dropdown */}
           <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
             {/* On header left side of Online/Offline capsule: Write queue pending when offline or pending exists */}
-            {(!isOnline || isSimulated || pendingCount > 0) && (
+            {(!isOnline || pendingCount > 0) && (
               <button
                 type="button"
                 onClick={handleManualSync}
-                disabled={isSyncing || !isOnline}
-                title={isOnline ? (lang === 'ta' ? 'கிளிக் செய்து உடனே ஒத்திசைக்கவும்' : 'Click to sync pending updates') : undefined}
-                className={`text-[10px] sm:text-[11px] font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl shadow-2xs transition-all ${
-                  isOnline && pendingCount > 0
-                    ? 'text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 cursor-pointer active:scale-95'
-                    : 'text-amber-900 bg-amber-100 border border-amber-300 cursor-default'
-                }`}
+                disabled={isSyncing}
+                title={lang === 'ta' ? 'கிளிக் செய்து பதிவுகளைக் காணவும் / ஒத்திசைக்கவும்' : 'Click to inspect pending queue or sync'}
+                className="text-[10px] sm:text-[11px] font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl shadow-2xs transition-all text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 cursor-pointer active:scale-95"
               >
                 {isSyncing ? (lang === 'ta' ? 'ஒத்திசைகிறது...' : 'Syncing...') : `${pendingCount} Pending`}
               </button>
             )}
 
-            {/* Online / Offline Simulator Pill in Main Header */}
-            <button
-              type="button"
-              onClick={handleToggleSimulation}
-              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer ${
-                !isOnline || isSimulated
-                  ? 'bg-rose-50 text-rose-800 border border-rose-300 hover:bg-rose-100'
-                  : 'bg-emerald-50 text-emerald-900 border border-emerald-300 hover:bg-emerald-100'
+            {/* Real Network Status Badge (Unclickable - solely reflects actual network connection) */}
+            <div
+              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-bold shadow-2xs select-none cursor-default ${
+                !isOnline
+                  ? 'bg-rose-50 text-rose-800 border border-rose-300'
+                  : 'bg-emerald-50 text-emerald-900 border border-emerald-300'
               }`}
-              title="Click to toggle Offline Simulation mode"
+              title={!isOnline ? (lang === 'ta' ? 'இணையத் தொடர்பு இல்லை' : 'Offline - No Internet Connection') : (lang === 'ta' ? 'இணையத் தொடர்பு உள்ளது' : 'Online - Connected')}
             >
-              {!isOnline || isSimulated ? (
+              {!isOnline ? (
                 <>
                   <WifiOff className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-600 shrink-0" />
                   <span className="text-[10px] sm:text-[11px] font-black">
                     {lang === 'ta' ? 'இணைப்பில்லை' : 'OFFLINE'}
                   </span>
-                  {isSimulated && (
-                    <span className="hidden md:inline text-[10px] text-rose-500 font-semibold">
-                      {lang === 'ta' ? '(மாதிரி)' : '(Sim)'}
-                    </span>
-                  )}
                 </>
               ) : (
                 <>
@@ -231,7 +206,7 @@ export const AppLayout: React.FC = () => {
                   </span>
                 </>
               )}
-            </button>
+            </div>
 
             {/* Language Toggle (தமிழ் / EN) */}
             <button

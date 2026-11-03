@@ -165,6 +165,7 @@ export async function resetPendingStatus(idempotencyKey: string): Promise<void> 
 
       record.status = 'QUEUED';
       record.lastError = null;
+      record.retryCount = 0;
 
       const putReq = store.put(record);
       putReq.onsuccess = () => resolve();

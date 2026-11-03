@@ -211,12 +211,18 @@ export const MyWorkPage: React.FC = () => {
       window.removeEventListener('threadflow-queue-changed', handleQueueChange);
       window.removeEventListener('threadflow-queue-synced', handleQueueSynced);
       window.removeEventListener('threadflow-cache-optimistic-updated', handleOptimisticUpdate);
+      window.removeEventListener('threadflow-open-queue-drawer', handleOpenQueueDrawer);
     };
   }, [refreshPendingCount, loadPendingList, fetchWork, user?.assignedUnitId, lang]);
 
-  // Initial fetch
+  // Initial fetch & listener for open drawer
   useEffect(() => {
     fetchWork();
+    const handleDrawer = () => {
+      handleOpenQueueDrawer();
+    };
+    window.addEventListener('threadflow-open-queue-drawer', handleDrawer);
+    return () => window.removeEventListener('threadflow-open-queue-drawer', handleDrawer);
   }, [fetchWork]);
 
   // Toggle offline simulation switch
@@ -759,13 +765,34 @@ export const MyWorkPage: React.FC = () => {
 
             {/* Modal Footer */}
             <div className="p-4 sm:p-5 bg-white border-t border-slate-200 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => setIsQueueDrawerOpen(false)}
-                className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
-              >
-                {t.close}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsQueueDrawerOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
+                >
+                  {t.close}
+                </button>
+                {pendingList.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (window.confirm(lang === 'ta' ? 'அனைத்து நிலுவைப் பதிவுகளையும் நீக்க விரும்புகிறீர்களா?' : 'Discard all pending offline updates?')) {
+                        for (const item of pendingList) {
+                          await discardOfflineUpdate(item.idempotencyKey);
+                        }
+                        await loadPendingList();
+                        await refreshPendingCount();
+                        setIsQueueDrawerOpen(false);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-rose-700 hover:text-rose-900 hover:bg-rose-50 border border-rose-200 rounded-xl transition-all cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{lang === 'ta' ? 'அனைத்தையும் நீக்கு' : 'Discard All'}</span>
+                  </button>
+                )}
+              </div>
 
               {pendingList.length > 0 && isOnline && (
                 <button
