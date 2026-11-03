@@ -387,13 +387,13 @@ export const OrderDetailPage: React.FC = () => {
               <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
                 <tr>
                   <th className="py-2 px-2 w-[10%]">Date / Time</th>
-                  <th className="py-2 px-1.5 w-[8%]">Stage</th>
-                  <th className="py-2 px-2 w-[10%]">Shift · Line</th>
+                  <th className="py-2 px-1.5 w-[7%]">Stage</th>
+                  <th className="py-2 px-2 w-[9%]">Shift · Line</th>
                   <th className="py-2 px-1 w-[6%] text-right">Output</th>
-                  <th className="py-2 px-2 w-[11%]">Issue Reason</th>
+                  <th className="py-2 px-2 w-[16%] whitespace-nowrap">Issue Reason</th>
                   <th className="py-2 px-2 w-[9%]">Logged By</th>
                   <th className="py-2 px-1 w-[4%] text-center">Photo</th>
-                  <th className="py-2 px-3 w-[42%]">Supervisor Note & AI Summary</th>
+                  <th className="py-2 px-3 w-[39%]">Supervisor Note & AI Summary</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
@@ -473,11 +473,11 @@ export const OrderDetailPage: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 5. Issue Category (Clean text without yellow capsule or emoji) */}
-                      <td className="py-2 px-2">
+                      {/* 5. Issue Category (Clean text without yellow capsule or emoji, increased width) */}
+                      <td className="py-2 px-2 whitespace-nowrap">
                         {classification ? (
                           <span
-                            className="text-[11px] font-semibold text-slate-700 block truncate"
+                            className="text-[11px] font-semibold text-slate-700 whitespace-nowrap"
                             title={`${classification.category.replace(/_/g, ' ')} (${Math.round(classification.confidenceScore * 100)}%)`}
                           >
                             {classification.category.replace(/_/g, ' ')}
