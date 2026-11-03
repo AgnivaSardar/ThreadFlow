@@ -768,6 +768,12 @@ export const ReportsPage: React.FC = () => {
           onClose={() => setIsPrintModalOpen(false)}
           buyer={data.buyer}
           orders={exportFormattedOrders}
+          selectedWeek={data.selectedWeek || selectedWeek}
+          metrics={data.metrics}
+          aiIntelligence={data.aiIntelligence}
+          stageTrends={data.stageTrends}
+          weeklyThroughput={data.weeklyThroughput}
+          milestoneHealth={data.milestoneHealth}
         />
       )}
     </div>
