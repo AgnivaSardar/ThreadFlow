@@ -26,10 +26,13 @@ import { OrderForm } from './OrderForm';
 import { BulkShiftModal } from './BulkShiftModal';
 import { useAuthStore } from '../auth/authStore';
 import { ShiftCutoffBanner } from '../dashboard/ShiftCutoffBanner';
+import { useLanguage } from '../../hooks/useLanguage';
+import { STAGE_TRANSLATIONS } from '../supervisor/supervisorTranslations';
 
 export const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
   const { hasRole } = useAuthStore();
+  const { isTa, t } = useLanguage();
   const [orders, setOrders] = useState<OrderListItem[]>([]);
   const [buyers, setBuyers] = useState<Buyer[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -271,9 +274,9 @@ export const OrdersPage: React.FC = () => {
       {/* Page Title & Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Export Order Board</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t.orders.title}</h1>
           <p className="text-xs text-slate-500 mt-1">
-            Active export purchase orders and milestone schedules
+            {t.orders.subtitle}
           </p>
         </div>
 
@@ -281,7 +284,7 @@ export const OrdersPage: React.FC = () => {
           <button
             onClick={fetchOrders}
             className="p-2 text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl shadow-xs transition cursor-pointer"
-            title="Refresh order statuses"
+            title={t.common.refresh}
           >
             <RefreshCw className="w-4 h-4" />
           </button>
@@ -293,7 +296,7 @@ export const OrdersPage: React.FC = () => {
             title="Export currently filtered orders to CSV"
           >
             <Download className="w-4 h-4 text-sky-700" />
-            <span className="hidden sm:inline">Export CSV</span>
+            <span className="hidden sm:inline">{t.common.exportCsv}</span>
           </button>
 
           {hasRole('MERCHANDISER', 'ADMIN') && (
@@ -302,7 +305,7 @@ export const OrdersPage: React.FC = () => {
               className="inline-flex items-center gap-2 px-4 py-2 bg-[#0C2D48] hover:bg-[#143D60] text-white font-semibold rounded-xl text-xs shadow-md transition cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              New Export Order
+              {t.orders.newOrder}
             </button>
           )}
         </div>
@@ -319,11 +322,11 @@ export const OrdersPage: React.FC = () => {
             <div className="flex items-center gap-1 sm:gap-1.5 p-1 bg-slate-100 rounded-xl overflow-x-auto no-scrollbar">
               {(
                 [
-                  { key: 'ALL', label: 'All Orders', shortLabel: 'All', dot: '' },
-                  { key: 'RED', label: 'Critical Deficit', shortLabel: 'Critical', dot: 'bg-rose-500' },
-                  { key: 'AMBER', label: 'Buffer Caution', shortLabel: 'Caution', dot: 'bg-amber-500' },
-                  { key: 'GREEN', label: 'On Track', shortLabel: 'On Track', dot: 'bg-emerald-500' },
-                  { key: 'COMPLETED', label: 'Completed', shortLabel: 'Completed', dot: 'bg-emerald-600' },
+                  { key: 'ALL', label: isTa ? 'அனைத்து ஆர்டர்கள்' : 'All Orders', shortLabel: isTa ? 'அனைத்தும்' : 'All', dot: '' },
+                  { key: 'RED', label: isTa ? 'முக்கிய பற்றாக்குறை' : 'Critical Deficit', shortLabel: isTa ? 'முக்கியம்' : 'Critical', dot: 'bg-rose-500' },
+                  { key: 'AMBER', label: isTa ? 'எச்சரிக்கை' : 'Buffer Caution', shortLabel: isTa ? 'எச்சரிக்கை' : 'Caution', dot: 'bg-amber-500' },
+                  { key: 'GREEN', label: isTa ? 'சரியான பாதை' : 'On Track', shortLabel: isTa ? 'பாதை' : 'On Track', dot: 'bg-emerald-500' },
+                  { key: 'COMPLETED', label: isTa ? 'முடிந்தது' : 'Completed', shortLabel: isTa ? 'முடிந்தது' : 'Completed', dot: 'bg-emerald-600' },
                 ] as const
               ).map((tab) => (
                 <button
@@ -360,7 +363,7 @@ export const OrdersPage: React.FC = () => {
               title="Toggle dropdown filters"
             >
               <Filter className="w-3.5 h-3.5 text-slate-500" />
-              <span>Filters</span>
+              <span>{t.common.filter}</span>
               {(buyerFilter !== 'ALL' || unitFilter !== 'ALL' || shipWeekFilter !== 'ALL') && (
                 <span className="w-4 h-4 rounded-full bg-sky-600 text-white text-[10px] flex items-center justify-center font-bold">
                   {(buyerFilter !== 'ALL' ? 1 : 0) + (unitFilter !== 'ALL' ? 1 : 0) + (shipWeekFilter !== 'ALL' ? 1 : 0)}
@@ -377,7 +380,7 @@ export const OrdersPage: React.FC = () => {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search PO number, style code, or description..."
+              placeholder={t.orders.searchOrders}
               className="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
             />
           </form>
@@ -388,7 +391,7 @@ export const OrdersPage: React.FC = () => {
           {/* Buyer Filter */}
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-              Buyer
+              {isTa ? 'வாங்குபவர்' : 'Buyer'}
             </label>
             <CustomSelect
               value={buyerFilter}
@@ -400,7 +403,7 @@ export const OrdersPage: React.FC = () => {
           {/* Unit Filter */}
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-              Manufacturing Unit
+              {isTa ? 'உற்பத்திப் பிரிவு' : 'Manufacturing Unit'}
             </label>
             <CustomSelect
               value={unitFilter}
@@ -412,7 +415,7 @@ export const OrdersPage: React.FC = () => {
           {/* Ship Week Filter */}
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-              Ship Week (CW)
+              {isTa ? 'கப்பல் வாரம் (CW)' : 'Ship Week (CW)'}
             </label>
             <CustomSelect
               value={shipWeekFilter}
@@ -424,7 +427,7 @@ export const OrdersPage: React.FC = () => {
           {/* Result Count Indicator */}
           <div className="flex items-end justify-between sm:justify-end pb-1 text-slate-500 font-medium text-xs">
             <span>
-              Total: <strong className="text-slate-800">{pagination.total}</strong> orders
+              {isTa ? 'மொத்தம்:' : 'Total:'} <strong className="text-slate-800">{pagination.total}</strong> {isTa ? 'ஆர்டர்கள்' : 'orders'}
             </span>
           </div>
         </div>
@@ -441,16 +444,16 @@ export const OrdersPage: React.FC = () => {
       {loading ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center flex flex-col items-center justify-center gap-3">
           <Loader2 className="w-8 h-8 text-sky-600 animate-spin" />
-          <p className="text-xs text-slate-500 font-medium">Loading export orders & TNA pipelines...</p>
+          <p className="text-xs text-slate-500 font-medium">{t.common.loading}</p>
         </div>
       ) : orders.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
           <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
             <Filter className="w-6 h-6" />
           </div>
-          <h3 className="text-base font-bold text-slate-800">No Orders Found</h3>
+          <h3 className="text-base font-bold text-slate-800">{t.orders.noOrdersMatch}</h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            No export orders match the active filter criteria. Try clearing search terms or selecting 'All Orders'.
+            {isTa ? 'தேடல் அல்லது வடிகட்டிகளை மாற்றி முயற்சிக்கவும்.' : "No export orders match the active filter criteria. Try clearing search terms or selecting 'All Orders'."}
           </p>
         </div>
       ) : (
@@ -469,14 +472,14 @@ export const OrdersPage: React.FC = () => {
                       title="Select all orders on this page"
                     />
                   </th>
-                  <th className="py-3.5 px-4 text-slate-100">PO & Style</th>
-                  <th className="py-3.5 px-4 text-slate-100">Buyer & Market</th>
-                  <th className="py-3.5 px-4 text-slate-100">Assigned Unit</th>
-                  <th className="py-3.5 px-4 text-right text-slate-100">Order Qty</th>
-                  <th className="py-3.5 px-4 text-slate-100">Active Stage & Progress</th>
-                  <th className="py-3.5 px-4 text-slate-100">Ex-Factory</th>
-                  <th className="py-3.5 px-4 text-center text-slate-100">Status</th>
-                  <th className="py-3.5 px-4 text-right text-slate-100">Action</th>
+                  <th className="py-3.5 px-4 text-slate-100">{t.orders.poAndStyle}</th>
+                  <th className="py-3.5 px-4 text-slate-100">{t.orders.buyerAndMarket}</th>
+                  <th className="py-3.5 px-4 text-slate-100">{t.orders.assignedUnit}</th>
+                  <th className="py-3.5 px-4 text-right text-slate-100">{t.orders.orderQty}</th>
+                  <th className="py-3.5 px-4 text-slate-100">{t.orders.activeStageProgress}</th>
+                  <th className="py-3.5 px-4 text-slate-100">{t.common.exFactory}</th>
+                  <th className="py-3.5 px-4 text-center text-slate-100">{t.orders.statusCol}</th>
+                  <th className="py-3.5 px-4 text-right text-slate-100">{t.orders.actionCol}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-normal">
@@ -557,7 +560,7 @@ export const OrdersPage: React.FC = () => {
                                 order.activeStageProgressPct >= 100 ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
                               }`}
                             ></span>
-                            {order.activeStage}
+                            {isTa ? (STAGE_TRANSLATIONS[order.activeStage]?.ta || order.activeStage) : order.activeStage}
                           </span>
                           <span className="font-mono font-bold text-slate-800">
                             {order.activeStageProgressPct}%
@@ -578,9 +581,9 @@ export const OrdersPage: React.FC = () => {
                           ></div>
                         </div>
                         <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium">
-                          <span>Stage {order.activeStageSequence} of 7</span>
+                          <span>{isTa ? `நிலை ${order.activeStageSequence} / 7` : `Stage ${order.activeStageSequence} of 7`}</span>
                           <span className="font-mono">
-                            {(order.activeMilestoneCompleted || 0).toLocaleString()} / {(order.activeMilestoneTarget || order.totalQuantity).toLocaleString()} pcs
+                            {(order.activeMilestoneCompleted || 0).toLocaleString()} / {(order.activeMilestoneTarget || order.totalQuantity).toLocaleString()} {isTa ? 'துண்டுகள்' : 'pcs'}
                           </span>
                         </div>
                       </td>
@@ -592,7 +595,7 @@ export const OrdersPage: React.FC = () => {
                           {formatDate(order.exFactoryDate)}
                         </div>
                         <div className="text-[11px] text-amber-700 font-medium">
-                          {order.workingDaysLeft}d left (CW {order.shipWeek})
+                          {order.workingDaysLeft}{isTa ? ' நாள்கள் எஞ்சியுள்ளன' : 'd left'} (CW {order.shipWeek})
                         </div>
                         {order.hasCriticalBottleneck && (
                           <div className="mt-0.5">
@@ -618,7 +621,7 @@ export const OrdersPage: React.FC = () => {
                           to={`/orders/${order.id}`}
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 transition"
                         >
-                          TNA Detail <ArrowRight className="w-3.5 h-3.5" />
+                          {isTa ? 'TNA விவரம்' : 'TNA Detail'} <ArrowRight className="w-3.5 h-3.5" />
                         </Link>
                       </td>
                     </tr>
@@ -634,21 +637,37 @@ export const OrdersPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1 px-1">
             {/* Showing Count */}
             <div className="text-xs text-slate-500 font-medium">
-              Showing{' '}
-              <span className="font-semibold text-slate-800">
-                {(pagination.page - 1) * pagination.limit + 1}
-              </span>{' '}
-              to{' '}
-              <span className="font-semibold text-slate-800">
-                {Math.min(pagination.page * pagination.limit, pagination.total)}
-              </span>{' '}
-              of <span className="font-semibold text-slate-800">{pagination.total}</span> export orders
+              {isTa ? (
+                <>
+                  காண்பிக்கப்படுகிறது{' '}
+                  <span className="font-semibold text-slate-800">
+                    {(pagination.page - 1) * pagination.limit + 1}
+                  </span>{' '}
+                  முதல்{' '}
+                  <span className="font-semibold text-slate-800">
+                    {Math.min(pagination.page * pagination.limit, pagination.total)}
+                  </span>{' '}
+                  வரை (மொத்தம் <span className="font-semibold text-slate-800">{pagination.total}</span> ஏற்றுமதி ஆர்டர்கள்)
+                </>
+              ) : (
+                <>
+                  Showing{' '}
+                  <span className="font-semibold text-slate-800">
+                    {(pagination.page - 1) * pagination.limit + 1}
+                  </span>{' '}
+                  to{' '}
+                  <span className="font-semibold text-slate-800">
+                    {Math.min(pagination.page * pagination.limit, pagination.total)}
+                  </span>{' '}
+                  of <span className="font-semibold text-slate-800">{pagination.total}</span> export orders
+                </>
+              )}
             </div>
 
             <div className="flex items-center gap-4">
               {/* Rows per page selector with CustomSelect */}
               <div className="flex items-center gap-2 text-xs text-slate-600">
-                <span className="text-slate-400">Rows:</span>
+                <span className="text-slate-400">{isTa ? 'வரிசைகள்:' : 'Rows:'}</span>
                 <CustomSelect
                   value={limit.toString()}
                   options={limitOptions}

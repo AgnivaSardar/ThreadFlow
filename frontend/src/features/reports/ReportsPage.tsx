@@ -3,6 +3,8 @@ import { apiRequest } from '../../services/api';
 import { CustomSelect, Option } from '../../components/CustomSelect';
 import { exportOrdersToCsv, BuyerExportOrder, BuyerProfile } from './exportService';
 import { WeeklyReportPrintModal } from './WeeklyReportPrintModal';
+import { useLanguage } from '../../hooks/useLanguage';
+import { STAGE_TRANSLATIONS } from '../supervisor/supervisorTranslations';
 import {
   FileText,
   Printer,
@@ -139,6 +141,7 @@ function ensureEnglishNote(text: string | null | undefined): string {
 }
 
 export const ReportsPage: React.FC = () => {
+  const { isTa, t } = useLanguage();
   const [data, setData] = useState<WeeklySummaryData | null>(null);
   const [buyers, setBuyers] = useState<{ id: string; name: string; code: string; country?: string | null }[]>([]);
   const [selectedBuyerId, setSelectedBuyerId] = useState<string>('');
@@ -206,11 +209,11 @@ export const ReportsPage: React.FC = () => {
   }));
 
   const weekOptions: Option[] = [
-    { value: 'CW44', label: 'Calendar Week 44 (Nov 02 - Nov 08)' },
-    { value: 'CW43', label: 'Calendar Week 43 (Oct 26 - Nov 01)' },
-    { value: 'CW42', label: 'Calendar Week 42 (Oct 19 - Oct 25)' },
-    { value: 'CW41', label: 'Calendar Week 41 (Oct 12 - Oct 18)' },
-    { value: 'CW40', label: 'Calendar Week 40 (Oct 05 - Oct 11)' },
+    { value: 'CW44', label: isTa ? 'காலண்டர் வாரம் 44 (நவ 02 - நவ 08)' : 'Calendar Week 44 (Nov 02 - Nov 08)' },
+    { value: 'CW43', label: isTa ? 'காலண்டர் வாரம் 43 (அக் 26 - நவ 01)' : 'Calendar Week 43 (Oct 26 - Nov 01)' },
+    { value: 'CW42', label: isTa ? 'காலண்டர் வாரம் 42 (அக் 19 - அக் 25)' : 'Calendar Week 42 (Oct 19 - Oct 25)' },
+    { value: 'CW41', label: isTa ? 'காலண்டர் வாரம் 41 (அக் 12 - அக் 18)' : 'Calendar Week 41 (Oct 12 - Oct 18)' },
+    { value: 'CW40', label: isTa ? 'காலண்டர் வாரம் 40 (அக் 05 - அக் 11)' : 'Calendar Week 40 (Oct 05 - Oct 11)' },
   ];
 
   // Map orders for export service format
@@ -255,10 +258,10 @@ export const ReportsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            Weekly Buyer Status & Executive Reports
+            {t.reports.title}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Verified export status matrices, milestone velocity charts, and executive sign-off packs
+            {t.reports.subtitle}
           </p>
         </div>
 
@@ -274,7 +277,7 @@ export const ReportsPage: React.FC = () => {
             title="Download formatted RFC 4180 CSV spreadsheet"
           >
             <Download className="w-3.5 h-3.5 text-sky-700" />
-            <span>Export CSV</span>
+            <span>{t.common.exportCsv}</span>
           </button>
 
           {/* Print / PDF Report */}
@@ -286,7 +289,7 @@ export const ReportsPage: React.FC = () => {
             title="Generate official branded printable report with executive sign-off block"
           >
             <Printer className="w-3.5 h-3.5" />
-            <span>Printable PDF Report</span>
+            <span>{t.reports.printablePdf}</span>
           </button>
 
           <button
@@ -294,14 +297,14 @@ export const ReportsPage: React.FC = () => {
             onClick={() => fetchSummary(selectedBuyerId, selectedWeek)}
             disabled={isLoading}
             className="p-2 text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl shadow-2xs transition cursor-pointer"
-            title="Refresh weekly data"
+            title={t.common.refresh}
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
 
-      {/* 2. Partner & Calendar Week Selection Bar (Clean, compliance line removed) */}
+      {/* 2. Partner & Calendar Week Selection Bar */}
       <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 w-full sm:w-auto flex-wrap">
           <div className="w-56">
@@ -309,7 +312,7 @@ export const ReportsPage: React.FC = () => {
               value={selectedBuyerId}
               options={buyerOptions}
               onChange={(val) => setSelectedBuyerId(val)}
-              placeholder="Select Sourcing Buyer"
+              placeholder={t.reports.selectBuyer}
             />
           </div>
 
@@ -318,14 +321,14 @@ export const ReportsPage: React.FC = () => {
               value={selectedWeek}
               options={weekOptions}
               onChange={(val) => setSelectedWeek(val)}
-              placeholder="Select Calendar Week"
+              placeholder={t.reports.selectWeek}
             />
           </div>
         </div>
 
         <div className="text-xs font-semibold text-slate-600 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Active Export Partner: <strong className="text-slate-900 font-bold">{data?.buyer.name || 'Company B (UK)'}</strong></span>
+          <span>{t.reports.activePartner} <strong className="text-slate-900 font-bold">{data?.buyer.name || 'Company B (UK)'}</strong></span>
         </div>
       </div>
 
@@ -336,17 +339,17 @@ export const ReportsPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-sky-600" />
               <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
-                7-Stage TNA Pipeline Velocity: Past 5 Weeks Multi-Bar Comparison
+                {t.reports.pipelineVelocity}
               </h2>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Tracks completed stage progress rates across 5 consecutive calendar cycles to detect throughput acceleration or bottlenecks.
+              {t.reports.pipelineVelocitySubtitle}
             </p>
           </div>
 
           {/* Bar Chart Legend */}
           <div className="flex items-center gap-3 text-[11px] font-medium text-slate-600 flex-wrap">
-            <span className="text-slate-400 font-semibold">Weeks:</span>
+            <span className="text-slate-400 font-semibold">{t.reports.weeks}</span>
             {data?.stageTrends?.[0]?.weeklyBars?.map((b, i) => (
               <span key={b.week} className="inline-flex items-center gap-1.5">
                 <span className={`w-2.5 h-2.5 rounded-sm ${barColors[i] || 'bg-sky-600'}`} />
@@ -361,6 +364,9 @@ export const ReportsPage: React.FC = () => {
           {(data?.stageTrends || []).map((stage) => {
             const isUp = stage.trend === 'UP';
             const isDown = stage.trend === 'DOWN';
+            const stageDisplayName = isTa
+              ? STAGE_TRANSLATIONS[stage.stage]?.ta || stage.displayName
+              : stage.displayName;
 
             return (
               <div
@@ -370,8 +376,8 @@ export const ReportsPage: React.FC = () => {
                 {/* Stage Header & Trend Delta */}
                 <div>
                   <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="font-bold text-slate-800 text-xs truncate" title={stage.displayName}>
-                      {stage.displayName}
+                    <span className="font-bold text-slate-800 text-xs truncate" title={stageDisplayName}>
+                      {stageDisplayName}
                     </span>
                     <span
                       className={`inline-flex items-center gap-0.5 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md border ${
@@ -394,7 +400,7 @@ export const ReportsPage: React.FC = () => {
                   </div>
 
                   <div className="text-[11px] text-slate-500 font-mono">
-                    Current: <strong className="text-slate-900 font-extrabold">{stage.currentRate}%</strong>
+                    {t.reports.current} <strong className="text-slate-900 font-extrabold">{stage.currentRate}%</strong>
                   </div>
                 </div>
 
@@ -407,7 +413,7 @@ export const ReportsPage: React.FC = () => {
                     >
                       {/* Hover Tooltip */}
                       <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition pointer-events-none bg-slate-900 text-white text-[9px] font-mono py-0.5 px-1.5 rounded whitespace-nowrap z-20 shadow-md">
-                        {bar.week}: {bar.rate}% ({bar.pieces.toLocaleString()} pcs)
+                        {bar.week}: {bar.rate}% ({bar.pieces.toLocaleString()} {t.common.pieces})
                       </div>
 
                       <div
@@ -423,9 +429,9 @@ export const ReportsPage: React.FC = () => {
 
                 {/* Status Footnote */}
                 <div className="text-[10px] font-semibold text-slate-500 flex items-center justify-between border-t border-slate-200/50 pt-1.5">
-                  <span className="uppercase text-[9px] tracking-wider text-slate-400">Pacing</span>
+                  <span className="uppercase text-[9px] tracking-wider text-slate-400">{t.reports.pacing}</span>
                   <span className={isUp ? 'text-emerald-700' : isDown ? 'text-rose-600' : 'text-slate-600'}>
-                    {isUp ? 'Accelerating ↑' : isDown ? 'Decelerating ↓' : 'Steady Pace'}
+                    {isUp ? t.reports.accelerating : isDown ? t.reports.decelerating : t.reports.steadyPace}
                   </span>
                 </div>
               </div>
@@ -444,19 +450,19 @@ export const ReportsPage: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                  <span>AI Sourcing Intelligence Analysis ({data.aiIntelligence.week})</span>
+                  <span>{t.reports.aiAnalysis} ({data.aiIntelligence.week})</span>
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 border border-sky-200">
-                    Confidence: {data.aiIntelligence.confidenceScore}%
+                    {t.reports.confidence} {data.aiIntelligence.confidenceScore}%
                   </span>
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  Synthesized weekly from floor run-rates, stage throughput deltas, and milestone buffers
+                  {t.reports.aiSubtitle}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 text-xs font-semibold">
-              <span className="text-slate-500">Risk Assessment:</span>
+              <span className="text-slate-500">{t.reports.riskAssessment}</span>
               <span
                 className={`px-2 py-0.5 rounded-md font-bold text-[11px] ${
                   data.aiIntelligence.riskLevel === 'LOW'
@@ -466,7 +472,11 @@ export const ReportsPage: React.FC = () => {
                     : 'bg-rose-100 text-rose-900 border border-rose-300'
                 }`}
               >
-                {data.aiIntelligence.riskLevel} RISK PIPELINE
+                {data.aiIntelligence.riskLevel === 'LOW'
+                  ? t.reports.lowRisk
+                  : data.aiIntelligence.riskLevel === 'MEDIUM'
+                  ? t.reports.medRisk
+                  : t.reports.highRisk}
               </span>
             </div>
           </div>
@@ -484,7 +494,7 @@ export const ReportsPage: React.FC = () => {
             <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                Operational Strengths
+                {t.reports.operationalStrengths}
               </span>
               <ul className="text-xs text-slate-700 space-y-1 list-disc list-inside">
                 {data.aiIntelligence.keyStrengths.map((s, idx) => (
@@ -496,7 +506,7 @@ export const ReportsPage: React.FC = () => {
             <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 flex items-center gap-1">
                 <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                Bottlenecks to Monitor
+                {t.reports.bottlenecks}
               </span>
               <ul className="text-xs text-slate-700 space-y-1 list-disc list-inside">
                 {data.aiIntelligence.keyBottlenecks.map((b, idx) => (
@@ -508,7 +518,7 @@ export const ReportsPage: React.FC = () => {
             <div className="p-3 bg-white rounded-xl border border-sky-300 shadow-2xs space-y-1.5 bg-gradient-to-br from-sky-50/50 to-white">
               <span className="text-[10px] font-bold uppercase tracking-wider text-sky-800 flex items-center gap-1">
                 <Activity className="w-3.5 h-3.5 text-sky-600" />
-                Floor Merchandiser Directive
+                {t.reports.merchandiserDirective}
               </span>
               <p className="text-xs text-slate-800 font-medium leading-relaxed">
                 {data.aiIntelligence.aiRecommendation}
@@ -525,12 +535,12 @@ export const ReportsPage: React.FC = () => {
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <div>
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                Weekly Garment Throughput Velocity (Actual vs Planned Output)
+                {t.reports.throughputVelocity}
               </h3>
-              <p className="text-[11px] text-slate-400">Total verified output across all active units</p>
+              <p className="text-[11px] text-slate-400">{t.reports.totalVerifiedOutput}</p>
             </div>
             <span className="text-xs font-mono font-bold text-sky-700 bg-sky-50 px-2.5 py-0.5 rounded-lg border border-sky-200">
-              {(data?.metrics.totalContractedPieces || 0).toLocaleString()} pcs Total
+              {(data?.metrics.totalContractedPieces || 0).toLocaleString()} {t.common.pieces} {t.reports.totalPieces}
             </span>
           </div>
 
@@ -540,8 +550,8 @@ export const ReportsPage: React.FC = () => {
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-mono font-bold text-slate-700">{wt.week}</span>
                   <div className="flex items-center gap-2 font-mono text-[11px]">
-                    <span className="text-slate-900 font-bold">{wt.actualPcs.toLocaleString()} pcs produced</span>
-                    <span className="text-slate-400">/ {wt.targetPcs.toLocaleString()} target</span>
+                    <span className="text-slate-900 font-bold">{wt.actualPcs.toLocaleString()} {t.reports.produced}</span>
+                    <span className="text-slate-400">/ {wt.targetPcs.toLocaleString()} {t.reports.target}</span>
                     <span className="font-extrabold text-sky-700">({wt.efficiencyRate}%)</span>
                   </div>
                 </div>
@@ -566,16 +576,18 @@ export const ReportsPage: React.FC = () => {
         <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col justify-between space-y-3">
           <div className="border-b border-slate-100 pb-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-              Delivery Schedule Health
+              {t.reports.scheduleHealth}
             </h3>
-            <p className="text-[11px] text-slate-400">Risk classification across {data?.metrics.totalOrders || 0} purchase orders</p>
+            <p className="text-[11px] text-slate-400">
+              {data?.metrics.totalOrders || 0} {t.reports.riskClassification}
+            </p>
           </div>
 
           <div className="space-y-3 my-auto">
             <div className="flex items-center justify-between text-xs">
               <span className="flex items-center gap-1.5 font-semibold text-emerald-800">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                On Track (Clean Shipping Buffer)
+                {t.reports.onTrack}
               </span>
               <span className="font-mono font-bold text-slate-900">{data?.milestoneHealth.onTrack || 84}%</span>
             </div>
@@ -589,7 +601,7 @@ export const ReportsPage: React.FC = () => {
             <div className="flex items-center justify-between text-xs">
               <span className="flex items-center gap-1.5 font-semibold text-amber-800">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                Minor Buffer Consumed (&lt; 3 Days)
+                {t.reports.minorBuffer}
               </span>
               <span className="font-mono font-bold text-slate-900">{data?.milestoneHealth.minorBuffer || 12}%</span>
             </div>
@@ -603,7 +615,7 @@ export const ReportsPage: React.FC = () => {
             <div className="flex items-center justify-between text-xs">
               <span className="flex items-center gap-1.5 font-semibold text-rose-800">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-                Critical Deficit Attention Needed
+                {t.reports.criticalDeficit}
               </span>
               <span className="font-mono font-bold text-slate-900">{data?.milestoneHealth.criticalDeficit || 4}%</span>
             </div>
@@ -616,7 +628,7 @@ export const ReportsPage: React.FC = () => {
           </div>
 
           <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-[11px] text-slate-600 flex items-center justify-between">
-            <span className="font-medium">Overall Confidence Index:</span>
+            <span className="font-medium">{t.reports.overallConfidence}</span>
             <span className="font-bold text-[#0C2D48] font-mono text-xs">
               {data?.metrics.onTimeConfidencePercent || 92}%
             </span>
@@ -624,14 +636,14 @@ export const ReportsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 6. Purchase Orders Status Table (Strict compliance lines removed, supervisor notes strictly in English) */}
+      {/* 6. Purchase Orders Status Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-xs">
           <span className="font-bold text-slate-800">
-            Purchase Orders in Sourcing Window ({data?.orders.length || 0})
+            {t.reports.poWindow} ({data?.orders.length || 0})
           </span>
           <span className="text-slate-500 text-[11px] font-mono">
-            Cycle: {data?.selectedWeek || selectedWeek}
+            {t.reports.cycle} {data?.selectedWeek || selectedWeek}
           </span>
         </div>
 
@@ -639,43 +651,49 @@ export const ReportsPage: React.FC = () => {
           <table className="w-full text-left text-xs">
             <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
               <tr>
-                <th className="py-2.5 px-3 text-slate-100">PO Number</th>
-                <th className="py-2.5 px-3 text-slate-100">Style</th>
-                <th className="py-2.5 px-3 text-right text-slate-100">Quantity</th>
-                <th className="py-2.5 px-3 text-slate-100">Ex-Factory</th>
-                <th className="py-2.5 px-3 text-slate-100">Active Stage</th>
-                <th className="py-2.5 px-3 text-slate-100">Manufacturing Unit</th>
-                <th className="py-2.5 px-3 text-slate-100">Directives & Supervisor Notes (English)</th>
+                <th className="py-2.5 px-3 text-slate-100">{t.reports.poNumber}</th>
+                <th className="py-2.5 px-3 text-slate-100">{t.reports.style}</th>
+                <th className="py-2.5 px-3 text-right text-slate-100">{t.reports.quantity}</th>
+                <th className="py-2.5 px-3 text-slate-100">{t.common.exFactory}</th>
+                <th className="py-2.5 px-3 text-slate-100">{t.reports.activeStage}</th>
+                <th className="py-2.5 px-3 text-slate-100">{t.reports.manufacturingUnit}</th>
+                <th className="py-2.5 px-3 text-slate-100">{t.reports.directivesNotes}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {(!data || data.orders.length === 0) ? (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-slate-400">
-                    No orders scheduled for this sourcing partner in {selectedWeek}.
+                    {t.reports.noOrdersWeek}
                   </td>
                 </tr>
               ) : (
-                data.orders.map((o) => (
-                  <tr key={o.id} className="even:bg-slate-50/80 odd:bg-white hover:bg-sky-50/60 transition">
-                    <td className="py-2.5 px-3">
-                      <span className="font-mono text-xs font-extrabold text-sky-700 inline-flex items-center gap-1">
-                        <span>{o.poNumber}</span>
-                        <ExternalLink className="w-3 h-3 text-sky-500" />
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 font-semibold text-slate-800">{o.style}</td>
-                    <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">{o.totalQuantity.toLocaleString()} pcs</td>
-                    <td className="py-2.5 px-3 whitespace-nowrap text-slate-600">
-                      {new Date(o.exFactoryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </td>
-                    <td className="py-2.5 px-3 font-semibold text-sky-900 capitalize">{o.activeStage.replace(/_/g, ' ')}</td>
-                    <td className="py-2.5 px-3 text-slate-700">{o.unitName}</td>
-                    <td className="py-2.5 px-3 text-slate-600 max-w-xs truncate" title={ensureEnglishNote(o.latestNote)}>
-                      {ensureEnglishNote(o.confirmedMitigations[0] || o.latestNote)}
-                    </td>
-                  </tr>
-                ))
+                data.orders.map((o) => {
+                  const stageDisplayName = isTa
+                    ? STAGE_TRANSLATIONS[o.activeStage]?.ta || o.activeStage.replace(/_/g, ' ')
+                    : o.activeStage.replace(/_/g, ' ');
+
+                  return (
+                    <tr key={o.id} className="even:bg-slate-50/80 odd:bg-white hover:bg-sky-50/60 transition">
+                      <td className="py-2.5 px-3">
+                        <span className="font-mono text-xs font-extrabold text-sky-700 inline-flex items-center gap-1">
+                          <span>{o.poNumber}</span>
+                          <ExternalLink className="w-3 h-3 text-sky-500" />
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 font-semibold text-slate-800">{o.style}</td>
+                      <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">{o.totalQuantity.toLocaleString()} {t.common.pieces}</td>
+                      <td className="py-2.5 px-3 whitespace-nowrap text-slate-600">
+                        {new Date(o.exFactoryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </td>
+                      <td className="py-2.5 px-3 font-semibold text-sky-900 capitalize">{stageDisplayName}</td>
+                      <td className="py-2.5 px-3 text-slate-700">{o.unitName}</td>
+                      <td className="py-2.5 px-3 text-slate-600 max-w-xs truncate" title={ensureEnglishNote(o.latestNote)}>
+                        {ensureEnglishNote(o.confirmedMitigations[0] || o.latestNote)}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

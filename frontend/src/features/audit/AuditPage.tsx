@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../../services/api';
 import { CustomSelect, Option } from '../../components/CustomSelect';
+import { useLanguage } from '../../hooks/useLanguage';
 import {
   Search,
   RefreshCw,
@@ -80,6 +81,7 @@ function ensureEnglishNote(text: string | null | undefined): string {
 }
 
 export const AuditPage: React.FC = () => {
+  const { isTa, t } = useLanguage();
   const [events, setEvents] = useState<AuditEventItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -146,21 +148,21 @@ export const AuditPage: React.FC = () => {
   };
 
   const actionOptions: Option[] = [
-    { value: 'ALL', label: 'All Actions' },
-    { value: 'UPDATE_EX_FACTORY_DATE', label: 'Ex-Factory Revised' },
-    { value: 'BULK_UPDATE_EX_FACTORY_DATE', label: 'Bulk Schedule Shift' },
-    { value: 'BUYER_DAILY_RESPONSE', label: 'Buyer Sign-off & Feedback' },
-    { value: 'WHATSAPP_SHIFT_NUDGE', label: 'WhatsApp Shift Nudge' },
-    { value: 'CREATE_ORDER', label: 'Order Created' },
-    { value: 'AUTHORIZE_OVERTIME', label: 'Overtime Authorized' },
+    { value: 'ALL', label: t.audit.allActions },
+    { value: 'UPDATE_EX_FACTORY_DATE', label: isTa ? 'புறப்பாடு தேதி மாற்றப்பட்டது' : 'Ex-Factory Revised' },
+    { value: 'BULK_UPDATE_EX_FACTORY_DATE', label: isTa ? 'மொத்த அட்டவணை மாற்றம்' : 'Bulk Schedule Shift' },
+    { value: 'BUYER_DAILY_RESPONSE', label: isTa ? 'வாங்குபவர் தினசரி ஒப்புதல்' : 'Buyer Sign-off & Feedback' },
+    { value: 'WHATSAPP_SHIFT_NUDGE', label: isTa ? 'வாட்ஸ்அப் நினைவூட்டல்' : 'WhatsApp Shift Nudge' },
+    { value: 'CREATE_ORDER', label: isTa ? 'ஆர்டர் உருவாக்கப்பட்டது' : 'Order Created' },
+    { value: 'AUTHORIZE_OVERTIME', label: isTa ? 'கூடுதல் நேரம் அனுமதிக்கப்பட்டது' : 'Overtime Authorized' },
   ];
 
   const roleOptions: Option[] = [
-    { value: 'ALL', label: 'All Roles' },
-    { value: 'MERCHANDISER', label: 'Merchandiser' },
-    { value: 'SUPERVISOR', label: 'Floor Supervisor' },
-    { value: 'ADMIN', label: 'Administrator' },
-    { value: 'BUYER', label: 'Foreign Buyer' },
+    { value: 'ALL', label: t.audit.allRoles },
+    { value: 'MERCHANDISER', label: isTa ? 'வணிகப் பொறுப்பாளர்' : 'Merchandiser' },
+    { value: 'SUPERVISOR', label: isTa ? 'தள மேற்பார்வையாளர்' : 'Floor Supervisor' },
+    { value: 'ADMIN', label: isTa ? 'முதன்மை நிர்வாகி' : 'Administrator' },
+    { value: 'BUYER', label: isTa ? 'வெளிநாட்டு வாங்குபவர்' : 'Foreign Buyer' },
   ];
 
   // Helper for rendering pagination numbers
@@ -234,10 +236,10 @@ export const AuditPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            Audit History
+            {t.audit.title}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Immutable event stream for commercial compliance and financial accountability
+            {t.audit.subtitle}
           </p>
         </div>
 
@@ -247,7 +249,7 @@ export const AuditPage: React.FC = () => {
             onClick={() => fetchAuditData()}
             disabled={isLoading}
             className="p-2 text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl shadow-xs transition cursor-pointer"
-            title="Refresh audit stream"
+            title={t.common.refresh}
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
@@ -261,7 +263,7 @@ export const AuditPage: React.FC = () => {
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search by PO number, user, or reason..."
+              placeholder={t.audit.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 transition"
@@ -277,7 +279,7 @@ export const AuditPage: React.FC = () => {
                   setActionFilter(val);
                   setPage(1);
                 }}
-                placeholder="Filter Action"
+                placeholder={t.audit.filterAction}
               />
             </div>
 
@@ -289,7 +291,7 @@ export const AuditPage: React.FC = () => {
                   setRoleFilter(val);
                   setPage(1);
                 }}
-                placeholder="Filter Role"
+                placeholder={t.audit.filterRole}
               />
             </div>
           </div>
@@ -310,19 +312,19 @@ export const AuditPage: React.FC = () => {
             </colgroup>
             <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
               <tr>
-                <th className="py-2.5 px-3 text-slate-100">Date & Time</th>
-                <th className="py-2.5 px-3 text-slate-100">Action</th>
-                <th className="py-2.5 px-3 text-slate-100">Reason Code</th>
-                <th className="py-2.5 px-3 text-slate-100">Target Entity</th>
-                <th className="py-2.5 px-3 text-slate-100">Author & Role</th>
-                <th className="py-2.5 px-3 text-slate-100">Notes & Details</th>
+                <th className="py-2.5 px-3 text-slate-100">{t.audit.dateAndTime}</th>
+                <th className="py-2.5 px-3 text-slate-100">{t.audit.actionCol}</th>
+                <th className="py-2.5 px-3 text-slate-100">{t.audit.reasonCode}</th>
+                <th className="py-2.5 px-3 text-slate-100">{t.audit.targetEntity}</th>
+                <th className="py-2.5 px-3 text-slate-100">{t.audit.authorRole}</th>
+                <th className="py-2.5 px-3 text-slate-100">{t.audit.notesDetails}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-normal">
               {events.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-10 text-center text-slate-400">
-                    No audit records match the selected filters.
+                    {t.audit.noRecords}
                   </td>
                 </tr>
               ) : (
@@ -355,7 +357,7 @@ export const AuditPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-2.5 px-3 text-slate-700 truncate">
-                      <span className="font-semibold block truncate">{ev.user?.name || 'System'}</span>
+                      <span className="font-semibold block truncate">{ev.user?.name || (isTa ? 'கணினி' : 'System')}</span>
                       <span className="text-slate-400 text-[10px] block font-mono uppercase">
                         {ev.userRole}
                       </span>
@@ -373,7 +375,7 @@ export const AuditPage: React.FC = () => {
         {/* Dynamic Interactive Pagination Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between p-3 border-t border-slate-100 text-xs gap-2">
           <span className="text-slate-500">
-            Showing Page <strong className="text-slate-800 font-bold">{page}</strong> of <strong className="text-slate-800 font-bold">{totalPages}</strong> ({totalEvents} total entries)
+            {t.audit.showingPage} <strong className="text-slate-800 font-bold">{page}</strong> {t.audit.of} <strong className="text-slate-800 font-bold">{totalPages}</strong> ({totalEvents} {t.audit.totalEntries})
           </span>
 
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -416,14 +418,14 @@ export const AuditPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-sky-600" />
                 <h3 className="font-bold text-sm text-slate-900">
-                  Audit Record Details #{inspectedEvent.id.substring(0, 10)}
+                  {t.audit.recordDetails} #{inspectedEvent.id.substring(0, 10)}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setInspectedEvent(null)}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-900 transition cursor-pointer"
-                title="Close (Esc)"
+                title={`${t.common.close} (Esc)`}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -432,27 +434,27 @@ export const AuditPage: React.FC = () => {
             <div className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Action</span>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">{t.audit.actionCol}</span>
                   <span className="font-bold text-slate-800">{inspectedEvent.action.replace(/_/g, ' ')}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Reason Code</span>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">{t.audit.reasonCode}</span>
                   <span className="font-semibold text-slate-800">{inspectedEvent.reasonCode.replace(/_/g, ' ')}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Target Entity</span>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">{t.audit.targetEntity}</span>
                   <span className="font-mono font-bold text-sky-600">
                     {inspectedEvent.order?.poNumber || `${inspectedEvent.entityType} (${inspectedEvent.entityId.substring(0, 10)})`}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Author</span>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">{t.audit.author}</span>
                   <span className="font-semibold text-slate-800">
-                    {inspectedEvent.user?.name || 'System'} ({inspectedEvent.userRole})
+                    {inspectedEvent.user?.name || (isTa ? 'கணினி' : 'System')} ({inspectedEvent.userRole})
                   </span>
                 </div>
                 <div className="col-span-2">
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Timestamp</span>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">{t.audit.timestamp}</span>
                   <span className="font-mono text-slate-700">
                     {new Date(inspectedEvent.timestamp).toLocaleString()}
                   </span>
@@ -462,7 +464,7 @@ export const AuditPage: React.FC = () => {
               {inspectedEvent.notes && (
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1">
-                    Supervisor Note / Commercial Directive (English)
+                    {t.audit.directiveNotes}
                   </span>
                   <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 leading-relaxed italic">
                     "{ensureEnglishNote(inspectedEvent.notes)}"
@@ -472,7 +474,7 @@ export const AuditPage: React.FC = () => {
 
               {inspectedEvent.financialImpactRupees > 0 && (
                 <div className="bg-amber-50 p-3 rounded-xl border border-amber-200 flex items-center justify-between">
-                  <span className="text-amber-900 font-semibold text-xs">Financial Exposure Logged:</span>
+                  <span className="text-amber-900 font-semibold text-xs">{t.audit.financialExposure}</span>
                   <span className="font-mono font-bold text-amber-950 text-sm">
                     ₹{inspectedEvent.financialImpactRupees.toLocaleString()}
                   </span>
@@ -486,7 +488,7 @@ export const AuditPage: React.FC = () => {
                 onClick={() => setInspectedEvent(null)}
                 className="w-full py-2 bg-[#0C2D48] text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition cursor-pointer"
               >
-                Close Record
+                {t.audit.closeRecord}
               </button>
             </div>
           </div>

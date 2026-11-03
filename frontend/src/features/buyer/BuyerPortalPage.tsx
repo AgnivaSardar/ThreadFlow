@@ -32,6 +32,8 @@ import {
 } from 'lucide-react';
 import { exportOrdersToCsv } from '../reports/exportService';
 import { WeeklyReportPrintModal } from '../reports/WeeklyReportPrintModal';
+import { useLanguage } from '../../hooks/useLanguage';
+import { STAGE_TRANSLATIONS } from '../supervisor/supervisorTranslations';
 
 interface BuyerProfile {
   id: string;
@@ -133,6 +135,7 @@ const QUICK_FEEDBACK_PILLS = [
 export const BuyerPortalPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, hasRole } = useAuthStore();
+  const { isTa, t } = useLanguage();
 
   const [profile, setProfile] = useState<BuyerProfile | null>(null);
   const [orders, setOrders] = useState<BuyerOrderItem[]>([]);
@@ -315,20 +318,20 @@ export const BuyerPortalPage: React.FC = () => {
 
   // Dropdown Options
   const statusOptions: Option[] = [
-    { value: 'ALL', label: 'All Statuses' },
-    { value: 'IN_PRODUCTION', label: 'In Production', badge: 'Active' },
-    { value: 'COMPLETED', label: 'Completed', badge: 'Done' },
+    { value: 'ALL', label: isTa ? 'அனைத்து நிலைகளும்' : 'All Statuses' },
+    { value: 'IN_PRODUCTION', label: isTa ? 'உற்பத்தியில் உள்ளது' : 'In Production', badge: isTa ? 'செயலில்' : 'Active' },
+    { value: 'COMPLETED', label: isTa ? 'முடிந்தது' : 'Completed', badge: isTa ? 'முடிந்தது' : 'Done' },
   ];
 
   const stageOptions: Option[] = [
-    { value: 'ALL', label: 'All 7 TNA Stages' },
-    { value: 'KNITTING', label: 'Knitting' },
-    { value: 'DYEING_WASHING', label: 'Dyeing & Washing' },
-    { value: 'PRINTING', label: 'Printing & Embroidery' },
-    { value: 'CUTTING', label: 'Fabric Cutting' },
-    { value: 'STITCHING', label: 'Assembly & Stitching' },
-    { value: 'CHECKING', label: 'Quality Checking' },
-    { value: 'FINISHING', label: 'Finishing & Packing' },
+    { value: 'ALL', label: isTa ? 'அனைத்து 7 TNA நிலைகளும்' : 'All 7 TNA Stages' },
+    { value: 'KNITTING', label: isTa ? 'பின்னல்' : 'Knitting' },
+    { value: 'DYEING_WASHING', label: isTa ? 'சலவை / சாயம்' : 'Dyeing & Washing' },
+    { value: 'PRINTING', label: isTa ? 'அச்சிடுதல்' : 'Printing & Embroidery' },
+    { value: 'CUTTING', label: isTa ? 'வெட்டுதல்' : 'Fabric Cutting' },
+    { value: 'STITCHING', label: isTa ? 'தையல்' : 'Assembly & Stitching' },
+    { value: 'CHECKING', label: isTa ? 'சரிபார்த்தல்' : 'Quality Checking' },
+    { value: 'FINISHING', label: isTa ? 'முடித்தல் & பேக்கிங்' : 'Finishing & Packing' },
   ];
 
   const buyerOptions: Option[] = availableBuyers.map((b) => ({
@@ -392,7 +395,7 @@ export const BuyerPortalPage: React.FC = () => {
             </span>
             <span className="text-slate-300">•</span>
             <span className="text-xs font-medium text-slate-500">
-              Direct live production transparency & inspection audit stream
+              {t.buyer.directTransparency}
             </span>
           </div>
         </div>
@@ -405,7 +408,7 @@ export const BuyerPortalPage: React.FC = () => {
                 value={selectedBuyerId || profile?.id || ''}
                 options={buyerOptions}
                 onChange={handleBuyerChange}
-                placeholder="Switch Buyer View..."
+                placeholder={isTa ? 'வாங்குபவர் பார்வையை மாற்றவும்...' : 'Switch Buyer View...'}
               />
             </div>
           )}
@@ -421,7 +424,7 @@ export const BuyerPortalPage: React.FC = () => {
             title="Download RFC 4180 CSV spreadsheet"
           >
             <Download className="w-3.5 h-3.5 text-sky-700" />
-            <span className="hidden sm:inline">Export CSV</span>
+            <span className="hidden sm:inline">{t.common.exportCsv}</span>
           </button>
 
           <button
@@ -432,7 +435,7 @@ export const BuyerPortalPage: React.FC = () => {
             title="View and print official weekly PDF status report"
           >
             <Printer className="w-3.5 h-3.5 text-emerald-700" />
-            <span>Weekly PDF</span>
+            <span>{t.buyer.weeklyPdf}</span>
           </button>
 
           <button
@@ -443,7 +446,7 @@ export const BuyerPortalPage: React.FC = () => {
             title="Refresh order statuses"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isLoading ? 'animate-spin' : ''}`} />
-            <span>Refresh Portal</span>
+            <span>{t.buyer.refreshPortal}</span>
           </button>
         </div>
       </div>
@@ -456,7 +459,7 @@ export const BuyerPortalPage: React.FC = () => {
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search PO number or garment style..."
+              placeholder={t.buyer.searchPo}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 transition"
@@ -470,7 +473,7 @@ export const BuyerPortalPage: React.FC = () => {
                 value={statusFilter}
                 options={statusOptions}
                 onChange={setStatusFilter}
-                placeholder="Filter Status"
+                placeholder={t.buyer.filterStatus}
               />
             </div>
 
@@ -479,7 +482,7 @@ export const BuyerPortalPage: React.FC = () => {
                 value={stageFilter}
                 options={stageOptions}
                 onChange={setStageFilter}
-                placeholder="Filter TNA Stage"
+                placeholder={t.buyer.filterStage}
               />
             </div>
           </div>
@@ -493,9 +496,9 @@ export const BuyerPortalPage: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto mb-2">
                 <Package className="w-5 h-5" />
               </div>
-              <h4 className="text-sm font-bold text-slate-800">No Orders Match Current Filters</h4>
+              <h4 className="text-sm font-bold text-slate-800">{t.buyer.noOrdersFound}</h4>
               <p className="text-xs text-slate-500 max-w-md mx-auto">
-                Try adjusting your search query or resetting the status and stage filters.
+                {t.buyer.adjustFilters}
               </p>
             </div>
           ) : (
@@ -517,11 +520,11 @@ export const BuyerPortalPage: React.FC = () => {
                       <span className="font-bold text-white">{order.style.split(' (')[0].split(' - ')[0]}</span>
                       <span className="text-white/40">•</span>
                       <span className="font-medium text-sky-100">
-                        {order.totalQuantity.toLocaleString()} pcs
+                        {order.totalQuantity.toLocaleString()} {t.common.pieces}
                       </span>
                       <span className="text-white/40">•</span>
                       <span className="font-semibold text-sky-200">
-                        Production Hub: {order.unit?.name || 'Unit 1 (Cotton Hub)'}
+                        {t.buyer.productionHub} {order.unit?.name || 'Unit 1 (Cotton Hub)'}
                       </span>
                       {order.currency && (
                         <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-white/15 text-sky-200 border border-white/20">
@@ -533,7 +536,7 @@ export const BuyerPortalPage: React.FC = () => {
                     <div className="flex items-center gap-2.5 flex-wrap">
                       <div className="text-xs text-slate-300 flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-sky-300" />
-                        <span>Ex-Factory: <strong className="text-white font-semibold">{formatDate(order.exFactoryDate)}</strong></span>
+                        <span>{t.common.exFactory}: <strong className="text-white font-semibold">{formatDate(order.exFactoryDate)}</strong></span>
                       </div>
 
                       <span
@@ -546,8 +549,8 @@ export const BuyerPortalPage: React.FC = () => {
                         }`}
                       >
                         {order.daysToExFactory > 0
-                          ? `${order.daysToExFactory}d left`
-                          : 'Shipment Window'}
+                          ? `${order.daysToExFactory}${t.buyer.daysLeft}`
+                          : t.buyer.shipmentWindow}
                       </span>
                     </div>
                   </div>
@@ -559,15 +562,15 @@ export const BuyerPortalPage: React.FC = () => {
                       <div className="flex items-center justify-between text-xs mb-1.5">
                         <span className="font-bold text-slate-700 flex items-center gap-1.5">
                           <Layers className="w-3.5 h-3.5 text-sky-600" />
-                          <span>Milestone Completion:</span>
+                          <span>{t.buyer.milestoneCompletion}</span>
                           <strong className="text-slate-900 font-black">
                             {order.progressPercent}%
                           </strong>
                         </span>
                         <span className="text-slate-500 text-[11px]">
-                          Active Stage:{' '}
+                          {t.buyer.activeStageLabel}{' '}
                           <strong className="text-sky-800 font-bold uppercase tracking-wide">
-                            {order.activeStage.replace(/_/g, ' ')}
+                            {isTa ? STAGE_TRANSLATIONS[order.activeStage]?.ta || order.activeStage : order.activeStage.replace(/_/g, ' ')}
                           </strong>
                         </span>
                       </div>
@@ -736,7 +739,7 @@ export const BuyerPortalPage: React.FC = () => {
                           <MessageSquare className="w-3.5 h-3.5" />
                         </div>
                         <h5 className="text-xs font-bold text-slate-900">
-                          Buyer Daily Acknowledgement & Sign-off
+                          {t.buyer.buyerFeedbackTitle}
                         </h5>
                       </div>
 
@@ -751,7 +754,7 @@ export const BuyerPortalPage: React.FC = () => {
                               <div className="flex items-center justify-between text-[10px]">
                                 <span className="font-bold text-slate-800 flex items-center gap-1.5">
                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                  {resp.userName} ({resp.userEmail || 'Buyer Representative'})
+                                  {resp.userName} ({resp.userEmail || (isTa ? 'வாங்குபவர் பிரதிநிதி' : 'Buyer Representative')})
                                 </span>
                                 <span className="text-slate-400 font-mono">
                                   {new Date(resp.timestamp).toLocaleString(undefined, {
@@ -773,7 +776,7 @@ export const BuyerPortalPage: React.FC = () => {
                       {/* Quick Response Preset Pills in ONE LINE */}
                       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">
-                          Quick Presets:
+                          {isTa ? 'விரைவு பதில்கள்:' : 'Quick Presets:'}
                         </span>
                         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                           {QUICK_FEEDBACK_PILLS.map((pill, idx) => (
@@ -798,7 +801,7 @@ export const BuyerPortalPage: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <input
                           type="text"
-                          placeholder="Type your daily acknowledgement or sign-off message for this order..."
+                          placeholder={t.buyer.feedbackPlaceholder}
                           value={feedbackInputs[order.id] || ''}
                           onChange={(e) =>
                             setFeedbackInputs((prev) => ({
@@ -827,17 +830,17 @@ export const BuyerPortalPage: React.FC = () => {
                           {submittingOrderId === order.id ? (
                             <>
                               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                              <span>Saving...</span>
+                              <span>{t.buyer.saving}</span>
                             </>
                           ) : feedbackSuccess[order.id] ? (
                             <>
                               <Check className="w-3.5 h-3.5 text-emerald-400" />
-                              <span>Recorded!</span>
+                              <span>{t.buyer.recorded}</span>
                             </>
                           ) : (
                             <>
                               <SendHorizontal className="w-3.5 h-3.5" />
-                              <span>Post Response</span>
+                              <span>{t.buyer.postResponse}</span>
                             </>
                           )}
                         </button>

@@ -952,17 +952,14 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             </span>
           </div>
 
-          <div className="flex gap-1.5 shrink-0">
-            {[50, 100, 250, 500].map((amount) => (
-              <button
-                key={amount}
-                type="button"
-                onClick={() => handleAddGoodQty(amount)}
-                className="px-2.5 py-2 bg-slate-100 hover:bg-emerald-600 active:scale-95 text-slate-800 hover:text-white font-bold text-xs rounded-xl border border-slate-300 transition-all cursor-pointer shadow-2xs"
-              >
-                +{amount}
-              </button>
-            ))}
+          <div className="shrink-0">
+            <button
+              type="button"
+              onClick={() => handleAddGoodQty(50)}
+              className="min-h-[46px] px-4 bg-slate-100 hover:bg-emerald-600 hover:text-white active:scale-95 text-emerald-800 font-black text-sm rounded-xl border border-slate-300 transition-all cursor-pointer shadow-2xs"
+            >
+              +50
+            </button>
           </div>
         </div>
       </div>
@@ -1003,17 +1000,14 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
               {t.pieces}
             </span>
           </div>
-          <div className="flex gap-1.5">
-            {[1, 5, 10].map((amt) => (
-              <button
-                key={amt}
-                type="button"
-                onClick={() => handleAddRejectedQty(amt)}
-                className="min-h-[46px] px-3.5 bg-slate-100 hover:bg-rose-100 active:scale-95 text-rose-800 font-black text-sm rounded-xl border border-slate-300 transition-all cursor-pointer"
-              >
-                +{amt}
-              </button>
-            ))}
+          <div className="shrink-0">
+            <button
+              type="button"
+              onClick={() => handleAddRejectedQty(5)}
+              className="min-h-[46px] px-4 bg-slate-100 hover:bg-rose-100 active:scale-95 text-rose-800 font-black text-sm rounded-xl border border-slate-300 transition-all cursor-pointer shadow-2xs"
+            >
+              +5
+            </button>
           </div>
         </div>
       </div>
