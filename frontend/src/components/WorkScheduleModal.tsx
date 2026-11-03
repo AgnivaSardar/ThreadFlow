@@ -2,15 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   Calendar as CalendarIcon,
   CheckCircle2,
-  Circle,
   Clock,
   MapPin,
   Building2,
   X,
   ChevronLeft,
   ChevronRight,
-  Filter,
-  Sparkles,
 } from 'lucide-react';
 import { useAuthStore } from '../features/auth/authStore';
 
@@ -28,18 +25,22 @@ export interface WorkTask {
 interface WorkScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
+  selectedDate: Date;
 }
 
 export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
   isOpen,
   onClose,
+  selectedDate,
 }) => {
   const { user } = useAuthStore();
+  const [currentDate, setCurrentDate] = useState<Date>(selectedDate);
 
-  // Selected date state (defaults to 2026-11-04)
-  const [selectedDayOffset, setSelectedDayOffset] = useState<number>(0);
+  useEffect(() => {
+    setCurrentDate(selectedDate);
+  }, [selectedDate]);
 
-  // Esc key listener
+  // Esc key listener to exit modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -50,37 +51,41 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Tasks state stored by date and role in localStorage
+  // Unique date key: YYYY-MM-DD
+  const dateKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
   const currentRole = user?.role || 'MERCHANDISER';
-  const storageKey = `threadflow_tasks_${currentRole}_offset_${selectedDayOffset}`;
+  const storageKey = `threadflow_tasks_${currentRole}_${dateKey}`;
 
-  // Default tasks template tailored per role
-  const getTasksForRoleAndOffset = (role: string, offset: number): WorkTask[] => {
+  // Role-specific task generator for given date
+  const getTasksForRoleAndDate = (role: string, date: Date): WorkTask[] => {
+    const day = date.getDate();
+    const isPast = date < new Date(2026, 10, 4);
+
     if (role === 'SUPERVISOR') {
       return [
         {
-          id: `sup-1-${offset}`,
+          id: `sup-1-${dateKey}`,
           time: '06:00 AM - 07:30 AM',
           title: 'Shift Handover & Needle Count Verification',
-          description: 'Log start needle count on Line 1, inspect safety guards, and verify operator attendance.',
+          description: `Line 1 needle log and operator count sign-off for ${currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}.`,
           unit: 'Unit 1 (Cotton Hub - Own)',
           buyerOrPo: 'PO: B-PO-88213 (Company B UK)',
-          completed: offset < 0,
+          completed: isPast,
           role: ['SUPERVISOR'],
         },
         {
-          id: `sup-2-${offset}`,
-          time: '08:30 AM - 11:00 AM',
-          title: 'Active Stage Output Log & Defect Inspection',
+          id: `sup-2-${dateKey}`,
+          time: '08:30 AM - 11:30 AM',
+          title: 'Active Stage Production Log & Quality Audit',
           description: 'Log hourly piece count in Finishing & Packing stage. Target: 500 pcs good output.',
           unit: 'Unit 1 (Cotton Hub - Own)',
           buyerOrPo: 'PO: B-PO-88213',
-          completed: offset < 0,
+          completed: isPast,
           role: ['SUPERVISOR'],
         },
         {
-          id: `sup-3-${offset}`,
-          time: '11:45 AM - 01:00 PM',
+          id: `sup-3-${dateKey}`,
+          time: '12:00 PM - 01:30 PM',
           title: 'Subcontract Gate Pass Dispatch to PrintTex',
           description: 'Verify 3,000 cut pieces loaded for chest screen printing. Sign dispatch receipt.',
           unit: 'Subcontract - PrintTex',
@@ -89,12 +94,12 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
           role: ['SUPERVISOR'],
         },
         {
-          id: `sup-4-${offset}`,
-          time: '02:00 PM - 02:30 PM',
-          title: 'Shift End Clean-down & Machine Log Sign-off',
-          description: 'Ensure floor line is clear, scrap is weighed, and upload voice note summary.',
+          id: `sup-4-${dateKey}`,
+          time: '02:00 PM - 02:45 PM',
+          title: 'Shift End Clean-down & Voice Note Summary',
+          description: 'Ensure floor line is clear, record voice note in Tamil with scrap weigh-off.',
           unit: 'Unit 1 & Unit 2',
-          buyerOrPo: 'All Active Runs',
+          buyerOrPo: 'All Active Line Orders',
           completed: false,
           role: ['SUPERVISOR'],
         },
@@ -104,17 +109,17 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
     if (role === 'BUYER') {
       return [
         {
-          id: `buy-1-${offset}`,
+          id: `buy-1-${dateKey}`,
           time: '09:00 AM GMT',
           title: 'Review Daily Shift Output & Defect Visuals',
-          description: 'Inspect photo proofs logged by floor supervisor for Waffle Knit Henley lot.',
+          description: 'Inspect photo proofs logged by floor supervisor for active consignment.',
           unit: 'Unit 3 (Specialty - Own)',
           buyerOrPo: 'PO: B-PO-88272',
-          completed: offset < 0,
+          completed: isPast,
           role: ['BUYER'],
         },
         {
-          id: `buy-2-${offset}`,
+          id: `buy-2-${dateKey}`,
           time: '11:30 AM GMT',
           title: 'Acknowledge Ex-Factory Schedule Buffer',
           description: 'Confirm 2-day recovery mitigation proposed by factory merchandising team.',
@@ -124,7 +129,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
           role: ['BUYER'],
         },
         {
-          id: `buy-3-${offset}`,
+          id: `buy-3-${dateKey}`,
           time: '03:00 PM GMT',
           title: 'Weekly Executive Quality & Sedex Audit Review',
           description: 'Sign off digital shipment clearance certificate for CW 45 air consignments.',
@@ -139,7 +144,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
     if (role === 'ADMIN') {
       return [
         {
-          id: `adm-1-${offset}`,
+          id: `adm-1-${dateKey}`,
           time: '07:30 AM - 08:30 AM',
           title: 'Factory-wide Output & Run-Rate Briefing',
           description: 'Review real-time throughput across Unit 1, Unit 2, Unit 3, and PrintTex lines.',
@@ -149,7 +154,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
           role: ['ADMIN'],
         },
         {
-          id: `adm-2-${offset}`,
+          id: `adm-2-${dateKey}`,
           time: '10:00 AM - 11:30 AM',
           title: 'Cryptographic Audit Trail Verification',
           description: 'Verify 100% SHA-256 chain seal continuity and inspect zero-tamper integrity log.',
@@ -159,7 +164,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
           role: ['ADMIN'],
         },
         {
-          id: `adm-3-${offset}`,
+          id: `adm-3-${dateKey}`,
           time: '02:00 PM - 03:30 PM',
           title: 'Subcontract Partner Capacity Audit',
           description: 'Inspect WashTex hydro-extraction capacity to eliminate bottleneck risk on organic rib tanks.',
@@ -174,17 +179,17 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
     // Default: MERCHANDISER
     return [
       {
-        id: `mer-1-${offset}`,
+        id: `mer-1-${dateKey}`,
         time: '09:00 AM - 10:15 AM',
         title: 'Operational Issue Review & Triage Gate',
         description: 'Review machine breakdown alert flagged on Line 1. Decide: Inform Buyer or keep internal buffer.',
         unit: 'Unit 1 (Cotton Hub - Own)',
         buyerOrPo: 'PO: B-PO-88213 (Company B UK)',
-        completed: offset < 0,
+        completed: isPast,
         role: ['MERCHANDISER'],
       },
       {
-        id: `mer-2-${offset}`,
+        id: `mer-2-${dateKey}`,
         time: '11:00 AM - 12:30 PM',
         title: 'Ex-Factory Buffer & Run-Rate Alignment',
         description: 'Simulate recovery plan in finishing stage to protect 24-Dec-2026 air shipment window.',
@@ -194,7 +199,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
         role: ['MERCHANDISER'],
       },
       {
-        id: `mer-3-${offset}`,
+        id: `mer-3-${dateKey}`,
         time: '02:00 PM - 03:15 PM',
         title: 'Subcontract Strike-off Approval (PrintTex)',
         description: 'Verify pigment printing colour fastness and wash-test report before bulk run.',
@@ -204,7 +209,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
         role: ['MERCHANDISER'],
       },
       {
-        id: `mer-4-${offset}`,
+        id: `mer-4-${dateKey}`,
         time: '04:30 PM - 05:30 PM',
         title: 'Weekly Executive Report Generation & Buyer Memo',
         description: 'Generate CW 45 comprehensive delivery schedule health analysis with AI forecast.',
@@ -223,7 +228,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
     } catch {
       // Fallback
     }
-    return getTasksForRoleAndOffset(currentRole, selectedDayOffset);
+    return getTasksForRoleAndDate(currentRole, currentDate);
   });
 
   // Reload when date or role changes
@@ -237,8 +242,8 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
     } catch {
       // ignore
     }
-    setTasks(getTasksForRoleAndOffset(currentRole, selectedDayOffset));
-  }, [selectedDayOffset, currentRole, storageKey]);
+    setTasks(getTasksForRoleAndDate(currentRole, currentDate));
+  }, [dateKey, currentRole, storageKey]);
 
   // Persist task updates
   const handleToggleTask = (taskId: string) => {
@@ -251,19 +256,31 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
     });
   };
 
+  const handlePrevDay = () => {
+    const prev = new Date(currentDate);
+    prev.setDate(prev.getDate() - 1);
+    setCurrentDate(prev);
+  };
+
+  const handleNextDay = () => {
+    const next = new Date(currentDate);
+    next.setDate(next.getDate() + 1);
+    setCurrentDate(next);
+  };
+
   if (!isOpen) return null;
 
-  // Calculate simulated date based on 2026-11-04 anchor
-  const baseDate = new Date(2026, 10, 4); // Nov 4, 2026
-  const activeDate = new Date(baseDate);
-  activeDate.setDate(baseDate.getDate() + selectedDayOffset);
-
-  const formattedDateString = activeDate.toLocaleDateString('en-US', {
-    weekday: 'short',
+  const formattedDateString = currentDate.toLocaleDateString('en-US', {
+    weekday: 'long',
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   });
+
+  const isToday =
+    currentDate.getFullYear() === 2026 &&
+    currentDate.getMonth() === 10 &&
+    currentDate.getDate() === 4;
 
   const completedCount = tasks.filter((t) => t.completed).length;
   const progressPercent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
@@ -280,14 +297,14 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-white tracking-wide">
-                  Work Schedule & Daily Tracker
+                  Daily Work & Operations Checklist
                 </h2>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
                   {user?.role}
                 </span>
               </div>
               <p className="text-xs text-sky-200/70 mt-0.5">
-                Role-specific daily operations, floor supervision, and milestone deadlines
+                Tasks, line supervisions, and milestone commitments for this date
               </p>
             </div>
           </div>
@@ -307,8 +324,8 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setSelectedDayOffset((prev) => prev - 1)}
-              className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-colors"
+              onClick={handlePrevDay}
+              className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-colors cursor-pointer"
               title="Previous Day"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -317,7 +334,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
             <div className="px-3 py-1 bg-white rounded-xl border border-slate-200 text-xs font-bold text-slate-900 shadow-2xs flex items-center gap-1.5">
               <CalendarIcon className="w-3.5 h-3.5 text-sky-700" />
               <span>{formattedDateString}</span>
-              {selectedDayOffset === 0 && (
+              {isToday && (
                 <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-800">
                   TODAY
                 </span>
@@ -326,50 +343,17 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
 
             <button
               type="button"
-              onClick={() => setSelectedDayOffset((prev) => prev + 1)}
-              className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-colors"
+              onClick={handleNextDay}
+              className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-colors cursor-pointer"
               title="Next Day"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Quick Date Pills */}
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setSelectedDayOffset(-1)}
-              className={`px-2 py-1 rounded-lg text-xs font-semibold transition-all ${
-                selectedDayOffset === -1
-                  ? 'bg-[#0C2D48] text-white shadow-2xs'
-                  : 'text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Yesterday
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedDayOffset(0)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                selectedDayOffset === 0
-                  ? 'bg-amber-400 text-slate-950 shadow-2xs'
-                  : 'text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Today
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedDayOffset(1)}
-              className={`px-2 py-1 rounded-lg text-xs font-semibold transition-all ${
-                selectedDayOffset === 1
-                  ? 'bg-[#0C2D48] text-white shadow-2xs'
-                  : 'text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Tomorrow
-            </button>
-          </div>
+          <span className="text-[11px] font-semibold text-slate-500">
+            {tasks.length} Planned Events
+          </span>
         </div>
 
         {/* Progress Bar */}
@@ -456,7 +440,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
         {/* Footer */}
         <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
           <span className="text-xs text-slate-500">
-            Click any task to mark completed • Progress is saved automatically
+            Click tasks to complete • Press Esc to close
           </span>
           <button
             type="button"
