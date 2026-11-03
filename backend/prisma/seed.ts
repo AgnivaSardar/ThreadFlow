@@ -141,17 +141,41 @@ async function main() {
   }
 
   // 7. Verify and Print Summary Metrics
-  const [totalBuyers, totalUnits, totalUsers, totalOrders, totalMilestones, totalLogs, totalPhotos, totalRiskWarnings] =
-    await Promise.all([
-      prisma.buyer.count(),
-      prisma.unit.count(),
-      prisma.user.count(),
-      prisma.order.count(),
-      prisma.tnaMilestone.count(),
-      prisma.productionUpdate.count(),
-      prisma.productionPhoto.count(),
-      prisma.riskWarning.count(),
-    ]);
+  const [
+    totalBuyers,
+    totalUnits,
+    totalUsers,
+    totalOrders,
+    totalMilestones,
+    totalOrderLines,
+    totalLogs,
+    totalUpdateLines,
+    totalPhotos,
+    totalClassifications,
+    totalRiskWarnings,
+    totalMitigations,
+    totalGatePasses,
+    totalMagicLinks,
+    totalReports,
+    totalAuditEvents,
+  ] = await Promise.all([
+    prisma.buyer.count(),
+    prisma.unit.count(),
+    prisma.user.count(),
+    prisma.order.count(),
+    prisma.tnaMilestone.count(),
+    prisma.orderLine.count(),
+    prisma.productionUpdate.count(),
+    prisma.productionUpdateLine.count(),
+    prisma.productionPhoto.count(),
+    prisma.issueClassification.count(),
+    prisma.riskWarning.count(),
+    prisma.riskMitigationAction.count(),
+    prisma.subcontractGatePass.count(),
+    prisma.buyerMagicLink.count(),
+    prisma.weeklyBuyerReport.count(),
+    prisma.auditEvent.count(),
+  ]);
 
   const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(2);
 
@@ -160,12 +184,20 @@ async function main() {
   console.table([
     { Entity: 'Buyers', InDB: totalBuyers },
     { Entity: 'Manufacturing Units', InDB: totalUnits },
-    { Entity: 'Users', InDB: totalUsers },
-    { Entity: 'Active Orders', InDB: totalOrders },
-    { Entity: 'TNA Milestones', InDB: totalMilestones },
+    { Entity: 'Users & Roles', InDB: totalUsers },
+    { Entity: 'Orders', InDB: totalOrders },
+    { Entity: 'TNA Milestones (1-7)', InDB: totalMilestones },
+    { Entity: 'Order Lines (Color/Size)', InDB: totalOrderLines },
     { Entity: 'Floor Production Logs', InDB: totalLogs },
+    { Entity: 'Size Breakdown Lines', InDB: totalUpdateLines },
     { Entity: 'Photo Evidences', InDB: totalPhotos },
-    { Entity: 'Active Risk Warnings', InDB: totalRiskWarnings },
+    { Entity: 'AI Issue Classifications', InDB: totalClassifications },
+    { Entity: 'Risk Warnings (Red/Amber/Grn)', InDB: totalRiskWarnings },
+    { Entity: 'Risk Mitigation Actions', InDB: totalMitigations },
+    { Entity: 'Subcontract Gate Passes', InDB: totalGatePasses },
+    { Entity: 'Buyer Magic Links', InDB: totalMagicLinks },
+    { Entity: 'Weekly Buyer Reports', InDB: totalReports },
+    { Entity: 'Tamper-Evident Audit Events', InDB: totalAuditEvents },
   ]);
   console.log('--------------------------------------------------------------------------------');
 }

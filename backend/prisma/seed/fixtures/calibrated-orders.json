@@ -10,51 +10,326 @@
     "currency": "GBP",
     "exchangeRate": 105.5,
     "exFactoryDateStr": "2026-11-12T00:00:00Z",
+    "status": "ACTIVE",
     "orderLines": [
-      { "size": "S", "color": "White", "plannedQty": 1600 },
-      { "size": "M", "color": "White", "plannedQty": 2800 },
-      { "size": "L", "color": "White", "plannedQty": 2400 },
-      { "size": "XL", "color": "White", "plannedQty": 1200 }
+      {
+        "size": "S",
+        "color": "Optic White",
+        "plannedQty": 1600
+      },
+      {
+        "size": "M",
+        "color": "Optic White",
+        "plannedQty": 2800
+      },
+      {
+        "size": "L",
+        "color": "Optic White",
+        "plannedQty": 2400
+      },
+      {
+        "size": "XL",
+        "color": "Optic White",
+        "plannedQty": 1200
+      }
     ],
     "milestones": [
-      { "stage": "KNITTING", "sequenceOrder": 1, "plannedStartOffsetDays": -35, "plannedEndOffsetDays": -28, "bufferDaysAhead": 18, "targetQuantity": 8000, "completedQuantity": 8000, "unitCode": "UNIT_1" },
-      { "stage": "DYEING_WASHING", "sequenceOrder": 2, "plannedStartOffsetDays": -27, "plannedEndOffsetDays": -20, "bufferDaysAhead": 14, "targetQuantity": 8000, "completedQuantity": 8000, "unitCode": "UNIT_1" },
-      { "stage": "PRINTING", "sequenceOrder": 3, "plannedStartOffsetDays": -19, "plannedEndOffsetDays": -15, "bufferDaysAhead": 11, "targetQuantity": 8000, "completedQuantity": 8000, "unitCode": "PRINTTEX" },
-      { "stage": "CUTTING", "sequenceOrder": 4, "plannedStartOffsetDays": -14, "plannedEndOffsetDays": -10, "bufferDaysAhead": 9, "targetQuantity": 8000, "completedQuantity": 8000, "unitCode": "UNIT_1" },
-      { "stage": "STITCHING", "sequenceOrder": 5, "plannedStartOffsetDays": -9, "plannedEndOffsetDays": -4, "bufferDaysAhead": 3, "targetQuantity": 8000, "completedQuantity": 8000, "unitCode": "UNIT_1" },
-      { "stage": "CHECKING", "sequenceOrder": 6, "plannedStartOffsetDays": -3, "plannedEndOffsetDays": -1, "bufferDaysAhead": 2, "targetQuantity": 8000, "completedQuantity": 8000, "unitCode": "UNIT_1" },
-      { "stage": "FINISHING", "sequenceOrder": 7, "plannedStartOffsetDays": 0, "plannedEndOffsetDays": 10, "bufferDaysAhead": 0, "targetQuantity": 8000, "completedQuantity": 5200, "unitCode": "UNIT_1" }
+      {
+        "stage": "KNITTING",
+        "sequenceOrder": 1,
+        "plannedStartOffsetDays": -35,
+        "plannedEndOffsetDays": -28,
+        "bufferDaysAhead": 18,
+        "targetQuantity": 8000,
+        "completedQuantity": 8000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "DYEING_WASHING",
+        "sequenceOrder": 2,
+        "plannedStartOffsetDays": -27,
+        "plannedEndOffsetDays": -20,
+        "bufferDaysAhead": 14,
+        "targetQuantity": 8000,
+        "completedQuantity": 8000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "PRINTING",
+        "sequenceOrder": 3,
+        "plannedStartOffsetDays": -19,
+        "plannedEndOffsetDays": -15,
+        "bufferDaysAhead": 11,
+        "targetQuantity": 8000,
+        "completedQuantity": 8000,
+        "unitCode": "PRINTTEX"
+      },
+      {
+        "stage": "CUTTING",
+        "sequenceOrder": 4,
+        "plannedStartOffsetDays": -14,
+        "plannedEndOffsetDays": -10,
+        "bufferDaysAhead": 9,
+        "targetQuantity": 8000,
+        "completedQuantity": 8000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "STITCHING",
+        "sequenceOrder": 5,
+        "plannedStartOffsetDays": -9,
+        "plannedEndOffsetDays": -4,
+        "bufferDaysAhead": 3,
+        "targetQuantity": 8000,
+        "completedQuantity": 8000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "CHECKING",
+        "sequenceOrder": 6,
+        "plannedStartOffsetDays": -3,
+        "plannedEndOffsetDays": -1,
+        "bufferDaysAhead": 2,
+        "targetQuantity": 8000,
+        "completedQuantity": 8000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "FINISHING",
+        "sequenceOrder": 7,
+        "plannedStartOffsetDays": 0,
+        "plannedEndOffsetDays": 10,
+        "bufferDaysAhead": 0,
+        "targetQuantity": 8000,
+        "completedQuantity": 5200,
+        "unitCode": "UNIT_1"
+      }
     ],
     "dailyLogs": [
-      { "dateOffsetDays": -2, "completedQty": 220, "reworkQty": 12, "rejectedQty": 4, "stage": "FINISHING", "unitCode": "UNIT_1", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift A", "operatorNotes": "Steam iron line 1 operated with reduced pressure." },
-      { "dateOffsetDays": -1, "completedQty": 190, "reworkQty": 15, "rejectedQty": 6, "stage": "FINISHING", "unitCode": "UNIT_1", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift B", "operatorNotes": "Collar folding station bottleneck; extra ironer requested." },
-      { "dateOffsetDays": 0, "completedQty": 200, "reworkQty": 10, "rejectedQty": 3, "stage": "FINISHING", "unitCode": "UNIT_1", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift A", "operatorNotes": "3-day weighted average running at 200 pcs/day vs 311 pcs/day required." }
+      {
+        "dateOffsetDays": -4,
+        "completedQty": 320,
+        "reworkQty": 18,
+        "rejectedQty": 4,
+        "stage": "FINISHING",
+        "unitCode": "UNIT_1",
+        "userEmail": "supervisor.muthu@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 1 Steam Line A",
+        "operatorNotes": "Steam iron line 1 operated with reduced pressure during morning hours.",
+        "rawTamilText": "நீராவி அயர்ன் லைன் 1 அழுத்தம் குறைவாக இயங்கியது.",
+        "translatedText": "Steam iron line 1 operated with reduced pressure during morning hours.",
+        "issueCategory": "MACHINE_BREAKDOWN",
+        "audioFileUrl": "https://assets.threadflow.app/audio/tamil-voice-shift-log-line1.mp3",
+        "voiceDurationSeconds": 24
+      },
+      {
+        "dateOffsetDays": -3,
+        "completedQty": 290,
+        "reworkQty": 12,
+        "rejectedQty": 6,
+        "stage": "FINISHING",
+        "unitCode": "UNIT_1",
+        "userEmail": "supervisor.muthu@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 1 Steam Line B",
+        "operatorNotes": "Collar folding station bottleneck; extra ironer requested to boost throughput.",
+        "rawTamilText": "காலர் மடிப்பு பகுதியில் தேக்கம் ஏற்பட்டது; கூடுதல் ஆட்கள் தேவை.",
+        "translatedText": "Collar folding station bottleneck; extra ironer requested to boost throughput.",
+        "issueCategory": "LABOUR_SHORTAGE",
+        "voiceDurationSeconds": 19
+      },
+      {
+        "dateOffsetDays": -2,
+        "completedQty": 220,
+        "reworkQty": 15,
+        "rejectedQty": 5,
+        "stage": "FINISHING",
+        "unitCode": "UNIT_1",
+        "userEmail": "supervisor.kumar@company-a.com",
+        "shift": "NIGHT",
+        "machineLine": "Unit 1 Finishing Line 2",
+        "operatorNotes": "Power tripped at 02:15 AM. Genset transitioned after 20 minutes interruption.",
+        "rawTamilText": "இரவு 2:15 மணிக்கு மின்வெட்டு; 20 நிமிடங்களில் ஜெனரேட்டர் இயக்கப்பட்டது.",
+        "translatedText": "Power tripped at 02:15 AM. Genset transitioned after 20 minutes interruption.",
+        "issueCategory": "POWER_OUTAGE",
+        "voiceDurationSeconds": 31
+      },
+      {
+        "dateOffsetDays": -1,
+        "completedQty": 200,
+        "reworkQty": 8,
+        "rejectedQty": 3,
+        "stage": "FINISHING",
+        "unitCode": "UNIT_1",
+        "userEmail": "supervisor.muthu@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 1 Packing Hub",
+        "operatorNotes": "3-day rolling average running at 200 pcs/day vs 311 pcs/day required.",
+        "rawTamilText": "3 நாள் உற்பத்தி சராசரி 200 பீஸ்கள் மட்டுமே; தேவை 311 பீஸ்கள்.",
+        "translatedText": "3-day rolling average running at 200 pcs/day vs 311 pcs/day required.",
+        "issueCategory": "OTHER",
+        "voiceDurationSeconds": 15
+      },
+      {
+        "dateOffsetDays": 0,
+        "completedQty": 210,
+        "reworkQty": 6,
+        "rejectedQty": 2,
+        "stage": "FINISHING",
+        "unitCode": "UNIT_1",
+        "userEmail": "supervisor.muthu@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 1 Packing Hub",
+        "operatorNotes": "XL size collars showing slight rib tension wave; adjusted folding jig.",
+        "rawTamilText": "XL சைஸ் காலர் ரிப் பகுதியில் லேசான அலைவு; ஜிக் சரி செய்யப்பட்டது.",
+        "translatedText": "XL size collars showing slight rib tension wave; adjusted folding jig.",
+        "issueCategory": "QUALITY_HOLD",
+        "voiceDurationSeconds": 22
+      }
     ],
     "photos": [
-      { "caption": "Collar inspection and fold press station", "category": "FINISHING_AUDIT", "mimeType": "image/jpeg", "fileName": "b-po-88240-collar-inspection.jpg" }
+      {
+        "caption": "Collar inspection and fold press station",
+        "category": "FINISHING_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "collar-inspection-b88240.jpg",
+        "stage": "FINISHING",
+        "isBuyerVisible": true
+      },
+      {
+        "caption": "Finishing and final carton packaging line",
+        "category": "PACKING_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "finishing-packing-b88240.jpg",
+        "stage": "FINISHING",
+        "isBuyerVisible": true
+      },
+      {
+        "caption": "Stitching placket reinforcement check",
+        "category": "STITCHING_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "stitching-line-b88240.jpg",
+        "stage": "STITCHING",
+        "isBuyerVisible": false
+      }
     ],
     "riskWarnings": [
       {
         "stage": "FINISHING",
         "riskLevel": "RED",
-        "requiredDailyRate": 311,
+        "requiredDailyRate": 311.1,
         "actualRollingRate": 200,
-        "varianceQtyPerDay": -111,
+        "varianceQtyPerDay": -111.1,
         "projectedCompletionDaysLate": 5,
         "financialExposureRupees": 350000,
         "mathBreakdown": {
           "remainingQty": 2800,
           "availableWorkingDays": 9,
-          "sundaysExcluded": ["2026-11-08"],
+          "sundaysExcluded": [
+            "2026-11-08"
+          ],
           "requiredRate": 311.11,
           "weightedAverageDailyRate": 200,
           "rateDeficit": -111.11,
           "daysLate": 5,
-          "reason": "Finishing pace (200 pcs/day) misses 2026-11-12 ship date by 5 days. Risk of buyer requiring air freight."
+          "reason": "Finishing pace (200 pcs/day) misses 2026-11-12 ship date by 5 days. Risk of buyer requiring air freight penalty."
         },
-        "mitigationPlan": "Add second ironer shift starting Nov 3 (target 350 pcs/day) to pull completion date forward.",
+        "mitigationPlan": "Authorized 2 hours daily overtime across Line 1 & Line 2 ironers starting Nov 3 to reach 350 pcs/day.",
         "isBuyerVisible": false,
-        "approvalStatus": "PENDING_REVIEW"
+        "approvalStatus": "CONFIRMED"
+      }
+    ],
+    "mitigationActions": [
+      {
+        "actionType": "AUTHORIZE_OVERTIME",
+        "description": "Authorized 2 hours overtime per shift for 14 finishing operators to bridge 111 pcs/day deficit.",
+        "addedDailyCapacity": 140,
+        "estimatedCostRupees": 35000,
+        "authorizedByEmail": "merchandiser@company-a.com",
+        "offsetDays": -1
+      },
+      {
+        "actionType": "ADD_STITCHING_LINE",
+        "description": "Reassigned 4 operators from Unit 3 sampling line to support placket pressing.",
+        "addedDailyCapacity": 80,
+        "estimatedCostRupees": 12000,
+        "authorizedByEmail": "merchandiser@company-a.com",
+        "offsetDays": 0
+      }
+    ],
+    "gatePasses": [
+      {
+        "passNumber": "GP-2026-0881",
+        "destinationUnitCode": "PRINTTEX",
+        "stage": "PRINTING",
+        "quantityDispatched": 8000,
+        "quantityReturned": 8000,
+        "status": "COMPLETED",
+        "outwardOffsetDays": -19,
+        "expectedReturnOffsetDays": -15,
+        "actualReturnOffsetDays": -15,
+        "vehicleNumber": "TN-38-BC-4412 (Tata 407)",
+        "notes": "Full batch returned with zero transit damage."
+      }
+    ],
+    "orderAuditTrail": [
+      {
+        "action": "CREATE_ORDER",
+        "category": "DATE_CHANGE",
+        "reasonCode": "INITIAL_PO_CREATION",
+        "notes": "Initial Purchase Order created in system for 8,000 pcs.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -45
+      },
+      {
+        "action": "CONFIRM_RISK_WARNING",
+        "category": "RISK_STATUS_CHANGE",
+        "reasonCode": "LABOUR_SHORTAGE",
+        "notes": "Finishing deficit flagged as RED. Projected 5 days late.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -2
+      },
+      {
+        "action": "AUTHORIZE_OVERTIME",
+        "category": "OVERTIME_AUTHORIZATION",
+        "reasonCode": "LABOUR_SHORTAGE",
+        "notes": "Authorized overtime for 14 operators; financial impact estimated at ₹35,000.",
+        "financialImpactRupees": 35000,
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -1
+      },
+      {
+        "action": "UPDATE_EX_FACTORY_DATE",
+        "category": "DATE_CHANGE",
+        "reasonCode": "BUYER_REQUEST",
+        "notes": "Buyer requested revised delivery schedule window.",
+        "previousValue": "{\"exFactoryDate\":\"2026-11-17T00:00:00Z\"}",
+        "newValue": "{\"exFactoryDate\":\"2026-11-12T00:00:00Z\"}",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -1
+      },
+      {
+        "action": "BUYER_SCHEDULE_NOTIFICATION",
+        "category": "ACCESS_CONTROL",
+        "reasonCode": "BUYER_REQUEST",
+        "notes": "Automated notification dispatch delivered to buyer@company-b.co.uk.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -1
+      },
+      {
+        "action": "BUYER_DAILY_RESPONSE",
+        "category": "STAGE_OUTPUT",
+        "reasonCode": "BUYER_REQUEST",
+        "notes": "Sarah Jenkins: Approved revised finishing plan; requested daily status dispatch.",
+        "userEmail": "buyer@company-b.co.uk",
+        "role": "BUYER",
+        "offsetDays": 0
       }
     ]
   },
@@ -69,258 +344,1798 @@
     "currency": "EUR",
     "exchangeRate": 90.25,
     "exFactoryDateStr": "2026-11-28T00:00:00Z",
+    "status": "ACTIVE",
     "orderLines": [
-      { "size": "4Y", "color": "Sunshine Yellow", "plannedQty": 2500 },
-      { "size": "6Y", "color": "Sunshine Yellow", "plannedQty": 3500 },
-      { "size": "8Y", "color": "Sunshine Yellow", "plannedQty": 4000 }
+      {
+        "size": "4Y",
+        "color": "Sunshine Yellow",
+        "plannedQty": 2500
+      },
+      {
+        "size": "6Y",
+        "color": "Sunshine Yellow",
+        "plannedQty": 3500
+      },
+      {
+        "size": "8Y",
+        "color": "Sunshine Yellow",
+        "plannedQty": 4000
+      }
     ],
     "milestones": [
-      { "stage": "KNITTING", "sequenceOrder": 1, "plannedStartOffsetDays": -25, "plannedEndOffsetDays": -18, "bufferDaysAhead": 18, "targetQuantity": 10000, "completedQuantity": 10000, "unitCode": "UNIT_1" },
-      { "stage": "DYEING_WASHING", "sequenceOrder": 2, "plannedStartOffsetDays": -17, "plannedEndOffsetDays": -10, "bufferDaysAhead": 14, "targetQuantity": 10000, "completedQuantity": 10000, "unitCode": "UNIT_1" },
-      { "stage": "PRINTING", "sequenceOrder": 3, "plannedStartOffsetDays": -9, "plannedEndOffsetDays": 3, "bufferDaysAhead": 11, "targetQuantity": 10000, "completedQuantity": 3100, "unitCode": "PRINTTEX" },
-      { "stage": "CUTTING", "sequenceOrder": 4, "plannedStartOffsetDays": 4, "plannedEndOffsetDays": 8, "bufferDaysAhead": 9, "targetQuantity": 10000, "completedQuantity": 0, "unitCode": "UNIT_2" },
-      { "stage": "STITCHING", "sequenceOrder": 5, "plannedStartOffsetDays": 9, "plannedEndOffsetDays": 18, "bufferDaysAhead": 3, "targetQuantity": 10000, "completedQuantity": 0, "unitCode": "UNIT_2" },
-      { "stage": "CHECKING", "sequenceOrder": 6, "plannedStartOffsetDays": 19, "plannedEndOffsetDays": 21, "bufferDaysAhead": 2, "targetQuantity": 10000, "completedQuantity": 0, "unitCode": "UNIT_2" },
-      { "stage": "FINISHING", "sequenceOrder": 7, "plannedStartOffsetDays": 22, "plannedEndOffsetDays": 26, "bufferDaysAhead": 0, "targetQuantity": 10000, "completedQuantity": 0, "unitCode": "UNIT_2" }
+      {
+        "stage": "KNITTING",
+        "sequenceOrder": 1,
+        "plannedStartOffsetDays": -25,
+        "plannedEndOffsetDays": -18,
+        "bufferDaysAhead": 18,
+        "targetQuantity": 10000,
+        "completedQuantity": 10000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "DYEING_WASHING",
+        "sequenceOrder": 2,
+        "plannedStartOffsetDays": -17,
+        "plannedEndOffsetDays": -10,
+        "bufferDaysAhead": 14,
+        "targetQuantity": 10000,
+        "completedQuantity": 10000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "PRINTING",
+        "sequenceOrder": 3,
+        "plannedStartOffsetDays": -9,
+        "plannedEndOffsetDays": 3,
+        "bufferDaysAhead": 11,
+        "targetQuantity": 10000,
+        "completedQuantity": 3100,
+        "unitCode": "PRINTTEX"
+      },
+      {
+        "stage": "CUTTING",
+        "sequenceOrder": 4,
+        "plannedStartOffsetDays": 4,
+        "plannedEndOffsetDays": 9,
+        "bufferDaysAhead": 8,
+        "targetQuantity": 10000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "STITCHING",
+        "sequenceOrder": 5,
+        "plannedStartOffsetDays": 10,
+        "plannedEndOffsetDays": 16,
+        "bufferDaysAhead": 5,
+        "targetQuantity": 10000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "CHECKING",
+        "sequenceOrder": 6,
+        "plannedStartOffsetDays": 17,
+        "plannedEndOffsetDays": 20,
+        "bufferDaysAhead": 2,
+        "targetQuantity": 10000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "FINISHING",
+        "sequenceOrder": 7,
+        "plannedStartOffsetDays": 21,
+        "plannedEndOffsetDays": 26,
+        "bufferDaysAhead": 0,
+        "targetQuantity": 10000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      }
     ],
     "dailyLogs": [
-      { "dateOffsetDays": -2, "completedQty": 450, "reworkQty": 20, "rejectedQty": 8, "stage": "PRINTING", "unitCode": "PRINTTEX", "userEmail": "supervisor.selvam@company-a.com", "shift": "Day Shift", "operatorNotes": "Screen registration recalibrated on rotary table." },
-      { "dateOffsetDays": -1, "completedQty": 460, "reworkQty": 18, "rejectedQty": 5, "stage": "PRINTING", "unitCode": "PRINTTEX", "userEmail": "supervisor.selvam@company-a.com", "shift": "Day Shift", "operatorNotes": "Curing tunnel temperature stable at 165C." },
-      { "dateOffsetDays": 0, "completedQty": 440, "reworkQty": 22, "rejectedQty": 7, "stage": "PRINTING", "unitCode": "PRINTTEX", "userEmail": "supervisor.selvam@company-a.com", "shift": "Day Shift", "operatorNotes": "Current rate 450 pcs/day vs required 575 pcs/day. 11 days downstream buffer." }
+      {
+        "dateOffsetDays": -3,
+        "completedQty": 600,
+        "reworkQty": 45,
+        "rejectedQty": 18,
+        "stage": "PRINTING",
+        "unitCode": "PRINTTEX",
+        "userEmail": "supervisor.muthu@company-a.com",
+        "shift": "DAY",
+        "machineLine": "PrintTex Screen Bed 4",
+        "operatorNotes": "Chest motif screen alignment offset by 3mm; recalibrating mesh clamp.",
+        "rawTamilText": "ஸ்கிரீன் அச்சு 3 மிமீ விலகி விழுந்தது; மெஷ் சரிசெய்யப்படுகிறது.",
+        "translatedText": "Chest motif screen alignment offset by 3mm; recalibrating mesh clamp.",
+        "issueCategory": "SUBCONTRACTOR_DELAY",
+        "voiceDurationSeconds": 28
+      },
+      {
+        "dateOffsetDays": -2,
+        "completedQty": 1200,
+        "reworkQty": 30,
+        "rejectedQty": 12,
+        "stage": "PRINTING",
+        "unitCode": "PRINTTEX",
+        "userEmail": "supervisor.muthu@company-a.com",
+        "shift": "DAY",
+        "machineLine": "PrintTex Screen Bed 4",
+        "operatorNotes": "First pass 1,200 pcs cleared strike-off inspection by merchandiser.",
+        "rawTamilText": "முதல் 1,200 பீஸ்கள் மார்ச்சண்டைஸர் ஒப்புதல் பெற்றுள்ளது.",
+        "translatedText": "First pass 1,200 pcs cleared strike-off inspection by merchandiser.",
+        "issueCategory": "OTHER",
+        "voiceDurationSeconds": 16
+      },
+      {
+        "dateOffsetDays": -1,
+        "completedQty": 1300,
+        "reworkQty": 25,
+        "rejectedQty": 10,
+        "stage": "PRINTING",
+        "unitCode": "PRINTTEX",
+        "userEmail": "supervisor.muthu@company-a.com",
+        "shift": "DAY",
+        "machineLine": "PrintTex Screen Bed 2",
+        "operatorNotes": "Pigment curing tunnel heating element replaced; delay resolved.",
+        "rawTamilText": "ஹீட்டிங் கியூரிங் மெஷின் சரி செய்யப்பட்டு உற்பத்தி தொடர்கிறது.",
+        "translatedText": "Pigment curing tunnel heating element replaced; delay resolved.",
+        "issueCategory": "MACHINE_BREAKDOWN",
+        "voiceDurationSeconds": 20
+      }
     ],
     "photos": [
-      { "caption": "Print strike-off pigment curing inspection", "category": "PRINT_STRIKE_OFF", "mimeType": "image/jpeg", "fileName": "c-po-0488-print-strike-off.jpg" }
+      {
+        "caption": "Chest pigment screen strike-off registration",
+        "category": "PRINT_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "print-strike-off-c0488.jpg",
+        "stage": "PRINTING",
+        "isBuyerVisible": true
+      },
+      {
+        "caption": "Yellow fabric roll inspection before print feed",
+        "category": "FABRIC_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "cutting-inspection-c0488.jpg",
+        "stage": "CUTTING",
+        "isBuyerVisible": true
+      }
     ],
     "riskWarnings": [
       {
         "stage": "PRINTING",
-        "riskLevel": "AMBER",
-        "requiredDailyRate": 575,
-        "actualRollingRate": 450,
-        "varianceQtyPerDay": -125,
-        "projectedCompletionDaysLate": 3,
-        "financialExposureRupees": 105000,
+        "riskLevel": "RED",
+        "requiredDailyRate": 1150,
+        "actualRollingRate": 775,
+        "varianceQtyPerDay": -375,
+        "projectedCompletionDaysLate": 6,
+        "financialExposureRupees": 280000,
         "mathBreakdown": {
-          "totalRemainingQty": 6900,
-          "calendarDaysToShip": 26,
-          "sundaysExcluded": ["2026-11-08", "2026-11-15", "2026-11-22"],
-          "downstreamBufferDays": 11,
-          "effectiveWorkingDays": 12,
-          "requiredRate": 575,
-          "rollingDailyRate": 450,
-          "rateDeficit": -125,
-          "penaltyPercentage": 5,
-          "orderValueINR": 3429500,
-          "penaltyRiskINR": 105000
+          "remainingQty": 6900,
+          "availableWorkingDays": 6,
+          "sundaysExcluded": [
+            "2026-11-08"
+          ],
+          "requiredRate": 1150,
+          "weightedAverageDailyRate": 775,
+          "rateDeficit": -375,
+          "daysLate": 6,
+          "reason": "Subcontractor PrintTex screen mesh alignment caused 2-day work halt. 6 days late projection."
         },
-        "mitigationPlan": "Transfer 2,000 pcs panel printing to secondary rotary table at PrintTex to protect downstream buffer.",
-        "isBuyerVisible": false,
-        "approvalStatus": "PENDING_REVIEW"
+        "mitigationPlan": "Directing remaining 4,000 pcs to Unit 3 automatic rotary printer to catch up.",
+        "isBuyerVisible": true,
+        "approvalStatus": "CONFIRMED"
+      }
+    ],
+    "mitigationActions": [
+      {
+        "actionType": "SPLIT_SUBCONTRACT",
+        "description": "Diverted 4,000 pcs unprinted cut panels to Unit 3 rotary print bed.",
+        "addedDailyCapacity": 450,
+        "estimatedCostRupees": 48000,
+        "authorizedByEmail": "merchandiser@company-a.com",
+        "offsetDays": -1
       }
     ],
     "gatePasses": [
       {
-        "passNumber": "GP-2026-PT-008",
+        "passNumber": "GP-2026-0891",
         "destinationUnitCode": "PRINTTEX",
         "stage": "PRINTING",
         "quantityDispatched": 10000,
         "quantityReturned": 3100,
         "status": "PARTIAL_RECEIVED",
         "outwardOffsetDays": -9,
-        "expectedReturnOffsetDays": 4,
-        "vehicleNumber": "TN-39-BT-4412"
+        "expectedReturnOffsetDays": 3,
+        "vehicleNumber": "TN-39-AA-8920 (Mahindra Bolero Pickup)",
+        "notes": "Challan #PT-442; 3,100 pcs received; balance 6,900 pcs in print run."
       }
-    ]
-  },
-  {
-    "poNumber": "B-PO-88213",
-    "buyerCode": "COMPANY_B",
-    "unitCode": "UNIT_2",
-    "style": "Men's Crew Neck Tee Navy",
-    "description": "180 GSM Single Jersey with Lycra Rib Neck",
-    "totalQuantity": 12000,
-    "fobPricePerPiece": 5.4,
-    "currency": "GBP",
-    "exchangeRate": 105.5,
-    "exFactoryDateStr": "2026-11-20T00:00:00Z",
-    "orderLines": [
-      { "size": "S", "color": "Navy", "plannedQty": 3000 },
-      { "size": "M", "color": "Navy", "plannedQty": 5000 },
-      { "size": "L", "color": "Navy", "plannedQty": 4000 }
     ],
-    "milestones": [
-      { "stage": "KNITTING", "sequenceOrder": 1, "plannedStartOffsetDays": -28, "plannedEndOffsetDays": -21, "bufferDaysAhead": 18, "targetQuantity": 12000, "completedQuantity": 12000, "unitCode": "UNIT_1" },
-      { "stage": "DYEING_WASHING", "sequenceOrder": 2, "plannedStartOffsetDays": -20, "plannedEndOffsetDays": -13, "bufferDaysAhead": 14, "targetQuantity": 12000, "completedQuantity": 12000, "unitCode": "UNIT_1" },
-      { "stage": "PRINTING", "sequenceOrder": 3, "plannedStartOffsetDays": -12, "plannedEndOffsetDays": -8, "bufferDaysAhead": 11, "targetQuantity": 12000, "completedQuantity": 12000, "unitCode": "PRINTTEX" },
-      { "stage": "CUTTING", "sequenceOrder": 4, "plannedStartOffsetDays": -7, "plannedEndOffsetDays": -4, "bufferDaysAhead": 9, "targetQuantity": 12000, "completedQuantity": 12000, "unitCode": "UNIT_2" },
-      { "stage": "STITCHING", "sequenceOrder": 5, "plannedStartOffsetDays": -3, "plannedEndOffsetDays": 10, "bufferDaysAhead": 3, "targetQuantity": 12000, "completedQuantity": 6800, "unitCode": "UNIT_2" },
-      { "stage": "CHECKING", "sequenceOrder": 6, "plannedStartOffsetDays": 11, "plannedEndOffsetDays": 13, "bufferDaysAhead": 2, "targetQuantity": 12000, "completedQuantity": 0, "unitCode": "UNIT_2" },
-      { "stage": "FINISHING", "sequenceOrder": 7, "plannedStartOffsetDays": 14, "plannedEndOffsetDays": 18, "bufferDaysAhead": 0, "targetQuantity": 12000, "completedQuantity": 0, "unitCode": "UNIT_2" }
-    ],
-    "dailyLogs": [
-      { "dateOffsetDays": -2, "completedQty": 430, "reworkQty": 8, "rejectedQty": 2, "stage": "STITCHING", "unitCode": "UNIT_2", "userEmail": "supervisor.selvam@company-a.com", "shift": "Line 2", "operatorNotes": "Overlock tension checked, steady line output." },
-      { "dateOffsetDays": -1, "completedQty": 410, "reworkQty": 12, "rejectedQty": 3, "stage": "STITCHING", "unitCode": "UNIT_2", "userEmail": "supervisor.selvam@company-a.com", "shift": "Line 2", "operatorNotes": "Shift handover smooth. Bobbin thread spool replenished." },
-      { "dateOffsetDays": 0, "completedQty": 420, "reworkQty": 9, "rejectedQty": 1, "stage": "STITCHING", "unitCode": "UNIT_2", "userEmail": "supervisor.selvam@company-a.com", "shift": "Line 2", "operatorNotes": "Run rate 420 pcs/day vs required 400 pcs/day. +2 days safety buffer intact." }
-    ],
-    "photos": [
-      { "caption": "Navy single jersey lab-dip shade clearance", "category": "FABRIC_SWATCH", "mimeType": "image/jpeg", "fileName": "b-po-88213-labdip-navy.jpg" }
+    "orderAuditTrail": [
+      {
+        "action": "CREATE_ORDER",
+        "category": "DATE_CHANGE",
+        "reasonCode": "INITIAL_PO_CREATION",
+        "notes": "PO C-PO-0488 created for 10,000 pcs kids printed apparel.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -30
+      },
+      {
+        "action": "CONFIRM_RISK_WARNING",
+        "category": "RISK_STATUS_CHANGE",
+        "reasonCode": "SUBCONTRACTOR_DELAY",
+        "notes": "PrintTex delay flagged RED. Projected financial exposure ₹2,80,000.",
+        "financialImpactRupees": 280000,
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -2
+      },
+      {
+        "action": "BUYER_SCHEDULE_NOTIFICATION",
+        "category": "ACCESS_CONTROL",
+        "reasonCode": "SUBCONTRACTOR_DELAY",
+        "notes": "Official notice transmitted to compliance@company-c.de.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -1
+      },
+      {
+        "action": "BUYER_DAILY_RESPONSE",
+        "category": "STAGE_OUTPUT",
+        "reasonCode": "SUBCONTRACTOR_DELAY",
+        "notes": "Klaus Mueller: Acknowledged PrintTex split; requested print defect rate report.",
+        "userEmail": "compliance@company-c.de",
+        "role": "BUYER",
+        "offsetDays": 0
+      }
     ]
   },
   {
     "poNumber": "B-PO-88255",
     "buyerCode": "COMPANY_B",
-    "unitCode": "UNIT_3",
-    "style": "Brushed Fleece Hoodie",
-    "description": "320 GSM 3-thread fleece hoodie with kangaroo pocket",
-    "totalQuantity": 5000,
+    "unitCode": "UNIT_1",
+    "style": "French Terry Hoodie Navy",
+    "description": "380 GSM Heavyweight French Terry Hoodie with Kangaroo Pocket",
+    "totalQuantity": 6500,
     "fobPricePerPiece": 14.5,
     "currency": "GBP",
     "exchangeRate": 105.5,
     "exFactoryDateStr": "2026-12-05T00:00:00Z",
+    "status": "ACTIVE",
     "orderLines": [
-      { "size": "M", "color": "Heather Grey", "plannedQty": 2500 },
-      { "size": "L", "color": "Heather Grey", "plannedQty": 2500 }
+      {
+        "size": "M",
+        "color": "Deep Navy",
+        "plannedQty": 2500
+      },
+      {
+        "size": "L",
+        "color": "Deep Navy",
+        "plannedQty": 2500
+      },
+      {
+        "size": "XL",
+        "color": "Deep Navy",
+        "plannedQty": 1500
+      }
     ],
     "milestones": [
-      { "stage": "KNITTING", "sequenceOrder": 1, "plannedStartOffsetDays": -20, "plannedEndOffsetDays": -10, "bufferDaysAhead": 18, "targetQuantity": 5000, "completedQuantity": 5000, "unitCode": "UNIT_1" },
-      { "stage": "DYEING_WASHING", "sequenceOrder": 2, "plannedStartOffsetDays": -9, "plannedEndOffsetDays": -2, "bufferDaysAhead": 14, "targetQuantity": 5000, "completedQuantity": 5000, "unitCode": "UNIT_1" },
-      { "stage": "PRINTING", "sequenceOrder": 3, "plannedStartOffsetDays": -1, "plannedEndOffsetDays": 2, "bufferDaysAhead": 11, "targetQuantity": 5000, "completedQuantity": 5000, "unitCode": "PRINTTEX" },
-      { "stage": "CUTTING", "sequenceOrder": 4, "plannedStartOffsetDays": 3, "plannedEndOffsetDays": 8, "bufferDaysAhead": 9, "targetQuantity": 5000, "completedQuantity": 1200, "unitCode": "UNIT_3" },
-      { "stage": "STITCHING", "sequenceOrder": 5, "plannedStartOffsetDays": 9, "plannedEndOffsetDays": 22, "bufferDaysAhead": 3, "targetQuantity": 5000, "completedQuantity": 0, "unitCode": "UNIT_3" },
-      { "stage": "CHECKING", "sequenceOrder": 6, "plannedStartOffsetDays": 23, "plannedEndOffsetDays": 26, "bufferDaysAhead": 2, "targetQuantity": 5000, "completedQuantity": 0, "unitCode": "UNIT_3" },
-      { "stage": "FINISHING", "sequenceOrder": 7, "plannedStartOffsetDays": 27, "plannedEndOffsetDays": 32, "bufferDaysAhead": 0, "targetQuantity": 5000, "completedQuantity": 0, "unitCode": "UNIT_3" }
+      {
+        "stage": "KNITTING",
+        "sequenceOrder": 1,
+        "plannedStartOffsetDays": -20,
+        "plannedEndOffsetDays": -14,
+        "bufferDaysAhead": 15,
+        "targetQuantity": 6500,
+        "completedQuantity": 6500,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "DYEING_WASHING",
+        "sequenceOrder": 2,
+        "plannedStartOffsetDays": -13,
+        "plannedEndOffsetDays": -6,
+        "bufferDaysAhead": 10,
+        "targetQuantity": 6500,
+        "completedQuantity": 6500,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "CUTTING",
+        "sequenceOrder": 3,
+        "plannedStartOffsetDays": -5,
+        "plannedEndOffsetDays": 2,
+        "bufferDaysAhead": 6,
+        "targetQuantity": 6500,
+        "completedQuantity": 2800,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "STITCHING",
+        "sequenceOrder": 4,
+        "plannedStartOffsetDays": 3,
+        "plannedEndOffsetDays": 12,
+        "bufferDaysAhead": 4,
+        "targetQuantity": 6500,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "CHECKING",
+        "sequenceOrder": 5,
+        "plannedStartOffsetDays": 13,
+        "plannedEndOffsetDays": 17,
+        "bufferDaysAhead": 2,
+        "targetQuantity": 6500,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "FINISHING",
+        "sequenceOrder": 6,
+        "plannedStartOffsetDays": 18,
+        "plannedEndOffsetDays": 24,
+        "bufferDaysAhead": 0,
+        "targetQuantity": 6500,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      }
     ],
     "dailyLogs": [
-      { "stage": "CUTTING", "completedQty": 420, "rejectedQty": 6, "operatorNotes": "Pattern bundle cutting for fleece batch", "dateOffsetDays": -2, "unitCode": "UNIT_3", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" },
-      { "stage": "CUTTING", "completedQty": 400, "rejectedQty": 4, "operatorNotes": "Laser pattern cutting fleece", "dateOffsetDays": -1, "unitCode": "UNIT_3", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" },
-      { "stage": "CUTTING", "completedQty": 380, "rejectedQty": 8, "operatorNotes": "Pocket and hood pattern bundling", "dateOffsetDays": 0, "unitCode": "UNIT_3", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" }
+      {
+        "dateOffsetDays": -2,
+        "completedQty": 1400,
+        "reworkQty": 20,
+        "rejectedQty": 8,
+        "stage": "CUTTING",
+        "unitCode": "UNIT_1",
+        "userEmail": "supervisor.muthu@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 1 Auto Cutter 1",
+        "operatorNotes": "Navy shade delta E measured 1.1; within acceptable buyer tolerance.",
+        "rawTamilText": "நேவி நிற வேறுபாடு சோதனை செய்யப்பட்டது; அனுமதிக்கப்பட்ட வரம்பிற்குள் உள்ளது.",
+        "translatedText": "Navy shade delta E measured 1.1; within acceptable buyer tolerance.",
+        "issueCategory": "FABRIC_DEFECT",
+        "voiceDurationSeconds": 18
+      },
+      {
+        "dateOffsetDays": -1,
+        "completedQty": 1400,
+        "reworkQty": 15,
+        "rejectedQty": 5,
+        "stage": "CUTTING",
+        "unitCode": "UNIT_1",
+        "userEmail": "supervisor.muthu@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 1 Auto Cutter 1",
+        "operatorNotes": "Rib collar matching lot 2 cut; balance 3,700 pcs waiting fabric lot 3.",
+        "rawTamilText": "ரிப் மற்றும் காலர் வெட்டும் பணி முடிந்தது.",
+        "translatedText": "Rib collar matching lot 2 cut; balance 3,700 pcs waiting fabric lot 3.",
+        "issueCategory": "OTHER",
+        "voiceDurationSeconds": 14
+      }
+    ],
+    "photos": [
+      {
+        "caption": "Navy shade swatch spectro measurement",
+        "category": "LABDIP_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "labdip-navy-b88255.jpg",
+        "stage": "CUTTING",
+        "isBuyerVisible": true
+      },
+      {
+        "caption": "French terry fleece fabric inspection",
+        "category": "CUTTING_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "cutting-inspection-b88255.jpg",
+        "stage": "CUTTING",
+        "isBuyerVisible": true
+      }
+    ],
+    "riskWarnings": [
+      {
+        "stage": "CUTTING",
+        "riskLevel": "AMBER",
+        "requiredDailyRate": 925,
+        "actualRollingRate": 700,
+        "varianceQtyPerDay": -225,
+        "projectedCompletionDaysLate": 2,
+        "financialExposureRupees": 165000,
+        "mathBreakdown": {
+          "remainingQty": 3700,
+          "availableWorkingDays": 4,
+          "sundaysExcluded": [
+            "2026-11-08"
+          ],
+          "requiredRate": 925,
+          "weightedAverageDailyRate": 700,
+          "rateDeficit": -225,
+          "daysLate": 2,
+          "reason": "Fabric lot 3 delayed at compacting line; buffer reduced from 6 days to 1 day."
+        },
+        "mitigationPlan": "Expedited lot 3 compacting; scheduled second shift cutting for Nov 4.",
+        "isBuyerVisible": false,
+        "approvalStatus": "CONFIRMED"
+      }
+    ],
+    "gatePasses": [],
+    "orderAuditTrail": [
+      {
+        "action": "CREATE_ORDER",
+        "category": "DATE_CHANGE",
+        "reasonCode": "INITIAL_PO_CREATION",
+        "notes": "PO B-PO-88255 booked.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -25
+      },
+      {
+        "action": "CONFIRM_RISK_WARNING",
+        "category": "RISK_STATUS_CHANGE",
+        "reasonCode": "FABRIC_DELAY",
+        "notes": "Fabric lot 3 delay flagged as AMBER.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -1
+      }
     ]
   },
   {
     "poNumber": "C-PO-0492",
     "buyerCode": "COMPANY_C",
     "unitCode": "WASHTEX",
-    "style": "Organic Rib Tank",
-    "description": "2x2 Stretch Rib Tank Top in Vintage Olive",
+    "style": "Organic Rib Tank Top Sage",
+    "description": "100% GOTS Certified Organic Cotton 2x2 Rib with Bio-Enzyme Soft Wash",
     "totalQuantity": 6000,
-    "fobPricePerPiece": 4.1,
+    "fobPricePerPiece": 4.25,
     "currency": "EUR",
     "exchangeRate": 90.25,
-    "exFactoryDateStr": "2026-11-22T00:00:00Z",
+    "exFactoryDateStr": "2026-11-24T00:00:00Z",
+    "status": "ACTIVE",
     "orderLines": [
-      { "size": "XS", "color": "Vintage Olive", "plannedQty": 1500 },
-      { "size": "S", "color": "Vintage Olive", "plannedQty": 2500 },
-      { "size": "M", "color": "Vintage Olive", "plannedQty": 2000 }
+      {
+        "size": "XS",
+        "color": "Pastel Sage",
+        "plannedQty": 1000
+      },
+      {
+        "size": "S",
+        "color": "Pastel Sage",
+        "plannedQty": 2000
+      },
+      {
+        "size": "M",
+        "color": "Pastel Sage",
+        "plannedQty": 2000
+      },
+      {
+        "size": "L",
+        "color": "Pastel Sage",
+        "plannedQty": 1000
+      }
     ],
     "milestones": [
-      { "stage": "KNITTING", "sequenceOrder": 1, "plannedStartOffsetDays": -18, "plannedEndOffsetDays": -10, "bufferDaysAhead": 18, "targetQuantity": 6000, "completedQuantity": 6000, "unitCode": "UNIT_1" },
-      { "stage": "DYEING_WASHING", "sequenceOrder": 2, "plannedStartOffsetDays": -9, "plannedEndOffsetDays": 2, "bufferDaysAhead": 14, "targetQuantity": 6000, "completedQuantity": 1500, "unitCode": "WASHTEX" },
-      { "stage": "PRINTING", "sequenceOrder": 3, "plannedStartOffsetDays": 3, "plannedEndOffsetDays": 5, "bufferDaysAhead": 11, "targetQuantity": 6000, "completedQuantity": 0, "unitCode": "PRINTTEX" },
-      { "stage": "CUTTING", "sequenceOrder": 4, "plannedStartOffsetDays": 6, "plannedEndOffsetDays": 9, "bufferDaysAhead": 9, "targetQuantity": 6000, "completedQuantity": 0, "unitCode": "UNIT_1" },
-      { "stage": "STITCHING", "sequenceOrder": 5, "plannedStartOffsetDays": 10, "plannedEndOffsetDays": 15, "bufferDaysAhead": 3, "targetQuantity": 6000, "completedQuantity": 0, "unitCode": "UNIT_1" },
-      { "stage": "CHECKING", "sequenceOrder": 6, "plannedStartOffsetDays": 16, "plannedEndOffsetDays": 17, "bufferDaysAhead": 2, "targetQuantity": 6000, "completedQuantity": 0, "unitCode": "UNIT_1" },
-      { "stage": "FINISHING", "sequenceOrder": 7, "plannedStartOffsetDays": 18, "plannedEndOffsetDays": 20, "bufferDaysAhead": 0, "targetQuantity": 6000, "completedQuantity": 0, "unitCode": "UNIT_1" }
+      {
+        "stage": "KNITTING",
+        "sequenceOrder": 1,
+        "plannedStartOffsetDays": -20,
+        "plannedEndOffsetDays": -14,
+        "bufferDaysAhead": 15,
+        "targetQuantity": 6000,
+        "completedQuantity": 6000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "DYEING_WASHING",
+        "sequenceOrder": 2,
+        "plannedStartOffsetDays": -13,
+        "plannedEndOffsetDays": -4,
+        "bufferDaysAhead": 8,
+        "targetQuantity": 6000,
+        "completedQuantity": 3200,
+        "unitCode": "WASHTEX"
+      },
+      {
+        "stage": "CUTTING",
+        "sequenceOrder": 3,
+        "plannedStartOffsetDays": -3,
+        "plannedEndOffsetDays": 2,
+        "bufferDaysAhead": 6,
+        "targetQuantity": 6000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "STITCHING",
+        "sequenceOrder": 4,
+        "plannedStartOffsetDays": 3,
+        "plannedEndOffsetDays": 10,
+        "bufferDaysAhead": 4,
+        "targetQuantity": 6000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "CHECKING",
+        "sequenceOrder": 5,
+        "plannedStartOffsetDays": 11,
+        "plannedEndOffsetDays": 14,
+        "bufferDaysAhead": 2,
+        "targetQuantity": 6000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "FINISHING",
+        "sequenceOrder": 6,
+        "plannedStartOffsetDays": 15,
+        "plannedEndOffsetDays": 20,
+        "bufferDaysAhead": 0,
+        "targetQuantity": 6000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      }
     ],
     "dailyLogs": [
-      { "stage": "DYEING_WASHING", "completedQty": 520, "rejectedQty": 12, "operatorNotes": "Soft-flow dyeing lot 1 vintage olive", "dateOffsetDays": -2, "unitCode": "WASHTEX", "userEmail": "supervisor.selvam@company-a.com", "shift": "Day Shift" },
-      { "stage": "DYEING_WASHING", "completedQty": 500, "rejectedQty": 8, "operatorNotes": "Bio-wash & silicon softening lot 2", "dateOffsetDays": -1, "unitCode": "WASHTEX", "userEmail": "supervisor.selvam@company-a.com", "shift": "Day Shift" },
-      { "stage": "DYEING_WASHING", "completedQty": 480, "rejectedQty": 10, "operatorNotes": "Hydro-extraction and tumble drying lot 3", "dateOffsetDays": 0, "unitCode": "WASHTEX", "userEmail": "supervisor.selvam@company-a.com", "shift": "Day Shift" }
+      {
+        "dateOffsetDays": -2,
+        "completedQty": 1500,
+        "reworkQty": 30,
+        "rejectedQty": 10,
+        "stage": "DYEING_WASHING",
+        "unitCode": "WASHTEX",
+        "userEmail": "supervisor.selvam@company-a.com",
+        "shift": "DAY",
+        "machineLine": "WashTex Bio Pit 2",
+        "operatorNotes": "Enzyme bio-wash pass 1 completed; hand-feel approved by QA.",
+        "rawTamilText": "பயோ வாஷ் முதல் பகுதி நிறைவடைந்தது; கைத்தன்மை ஒப்புதல் பெறப்பட்டது.",
+        "translatedText": "Enzyme bio-wash pass 1 completed; hand-feel approved by QA.",
+        "issueCategory": "OTHER",
+        "voiceDurationSeconds": 21
+      },
+      {
+        "dateOffsetDays": -1,
+        "completedQty": 1700,
+        "reworkQty": 22,
+        "rejectedQty": 8,
+        "stage": "DYEING_WASHING",
+        "unitCode": "WASHTEX",
+        "userEmail": "supervisor.selvam@company-a.com",
+        "shift": "DAY",
+        "machineLine": "WashTex Bio Pit 2",
+        "operatorNotes": "Hydro-extractor tumble drying lot 2; remaining 2,800 pcs in wash cycle.",
+        "rawTamilText": "ஹைட்ரோ மற்றும் டம்பிள் ட்ரையிங் தொடர்ந்து நடைபெறுகிறது.",
+        "translatedText": "Hydro-extractor tumble drying lot 2; remaining 2,800 pcs in wash cycle.",
+        "issueCategory": "SUBCONTRACTOR_DELAY",
+        "voiceDurationSeconds": 19
+      }
+    ],
+    "photos": [
+      {
+        "caption": "Organic rib fabric wash shade test",
+        "category": "WASH_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "labdip-navy-c0492.jpg",
+        "stage": "DYEING_WASHING",
+        "isBuyerVisible": true
+      }
+    ],
+    "riskWarnings": [
+      {
+        "stage": "DYEING_WASHING",
+        "riskLevel": "AMBER",
+        "requiredDailyRate": 700,
+        "actualRollingRate": 533,
+        "varianceQtyPerDay": -167,
+        "projectedCompletionDaysLate": 2,
+        "financialExposureRupees": 120000,
+        "mathBreakdown": {
+          "remainingQty": 2800,
+          "availableWorkingDays": 4,
+          "sundaysExcluded": [
+            "2026-11-08"
+          ],
+          "requiredRate": 700,
+          "weightedAverageDailyRate": 533,
+          "rateDeficit": -167,
+          "daysLate": 2,
+          "reason": "WashTex hydro-extractor tumble queue delayed lot 3 by 36 hours."
+        },
+        "mitigationPlan": "Booked priority drying chamber at WashTex for immediate release.",
+        "isBuyerVisible": false,
+        "approvalStatus": "CONFIRMED"
+      }
     ],
     "gatePasses": [
       {
-        "passNumber": "GP-2026-WT-003",
+        "passNumber": "GP-2026-0922",
         "destinationUnitCode": "WASHTEX",
         "stage": "DYEING_WASHING",
         "quantityDispatched": 6000,
-        "quantityReturned": 1500,
+        "quantityReturned": 3200,
         "status": "PARTIAL_RECEIVED",
-        "outwardOffsetDays": -9,
-        "expectedReturnOffsetDays": 2,
-        "vehicleNumber": "TN-38-AL-8831"
+        "outwardOffsetDays": -13,
+        "expectedReturnOffsetDays": -4,
+        "vehicleNumber": "TN-42-D-5511 (Ashok Leyland Dost)",
+        "notes": "Challan #WT-901; 3,200 pcs washed and returned to Unit 2 cutting."
+      }
+    ],
+    "orderAuditTrail": [
+      {
+        "action": "CREATE_ORDER",
+        "category": "DATE_CHANGE",
+        "reasonCode": "INITIAL_PO_CREATION",
+        "notes": "PO C-PO-0492 booked.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -25
+      },
+      {
+        "action": "BUYER_DAILY_RESPONSE",
+        "category": "STAGE_OUTPUT",
+        "reasonCode": "BUYER_REQUEST",
+        "notes": "Klaus Mueller: Confirmed organic certificate and wash hand-feel swatch.",
+        "userEmail": "compliance@company-c.de",
+        "role": "BUYER",
+        "offsetDays": -1
       }
     ]
   },
   {
-    "poNumber": "B-PO-88260",
+    "poNumber": "B-PO-88213",
     "buyerCode": "COMPANY_B",
     "unitCode": "UNIT_1",
-    "style": "Mercerized Cotton Tee",
-    "description": "Premium 60s/2 Mercerized Egyptian Cotton T-Shirt",
-    "totalQuantity": 15000,
-    "fobPricePerPiece": 11.2,
+    "style": "Classic Crew Neck T-Shirt Olive",
+    "description": "180 GSM Bio-Washed Single Jersey T-Shirt with 1x1 Spandex Neck Rib",
+    "totalQuantity": 12000,
+    "fobPricePerPiece": 5.2,
     "currency": "GBP",
     "exchangeRate": 105.5,
-    "exFactoryDateStr": "2026-12-18T00:00:00Z",
+    "exFactoryDateStr": "2026-11-20T00:00:00Z",
+    "status": "ACTIVE",
     "orderLines": [
-      { "size": "M", "color": "Black", "plannedQty": 7500 },
-      { "size": "L", "color": "Black", "plannedQty": 7500 }
+      {
+        "size": "S",
+        "color": "Army Olive",
+        "plannedQty": 2400
+      },
+      {
+        "size": "M",
+        "color": "Army Olive",
+        "plannedQty": 4800
+      },
+      {
+        "size": "L",
+        "color": "Army Olive",
+        "plannedQty": 3600
+      },
+      {
+        "size": "XL",
+        "color": "Army Olive",
+        "plannedQty": 1200
+      }
     ],
     "milestones": [
-      { "stage": "KNITTING", "sequenceOrder": 1, "plannedStartOffsetDays": -6, "plannedEndOffsetDays": 12, "bufferDaysAhead": 18, "targetQuantity": 15000, "completedQuantity": 3800, "unitCode": "UNIT_1" },
-      { "stage": "DYEING_WASHING", "sequenceOrder": 2, "plannedStartOffsetDays": 13, "plannedEndOffsetDays": 20, "bufferDaysAhead": 14, "targetQuantity": 15000, "completedQuantity": 0, "unitCode": "UNIT_1" },
-      { "stage": "PRINTING", "sequenceOrder": 3, "plannedStartOffsetDays": 21, "plannedEndOffsetDays": 24, "bufferDaysAhead": 11, "targetQuantity": 15000, "completedQuantity": 0, "unitCode": "PRINTTEX" },
-      { "stage": "CUTTING", "sequenceOrder": 4, "plannedStartOffsetDays": 25, "plannedEndOffsetDays": 29, "bufferDaysAhead": 9, "targetQuantity": 15000, "completedQuantity": 0, "unitCode": "UNIT_1" },
-      { "stage": "STITCHING", "sequenceOrder": 5, "plannedStartOffsetDays": 30, "plannedEndOffsetDays": 40, "bufferDaysAhead": 3, "targetQuantity": 15000, "completedQuantity": 0, "unitCode": "UNIT_1" },
-      { "stage": "CHECKING", "sequenceOrder": 6, "plannedStartOffsetDays": 41, "plannedEndOffsetDays": 43, "bufferDaysAhead": 2, "targetQuantity": 15000, "completedQuantity": 0, "unitCode": "UNIT_1" },
-      { "stage": "FINISHING", "sequenceOrder": 7, "plannedStartOffsetDays": 44, "plannedEndOffsetDays": 46, "bufferDaysAhead": 0, "targetQuantity": 15000, "completedQuantity": 0, "unitCode": "UNIT_1" }
+      {
+        "stage": "KNITTING",
+        "sequenceOrder": 1,
+        "plannedStartOffsetDays": -30,
+        "plannedEndOffsetDays": -22,
+        "bufferDaysAhead": 16,
+        "targetQuantity": 12000,
+        "completedQuantity": 12000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "DYEING_WASHING",
+        "sequenceOrder": 2,
+        "plannedStartOffsetDays": -21,
+        "plannedEndOffsetDays": -14,
+        "bufferDaysAhead": 12,
+        "targetQuantity": 12000,
+        "completedQuantity": 12000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "CUTTING",
+        "sequenceOrder": 3,
+        "plannedStartOffsetDays": -13,
+        "plannedEndOffsetDays": -8,
+        "bufferDaysAhead": 8,
+        "targetQuantity": 12000,
+        "completedQuantity": 12000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "STITCHING",
+        "sequenceOrder": 4,
+        "plannedStartOffsetDays": -7,
+        "plannedEndOffsetDays": 4,
+        "bufferDaysAhead": 4,
+        "targetQuantity": 12000,
+        "completedQuantity": 8400,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "CHECKING",
+        "sequenceOrder": 5,
+        "plannedStartOffsetDays": 5,
+        "plannedEndOffsetDays": 9,
+        "bufferDaysAhead": 2,
+        "targetQuantity": 12000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "FINISHING",
+        "sequenceOrder": 6,
+        "plannedStartOffsetDays": 10,
+        "plannedEndOffsetDays": 16,
+        "bufferDaysAhead": 0,
+        "targetQuantity": 12000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      }
     ],
     "dailyLogs": [
-      { "stage": "KNITTING", "completedQty": 650, "rejectedQty": 15, "operatorNotes": "Circular 28-gauge jersey knitting batch A", "dateOffsetDays": -2, "unitCode": "UNIT_1", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" },
-      { "stage": "KNITTING", "completedQty": 620, "rejectedQty": 10, "operatorNotes": "Circular knitting batch B greige roll output", "dateOffsetDays": -1, "unitCode": "UNIT_1", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" },
-      { "stage": "KNITTING", "completedQty": 600, "rejectedQty": 12, "operatorNotes": "High-density knit fabric inspection roll C", "dateOffsetDays": 0, "unitCode": "UNIT_1", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" }
+      {
+        "dateOffsetDays": -2,
+        "completedQty": 1450,
+        "reworkQty": 15,
+        "rejectedQty": 4,
+        "stage": "STITCHING",
+        "unitCode": "UNIT_2",
+        "userEmail": "supervisor.selvam@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 2 Line 1 & Line 2",
+        "operatorNotes": "Stitching throughput optimal; pacing ahead of planned schedule.",
+        "rawTamilText": "தையல் உற்பத்தி சீராக நடைபெறுகிறது; திட்டமிட்டதை விட அதிகம்.",
+        "translatedText": "Stitching throughput optimal; pacing ahead of planned schedule.",
+        "issueCategory": "OTHER",
+        "voiceDurationSeconds": 15
+      },
+      {
+        "dateOffsetDays": -1,
+        "completedQty": 1480,
+        "reworkQty": 12,
+        "rejectedQty": 3,
+        "stage": "STITCHING",
+        "unitCode": "UNIT_2",
+        "userEmail": "supervisor.selvam@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 2 Line 1 & Line 2",
+        "operatorNotes": "Collar rib overlock assembly passed in-line QA check with 0 defects.",
+        "rawTamilText": "காலர் ஓவர்லாக் அசெம்பிளி தர சோதனையில் வெற்றி பெற்றுள்ளது.",
+        "translatedText": "Collar rib overlock assembly passed in-line QA check with 0 defects.",
+        "issueCategory": "OTHER",
+        "voiceDurationSeconds": 17
+      }
+    ],
+    "photos": [
+      {
+        "caption": "Unit 2 stitching line crew neck overlock pass",
+        "category": "STITCHING_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "stitching-line-b88213.jpg",
+        "stage": "STITCHING",
+        "isBuyerVisible": true
+      }
+    ],
+    "riskWarnings": [
+      {
+        "stage": "STITCHING",
+        "riskLevel": "GREEN",
+        "requiredDailyRate": 1200,
+        "actualRollingRate": 1465,
+        "varianceQtyPerDay": 265,
+        "projectedCompletionDaysLate": 0,
+        "financialExposureRupees": 0,
+        "mathBreakdown": {
+          "remainingQty": 3600,
+          "availableWorkingDays": 5,
+          "sundaysExcluded": [
+            "2026-11-08"
+          ],
+          "requiredRate": 1200,
+          "weightedAverageDailyRate": 1465,
+          "rateDeficit": 265,
+          "daysLate": 0,
+          "reason": "Production pacing 265 pcs/day ahead of planned daily capacity. Safe 4-day buffer."
+        },
+        "mitigationPlan": "Maintain current line layout; prepare finishing cartons.",
+        "isBuyerVisible": true,
+        "approvalStatus": "CONFIRMED"
+      }
+    ],
+    "gatePasses": [],
+    "orderAuditTrail": [
+      {
+        "action": "CREATE_ORDER",
+        "category": "DATE_CHANGE",
+        "reasonCode": "INITIAL_PO_CREATION",
+        "notes": "PO B-PO-88213 confirmed.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -35
+      }
     ]
   },
   {
     "poNumber": "C-PO-0501",
     "buyerCode": "COMPANY_C",
     "unitCode": "UNIT_2",
-    "style": "Striped Interlock Polo",
-    "description": "Yarn-dyed feeder stripe interlock polo with flat knit collar",
+    "style": "Striped Interlock Polo Navy/White",
+    "description": "Yarn-Dyed Feeder Stripe Interlock Polo with Knitted Jacquard Collar",
     "totalQuantity": 7500,
-    "fobPricePerPiece": 9.5,
+    "fobPricePerPiece": 9.1,
     "currency": "EUR",
     "exchangeRate": 90.25,
-    "exFactoryDateStr": "2026-11-09T00:00:00Z",
+    "exFactoryDateStr": "2026-11-18T00:00:00Z",
+    "status": "ACTIVE",
     "orderLines": [
-      { "size": "S", "color": "Navy/White", "plannedQty": 2000 },
-      { "size": "M", "color": "Navy/White", "plannedQty": 3500 },
-      { "size": "L", "color": "Navy/White", "plannedQty": 2000 }
+      {
+        "size": "S",
+        "color": "Navy/White Stripe",
+        "plannedQty": 2000
+      },
+      {
+        "size": "M",
+        "color": "Navy/White Stripe",
+        "plannedQty": 3500
+      },
+      {
+        "size": "L",
+        "color": "Navy/White Stripe",
+        "plannedQty": 2000
+      }
     ],
     "milestones": [
-      { "stage": "KNITTING", "sequenceOrder": 1, "plannedStartOffsetDays": -38, "plannedEndOffsetDays": -30, "bufferDaysAhead": 18, "targetQuantity": 7500, "completedQuantity": 7500, "unitCode": "UNIT_1" },
-      { "stage": "DYEING_WASHING", "sequenceOrder": 2, "plannedStartOffsetDays": -29, "plannedEndOffsetDays": -22, "bufferDaysAhead": 14, "targetQuantity": 7500, "completedQuantity": 7500, "unitCode": "UNIT_1" },
-      { "stage": "PRINTING", "sequenceOrder": 3, "plannedStartOffsetDays": -21, "plannedEndOffsetDays": -17, "bufferDaysAhead": 11, "targetQuantity": 7500, "completedQuantity": 7500, "unitCode": "PRINTTEX" },
-      { "stage": "CUTTING", "sequenceOrder": 4, "plannedStartOffsetDays": -16, "plannedEndOffsetDays": -12, "bufferDaysAhead": 9, "targetQuantity": 7500, "completedQuantity": 7500, "unitCode": "UNIT_2" },
-      { "stage": "STITCHING", "sequenceOrder": 5, "plannedStartOffsetDays": -11, "plannedEndOffsetDays": -4, "bufferDaysAhead": 3, "targetQuantity": 7500, "completedQuantity": 7500, "unitCode": "UNIT_2" },
-      { "stage": "CHECKING", "sequenceOrder": 6, "plannedStartOffsetDays": -3, "plannedEndOffsetDays": 3, "bufferDaysAhead": 2, "targetQuantity": 7500, "completedQuantity": 6100, "unitCode": "UNIT_2" },
-      { "stage": "FINISHING", "sequenceOrder": 7, "plannedStartOffsetDays": 4, "plannedEndOffsetDays": 7, "bufferDaysAhead": 0, "targetQuantity": 7500, "completedQuantity": 0, "unitCode": "UNIT_2" }
+      {
+        "stage": "KNITTING",
+        "sequenceOrder": 1,
+        "plannedStartOffsetDays": -32,
+        "plannedEndOffsetDays": -24,
+        "bufferDaysAhead": 18,
+        "targetQuantity": 7500,
+        "completedQuantity": 7500,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "DYEING_WASHING",
+        "sequenceOrder": 2,
+        "plannedStartOffsetDays": -23,
+        "plannedEndOffsetDays": -16,
+        "bufferDaysAhead": 14,
+        "targetQuantity": 7500,
+        "completedQuantity": 7500,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "CUTTING",
+        "sequenceOrder": 3,
+        "plannedStartOffsetDays": -15,
+        "plannedEndOffsetDays": -10,
+        "bufferDaysAhead": 10,
+        "targetQuantity": 7500,
+        "completedQuantity": 7500,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "STITCHING",
+        "sequenceOrder": 4,
+        "plannedStartOffsetDays": -9,
+        "plannedEndOffsetDays": -2,
+        "bufferDaysAhead": 5,
+        "targetQuantity": 7500,
+        "completedQuantity": 7500,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "CHECKING",
+        "sequenceOrder": 5,
+        "plannedStartOffsetDays": -1,
+        "plannedEndOffsetDays": 6,
+        "bufferDaysAhead": 3,
+        "targetQuantity": 7500,
+        "completedQuantity": 4200,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "FINISHING",
+        "sequenceOrder": 6,
+        "plannedStartOffsetDays": 7,
+        "plannedEndOffsetDays": 14,
+        "bufferDaysAhead": 0,
+        "targetQuantity": 7500,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      }
     ],
     "dailyLogs": [
-      { "stage": "CHECKING", "completedQty": 220, "rejectedQty": 18, "operatorNotes": "Needle detector and inline measurement check", "dateOffsetDays": -2, "unitCode": "UNIT_2", "userEmail": "supervisor.selvam@company-a.com", "shift": "Day Shift" },
-      { "stage": "CHECKING", "completedQty": 210, "rejectedQty": 14, "operatorNotes": "Stitch density & collar alignment audit", "dateOffsetDays": -1, "unitCode": "UNIT_2", "userEmail": "supervisor.selvam@company-a.com", "shift": "Day Shift" },
-      { "stage": "CHECKING", "completedQty": 200, "rejectedQty": 22, "operatorNotes": "Final pre-pack quality checking pass", "dateOffsetDays": 0, "unitCode": "UNIT_2", "userEmail": "supervisor.selvam@company-a.com", "shift": "Day Shift" }
+      {
+        "dateOffsetDays": -1,
+        "completedQty": 1150,
+        "reworkQty": 18,
+        "rejectedQty": 5,
+        "stage": "CHECKING",
+        "unitCode": "UNIT_2",
+        "userEmail": "supervisor.selvam@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 2 Checking Table 3",
+        "operatorNotes": "Final pre-pack quality checking pass; stripe matching verified on side seams.",
+        "rawTamilText": "கோடுகள் பொருத்தம் மற்றும் இறுதி தரம் சரிபார்க்கப்பட்டது.",
+        "translatedText": "Final pre-pack quality checking pass; stripe matching verified on side seams.",
+        "issueCategory": "OTHER",
+        "voiceDurationSeconds": 16
+      },
+      {
+        "dateOffsetDays": 0,
+        "completedQty": 1200,
+        "reworkQty": 14,
+        "rejectedQty": 4,
+        "stage": "CHECKING",
+        "unitCode": "UNIT_2",
+        "userEmail": "supervisor.selvam@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 2 Checking Table 3",
+        "operatorNotes": "Metal detector calibration completed; zero needle fragments detected.",
+        "rawTamilText": "மெட்டல் டிடெக்டர் சோதனை முடிந்தது; எந்த ஊசி துண்டும் இல்லை.",
+        "translatedText": "Metal detector calibration completed; zero needle fragments detected.",
+        "issueCategory": "OTHER",
+        "voiceDurationSeconds": 14
+      }
+    ],
+    "photos": [
+      {
+        "caption": "Stripe alignment inspection at side seam",
+        "category": "CHECKING_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "collar-inspection-c0501.jpg",
+        "stage": "CHECKING",
+        "isBuyerVisible": true
+      }
     ],
     "riskWarnings": [
       {
         "stage": "CHECKING",
-        "riskLevel": "RED",
-        "requiredDailyRate": 466,
-        "actualRollingRate": 210,
-        "varianceQtyPerDay": -256,
-        "projectedCompletionDaysLate": 4,
-        "financialExposureRupees": 142500,
+        "riskLevel": "GREEN",
+        "requiredDailyRate": 850,
+        "actualRollingRate": 1175,
+        "varianceQtyPerDay": 325,
+        "projectedCompletionDaysLate": 0,
+        "financialExposureRupees": 0,
         "mathBreakdown": {
-          "remainingQty": 1400,
-          "effectiveWorkingDays": 3,
-          "requiredRate": 466.67,
-          "rollingDailyRate": 210,
-          "rateDeficit": -256.67,
-          "daysLate": 4,
-          "reason": "Checking bottleneck blocks final Finishing pass before Nov 9 export cut-off."
+          "remainingQty": 3300,
+          "availableWorkingDays": 4,
+          "sundaysExcluded": [
+            "2026-11-08"
+          ],
+          "requiredRate": 850,
+          "weightedAverageDailyRate": 1175,
+          "rateDeficit": 325,
+          "daysLate": 0,
+          "reason": "Checking pace exceeds plan by 325 pcs/day. Handover to packing expected 1 day early."
         },
-        "mitigationPlan": "Transfer 4 quality checkers from Unit 1 to Unit 2 for 48 hours to clear backlogged lots.",
+        "mitigationPlan": "None needed. Maintain current checking inspection team.",
+        "isBuyerVisible": true,
+        "approvalStatus": "CONFIRMED"
+      }
+    ],
+    "gatePasses": [],
+    "orderAuditTrail": [
+      {
+        "action": "CREATE_ORDER",
+        "category": "DATE_CHANGE",
+        "reasonCode": "INITIAL_PO_CREATION",
+        "notes": "PO C-PO-0501 created.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -35
+      }
+    ]
+  },
+  {
+    "poNumber": "M-PO-91022",
+    "buyerCode": "M_AND_S_UK",
+    "unitCode": "UNIT_2",
+    "style": "Pima Cotton V-Neck Black",
+    "description": "Supima Long-Staple Cotton Single Jersey Luxury V-Neck T-Shirt",
+    "totalQuantity": 15000,
+    "fobPricePerPiece": 6.8,
+    "currency": "GBP",
+    "exchangeRate": 105.5,
+    "exFactoryDateStr": "2026-12-10T00:00:00Z",
+    "status": "ACTIVE",
+    "orderLines": [
+      {
+        "size": "S",
+        "color": "Pitch Black",
+        "plannedQty": 3000
+      },
+      {
+        "size": "M",
+        "color": "Pitch Black",
+        "plannedQty": 6000
+      },
+      {
+        "size": "L",
+        "color": "Pitch Black",
+        "plannedQty": 4500
+      },
+      {
+        "size": "XL",
+        "color": "Pitch Black",
+        "plannedQty": 1500
+      }
+    ],
+    "milestones": [
+      {
+        "stage": "KNITTING",
+        "sequenceOrder": 1,
+        "plannedStartOffsetDays": -28,
+        "plannedEndOffsetDays": -20,
+        "bufferDaysAhead": 20,
+        "targetQuantity": 15000,
+        "completedQuantity": 15000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "DYEING_WASHING",
+        "sequenceOrder": 2,
+        "plannedStartOffsetDays": -19,
+        "plannedEndOffsetDays": -11,
+        "bufferDaysAhead": 15,
+        "targetQuantity": 15000,
+        "completedQuantity": 15000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "CUTTING",
+        "sequenceOrder": 3,
+        "plannedStartOffsetDays": -10,
+        "plannedEndOffsetDays": -4,
+        "bufferDaysAhead": 10,
+        "targetQuantity": 15000,
+        "completedQuantity": 15000,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "STITCHING",
+        "sequenceOrder": 4,
+        "plannedStartOffsetDays": -3,
+        "plannedEndOffsetDays": 14,
+        "bufferDaysAhead": 6,
+        "targetQuantity": 15000,
+        "completedQuantity": 6200,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "CHECKING",
+        "sequenceOrder": 5,
+        "plannedStartOffsetDays": 15,
+        "plannedEndOffsetDays": 21,
+        "bufferDaysAhead": 3,
+        "targetQuantity": 15000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "FINISHING",
+        "sequenceOrder": 6,
+        "plannedStartOffsetDays": 22,
+        "plannedEndOffsetDays": 28,
+        "bufferDaysAhead": 0,
+        "targetQuantity": 15000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      }
+    ],
+    "dailyLogs": [
+      {
+        "dateOffsetDays": -1,
+        "completedQty": 1800,
+        "reworkQty": 15,
+        "rejectedQty": 3,
+        "stage": "STITCHING",
+        "unitCode": "UNIT_2",
+        "userEmail": "supervisor.selvam@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 2 Line 4 & Line 5",
+        "operatorNotes": "V-neck mitred corner jig achieving sharp symmetrical points.",
+        "rawTamilText": "வி-நெக் கார்னர் சரியான கோணத்தில் தைக்கப்படுகிறது.",
+        "translatedText": "V-neck mitred corner jig achieving sharp symmetrical points.",
+        "issueCategory": "OTHER",
+        "voiceDurationSeconds": 15
+      }
+    ],
+    "photos": [
+      {
+        "caption": "M&S V-neck mitred corner stitch detail",
+        "category": "STITCHING_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "stitching-line-m91022.jpg",
+        "stage": "STITCHING",
+        "isBuyerVisible": true
+      }
+    ],
+    "riskWarnings": [
+      {
+        "stage": "STITCHING",
+        "riskLevel": "GREEN",
+        "requiredDailyRate": 1500,
+        "actualRollingRate": 1800,
+        "varianceQtyPerDay": 300,
+        "projectedCompletionDaysLate": 0,
+        "financialExposureRupees": 0,
+        "mathBreakdown": {
+          "remainingQty": 8800,
+          "availableWorkingDays": 12,
+          "sundaysExcluded": [
+            "2026-11-08",
+            "2026-11-15"
+          ],
+          "requiredRate": 1500,
+          "weightedAverageDailyRate": 1800,
+          "rateDeficit": 300,
+          "daysLate": 0,
+          "reason": "Dual multi-needle stitching lines running at peak efficiency."
+        },
+        "mitigationPlan": "Maintain current cadence.",
+        "isBuyerVisible": true,
+        "approvalStatus": "CONFIRMED"
+      }
+    ],
+    "gatePasses": [],
+    "orderAuditTrail": [
+      {
+        "action": "CREATE_ORDER",
+        "category": "DATE_CHANGE",
+        "reasonCode": "INITIAL_PO_CREATION",
+        "notes": "PO M-PO-91022 booked for M&S Spring line.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -30
+      }
+    ]
+  },
+  {
+    "poNumber": "IND-PO-77401",
+    "buyerCode": "INDITEX_ES",
+    "unitCode": "UNIT_1",
+    "style": "Oversized Acid Wash Tee Charcoal",
+    "description": "240 GSM Heavy Open-End Cotton Acid Washed with Distressed Hem",
+    "totalQuantity": 8500,
+    "fobPricePerPiece": 7.9,
+    "currency": "EUR",
+    "exchangeRate": 90.25,
+    "exFactoryDateStr": "2026-11-30T00:00:00Z",
+    "status": "ACTIVE",
+    "orderLines": [
+      {
+        "size": "S",
+        "color": "Mineral Charcoal",
+        "plannedQty": 2500
+      },
+      {
+        "size": "M",
+        "color": "Mineral Charcoal",
+        "plannedQty": 3500
+      },
+      {
+        "size": "L",
+        "color": "Mineral Charcoal",
+        "plannedQty": 2500
+      }
+    ],
+    "milestones": [
+      {
+        "stage": "KNITTING",
+        "sequenceOrder": 1,
+        "plannedStartOffsetDays": -22,
+        "plannedEndOffsetDays": -15,
+        "bufferDaysAhead": 16,
+        "targetQuantity": 8500,
+        "completedQuantity": 8500,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "DYEING_WASHING",
+        "sequenceOrder": 2,
+        "plannedStartOffsetDays": -14,
+        "plannedEndOffsetDays": -3,
+        "bufferDaysAhead": 10,
+        "targetQuantity": 8500,
+        "completedQuantity": 4200,
+        "unitCode": "WASHTEX"
+      },
+      {
+        "stage": "CUTTING",
+        "sequenceOrder": 3,
+        "plannedStartOffsetDays": -2,
+        "plannedEndOffsetDays": 4,
+        "bufferDaysAhead": 7,
+        "targetQuantity": 8500,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "STITCHING",
+        "sequenceOrder": 4,
+        "plannedStartOffsetDays": 5,
+        "plannedEndOffsetDays": 14,
+        "bufferDaysAhead": 4,
+        "targetQuantity": 8500,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "CHECKING",
+        "sequenceOrder": 5,
+        "plannedStartOffsetDays": 15,
+        "plannedEndOffsetDays": 19,
+        "bufferDaysAhead": 2,
+        "targetQuantity": 8500,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "FINISHING",
+        "sequenceOrder": 6,
+        "plannedStartOffsetDays": 20,
+        "plannedEndOffsetDays": 26,
+        "bufferDaysAhead": 0,
+        "targetQuantity": 8500,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      }
+    ],
+    "dailyLogs": [
+      {
+        "dateOffsetDays": -1,
+        "completedQty": 1100,
+        "reworkQty": 25,
+        "rejectedQty": 8,
+        "stage": "DYEING_WASHING",
+        "unitCode": "WASHTEX",
+        "userEmail": "supervisor.selvam@company-a.com",
+        "shift": "DAY",
+        "machineLine": "WashTex Acid Wash Drum 1",
+        "operatorNotes": "Potassium permanganate spray neutralization verified; pH 6.5 neutral.",
+        "rawTamilText": "ஆசிட் வாஷ் நடுநிலையாக்கல் முடிந்தது; பி.ஹெச் 6.5 சரியானது.",
+        "translatedText": "Potassium permanganate spray neutralization verified; pH 6.5 neutral.",
+        "issueCategory": "OTHER",
+        "voiceDurationSeconds": 23
+      }
+    ],
+    "photos": [
+      {
+        "caption": "Acid wash marble effect swatch evaluation",
+        "category": "WASH_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "labdip-navy-ind77401.jpg",
+        "stage": "DYEING_WASHING",
+        "isBuyerVisible": true
+      }
+    ],
+    "riskWarnings": [
+      {
+        "stage": "DYEING_WASHING",
+        "riskLevel": "AMBER",
+        "requiredDailyRate": 1100,
+        "actualRollingRate": 850,
+        "varianceQtyPerDay": -250,
+        "projectedCompletionDaysLate": 2,
+        "financialExposureRupees": 180000,
+        "mathBreakdown": {
+          "remainingQty": 4300,
+          "availableWorkingDays": 4,
+          "sundaysExcluded": [
+            "2026-11-08"
+          ],
+          "requiredRate": 1100,
+          "weightedAverageDailyRate": 850,
+          "rateDeficit": -250,
+          "daysLate": 2,
+          "reason": "WashTex acid wash neutralization cycle requires additional rinse bath."
+        },
+        "mitigationPlan": "Authorized night shift rinsing at WashTex to recover 2 days.",
         "isBuyerVisible": false,
-        "approvalStatus": "PENDING_REVIEW"
+        "approvalStatus": "CONFIRMED"
+      }
+    ],
+    "gatePasses": [
+      {
+        "passNumber": "GP-2026-0985",
+        "destinationUnitCode": "WASHTEX",
+        "stage": "DYEING_WASHING",
+        "quantityDispatched": 8500,
+        "quantityReturned": 4200,
+        "status": "PARTIAL_RECEIVED",
+        "outwardOffsetDays": -14,
+        "expectedReturnOffsetDays": -3,
+        "vehicleNumber": "TN-38-BC-4412 (Tata 407)"
+      }
+    ],
+    "orderAuditTrail": [
+      {
+        "action": "CREATE_ORDER",
+        "category": "DATE_CHANGE",
+        "reasonCode": "INITIAL_PO_CREATION",
+        "notes": "PO IND-PO-77401 booked for Zara AW line.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -25
+      }
+    ]
+  },
+  {
+    "poNumber": "NEXT-PO-33104",
+    "buyerCode": "NEXT_UK",
+    "unitCode": "UNIT_1",
+    "style": "Waffle Knit Henley Heather Grey",
+    "description": "Thermal Waffle Knit Cotton/Poly Henley with 3-Button Horn Placket",
+    "totalQuantity": 9000,
+    "fobPricePerPiece": 11.2,
+    "currency": "GBP",
+    "exchangeRate": 105.5,
+    "exFactoryDateStr": "2026-12-15T00:00:00Z",
+    "status": "ACTIVE",
+    "orderLines": [
+      {
+        "size": "M",
+        "color": "Heather Grey",
+        "plannedQty": 3000
+      },
+      {
+        "size": "L",
+        "color": "Heather Grey",
+        "plannedQty": 3500
+      },
+      {
+        "size": "XL",
+        "color": "Heather Grey",
+        "plannedQty": 2500
+      }
+    ],
+    "milestones": [
+      {
+        "stage": "KNITTING",
+        "sequenceOrder": 1,
+        "plannedStartOffsetDays": -10,
+        "plannedEndOffsetDays": 0,
+        "bufferDaysAhead": 22,
+        "targetQuantity": 9000,
+        "completedQuantity": 6500,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "DYEING_WASHING",
+        "sequenceOrder": 2,
+        "plannedStartOffsetDays": 1,
+        "plannedEndOffsetDays": 8,
+        "bufferDaysAhead": 16,
+        "targetQuantity": 9000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "CUTTING",
+        "sequenceOrder": 3,
+        "plannedStartOffsetDays": 9,
+        "plannedEndOffsetDays": 15,
+        "bufferDaysAhead": 11,
+        "targetQuantity": 9000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "STITCHING",
+        "sequenceOrder": 4,
+        "plannedStartOffsetDays": 16,
+        "plannedEndOffsetDays": 27,
+        "bufferDaysAhead": 5,
+        "targetQuantity": 9000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "CHECKING",
+        "sequenceOrder": 5,
+        "plannedStartOffsetDays": 28,
+        "plannedEndOffsetDays": 33,
+        "bufferDaysAhead": 2,
+        "targetQuantity": 9000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "FINISHING",
+        "sequenceOrder": 6,
+        "plannedStartOffsetDays": 34,
+        "plannedEndOffsetDays": 40,
+        "bufferDaysAhead": 0,
+        "targetQuantity": 9000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      }
+    ],
+    "dailyLogs": [
+      {
+        "dateOffsetDays": -1,
+        "completedQty": 1600,
+        "reworkQty": 10,
+        "rejectedQty": 2,
+        "stage": "KNITTING",
+        "unitCode": "UNIT_1",
+        "userEmail": "supervisor.muthu@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 1 Circular Knit Bank 2",
+        "operatorNotes": "Thermal waffle structure running smooth on Mayer & Cie machines.",
+        "rawTamilText": "தெர்மல் வாஃபிள் பின்னல் இயந்திரத்தில் சீராக இயங்குகிறது.",
+        "translatedText": "Thermal waffle structure running smooth on Mayer & Cie machines.",
+        "issueCategory": "OTHER",
+        "voiceDurationSeconds": 14
+      }
+    ],
+    "photos": [
+      {
+        "caption": "Unit 1 circular knitting waffle machine setup",
+        "category": "KNITTING_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "knitting-inspection-next33104.jpg",
+        "stage": "KNITTING",
+        "isBuyerVisible": true
+      }
+    ],
+    "riskWarnings": [
+      {
+        "stage": "KNITTING",
+        "riskLevel": "GREEN",
+        "requiredDailyRate": 1200,
+        "actualRollingRate": 1600,
+        "varianceQtyPerDay": 400,
+        "projectedCompletionDaysLate": 0,
+        "financialExposureRupees": 0,
+        "mathBreakdown": {
+          "remainingQty": 2500,
+          "availableWorkingDays": 2,
+          "sundaysExcluded": [],
+          "requiredRate": 1200,
+          "weightedAverageDailyRate": 1600,
+          "rateDeficit": 400,
+          "daysLate": 0,
+          "reason": "Circular knitting bank pacing 400 pcs/day ahead of schedule."
+        },
+        "mitigationPlan": "Ready for dyeing dispatch.",
+        "isBuyerVisible": true,
+        "approvalStatus": "CONFIRMED"
+      }
+    ],
+    "gatePasses": [],
+    "orderAuditTrail": [
+      {
+        "action": "CREATE_ORDER",
+        "category": "DATE_CHANGE",
+        "reasonCode": "INITIAL_PO_CREATION",
+        "notes": "PO NEXT-PO-33104 confirmed.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -15
+      }
+    ]
+  },
+  {
+    "poNumber": "B-PO-88260",
+    "buyerCode": "COMPANY_B",
+    "unitCode": "UNIT_2",
+    "style": "Raglan Sleeve Athletic Top",
+    "description": "Poly-Spandex Quick Dry Activewear with Contrast Flatlock Raglan Seams",
+    "totalQuantity": 5000,
+    "fobPricePerPiece": 7.4,
+    "currency": "GBP",
+    "exchangeRate": 105.5,
+    "exFactoryDateStr": "2026-11-10T00:00:00Z",
+    "status": "ACTIVE",
+    "orderLines": [
+      {
+        "size": "S",
+        "color": "Cobalt / Black",
+        "plannedQty": 1500
+      },
+      {
+        "size": "M",
+        "color": "Cobalt / Black",
+        "plannedQty": 2000
+      },
+      {
+        "size": "L",
+        "color": "Cobalt / Black",
+        "plannedQty": 1500
+      }
+    ],
+    "milestones": [
+      {
+        "stage": "KNITTING",
+        "sequenceOrder": 1,
+        "plannedStartOffsetDays": -30,
+        "plannedEndOffsetDays": -24,
+        "bufferDaysAhead": 18,
+        "targetQuantity": 5000,
+        "completedQuantity": 5000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "DYEING_WASHING",
+        "sequenceOrder": 2,
+        "plannedStartOffsetDays": -23,
+        "plannedEndOffsetDays": -17,
+        "bufferDaysAhead": 14,
+        "targetQuantity": 5000,
+        "completedQuantity": 5000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "CUTTING",
+        "sequenceOrder": 3,
+        "plannedStartOffsetDays": -16,
+        "plannedEndOffsetDays": -12,
+        "bufferDaysAhead": 10,
+        "targetQuantity": 5000,
+        "completedQuantity": 5000,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "STITCHING",
+        "sequenceOrder": 4,
+        "plannedStartOffsetDays": -11,
+        "plannedEndOffsetDays": -4,
+        "bufferDaysAhead": 5,
+        "targetQuantity": 5000,
+        "completedQuantity": 5000,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "CHECKING",
+        "sequenceOrder": 5,
+        "plannedStartOffsetDays": -3,
+        "plannedEndOffsetDays": 1,
+        "bufferDaysAhead": 2,
+        "targetQuantity": 5000,
+        "completedQuantity": 5000,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "FINISHING",
+        "sequenceOrder": 6,
+        "plannedStartOffsetDays": 2,
+        "plannedEndOffsetDays": 7,
+        "bufferDaysAhead": 0,
+        "targetQuantity": 5000,
+        "completedQuantity": 4200,
+        "unitCode": "UNIT_2"
+      }
+    ],
+    "dailyLogs": [
+      {
+        "dateOffsetDays": -1,
+        "completedQty": 900,
+        "reworkQty": 8,
+        "rejectedQty": 2,
+        "stage": "FINISHING",
+        "unitCode": "UNIT_2",
+        "userEmail": "supervisor.selvam@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 2 Packing Line 1",
+        "operatorNotes": "Final hang-tagging and barcode polybagging for UK distribution.",
+        "rawTamilText": "பார்கோடு மற்றும் ஹேங்டேக் பொருத்தும் பணி நடைபெறுகிறது.",
+        "translatedText": "Final hang-tagging and barcode polybagging for UK distribution.",
+        "issueCategory": "OTHER",
+        "voiceDurationSeconds": 12
+      }
+    ],
+    "photos": [
+      {
+        "caption": "Unit 2 polybag carton packing inspection",
+        "category": "PACKING_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "finishing-packing-b88260.jpg",
+        "stage": "FINISHING",
+        "isBuyerVisible": true
+      }
+    ],
+    "riskWarnings": [
+      {
+        "stage": "FINISHING",
+        "riskLevel": "GREEN",
+        "requiredDailyRate": 400,
+        "actualRollingRate": 900,
+        "varianceQtyPerDay": 500,
+        "projectedCompletionDaysLate": 0,
+        "financialExposureRupees": 0,
+        "mathBreakdown": {
+          "remainingQty": 800,
+          "availableWorkingDays": 2,
+          "sundaysExcluded": [],
+          "requiredRate": 400,
+          "weightedAverageDailyRate": 900,
+          "rateDeficit": 500,
+          "daysLate": 0,
+          "reason": "Pacing ahead; order will dispatch 2 days prior to ex-factory deadline."
+        },
+        "mitigationPlan": "Coordinate container stuffing booking with CFS.",
+        "isBuyerVisible": true,
+        "approvalStatus": "CONFIRMED"
+      }
+    ],
+    "gatePasses": [],
+    "orderAuditTrail": [
+      {
+        "action": "CREATE_ORDER",
+        "category": "DATE_CHANGE",
+        "reasonCode": "INITIAL_PO_CREATION",
+        "notes": "PO B-PO-88260 created.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -30
+      }
+    ]
+  },
+  {
+    "poNumber": "C-PO-0515",
+    "buyerCode": "COMPANY_C",
+    "unitCode": "UNIT_2",
+    "style": "Baby Rib Sleepsuit 2-Pack Pastel",
+    "description": "100% Organic Interlock Baby Sleepsuits with YKK Nickel-Free Snaps",
+    "totalQuantity": 11000,
+    "fobPricePerPiece": 6.5,
+    "currency": "EUR",
+    "exchangeRate": 90.25,
+    "exFactoryDateStr": "2026-12-20T00:00:00Z",
+    "status": "ACTIVE",
+    "orderLines": [
+      {
+        "size": "0-3M",
+        "color": "Pastel Mint",
+        "plannedQty": 3000
+      },
+      {
+        "size": "3-6M",
+        "color": "Pastel Mint",
+        "plannedQty": 4500
+      },
+      {
+        "size": "6-12M",
+        "color": "Pastel Mint",
+        "plannedQty": 3500
+      }
+    ],
+    "milestones": [
+      {
+        "stage": "KNITTING",
+        "sequenceOrder": 1,
+        "plannedStartOffsetDays": -25,
+        "plannedEndOffsetDays": -17,
+        "bufferDaysAhead": 22,
+        "targetQuantity": 11000,
+        "completedQuantity": 11000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "DYEING_WASHING",
+        "sequenceOrder": 2,
+        "plannedStartOffsetDays": -16,
+        "plannedEndOffsetDays": -8,
+        "bufferDaysAhead": 16,
+        "targetQuantity": 11000,
+        "completedQuantity": 11000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "CUTTING",
+        "sequenceOrder": 3,
+        "plannedStartOffsetDays": -7,
+        "plannedEndOffsetDays": 0,
+        "bufferDaysAhead": 12,
+        "targetQuantity": 11000,
+        "completedQuantity": 7800,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "STITCHING",
+        "sequenceOrder": 4,
+        "plannedStartOffsetDays": 1,
+        "plannedEndOffsetDays": 14,
+        "bufferDaysAhead": 6,
+        "targetQuantity": 11000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "CHECKING",
+        "sequenceOrder": 5,
+        "plannedStartOffsetDays": 15,
+        "plannedEndOffsetDays": 20,
+        "bufferDaysAhead": 3,
+        "targetQuantity": 11000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "FINISHING",
+        "sequenceOrder": 6,
+        "plannedStartOffsetDays": 21,
+        "plannedEndOffsetDays": 28,
+        "bufferDaysAhead": 0,
+        "targetQuantity": 11000,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_2"
+      }
+    ],
+    "dailyLogs": [
+      {
+        "dateOffsetDays": -1,
+        "completedQty": 2200,
+        "reworkQty": 10,
+        "rejectedQty": 2,
+        "stage": "CUTTING",
+        "unitCode": "UNIT_2",
+        "userEmail": "supervisor.selvam@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 2 Gerber Auto Spreader",
+        "operatorNotes": "CAD cutting accuracy verified on 24-ply lay. Oeko-Tex cert checked.",
+        "rawTamilText": "சிஏடி தானியங்கி வெட்டும் இயந்திரத்தில் துல்லியம் சரிபார்க்கப்பட்டது.",
+        "translatedText": "CAD cutting accuracy verified on 24-ply lay. Oeko-Tex cert checked.",
+        "issueCategory": "OTHER",
+        "voiceDurationSeconds": 15
+      }
+    ],
+    "photos": [
+      {
+        "caption": "Gerber automated cutting lay inspection",
+        "category": "CUTTING_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "cutting-inspection-c0515.jpg",
+        "stage": "CUTTING",
+        "isBuyerVisible": true
+      }
+    ],
+    "riskWarnings": [
+      {
+        "stage": "CUTTING",
+        "riskLevel": "GREEN",
+        "requiredDailyRate": 1600,
+        "actualRollingRate": 2200,
+        "varianceQtyPerDay": 600,
+        "projectedCompletionDaysLate": 0,
+        "financialExposureRupees": 0,
+        "mathBreakdown": {
+          "remainingQty": 3200,
+          "availableWorkingDays": 2,
+          "sundaysExcluded": [],
+          "requiredRate": 1600,
+          "weightedAverageDailyRate": 2200,
+          "rateDeficit": 600,
+          "daysLate": 0,
+          "reason": "Automated CAD spreading and cutting pacing well ahead of plan."
+        },
+        "mitigationPlan": "Transfer cut bundles to stitching line 3.",
+        "isBuyerVisible": true,
+        "approvalStatus": "CONFIRMED"
+      }
+    ],
+    "gatePasses": [],
+    "orderAuditTrail": [
+      {
+        "action": "CREATE_ORDER",
+        "category": "DATE_CHANGE",
+        "reasonCode": "INITIAL_PO_CREATION",
+        "notes": "PO C-PO-0515 booked for baby sleepsuits.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -28
       }
     ]
   },
@@ -328,30 +2143,448 @@
     "poNumber": "B-PO-88272",
     "buyerCode": "COMPANY_B",
     "unitCode": "UNIT_3",
-    "style": "Waffle Knit Henley",
-    "description": "Thermal waffle knit long sleeve henley with coconut buttons",
-    "totalQuantity": 4200,
-    "fobPricePerPiece": 12.0,
+    "style": "Mercerized Cotton Dress Polo Black",
+    "description": "Double Mercerized 60/2 Giza Egyptian Cotton Luxury Polo",
+    "totalQuantity": 4500,
+    "fobPricePerPiece": 16,
     "currency": "GBP",
     "exchangeRate": 105.5,
-    "exFactoryDateStr": "2026-11-06T00:00:00Z",
+    "exFactoryDateStr": "2026-12-22T00:00:00Z",
+    "status": "ACTIVE",
     "orderLines": [
-      { "size": "M", "color": "Charcoal Melange", "plannedQty": 2100 },
-      { "size": "L", "color": "Charcoal Melange", "plannedQty": 2100 }
+      {
+        "size": "M",
+        "color": "Jet Black",
+        "plannedQty": 1800
+      },
+      {
+        "size": "L",
+        "color": "Jet Black",
+        "plannedQty": 1800
+      },
+      {
+        "size": "XL",
+        "color": "Jet Black",
+        "plannedQty": 900
+      }
     ],
     "milestones": [
-      { "stage": "KNITTING", "sequenceOrder": 1, "plannedStartOffsetDays": -30, "plannedEndOffsetDays": -22, "bufferDaysAhead": 18, "targetQuantity": 4200, "completedQuantity": 4200, "unitCode": "UNIT_3" },
-      { "stage": "DYEING_WASHING", "sequenceOrder": 2, "plannedStartOffsetDays": -21, "plannedEndOffsetDays": -15, "bufferDaysAhead": 14, "targetQuantity": 4200, "completedQuantity": 4200, "unitCode": "UNIT_1" },
-      { "stage": "PRINTING", "sequenceOrder": 3, "plannedStartOffsetDays": -14, "plannedEndOffsetDays": -11, "bufferDaysAhead": 11, "targetQuantity": 4200, "completedQuantity": 4200, "unitCode": "PRINTTEX" },
-      { "stage": "CUTTING", "sequenceOrder": 4, "plannedStartOffsetDays": -10, "plannedEndOffsetDays": -7, "bufferDaysAhead": 9, "targetQuantity": 4200, "completedQuantity": 4200, "unitCode": "UNIT_3" },
-      { "stage": "STITCHING", "sequenceOrder": 5, "plannedStartOffsetDays": -6, "plannedEndOffsetDays": -2, "bufferDaysAhead": 3, "targetQuantity": 4200, "completedQuantity": 4200, "unitCode": "UNIT_3" },
-      { "stage": "CHECKING", "sequenceOrder": 6, "plannedStartOffsetDays": -1, "plannedEndOffsetDays": 1, "bufferDaysAhead": 2, "targetQuantity": 4200, "completedQuantity": 4200, "unitCode": "UNIT_3" },
-      { "stage": "FINISHING", "sequenceOrder": 7, "plannedStartOffsetDays": 2, "plannedEndOffsetDays": 4, "bufferDaysAhead": 0, "targetQuantity": 4200, "completedQuantity": 3600, "unitCode": "UNIT_3" }
+      {
+        "stage": "KNITTING",
+        "sequenceOrder": 1,
+        "plannedStartOffsetDays": -12,
+        "plannedEndOffsetDays": 2,
+        "bufferDaysAhead": 18,
+        "targetQuantity": 4500,
+        "completedQuantity": 1800,
+        "unitCode": "UNIT_3"
+      },
+      {
+        "stage": "DYEING_WASHING",
+        "sequenceOrder": 2,
+        "plannedStartOffsetDays": 3,
+        "plannedEndOffsetDays": 10,
+        "bufferDaysAhead": 14,
+        "targetQuantity": 4500,
+        "completedQuantity": 0,
+        "unitCode": "DYECRAFT"
+      },
+      {
+        "stage": "CUTTING",
+        "sequenceOrder": 3,
+        "plannedStartOffsetDays": 11,
+        "plannedEndOffsetDays": 16,
+        "bufferDaysAhead": 9,
+        "targetQuantity": 4500,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_3"
+      },
+      {
+        "stage": "STITCHING",
+        "sequenceOrder": 4,
+        "plannedStartOffsetDays": 17,
+        "plannedEndOffsetDays": 26,
+        "bufferDaysAhead": 5,
+        "targetQuantity": 4500,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_3"
+      },
+      {
+        "stage": "CHECKING",
+        "sequenceOrder": 5,
+        "plannedStartOffsetDays": 27,
+        "plannedEndOffsetDays": 31,
+        "bufferDaysAhead": 2,
+        "targetQuantity": 4500,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_3"
+      },
+      {
+        "stage": "FINISHING",
+        "sequenceOrder": 6,
+        "plannedStartOffsetDays": 32,
+        "plannedEndOffsetDays": 37,
+        "bufferDaysAhead": 0,
+        "targetQuantity": 4500,
+        "completedQuantity": 0,
+        "unitCode": "UNIT_3"
+      }
     ],
     "dailyLogs": [
-      { "stage": "FINISHING", "completedQty": 180, "rejectedQty": 4, "operatorNotes": "Steam pressing long sleeve waffle henleys", "dateOffsetDays": -2, "unitCode": "UNIT_3", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" },
-      { "stage": "FINISHING", "completedQty": 170, "rejectedQty": 2, "operatorNotes": "Tagging and polybag carton packing", "dateOffsetDays": -1, "unitCode": "UNIT_3", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" },
-      { "stage": "FINISHING", "completedQty": 160, "rejectedQty": 5, "operatorNotes": "Export master carton sorting and barcoding", "dateOffsetDays": 0, "unitCode": "UNIT_3", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift" }
+      {
+        "dateOffsetDays": -1,
+        "completedQty": 450,
+        "reworkQty": 6,
+        "rejectedQty": 1,
+        "stage": "KNITTING",
+        "unitCode": "UNIT_3",
+        "userEmail": "supervisor.murugan@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 3 Fine Gauge Interlock 1",
+        "operatorNotes": "Imported 60/2 Giza yarn partial lot loaded; balance in customs clearance.",
+        "rawTamilText": "இறக்குமதி செய்யப்பட்ட 60/2 எகிப்திய நூல் சுங்கத்துறை அனுமதியில் தாமதம்.",
+        "translatedText": "Imported 60/2 Giza yarn partial lot loaded; balance in customs clearance.",
+        "issueCategory": "SUBCONTRACTOR_DELAY",
+        "voiceDurationSeconds": 22
+      }
+    ],
+    "photos": [
+      {
+        "caption": "Unit 3 60/2 fine gauge mercerized fabric roll test",
+        "category": "KNITTING_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "knitting-inspection-b88272.jpg",
+        "stage": "KNITTING",
+        "isBuyerVisible": true
+      }
+    ],
+    "riskWarnings": [
+      {
+        "stage": "KNITTING",
+        "riskLevel": "AMBER",
+        "requiredDailyRate": 675,
+        "actualRollingRate": 450,
+        "varianceQtyPerDay": -225,
+        "projectedCompletionDaysLate": 3,
+        "financialExposureRupees": 210000,
+        "mathBreakdown": {
+          "remainingQty": 2700,
+          "availableWorkingDays": 4,
+          "sundaysExcluded": [
+            "2026-11-08"
+          ],
+          "requiredRate": 675,
+          "weightedAverageDailyRate": 450,
+          "rateDeficit": -225,
+          "daysLate": 3,
+          "reason": "Customs release at Chennai port delayed 2nd lot of 60/2 Giza yarn by 4 days."
+        },
+        "mitigationPlan": "CHA clearing agent assigned priority clearance; yarn arriving Nov 5.",
+        "isBuyerVisible": false,
+        "approvalStatus": "CONFIRMED"
+      }
+    ],
+    "gatePasses": [],
+    "orderAuditTrail": [
+      {
+        "action": "CREATE_ORDER",
+        "category": "DATE_CHANGE",
+        "reasonCode": "INITIAL_PO_CREATION",
+        "notes": "PO B-PO-88272 booked.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -15
+      }
+    ]
+  },
+  {
+    "poNumber": "B-PO-88190",
+    "buyerCode": "COMPANY_B",
+    "unitCode": "UNIT_1",
+    "style": "Summer Slub Pocket Tee White",
+    "description": "100% Slub Cotton Lightweight Single Jersey with Mitred Chest Pocket",
+    "totalQuantity": 10000,
+    "fobPricePerPiece": 4.9,
+    "currency": "GBP",
+    "exchangeRate": 105.5,
+    "exFactoryDateStr": "2026-10-28T00:00:00Z",
+    "status": "COMPLETED",
+    "orderLines": [
+      {
+        "size": "S",
+        "color": "White Slub",
+        "plannedQty": 2000
+      },
+      {
+        "size": "M",
+        "color": "White Slub",
+        "plannedQty": 4000
+      },
+      {
+        "size": "L",
+        "color": "White Slub",
+        "plannedQty": 3000
+      },
+      {
+        "size": "XL",
+        "color": "White Slub",
+        "plannedQty": 1000
+      }
+    ],
+    "milestones": [
+      {
+        "stage": "KNITTING",
+        "sequenceOrder": 1,
+        "plannedStartOffsetDays": -45,
+        "plannedEndOffsetDays": -38,
+        "bufferDaysAhead": 20,
+        "targetQuantity": 10000,
+        "completedQuantity": 10000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "DYEING_WASHING",
+        "sequenceOrder": 2,
+        "plannedStartOffsetDays": -37,
+        "plannedEndOffsetDays": -30,
+        "bufferDaysAhead": 15,
+        "targetQuantity": 10000,
+        "completedQuantity": 10000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "CUTTING",
+        "sequenceOrder": 3,
+        "plannedStartOffsetDays": -29,
+        "plannedEndOffsetDays": -23,
+        "bufferDaysAhead": 10,
+        "targetQuantity": 10000,
+        "completedQuantity": 10000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "STITCHING",
+        "sequenceOrder": 4,
+        "plannedStartOffsetDays": -22,
+        "plannedEndOffsetDays": -12,
+        "bufferDaysAhead": 5,
+        "targetQuantity": 10000,
+        "completedQuantity": 10000,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "CHECKING",
+        "sequenceOrder": 5,
+        "plannedStartOffsetDays": -11,
+        "plannedEndOffsetDays": -7,
+        "bufferDaysAhead": 2,
+        "targetQuantity": 10000,
+        "completedQuantity": 10000,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "FINISHING",
+        "sequenceOrder": 6,
+        "plannedStartOffsetDays": -6,
+        "plannedEndOffsetDays": -1,
+        "bufferDaysAhead": 0,
+        "targetQuantity": 10000,
+        "completedQuantity": 10000,
+        "unitCode": "UNIT_2"
+      }
+    ],
+    "dailyLogs": [
+      {
+        "dateOffsetDays": -6,
+        "completedQty": 2000,
+        "reworkQty": 10,
+        "rejectedQty": 2,
+        "stage": "FINISHING",
+        "unitCode": "UNIT_2",
+        "userEmail": "supervisor.selvam@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 2 Packing Line 1",
+        "operatorNotes": "Final carton packing completed; all 10,000 pcs loaded into export container.",
+        "rawTamilText": "அனைத்து 10,000 பீஸ்களும் ஏற்றுமதி கன்டெய்னரில் ஏற்றப்பட்டது.",
+        "translatedText": "Final carton packing completed; all 10,000 pcs loaded into export container.",
+        "issueCategory": "OTHER",
+        "voiceDurationSeconds": 15
+      }
+    ],
+    "photos": [
+      {
+        "caption": "B-PO-88190 container seal and final loading pass",
+        "category": "PACKING_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "finishing-packing-b88190.jpg",
+        "stage": "FINISHING",
+        "isBuyerVisible": true
+      }
+    ],
+    "riskWarnings": [],
+    "gatePasses": [],
+    "orderAuditTrail": [
+      {
+        "action": "CREATE_ORDER",
+        "category": "DATE_CHANGE",
+        "reasonCode": "INITIAL_PO_CREATION",
+        "notes": "PO B-PO-88190 created.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -50
+      },
+      {
+        "action": "UPDATE_EX_FACTORY_DATE",
+        "category": "DATE_CHANGE",
+        "reasonCode": "BUYER_REQUEST",
+        "notes": "Ex-factory achieved on-time.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -6
+      }
+    ]
+  },
+  {
+    "poNumber": "C-PO-0460",
+    "buyerCode": "COMPANY_C",
+    "unitCode": "UNIT_2",
+    "style": "Vintage Wash Graphic Tee Charcoal",
+    "description": "Enzyme Mineral Wash Heavyweight Jersey with Distressed Chest Graphic",
+    "totalQuantity": 8000,
+    "fobPricePerPiece": 5.6,
+    "currency": "EUR",
+    "exchangeRate": 90.25,
+    "exFactoryDateStr": "2026-10-25T00:00:00Z",
+    "status": "COMPLETED",
+    "orderLines": [
+      {
+        "size": "S",
+        "color": "Vintage Charcoal",
+        "plannedQty": 2000
+      },
+      {
+        "size": "M",
+        "color": "Vintage Charcoal",
+        "plannedQty": 3500
+      },
+      {
+        "size": "L",
+        "color": "Vintage Charcoal",
+        "plannedQty": 2500
+      }
+    ],
+    "milestones": [
+      {
+        "stage": "KNITTING",
+        "sequenceOrder": 1,
+        "plannedStartOffsetDays": -42,
+        "plannedEndOffsetDays": -35,
+        "bufferDaysAhead": 18,
+        "targetQuantity": 8000,
+        "completedQuantity": 8000,
+        "unitCode": "UNIT_1"
+      },
+      {
+        "stage": "DYEING_WASHING",
+        "sequenceOrder": 2,
+        "plannedStartOffsetDays": -34,
+        "plannedEndOffsetDays": -26,
+        "bufferDaysAhead": 14,
+        "targetQuantity": 8000,
+        "completedQuantity": 8000,
+        "unitCode": "WASHTEX"
+      },
+      {
+        "stage": "PRINTING",
+        "sequenceOrder": 3,
+        "plannedStartOffsetDays": -25,
+        "plannedEndOffsetDays": -19,
+        "bufferDaysAhead": 10,
+        "targetQuantity": 8000,
+        "completedQuantity": 8000,
+        "unitCode": "PRINTTEX"
+      },
+      {
+        "stage": "CUTTING",
+        "sequenceOrder": 4,
+        "plannedStartOffsetDays": -18,
+        "plannedEndOffsetDays": -13,
+        "bufferDaysAhead": 8,
+        "targetQuantity": 8000,
+        "completedQuantity": 8000,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "STITCHING",
+        "sequenceOrder": 5,
+        "plannedStartOffsetDays": -12,
+        "plannedEndOffsetDays": -5,
+        "bufferDaysAhead": 4,
+        "targetQuantity": 8000,
+        "completedQuantity": 8000,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "CHECKING",
+        "sequenceOrder": 6,
+        "plannedStartOffsetDays": -4,
+        "plannedEndOffsetDays": -2,
+        "bufferDaysAhead": 2,
+        "targetQuantity": 8000,
+        "completedQuantity": 8000,
+        "unitCode": "UNIT_2"
+      },
+      {
+        "stage": "FINISHING",
+        "sequenceOrder": 7,
+        "plannedStartOffsetDays": -1,
+        "plannedEndOffsetDays": 0,
+        "bufferDaysAhead": 0,
+        "targetQuantity": 8000,
+        "completedQuantity": 8000,
+        "unitCode": "UNIT_2"
+      }
+    ],
+    "dailyLogs": [
+      {
+        "dateOffsetDays": -2,
+        "completedQty": 1800,
+        "reworkQty": 12,
+        "rejectedQty": 3,
+        "stage": "FINISHING",
+        "unitCode": "UNIT_2",
+        "userEmail": "supervisor.selvam@company-a.com",
+        "shift": "DAY",
+        "machineLine": "Unit 2 Packing Line 2",
+        "operatorNotes": "Final carton loading and dispatch pass completed to Tuticorin port.",
+        "rawTamilText": "தூத்துக்குடி துறைமுகத்திற்கு கன்டெய்னர் அனுப்பப்பட்டது.",
+        "translatedText": "Final carton loading and dispatch pass completed to Tuticorin port.",
+        "issueCategory": "OTHER",
+        "voiceDurationSeconds": 15
+      }
+    ],
+    "photos": [
+      {
+        "caption": "Final palletized shipment inspection for Hamburg destination",
+        "category": "PACKING_AUDIT",
+        "mimeType": "image/jpeg",
+        "fileName": "finishing-packing-c0460.jpg",
+        "stage": "FINISHING",
+        "isBuyerVisible": true
+      }
+    ],
+    "riskWarnings": [],
+    "gatePasses": [],
+    "orderAuditTrail": [
+      {
+        "action": "CREATE_ORDER",
+        "category": "DATE_CHANGE",
+        "reasonCode": "INITIAL_PO_CREATION",
+        "notes": "PO C-PO-0460 booked.",
+        "userEmail": "merchandiser@company-a.com",
+        "role": "MERCHANDISER",
+        "offsetDays": -45
+      }
     ]
   }
 ]

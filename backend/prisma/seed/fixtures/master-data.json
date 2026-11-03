@@ -11,6 +11,24 @@
       "code": "COMPANY_C",
       "country": "Germany",
       "contactEmail": "compliance@company-c.de"
+    },
+    {
+      "name": "Zara / Inditex (Spain)",
+      "code": "INDITEX_ES",
+      "country": "Spain",
+      "contactEmail": "laura.inditex@inditex.com"
+    },
+    {
+      "name": "Marks & Spencer (UK)",
+      "code": "M_AND_S_UK",
+      "country": "United Kingdom",
+      "contactEmail": "sourcing@marksandspencer.co.uk"
+    },
+    {
+      "name": "Next Retail (UK)",
+      "code": "NEXT_UK",
+      "country": "United Kingdom",
+      "contactEmail": "knitwear@next.co.uk"
     }
   ],
   "units": [
@@ -27,7 +45,7 @@
       "location": "Palladam Road, Tiruppur"
     },
     {
-      "name": "Unit 3 (Specialty - Own)",
+      "name": "Unit 3 (Specialty & Export - Own)",
       "code": "UNIT_3",
       "type": "OWN_UNIT",
       "location": "Angeripalayam, Tiruppur"
@@ -43,15 +61,49 @@
       "code": "WASHTEX",
       "type": "SUBCONTRACTOR",
       "location": "Dharapuram Road, Tiruppur"
+    },
+    {
+      "name": "Subcontract - DyeCraft",
+      "code": "DYECRAFT",
+      "type": "SUBCONTRACTOR",
+      "location": "SIPCOT Industrial Complex, Perundurai"
     }
   ],
   "users": [
+    {
+      "email": "admin@threadflow.com",
+      "name": "System Administrator",
+      "role": "ADMIN",
+      "languagePreference": "en",
+      "phone": "+91 98422 99999"
+    },
+    {
+      "email": "admin@company-a.com",
+      "name": "Tiruppur Operations Admin",
+      "role": "ADMIN",
+      "languagePreference": "en",
+      "phone": "+91 98422 99998"
+    },
     {
       "email": "merchandiser@company-a.com",
       "name": "Ramesh Merchandiser",
       "role": "MERCHANDISER",
       "languagePreference": "en",
       "phone": "+91 98422 10001"
+    },
+    {
+      "email": "priya.merchandiser@company-a.com",
+      "name": "Priya Sundaram",
+      "role": "MERCHANDISER",
+      "languagePreference": "en",
+      "phone": "+91 98422 10002"
+    },
+    {
+      "email": "karthik.merchandiser@company-a.com",
+      "name": "Karthik Rajan",
+      "role": "MERCHANDISER",
+      "languagePreference": "en",
+      "phone": "+91 98422 10003"
     },
     {
       "email": "supervisor.muthu@company-a.com",
@@ -70,6 +122,22 @@
       "assignedUnitCode": "UNIT_2"
     },
     {
+      "email": "supervisor.murugan@company-a.com",
+      "name": "Murugan Floor Supervisor",
+      "role": "SUPERVISOR",
+      "languagePreference": "ta",
+      "phone": "+91 98422 40004",
+      "assignedUnitCode": "UNIT_3"
+    },
+    {
+      "email": "supervisor.kumar@company-a.com",
+      "name": "Kumaravel Shift In-Charge",
+      "role": "SUPERVISOR",
+      "languagePreference": "ta",
+      "phone": "+91 98422 50005",
+      "assignedUnitCode": "UNIT_1"
+    },
+    {
       "email": "buyer@company-b.co.uk",
       "name": "Sarah Jenkins (UK Sourcing)",
       "role": "BUYER",
@@ -84,18 +152,25 @@
       "buyerCode": "COMPANY_C"
     },
     {
-      "email": "admin@threadflow.com",
-      "name": "System Administrator",
-      "role": "ADMIN",
+      "email": "laura.inditex@inditex.com",
+      "name": "Laura Gomez (Inditex Buyer)",
+      "role": "BUYER",
       "languagePreference": "en",
-      "phone": "+91 98422 99999"
+      "buyerCode": "INDITEX_ES"
     },
     {
-      "email": "admin@company-a.com",
-      "name": "System Administrator",
-      "role": "ADMIN",
+      "email": "sourcing@marksandspencer.co.uk",
+      "name": "David Ross (M&S Knitwear)",
+      "role": "BUYER",
       "languagePreference": "en",
-      "phone": "+91 98422 99999"
+      "buyerCode": "M_AND_S_UK"
+    },
+    {
+      "email": "knitwear@next.co.uk",
+      "name": "Emma Watson (Next UK Sourcing)",
+      "role": "BUYER",
+      "languagePreference": "en",
+      "buyerCode": "NEXT_UK"
     }
   ]
 }
