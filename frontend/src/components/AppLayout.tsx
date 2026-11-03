@@ -69,25 +69,16 @@ export const AppLayout: React.FC = () => {
 
     // Offline listeners
     refreshPending();
-    if (isEffectiveOnline()) {
-      setTimeout(() => syncOfflineQueue(), 200);
-    }
     const cleanupSync = registerOfflineSyncListeners();
 
     const handleNetworkChange = () => {
       setIsOnline(isEffectiveOnline());
       setIsSimulated(isOfflineSimulated());
       refreshPending();
-      if (isEffectiveOnline()) {
-        setTimeout(() => syncOfflineQueue(), 300);
-      }
     };
 
     const handleQueueChange = () => {
       refreshPending();
-      if (isEffectiveOnline()) {
-        setTimeout(() => syncOfflineQueue(), 300);
-      }
     };
 
     window.addEventListener('online', handleNetworkChange);

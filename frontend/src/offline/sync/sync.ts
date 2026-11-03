@@ -167,7 +167,7 @@ export async function syncOfflineQueue(): Promise<SyncResult> {
 
   const items = await getAllPendingUpdates();
   const pendingItems = items.filter(
-    (i) => i.status === 'QUEUED' || i.status === 'ERROR'
+    (i) => i.status === 'QUEUED' || (i.status === 'ERROR' && (i.retryCount || 0) < 3)
   );
 
   if (pendingItems.length === 0) {
@@ -288,14 +288,9 @@ export async function syncOfflineQueue(): Promise<SyncResult> {
     triggerSyncHaptics();
   }
 
-  if (result.failed > 0 && isEffectiveOnline()) {
-    if (autoRetryTimer) clearTimeout(autoRetryTimer);
-    const delay = Math.min(30000, 3000 * Math.pow(1.8, Math.min(4, result.failed)));
-    autoRetryTimer = setTimeout(() => {
-      if (isEffectiveOnline()) {
-        syncOfflineQueue();
-      }
-    }, delay);
+  if (autoRetryTimer) {
+    clearTimeout(autoRetryTimer);
+    autoRetryTimer = null;
   }
 
   return result;
