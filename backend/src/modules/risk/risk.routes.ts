@@ -11,6 +11,12 @@ router.use(enforceBuyerTenantScope);
 // List all active monitored risks with filters and KPIs
 router.get('/', RiskController.listRisks);
 
+// Feature 10: Human-in-the-Loop Review Gate & Merchandiser Risk Dashboard
+router.get('/alerts', RiskController.listAlerts);
+router.post('/alerts/:id/confirm', RiskController.confirmAlert);
+router.post('/alerts/:id/override', RiskController.overrideAlert);
+router.post('/alerts/:id/generate-mitigation', RiskController.generateMitigation);
+
 // Real-time What-If line capacity simulation
 router.post('/simulate', RiskController.simulateRate);
 

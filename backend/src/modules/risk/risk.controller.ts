@@ -59,4 +59,53 @@ export class RiskController {
       data: result,
     });
   });
+
+  static listAlerts = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError('Authentication required', 401);
+    }
+    const result = await RiskService.listAlerts(req.query as any, req.user);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  });
+
+  static confirmAlert = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError('Authentication required', 401);
+    }
+    const { id } = req.params;
+    const result = await RiskService.confirmAlert(id, req.body, req.user);
+    res.status(200).json({
+      success: true,
+      message: 'Alert confirmed for international buyer view',
+      data: result,
+    });
+  });
+
+  static overrideAlert = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError('Authentication required', 401);
+    }
+    const { id } = req.params;
+    const result = await RiskService.overrideAlert(id, req.body, req.user);
+    res.status(200).json({
+      success: true,
+      message: 'Alert overridden and resolved internally (hidden from buyer)',
+      data: result,
+    });
+  });
+
+  static generateMitigation = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError('Authentication required', 401);
+    }
+    const { id } = req.params;
+    const result = await RiskService.generateBuyerMitigationDraft(id);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  });
 }

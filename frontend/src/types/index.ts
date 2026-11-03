@@ -122,6 +122,65 @@ export interface RiskWarning {
   isBuyerVisible: boolean;
 }
 
+export interface FloorIssueContext {
+  productionUpdateId: string;
+  shift?: string | null;
+  machineLine?: string | null;
+  supervisorName: string;
+  rawTamilText?: string | null;
+  translatedText?: string | null;
+  category: string;
+  confidenceScore: number;
+  classifiedBy?: string | null;
+  loggedAt: string;
+}
+
+export interface RiskAlertItem {
+  id: string;
+  orderId: string;
+  milestoneId: string;
+  poNumber: string;
+  style: string;
+  totalQuantity: number;
+  exFactoryDate: string;
+  currency: string;
+  buyer: { id: string; name: string; code: string };
+  unit?: { id: string; name: string; code: string } | null;
+  stage: Stage;
+  sequenceOrder: number;
+  targetQuantity: number;
+  completedQuantity: number;
+  riskLevel: RiskLevel;
+  requiredDailyRate: number;
+  actualRollingRate: number;
+  varianceQtyPerDay: number;
+  projectedCompletionDate?: string | null;
+  daysLate: number;
+  financialExposureRupees: number;
+  approvalStatus: ApprovalStatus;
+  isBuyerVisible: boolean;
+  mitigationPlan?: string | null;
+  reviewedAt?: string | null;
+  reviewedBy?: { id: string; name: string; email?: string } | null;
+  floorIssue?: FloorIssueContext | null;
+  mitigationActions?: any[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RiskAlertSummary {
+  totalAtRiskRupees: number;
+  ordersAtRiskCount: number;
+  totalPendingReview: number;
+  totalConfirmed: number;
+  totalOverridden: number;
+}
+
+export interface RiskAlertsResponse {
+  summary: RiskAlertSummary;
+  alerts: RiskAlertItem[];
+}
+
 export interface OrderListItem {
   id: string;
   poNumber: string;

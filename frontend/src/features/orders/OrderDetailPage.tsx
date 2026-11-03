@@ -24,12 +24,13 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import { OrderDetail, UpdateExFactoryDatePayload, RiskEvaluationResult } from '../../types';
+import { OrderDetail, UpdateExFactoryDatePayload, RiskEvaluationResult, RiskAlertItem } from '../../types';
 import { apiRequest } from '../../services/api';
 import { StatusBadge } from '../../components/StatusBadge';
 import { CircularTnaPipeline } from '../tna/CircularTnaPipeline';
 import { SizeBreakdownVisualizer } from './SizeBreakdownVisualizer';
 import { ShowYourMathCard } from '../risk/ShowYourMathCard';
+import { RiskReviewCard } from '../risk/RiskReviewCard';
 
 export const OrderDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -37,6 +38,7 @@ export const OrderDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [riskEvaluation, setRiskEvaluation] = useState<RiskEvaluationResult | null>(null);
+  const [orderAlerts, setOrderAlerts] = useState<RiskAlertItem[]>([]);
 
   // Ex-Factory Date Change Modal state
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
@@ -87,6 +89,19 @@ export const OrderDetailPage: React.FC = () => {
     }
   };
 
+  const fetchOrderAlerts = async (orderId: string) => {
+    try {
+      const res = await apiRequest<{ success: boolean; data: { alerts: RiskAlertItem[] } }>(
+        `/risk/alerts?orderId=${orderId}&status=ALL`
+      );
+      if (res.data?.alerts) {
+        setOrderAlerts(res.data.alerts);
+      }
+    } catch {
+      // Non-blocking fallback
+    }
+  };
+
   const fetchOrderDetail = async () => {
     if (!id) return;
     try {
@@ -106,6 +121,7 @@ export const OrderDetailPage: React.FC = () => {
         if (activeMilestone) {
           fetchRiskEvaluation(res.data.id, activeMilestone.id);
         }
+        fetchOrderAlerts(res.data.id);
       }
     } catch (err: any) {
       if (err.status === 401) {
@@ -342,6 +358,36 @@ export const OrderDetailPage: React.FC = () => {
 
       {/* 7-Stage Circular Radial Donut Pipeline */}
       <CircularTnaPipeline milestones={order.milestones} currentStage={order.activeStage} />
+
+      {/* Feature 10: Human-in-the-Loop Review Gate Section */}
+      {orderAlerts.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+              Human-in-the-Loop Review Gate ({orderAlerts.length} Alert{orderAlerts.length > 1 ? 's' : ''})
+              {orderAlerts.some((a) => a.approvalStatus === 'PENDING_REVIEW') && (
+                <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-900 text-[10px] font-black animate-pulse">
+                  Action Required
+                </span>
+              )}
+            </h3>
+            <span className="text-xs text-slate-500 font-semibold">
+              Merchandiser Triage & Buyer Visibility Gate
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {orderAlerts.map((alert) => (
+              <RiskReviewCard
+                key={alert.id}
+                alert={alert}
+                onAlertUpdated={() => order && fetchOrderAlerts(order.id)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Feature 5: Transparent Show-Your-Math Run-Rate Engine */}
       {riskEvaluation && (

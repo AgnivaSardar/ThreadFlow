@@ -9,8 +9,12 @@ import {
   Stage,
   Buyer,
   Unit,
+  RiskAlertItem,
+  RiskAlertSummary,
+  RiskAlertsResponse,
 } from '../../types';
 import { ShowYourMathCard } from './ShowYourMathCard';
+import { RiskReviewCard } from './RiskReviewCard';
 import { CustomSelect, Option } from '../../components/CustomSelect';
 import {
   AlertTriangle,
@@ -23,6 +27,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Plane,
+  ShieldAlert,
+  Eye,
+  EyeOff,
+  Clock,
+  TrendingUp,
+  Sparkles,
 } from 'lucide-react';
 
 const STAGE_LABELS: Record<Stage, string> = {
@@ -48,6 +58,46 @@ export const RiskPage: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Feature 10: Human-in-the-Loop Review Gate state
+  const [activeTab, setActiveTab] = useState<'REVIEW_GATE' | 'RUN_RATE'>('REVIEW_GATE');
+  const [alerts, setAlerts] = useState<RiskAlertItem[]>([]);
+  const [alertSummary, setAlertSummary] = useState<RiskAlertSummary | null>(null);
+  const [alertStatusFilter, setAlertStatusFilter] = useState<'PENDING_REVIEW' | 'CONFIRMED' | 'OVERRIDDEN' | 'ALL'>('PENDING_REVIEW');
+  const [alertsLoading, setAlertsLoading] = useState(false);
+
+  const fetchAlerts = async () => {
+    try {
+      setAlertsLoading(true);
+      const params = new URLSearchParams();
+      if (alertStatusFilter !== 'ALL') {
+        params.append('status', alertStatusFilter);
+      }
+      const res = await apiRequest<{ success: boolean; data: RiskAlertsResponse }>(
+        `/risk/alerts?${params.toString()}`
+      );
+      if (res.data) {
+        setAlerts(res.data.alerts || []);
+        setAlertSummary(res.data.summary);
+      }
+    } catch (err: any) {
+      console.warn('Failed to fetch risk alerts:', err);
+    } finally {
+      setAlertsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAlerts();
+  }, [alertStatusFilter]);
+
+  const handleAlertUpdated = (updatedAlert: RiskAlertItem) => {
+    setAlerts((prev) =>
+      prev.map((a) => (a.id === updatedAlert.id ? updatedAlert : a))
+    );
+    fetchAlerts();
+    fetchRisks();
+  };
 
   // Filters
   const [riskLevelFilter, setRiskLevelFilter] = useState<'ALL' | RiskLevel>('ALL');
@@ -185,168 +235,369 @@ export const RiskPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            Production Run-Rate Analysis
+            Risk & Delays Intelligence
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Throughput monitoring, 3-day weighted pace, and downstream buffers
+            Human-in-the-loop review gate, throughput monitoring, and financial delay exposure
           </p>
         </div>
 
         <button
-          onClick={fetchRisks}
+          onClick={() => {
+            fetchAlerts();
+            fetchRisks();
+          }}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shadow-2xs transition cursor-pointer self-start sm:self-auto"
         >
           <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
-          <span>Refresh Analysis</span>
+          <span>Refresh All</span>
         </button>
       </div>
 
-      {/* KPI Metric Cards (Compact 5-Card Grid) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
-        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Monitored Orders
+      {/* Feature 10: Executive Financial Header Banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-5 sm:p-6 text-white shadow-xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div className="space-y-1.5 max-w-2xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[11px] font-black uppercase tracking-wider">
+            <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
+            Executive Financial Exposure
           </div>
-          <div className="text-lg font-bold text-slate-800 mt-0.5 font-mono">
-            {summary.totalMonitoredOrders}
+          <div className="text-2xl sm:text-4xl font-black font-mono tracking-tight text-white flex items-baseline gap-2.5">
+            <span>₹{(alertSummary?.totalAtRiskRupees || summary.totalExposureRupees || 0).toLocaleString()}</span>
+            <span className="text-xs sm:text-sm font-bold text-rose-300/80 uppercase tracking-wider">
+              At Risk Across Factory
+            </span>
           </div>
+          <p className="text-xs text-slate-300 leading-relaxed">
+            Total financial exposure across {alertSummary?.ordersAtRiskCount || summary.redCount + summary.amberCount} orders with active rate deficits. The Human-in-the-Loop gate ensures raw floor panic and colloquial Tamil notes never reach international buyers without merchandiser review.
+          </p>
         </div>
 
-        <div className="bg-white p-3 rounded-xl border border-rose-200 shadow-xs">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-rose-500 flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-            Critical Deficit
-          </div>
-          <div className="text-lg font-bold text-rose-700 mt-0.5 font-mono">{summary.redCount}</div>
-        </div>
+        {/* Quick Triage Counters */}
+        <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('REVIEW_GATE');
+              setAlertStatusFilter('PENDING_REVIEW');
+            }}
+            className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition flex items-center justify-between gap-3 cursor-pointer ${
+              activeTab === 'REVIEW_GATE' && alertStatusFilter === 'PENDING_REVIEW'
+                ? 'bg-amber-500 text-slate-900 border-amber-400 shadow-md font-black'
+                : 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/40 text-amber-200'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-amber-400" />
+              <span>Pending Review</span>
+            </span>
+            <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-900 text-xs font-black font-mono">
+              {alertSummary?.totalPendingReview || 0}
+            </span>
+          </button>
 
-        <div className="bg-white p-3 rounded-xl border border-amber-200 shadow-xs">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-amber-600 flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-            Buffer Caution
-          </div>
-          <div className="text-lg font-bold text-amber-700 mt-0.5 font-mono">{summary.amberCount}</div>
-        </div>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('REVIEW_GATE');
+              setAlertStatusFilter('CONFIRMED');
+            }}
+            className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition flex items-center justify-between gap-3 cursor-pointer ${
+              activeTab === 'REVIEW_GATE' && alertStatusFilter === 'CONFIRMED'
+                ? 'bg-emerald-600 text-white border-emerald-500 shadow-md font-black'
+                : 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/40 text-emerald-200'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Eye className="w-4 h-4 text-emerald-400" />
+              <span>Buyer Confirmed</span>
+            </span>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-black font-mono">
+              {alertSummary?.totalConfirmed || 0}
+            </span>
+          </button>
 
-        <div className="bg-white p-3 rounded-xl border border-emerald-200 shadow-xs">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            On-Track
-          </div>
-          <div className="text-lg font-bold text-emerald-700 mt-0.5 font-mono">{summary.greenCount}</div>
-        </div>
-
-        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs col-span-2 sm:col-span-1 lg:col-span-1">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Financial Exposure
-          </div>
-          <div className="text-lg font-bold text-slate-900 mt-0.5 font-mono truncate">
-            ₹{summary.totalExposureRupees.toLocaleString()}
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('REVIEW_GATE');
+              setAlertStatusFilter('OVERRIDDEN');
+            }}
+            className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition flex items-center justify-between gap-3 cursor-pointer ${
+              activeTab === 'REVIEW_GATE' && alertStatusFilter === 'OVERRIDDEN'
+                ? 'bg-slate-700 text-white border-slate-600 shadow-md font-black'
+                : 'bg-slate-800 hover:bg-slate-700/80 border-slate-700 text-slate-300'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <EyeOff className="w-4 h-4 text-slate-400" />
+              <span>Internal Overrides</span>
+            </span>
+            <span className="px-2 py-0.5 rounded-full bg-slate-700 text-slate-200 text-xs font-black font-mono">
+              {alertSummary?.totalOverridden || 0}
+            </span>
+          </button>
         </div>
       </div>
 
-      {/* Filter Toolbar (Relative on mobile so it never covers content when scrolling; Sticky on sm+) */}
-      <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs space-y-2.5 relative sm:sticky sm:top-0 z-30">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
-          {/* Status Segmented Buttons & Mobile Filter Toggle */}
-          <div className="flex items-center justify-between gap-1.5">
-            <div className="inline-flex p-1 bg-slate-100 rounded-xl gap-1 overflow-x-auto no-scrollbar">
-              {(['ALL', 'RED', 'AMBER', 'GREEN'] as const).map((lvl) => (
+      {/* Tab Switcher: Human-in-the-Loop Review Gate vs Run-Rate Engine */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-1">
+        <button
+          type="button"
+          onClick={() => setActiveTab('REVIEW_GATE')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-2 ${
+            activeTab === 'REVIEW_GATE'
+              ? 'bg-indigo-600 text-white shadow-xs'
+              : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'
+          }`}
+        >
+          <ShieldAlert className="w-4 h-4" />
+          <span>Human-in-the-Loop Review Gate</span>
+          {(alertSummary?.totalPendingReview || 0) > 0 && (
+            <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-900 text-[10px] font-black animate-pulse">
+              {alertSummary?.totalPendingReview}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('RUN_RATE')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-2 ${
+            activeTab === 'RUN_RATE'
+              ? 'bg-indigo-600 text-white shadow-xs'
+              : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'
+          }`}
+        >
+          <TrendingUp className="w-4 h-4" />
+          <span>Run-Rate Throughput Engine</span>
+          <span className="text-[11px] opacity-75">({sortedRisks.length})</span>
+        </button>
+      </div>
+
+      {/* TAB 1: HUMAN-IN-THE-LOOP REVIEW GATE */}
+      {activeTab === 'REVIEW_GATE' && (
+        <div className="space-y-4">
+          {/* Status Sub-Filters for Review Gate */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
+            <div className="inline-flex p-1 bg-slate-100 rounded-xl gap-1">
+              {(
+                [
+                  { id: 'PENDING_REVIEW', label: 'Pending Review', count: alertSummary?.totalPendingReview },
+                  { id: 'CONFIRMED', label: 'Confirmed (Buyer Visible)', count: alertSummary?.totalConfirmed },
+                  { id: 'OVERRIDDEN', label: 'Internally Overridden', count: alertSummary?.totalOverridden },
+                  { id: 'ALL', label: 'All Alerts', count: undefined },
+                ] as const
+              ).map((tab) => (
                 <button
-                  key={lvl}
+                  key={tab.id}
                   type="button"
-                  onClick={() => setRiskLevelFilter(lvl)}
-                  className={`px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
-                    riskLevelFilter === lvl
+                  onClick={() => setAlertStatusFilter(tab.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                    alertStatusFilter === tab.id
                       ? 'bg-white text-slate-900 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {lvl === 'ALL' ? (
-                    <>
-                      <span className="sm:hidden">All</span>
-                      <span className="hidden sm:inline">All Risks</span>
-                    </>
-                  ) : lvl === 'RED' ? (
-                    'Critical Deficit'
-                  ) : lvl === 'AMBER' ? (
-                    'Buffer Caution'
-                  ) : lvl === 'GREEN' ? (
-                    'On Track'
-                  ) : (
-                    lvl
+                  <span>{tab.label}</span>
+                  {tab.count !== undefined && (
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                        alertStatusFilter === tab.id
+                          ? 'bg-slate-100 text-slate-800'
+                          : 'bg-slate-200/80 text-slate-600'
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
                   )}
                 </button>
               ))}
             </div>
 
-            {/* Mobile Filter Toggle Button */}
-            <button
-              type="button"
-              onClick={() => setIsMobileFilterExpanded(!isMobileFilterExpanded)}
-              className="sm:hidden inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
-              title="Toggle dropdown filters"
-            >
-              <Filter className="w-3.5 h-3.5 text-slate-500" />
-              <span>Filters</span>
-              {(buyerFilter !== 'ALL' || unitFilter !== 'ALL' || stageFilter !== 'ALL') && (
-                <span className="w-4 h-4 rounded-full bg-sky-600 text-white text-[10px] flex items-center justify-center font-bold">
-                  {(buyerFilter !== 'ALL' ? 1 : 0) + (unitFilter !== 'ALL' ? 1 : 0) + (stageFilter !== 'ALL' ? 1 : 0)}
-                </span>
-              )}
-              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isMobileFilterExpanded ? 'rotate-180' : ''}`} />
-            </button>
+            <span className="text-xs text-slate-500 font-semibold">
+              Showing <strong>{alerts.length}</strong> alerts requiring triage
+            </span>
           </div>
 
-          {/* Quick Search */}
-          <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search PO number or garment style..."
-              className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-            />
-          </form>
+          {/* Alert Cards List */}
+          {alertsLoading ? (
+            <div className="p-10 text-center bg-white rounded-2xl border border-slate-200">
+              <div className="w-7 h-7 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <p className="text-xs text-slate-500 font-semibold">Loading alert triage cards...</p>
+            </div>
+          ) : alerts.length === 0 ? (
+            <div className="p-10 text-center bg-white rounded-2xl border border-slate-200 space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-2">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <h4 className="text-sm font-bold text-slate-800">No Alerts in this Category</h4>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">
+                All production alerts in this review status have been handled. Switch filter tabs or refresh to view other items.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {alerts.map((alert) => (
+                <RiskReviewCard
+                  key={alert.id}
+                  alert={alert}
+                  onAlertUpdated={handleAlertUpdated}
+                />
+              ))}
+            </div>
+          )}
         </div>
+      )}
 
-        {/* Custom Select Filters (Collapsible on mobile to maximize viewport, visible on sm+) */}
-        <div className={`grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-slate-100 text-xs ${isMobileFilterExpanded ? 'block' : 'hidden sm:grid'}`}>
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-              Foreign Buyer
-            </label>
-            <CustomSelect
-              value={buyerFilter}
-              options={buyerOptions}
-              onChange={(v) => setBuyerFilter(v)}
-            />
+      {/* TAB 2: RUN-RATE THROUGHPUT ENGINE */}
+      {activeTab === 'RUN_RATE' && (
+        <div className="space-y-4">
+          {/* KPI Metric Cards (Compact 5-Card Grid) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+            <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Monitored Orders
+              </div>
+              <div className="text-lg font-bold text-slate-800 mt-0.5 font-mono">
+                {summary.totalMonitoredOrders}
+              </div>
+            </div>
+
+            <div className="bg-white p-3 rounded-xl border border-rose-200 shadow-xs">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-rose-500 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                Critical Deficit
+              </div>
+              <div className="text-lg font-bold text-rose-700 mt-0.5 font-mono">{summary.redCount}</div>
+            </div>
+
+            <div className="bg-white p-3 rounded-xl border border-amber-200 shadow-xs">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-amber-600 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                Buffer Caution
+              </div>
+              <div className="text-lg font-bold text-amber-700 mt-0.5 font-mono">{summary.amberCount}</div>
+            </div>
+
+            <div className="bg-white p-3 rounded-xl border border-emerald-200 shadow-xs">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                On-Track
+              </div>
+              <div className="text-lg font-bold text-emerald-700 mt-0.5 font-mono">{summary.greenCount}</div>
+            </div>
+
+            <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs col-span-2 sm:col-span-1 lg:col-span-1">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Financial Exposure
+              </div>
+              <div className="text-lg font-bold text-slate-900 mt-0.5 font-mono truncate">
+                ₹{summary.totalExposureRupees.toLocaleString()}
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-              Production Unit
-            </label>
-            <CustomSelect
-              value={unitFilter}
-              options={unitOptions}
-              onChange={(v) => setUnitFilter(v)}
-            />
-          </div>
+          {/* Filter Toolbar (Relative on mobile so it never covers content when scrolling; Sticky on sm+) */}
+          <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs space-y-2.5 relative sm:sticky sm:top-0 z-30">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+              {/* Status Segmented Buttons & Mobile Filter Toggle */}
+              <div className="flex items-center justify-between gap-1.5">
+                <div className="inline-flex p-1 bg-slate-100 rounded-xl gap-1 overflow-x-auto no-scrollbar">
+                  {(['ALL', 'RED', 'AMBER', 'GREEN'] as const).map((lvl) => (
+                    <button
+                      key={lvl}
+                      type="button"
+                      onClick={() => setRiskLevelFilter(lvl)}
+                      className={`px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                        riskLevelFilter === lvl
+                          ? 'bg-white text-slate-900 shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      {lvl === 'ALL' ? (
+                        <>
+                          <span className="sm:hidden">All</span>
+                          <span className="hidden sm:inline">All Risks</span>
+                        </>
+                      ) : lvl === 'RED' ? (
+                        'Critical Deficit'
+                      ) : lvl === 'AMBER' ? (
+                        'Buffer Caution'
+                      ) : lvl === 'GREEN' ? (
+                        'On Track'
+                      ) : (
+                        lvl
+                      )}
+                    </button>
+                  ))}
+                </div>
 
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-              Production Stage
-            </label>
-            <CustomSelect
-              value={stageFilter}
-              options={stageOptions}
-              onChange={(v) => setStageFilter(v)}
-            />
+                {/* Mobile Filter Toggle Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsMobileFilterExpanded(!isMobileFilterExpanded)}
+                  className="sm:hidden inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
+                  title="Toggle dropdown filters"
+                >
+                  <Filter className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Filters</span>
+                  {(buyerFilter !== 'ALL' || unitFilter !== 'ALL' || stageFilter !== 'ALL') && (
+                    <span className="w-4 h-4 rounded-full bg-sky-600 text-white text-[10px] flex items-center justify-center font-bold">
+                      {(buyerFilter !== 'ALL' ? 1 : 0) + (unitFilter !== 'ALL' ? 1 : 0) + (stageFilter !== 'ALL' ? 1 : 0)}
+                    </span>
+                  )}
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isMobileFilterExpanded ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
+
+              {/* Quick Search */}
+              <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search PO number or garment style..."
+                  className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                />
+              </form>
+            </div>
+
+            {/* Custom Select Filters (Collapsible on mobile to maximize viewport, visible on sm+) */}
+            <div className={`grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-slate-100 text-xs ${isMobileFilterExpanded ? 'block' : 'hidden sm:grid'}`}>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                  Foreign Buyer
+                </label>
+                <CustomSelect
+                  value={buyerFilter}
+                  options={buyerOptions}
+                  onChange={(v) => setBuyerFilter(v)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                  Production Unit
+                </label>
+                <CustomSelect
+                  value={unitFilter}
+                  options={unitOptions}
+                  onChange={(v) => setUnitFilter(v)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                  Production Stage
+                </label>
+                <CustomSelect
+                  value={stageFilter}
+                  options={stageOptions}
+                  onChange={(v) => setStageFilter(v)}
+                />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
       {/* Main Content: List of Orders with Compact Cards */}
       {loading ? (
@@ -522,6 +773,8 @@ export const RiskPage: React.FC = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
         </div>
       )}
     </div>

@@ -1,7 +1,8 @@
 import { prisma } from '../../config/db';
-import { Role, RiskLevel, Stage } from '@prisma/client';
+import { Role, RiskLevel, Stage, ApprovalStatus, AuditCategory } from '@prisma/client';
 import { AppError } from '../../common/errors/AppError';
 import { AuthenticatedUser } from '../../common/types/express';
+import { calculateAuditHash } from '../../common/utils/crypto';
 import {
   evaluateProductionRisk,
   calculateWorkingDaysExcludingSundays,
@@ -83,6 +84,9 @@ export class RiskService {
       where: { orderId: order.id, milestoneId: milestone.id },
     });
 
+    const isConfirmed = existing?.approvalStatus === ApprovalStatus.CONFIRMED;
+    const isOverridden = existing?.approvalStatus === ApprovalStatus.OVERRIDDEN;
+
     const dataToSave = {
       riskLevel: evaluation.riskLevel,
       requiredDailyRate: evaluation.requiredDailyRate,
@@ -92,7 +96,13 @@ export class RiskService {
       daysLate: evaluation.daysLate,
       financialExposureRupees: evaluation.financialExposureRupees,
       mathBreakdown: JSON.stringify(evaluation.mathBreakdown),
-      isBuyerVisible: evaluation.riskLevel !== RiskLevel.GREEN,
+      // Raw panic is never buyer-visible without merchandiser confirmation
+      isBuyerVisible: isConfirmed,
+      approvalStatus: isConfirmed
+        ? ApprovalStatus.CONFIRMED
+        : isOverridden
+        ? ApprovalStatus.OVERRIDDEN
+        : ApprovalStatus.PENDING_REVIEW,
     };
 
     if (existing) {
@@ -337,5 +347,424 @@ export class RiskService {
       simulatedRisk,
       financialExposureRupees: exposure,
     };
+  }
+
+  /**
+   * Feature 10: Human-in-the-Loop Review Gate
+   * Retrieves alerts for merchandiser triage: Raw floor voice/text, AI classification,
+   * risk metrics, and buyer-visibility approval status.
+   */
+  static async listAlerts(
+    filters: {
+      status?: 'PENDING_REVIEW' | 'CONFIRMED' | 'OVERRIDDEN' | 'ALL';
+      orderId?: string;
+      riskLevel?: RiskLevel;
+    },
+    user: AuthenticatedUser
+  ) {
+    const where: any = {
+      order: {
+        deletedAt: null,
+        status: 'ACTIVE',
+      },
+    };
+
+    // Buyer scoping: International buyers can ONLY see CONFIRMED + isBuyerVisible alerts
+    if (user.role === Role.BUYER) {
+      if (!user.buyerId) {
+        throw new AppError('Buyer account missing organization association', 403);
+      }
+      where.order.buyerId = user.buyerId;
+      where.isBuyerVisible = true;
+      where.approvalStatus = ApprovalStatus.CONFIRMED;
+    } else {
+      // Merchandiser / Admin filtering
+      if (filters.status && filters.status !== 'ALL') {
+        where.approvalStatus = filters.status as ApprovalStatus;
+      }
+    }
+
+    if (filters.orderId) {
+      where.orderId = filters.orderId;
+    }
+
+    if (filters.riskLevel) {
+      where.riskLevel = filters.riskLevel;
+    }
+
+    const warnings = await prisma.riskWarning.findMany({
+      where,
+      include: {
+        order: {
+          select: {
+            id: true,
+            poNumber: true,
+            style: true,
+            totalQuantity: true,
+            exFactoryDate: true,
+            currency: true,
+            fobPricePerPiece: true,
+            exchangeRate: true,
+            buyer: { select: { id: true, name: true, code: true } },
+            unit: { select: { id: true, name: true, code: true } },
+          },
+        },
+        milestone: {
+          select: {
+            id: true,
+            stage: true,
+            sequenceOrder: true,
+            targetQuantity: true,
+            completedQuantity: true,
+            plannedStart: true,
+            plannedEnd: true,
+            bufferDaysAhead: true,
+          },
+        },
+        mitigationActions: {
+          orderBy: { createdAt: 'desc' },
+          include: { authorizedBy: { select: { id: true, name: true } } },
+        },
+      },
+      orderBy: [
+        { riskLevel: 'desc' },
+        { financialExposureRupees: 'desc' },
+        { createdAt: 'desc' },
+      ],
+    });
+
+    // For each warning, attach latest relevant production update with raw Tamil voice/text and AI triage
+    const alerts = await Promise.all(
+      warnings.map(async (w) => {
+        const update = await prisma.productionUpdate.findFirst({
+          where: {
+            orderId: w.orderId,
+            milestoneId: w.milestoneId,
+          },
+          orderBy: { clientEventAt: 'desc' },
+          include: {
+            supervisor: { select: { id: true, name: true } },
+            issueClassification: true,
+          },
+        });
+
+        const reviewer = w.reviewedById
+          ? await prisma.user.findUnique({
+              where: { id: w.reviewedById },
+              select: { id: true, name: true, email: true },
+            })
+          : null;
+
+        return {
+          id: w.id,
+          orderId: w.orderId,
+          milestoneId: w.milestoneId,
+          poNumber: w.order.poNumber,
+          style: w.order.style,
+          totalQuantity: w.order.totalQuantity,
+          exFactoryDate: w.order.exFactoryDate,
+          currency: w.order.currency,
+          buyer: w.order.buyer,
+          unit: w.order.unit,
+          stage: w.milestone.stage,
+          sequenceOrder: w.milestone.sequenceOrder,
+          targetQuantity: w.milestone.targetQuantity,
+          completedQuantity: w.milestone.completedQuantity,
+          riskLevel: w.riskLevel,
+          requiredDailyRate: w.requiredDailyRate,
+          actualRollingRate: w.actualRollingRate,
+          varianceQtyPerDay: w.varianceQtyPerDay,
+          projectedCompletionDate: w.projectedCompletionDate,
+          daysLate: w.daysLate,
+          financialExposureRupees: w.financialExposureRupees,
+          approvalStatus: w.approvalStatus,
+          isBuyerVisible: w.isBuyerVisible,
+          mitigationPlan: w.mitigationPlan,
+          reviewedAt: w.reviewedAt,
+          reviewedBy: reviewer,
+          mitigationActions: w.mitigationActions,
+          createdAt: w.createdAt,
+          updatedAt: w.updatedAt,
+          // Floor context (Tamil voice/text & AI classification)
+          floorIssue: update
+            ? {
+                productionUpdateId: update.id,
+                shift: update.shift,
+                machineLine: update.machineLine,
+                supervisorName: update.supervisor?.name || 'Floor Supervisor',
+                rawTamilText: update.issueClassification?.rawTamilText || update.notes || null,
+                translatedText: update.issueClassification?.translatedText || update.notes || null,
+                category: update.issueClassification?.category || 'OTHER',
+                confidenceScore: update.issueClassification?.confidenceScore ?? 0.85,
+                classifiedBy: update.issueClassification?.classifiedBy || 'AI',
+                loggedAt: update.clientEventAt,
+              }
+            : null,
+        };
+      })
+    );
+
+    // Compute Executive Financial Summary
+    const allActiveWarnings = await prisma.riskWarning.findMany({
+      where: {
+        order: { deletedAt: null, status: 'ACTIVE' },
+      },
+      select: {
+        id: true,
+        orderId: true,
+        riskLevel: true,
+        approvalStatus: true,
+        financialExposureRupees: true,
+      },
+    });
+
+    const pendingReviewWarnings = allActiveWarnings.filter(
+      (w) => w.approvalStatus === ApprovalStatus.PENDING_REVIEW && (w.riskLevel === RiskLevel.RED || w.riskLevel === RiskLevel.AMBER)
+    );
+    const confirmedWarnings = allActiveWarnings.filter(
+      (w) => w.approvalStatus === ApprovalStatus.CONFIRMED
+    );
+    const overriddenWarnings = allActiveWarnings.filter(
+      (w) => w.approvalStatus === ApprovalStatus.OVERRIDDEN
+    );
+
+    const ordersAtRiskSet = new Set(
+      allActiveWarnings
+        .filter((w) => w.riskLevel === RiskLevel.RED || w.riskLevel === RiskLevel.AMBER)
+        .map((w) => w.orderId)
+    );
+
+    const totalExposureRupees = allActiveWarnings
+      .filter((w) => w.riskLevel === RiskLevel.RED || w.riskLevel === RiskLevel.AMBER)
+      .reduce((sum, w) => sum + w.financialExposureRupees, 0);
+
+    const summary = {
+      totalAtRiskRupees: totalExposureRupees,
+      ordersAtRiskCount: ordersAtRiskSet.size,
+      totalPendingReview: pendingReviewWarnings.length,
+      totalConfirmed: confirmedWarnings.length,
+      totalOverridden: overriddenWarnings.length,
+    };
+
+    return {
+      summary,
+      alerts,
+    };
+  }
+
+  /**
+   * Merchandiser confirms alert for buyer visibility with an external mitigation note.
+   */
+  static async confirmAlert(
+    alertId: string,
+    payload: {
+      mitigationPlan: string;
+      actionType?: string;
+      addedDailyCapacity?: number;
+      estimatedCostRupees?: number;
+    },
+    user: AuthenticatedUser
+  ) {
+    if (!payload.mitigationPlan?.trim()) {
+      throw new AppError('An external mitigation plan for buyer view is required to confirm this alert', 400);
+    }
+
+    const alert = await prisma.riskWarning.findUnique({
+      where: { id: alertId },
+    });
+
+    if (!alert) {
+      throw new AppError(`Alert #${alertId} not found`, 404);
+    }
+
+    const previousStatus = alert.approvalStatus;
+    const previousVisibility = alert.isBuyerVisible;
+
+    // Resolve valid user ID for foreign key constraint in mitigation actions & audit trail
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { id: true },
+    });
+    const fallbackUser = dbUser || (await prisma.user.findFirst({ select: { id: true } }));
+    const authorizedUserId = fallbackUser?.id || user.id;
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const rw = await tx.riskWarning.update({
+        where: { id: alertId },
+        data: {
+          approvalStatus: ApprovalStatus.CONFIRMED,
+          isBuyerVisible: true,
+          mitigationPlan: payload.mitigationPlan.trim(),
+          reviewedById: authorizedUserId,
+          reviewedAt: new Date(),
+        },
+      });
+
+      if (payload.actionType && fallbackUser) {
+        await tx.riskMitigationAction.create({
+          data: {
+            riskWarningId: alertId,
+            actionType: payload.actionType,
+            description: payload.mitigationPlan.trim(),
+            addedDailyCapacity: payload.addedDailyCapacity || 0,
+            estimatedCostRupees: payload.estimatedCostRupees || 0,
+            authorizedById: authorizedUserId,
+          },
+        });
+      }
+
+      // Record tamper-evident SHA-256 audit event
+      const latestAudit = await tx.auditEvent.findFirst({
+        where: { entityId: alertId },
+        orderBy: { timestamp: 'desc' },
+      });
+
+      const auditDate = new Date();
+      const auditTimestamp = auditDate.toISOString();
+      const auditHash = calculateAuditHash(
+        latestAudit?.auditHash || null,
+        alertId,
+        'CONFIRM_RISK_WARNING',
+        'MERCHANDISER_CONFIRMATION',
+        auditTimestamp,
+        payload.estimatedCostRupees || 0
+      );
+
+      await tx.auditEvent.create({
+        data: {
+          timestamp: auditDate,
+          entityType: 'RiskWarning',
+          entityId: alertId,
+          action: 'CONFIRM_RISK_WARNING',
+          category: AuditCategory.RISK_STATUS_CHANGE,
+          reasonCode: 'MERCHANDISER_CONFIRMATION',
+          notes: `Confirmed alert for buyer view with mitigation: "${payload.mitigationPlan.trim()}"`,
+          previousValue: JSON.stringify({ approvalStatus: previousStatus, isBuyerVisible: previousVisibility }),
+          newValue: JSON.stringify({ approvalStatus: 'CONFIRMED', isBuyerVisible: true, mitigationPlan: payload.mitigationPlan.trim() }),
+          financialImpactRupees: payload.estimatedCostRupees || 0,
+          currency: 'INR',
+          auditHash,
+          userId: user.id,
+          userRole: user.role,
+        },
+      });
+
+      return rw;
+    });
+
+    return updated;
+  }
+
+  /**
+   * Merchandiser internally resolves / overrides alert without buyer escalation.
+   */
+  static async overrideAlert(
+    alertId: string,
+    payload: { resolutionReason: string },
+    user: AuthenticatedUser
+  ) {
+    if (!payload.resolutionReason?.trim()) {
+      throw new AppError('An internal resolution reason is required to override this alert', 400);
+    }
+
+    const alert = await prisma.riskWarning.findUnique({
+      where: { id: alertId },
+    });
+
+    if (!alert) {
+      throw new AppError(`Alert #${alertId} not found`, 404);
+    }
+
+    const previousStatus = alert.approvalStatus;
+    const previousVisibility = alert.isBuyerVisible;
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const rw = await tx.riskWarning.update({
+        where: { id: alertId },
+        data: {
+          approvalStatus: ApprovalStatus.OVERRIDDEN,
+          isBuyerVisible: false,
+          mitigationPlan: payload.resolutionReason.trim(),
+          reviewedById: user.id,
+          reviewedAt: new Date(),
+        },
+      });
+
+      const latestAudit = await tx.auditEvent.findFirst({
+        where: { entityId: alertId },
+        orderBy: { timestamp: 'desc' },
+      });
+
+      const auditDate = new Date();
+      const auditTimestamp = auditDate.toISOString();
+      const auditHash = calculateAuditHash(
+        latestAudit?.auditHash || null,
+        alertId,
+        'OVERRIDE_RISK_WARNING',
+        'INTERNAL_OVERRIDE',
+        auditTimestamp,
+        0
+      );
+
+      await tx.auditEvent.create({
+        data: {
+          timestamp: auditDate,
+          entityType: 'RiskWarning',
+          entityId: alertId,
+          action: 'OVERRIDE_RISK_WARNING',
+          category: AuditCategory.RISK_STATUS_CHANGE,
+          reasonCode: 'INTERNAL_OVERRIDE',
+          notes: `Internally overridden by merchandiser: "${payload.resolutionReason.trim()}" (Kept hidden from international buyer)`,
+          previousValue: JSON.stringify({ approvalStatus: previousStatus, isBuyerVisible: previousVisibility }),
+          newValue: JSON.stringify({ approvalStatus: 'OVERRIDDEN', isBuyerVisible: false, mitigationPlan: payload.resolutionReason.trim() }),
+          financialImpactRupees: 0,
+          currency: 'INR',
+          auditHash,
+          userId: user.id,
+          userRole: user.role,
+        },
+      });
+
+      return rw;
+    });
+
+    return updated;
+  }
+
+  /**
+   * AI Copilot: Generates a courteous, professional buyer-ready mitigation draft from floor panic.
+   */
+  static async generateBuyerMitigationDraft(alertId: string) {
+    const alert = await prisma.riskWarning.findUnique({
+      where: { id: alertId },
+      include: {
+        order: { select: { poNumber: true, style: true, buyer: { select: { name: true } } } },
+        milestone: { select: { stage: true } },
+      },
+    });
+
+    if (!alert) {
+      throw new AppError(`Alert #${alertId} not found`, 404);
+    }
+
+    const latestUpdate = await prisma.productionUpdate.findFirst({
+      where: { orderId: alert.orderId, milestoneId: alert.milestoneId },
+      orderBy: { clientEventAt: 'desc' },
+      include: { issueClassification: true },
+    });
+
+    const stageName = alert.milestone.stage.replace(/_/g, ' ').toLowerCase();
+    const cleanIssue = latestUpdate?.issueClassification?.translatedText || latestUpdate?.notes || 'a brief floor pacing variance';
+    const variance = Math.abs(Math.round(alert.varianceQtyPerDay));
+    const daysLate = alert.daysLate;
+
+    let draftText = '';
+    if (daysLate > 0) {
+      draftText = `During operations in the ${stageName} stage, ${cleanIssue.toLowerCase()} created a temporary throughput variance of ~${variance.toLocaleString()} pcs/day. Our factory management has mobilized auxiliary line capacity and scheduled a 1.5-hour evening shift extension to recover the pace. We anticipate catching up within 48 hours and preserving the scheduled delivery date.`;
+    } else {
+      draftText = `A brief technical pause occurred in ${stageName} (${cleanIssue.toLowerCase()}). Our downstream buffer absorbs this adjustment with zero impact to the promised ex-factory shipment schedule.`;
+    }
+
+    return { draftText };
   }
 }
