@@ -84,7 +84,7 @@ export const router = createBrowserRouter([
       {
         path: 'supervisor/my-work',
         element: (
-          <RoleGuard allowedRoles={['SUPERVISOR', 'MERCHANDISER', 'ADMIN']}>
+          <RoleGuard allowedRoles={['SUPERVISOR', 'ADMIN']}>
             <MyWorkPage />
           </RoleGuard>
         ),

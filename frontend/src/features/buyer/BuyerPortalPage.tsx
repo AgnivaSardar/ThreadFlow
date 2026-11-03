@@ -773,6 +773,9 @@ export const BuyerPortalPage: React.FC = () => {
                         </div>
                       )}
 
+                      {/* Only Foreign BUYER and ADMIN are authorized to submit buyer daily feedback responses */}
+                      {hasRole('BUYER', 'ADMIN') ? (
+                        <>
                       {/* Quick Response Preset Pills in ONE LINE */}
                       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">
@@ -845,6 +848,13 @@ export const BuyerPortalPage: React.FC = () => {
                           )}
                         </button>
                       </div>
+                        </>
+                      ) : (
+                        <div className="p-3 bg-white/70 rounded-xl border border-sky-100 text-[11px] text-slate-500 italic flex items-center justify-between">
+                          <span>Buyer Daily Response input is authenticated for foreign buyers only. Merchandisers have oversight audit access.</span>
+                          <span className="text-[10px] font-mono font-bold text-sky-700 uppercase bg-sky-50 px-2 py-0.5 rounded border border-sky-200">READ ONLY</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Order Visual Proof Thumbnails */}

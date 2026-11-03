@@ -66,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: t.floorWork,
       to: '/supervisor/my-work',
       icon: <Factory className="w-5 h-5" />,
-      visible: hasRole('SUPERVISOR', 'MERCHANDISER', 'ADMIN'),
+      visible: hasRole('SUPERVISOR', 'ADMIN'),
     },
     {
       label: t.riskDelays,
