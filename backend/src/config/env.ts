@@ -17,4 +17,11 @@ export const config = {
   },
   encryptionMasterKey: process.env.ENCRYPTION_MASTER_KEY || 'e839f99e4f57c2a939f4039bca3bda4959cfc82dae11a221fbc34d580f1249fa',
   simulatedTodayDate: process.env.SIMULATED_TODAY_DATE || '2026-11-02',
+  ai: {
+    provider: process.env.AI_PROVIDER || 'gemini',
+    model: process.env.AI_MODEL || 'gemini-3.1-flash-lite',
+    apiKey: process.env.AI_API_KEY || '',
+    timeoutMs: parseInt(process.env.AI_TIMEOUT_MS || '3000', 10),
+    confidenceThreshold: parseFloat(process.env.AI_CONFIDENCE_THRESHOLD || '0.65'),
+  },
 };

@@ -35,6 +35,27 @@ import {
   X,
 } from 'lucide-react';
 
+function getAiCategoryLabel(cat: string, lang: Language): string {
+  switch (cat) {
+    case 'POWER_OUTAGE':
+      return lang === 'ta' ? 'மின்வெட்டு (Power Outage)' : 'Power Outage';
+    case 'MACHINE_BREAKDOWN':
+      return lang === 'ta' ? 'இயந்திரக் கோளாறு (Machine Breakdown)' : 'Machine Breakdown';
+    case 'FABRIC_DEFECT':
+      return lang === 'ta' ? 'நூல் / துணி குறைபாடு (Fabric Defect)' : 'Fabric Defect';
+    case 'SUBCONTRACTOR_DELAY':
+      return lang === 'ta' ? 'துணை ஒப்பந்த தாமதம் (Subcontractor Delay)' : 'Subcontractor Delay';
+    case 'LABOUR_SHORTAGE':
+      return lang === 'ta' ? 'ஆட்கள் பற்றாக்குறை (Labour Shortage)' : 'Labour Shortage';
+    case 'QUALITY_HOLD':
+      return lang === 'ta' ? 'தரக் கட்டுப்பாடு / தணிக்கை (Quality Hold)' : 'Quality Hold';
+    case 'OTHER':
+      return lang === 'ta' ? 'இதர குறிப்பு (Other Remark)' : 'Other Remark';
+    default:
+      return cat;
+  }
+}
+
 interface ProductionUpdateFormProps {
   order: SupervisorWorkOrderItem;
   activeMilestone: SupervisorActiveMilestone;
@@ -100,6 +121,15 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Live AI Classification Preview (Upgradation 1: Real-Time Floor Note Intelligence)
+  const [aiPreview, setAiPreview] = useState<{
+    category: string;
+    confidence: number;
+    summary: string;
+    classifiedBy: string;
+    isLoading: boolean;
+  } | null>(null);
+
   // Synchronize transcribed Tamil speech into the notes input
   useEffect(() => {
     if (transcript) {
@@ -110,6 +140,79 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       resetTranscript();
     }
   }, [transcript, resetTranscript]);
+
+  // Debounced Live AI Classification Preview effect
+  useEffect(() => {
+    const trimmed = notes.trim();
+    if (!trimmed || trimmed.length < 3) {
+      setAiPreview(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setAiPreview((prev) => (prev ? { ...prev, isLoading: true } : { category: '', confidence: 0, summary: '', classifiedBy: '', isLoading: true }));
+
+      // If client is currently offline, run local deterministic regex in browser
+      if (!isEffectiveOnline()) {
+        const lower = trimmed.toLowerCase();
+        let cat = 'OTHER';
+        if (/கரண்ட்|மின்சாரம்|power|eb\s*off/i.test(lower)) cat = 'POWER_OUTAGE';
+        else if (/ஊசி|மெஷின்|motor|needle/i.test(lower)) cat = 'MACHINE_BREAKDOWN';
+        else if (/துணி|சாயம்|gsm|shade|hole/i.test(lower)) cat = 'FABRIC_DEFECT';
+        else if (/பிரிண்டிங்|வாஷிங்|printtex|gate\s*pass/i.test(lower)) cat = 'SUBCONTRACTOR_DELAY';
+        else if (/ஆட்கள்|tailor|leave|shift\s*empty/i.test(lower)) cat = 'LABOUR_SHORTAGE';
+        else if (/ஆடிட்|rejection|measurement/i.test(lower)) cat = 'QUALITY_HOLD';
+
+        setAiPreview({
+          category: cat,
+          confidence: 0.50,
+          summary: `Offline Fallback: Identified ${cat}`,
+          classifiedBy: 'LOCAL_OFFLINE_DICTIONARY',
+          isLoading: false,
+        });
+        return;
+      }
+
+      try {
+        const res = await apiRequest<{
+          success: boolean;
+          data: {
+            category: string;
+            confidenceScore: number;
+            englishSummary: string;
+            classifiedBy: string;
+          };
+        }>('/ai/classify', {
+          method: 'POST',
+          body: JSON.stringify({
+            rawText: trimmed,
+            timeoutMs: 2500,
+            orderId: order.orderId,
+          }),
+        });
+
+        if (res.data) {
+          setAiPreview({
+            category: res.data.category,
+            confidence: res.data.confidenceScore,
+            summary: res.data.englishSummary,
+            classifiedBy: res.data.classifiedBy,
+            isLoading: false,
+          });
+        }
+      } catch {
+        setAiPreview({
+          category: 'FALLBACK',
+          confidence: 0.50,
+          summary: 'Deterministic local fallback active',
+          classifiedBy: 'LOCAL_REGEX_FALLBACK',
+          isLoading: false,
+        });
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [notes, order.orderId]);
 
   // Haptic feedback helper for mobile touch
   const triggerHaptic = (ms = 40) => {
@@ -790,6 +893,48 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           placeholder={t.notesPlaceholder}
           className="w-full text-xs font-medium text-slate-900 bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-blue-500 focus:bg-white resize-none"
         />
+
+        {/* Live AI Classification Preview Badge (Upgradation 1) */}
+        {aiPreview && (
+          <div className="mt-2.5 p-2.5 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50/90 to-blue-50/90 shadow-2xs transition-all animate-fadeIn">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Sparkles
+                  className={`w-3.5 h-3.5 flex-shrink-0 ${
+                    aiPreview.isLoading ? 'text-amber-500 animate-spin' : 'text-indigo-600'
+                  }`}
+                />
+                <span className="text-[11px] font-black text-slate-800 truncate">
+                  {aiPreview.isLoading
+                    ? lang === 'ta'
+                      ? 'AI பகுப்பாய்வு செய்கிறது...'
+                      : 'AI Analyzing...'
+                    : getAiCategoryLabel(aiPreview.category, lang)}
+                </span>
+              </div>
+              <span
+                className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                  aiPreview.confidence >= 0.8
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    : 'bg-amber-100 text-amber-800 border border-amber-300'
+                }`}
+              >
+                {Math.round(aiPreview.confidence * 100)}% (
+                {aiPreview.classifiedBy.includes('GEMINI')
+                  ? 'Gemini 3.1 Flash Lite'
+                  : lang === 'ta'
+                  ? 'அகராதி'
+                  : 'Fallback'}
+                )
+              </span>
+            </div>
+            {aiPreview.summary && !aiPreview.isLoading && (
+              <p className="mt-1 text-[11px] text-slate-600 font-medium italic line-clamp-2">
+                "{aiPreview.summary}"
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Client-Side Canvas Compressed Photo Capture */}
         <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">

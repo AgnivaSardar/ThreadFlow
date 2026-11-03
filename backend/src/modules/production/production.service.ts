@@ -5,6 +5,7 @@ import { AuthenticatedUser } from '../../common/types/express';
 import { CreateProductionUpdateInput } from './production.schema';
 import { calculateAuditHash } from '../../common/utils/crypto';
 import { RiskService } from '../risk/risk.service';
+import { AIService } from '../ai/ai.service';
 import { EventEmitter } from 'events';
 
 // Real-Time Event Broadcast Hub for Production Updates
@@ -23,14 +24,14 @@ function getStageActionVerb(stage: Stage): string {
       return 'check';
     case Stage.FINISHING:
       return 'finish';
-    case Stage.DYEING:
-      return 'dye';
+    case Stage.DYEING_WASHING:
+      return 'dye/wash';
+    case Stage.PRINTING:
+      return 'print';
     case Stage.KNITTING:
       return 'knit';
-    case Stage.YARN_SPINNING:
-      return 'spin';
     default:
-      return stage.toLowerCase();
+      return String(stage);
   }
 }
 
@@ -47,14 +48,14 @@ function getStageNoun(stage: Stage): string {
       return 'checking';
     case Stage.FINISHING:
       return 'finishing';
-    case Stage.DYEING:
-      return 'dyeing';
+    case Stage.DYEING_WASHING:
+      return 'dyeing/washing';
+    case Stage.PRINTING:
+      return 'printing';
     case Stage.KNITTING:
       return 'knitting';
-    case Stage.YARN_SPINNING:
-      return 'yarn spinning';
     default:
-      return stage.toLowerCase();
+      return String(stage);
   }
 }
 
@@ -366,29 +367,13 @@ export class ProductionService {
       });
 
       // Increment completedQuantity on TNA milestone & auto-complete if target met
+      // Increment completedQuantity on TNA milestone
       const updatedMilestone = await tx.tnaMilestone.update({
         where: { id: targetMilestone.id },
         data: {
           completedQuantity: { increment: input.goodQuantity },
-          isCompleted: isStageCompleted ? true : undefined,
-          actualEnd: isStageCompleted ? new Date() : undefined,
         },
       });
-
-      // Advance next milestone actualStart if current stage completed
-      if (isStageCompleted) {
-        const nextMilestone = order.milestones.find(
-          (m) => m.sequenceOrder === targetMilestone.sequenceOrder + 1
-        );
-        if (nextMilestone && !nextMilestone.actualStart) {
-          await tx.tnaMilestone.update({
-            where: { id: nextMilestone.id },
-            data: {
-              actualStart: new Date(),
-            },
-          });
-        }
-      }
 
       // Update OrderLines if size breakdown is provided
       if (input.sizeBreakdownLines && input.sizeBreakdownLines.length > 0) {
@@ -413,15 +398,24 @@ export class ProductionService {
 
       // Record classification if issue notes or category present
       if (input.notes || input.issueCategory) {
+        // Run resilient AI classifier with deterministic fallback
+        const aiResult = input.notes
+          ? await AIService.classifyIssueNote(input.notes, {
+              timeoutMs: 2500,
+              orderId: order.id,
+            })
+          : null;
+
         await tx.issueClassification.create({
           data: {
             productionUpdateId: update.id,
-            category: input.issueCategory || IssueCategory.OTHER,
-            confidenceScore: input.issueCategory ? 1.0 : 0.85,
-            needsReview: true,
-            isConfirmed: false,
-            rawTamilText: input.notes,
-            classifiedBy: 'SUPERVISOR_KEYPAD',
+            category: input.issueCategory || aiResult?.category || IssueCategory.OTHER,
+            confidenceScore: input.issueCategory ? 1.0 : (aiResult?.confidenceScore || 0.85),
+            needsReview: input.issueCategory ? false : (aiResult?.needsReview ?? true),
+            isConfirmed: input.issueCategory ? true : ((aiResult?.confidenceScore || 0) >= 0.90 && !aiResult?.needsReview),
+            rawTamilText: input.notes || null,
+            translatedText: aiResult?.translatedText || aiResult?.englishSummary || null,
+            classifiedBy: input.issueCategory ? 'SUPERVISOR_KEYPAD' : (aiResult?.classifiedBy || 'AI'),
           },
         });
       }
@@ -471,7 +465,7 @@ export class ProductionService {
       stage: targetMilestone.stage,
       goodQuantity: input.goodQuantity,
       completedQuantity: result.updatedMilestone.completedQuantity,
-      isCompleted: result.updatedMilestone.isCompleted,
+      isCompleted: result.updatedMilestone.completedQuantity >= targetMilestone.targetQuantity,
       timestamp: new Date().toISOString(),
     });
 
@@ -547,81 +541,67 @@ export class ProductionService {
   }
 
   /**
-   * Upgrade 4: Advanced Tamil & English colloquial NLP root-cause classifier
+   * Resilient Tamil AI Classification Job with Zero-Downtime Deterministic Fallback
    */
   static async processAiClassificationJob(
     updateId: string,
     notes?: string | null,
-    initialCategory?: IssueCategory | null
+    initialCategory?: IssueCategory | null,
+    orderId?: string
   ) {
     if (!notes && !initialCategory) return;
 
-    const rawText = (notes || '').toLowerCase();
-    let resolvedCategory = initialCategory || IssueCategory.OTHER;
-    let confidence = 0.85;
-
-    // Semantic Tamil & English textile keyword matching
-    if (
-      rawText.includes('மின்வெட்டு') ||
-      rawText.includes('ஜெனரேட்டர்') ||
-      rawText.includes('eb') ||
-      rawText.includes('power') ||
-      rawText.includes('electricity')
-    ) {
-      resolvedCategory = IssueCategory.POWER_OUTAGE;
-      confidence = 0.98;
-    } else if (
-      rawText.includes('ஊசி') ||
-      rawText.includes('மோட்டார்') ||
-      rawText.includes('மிஷின்') ||
-      rawText.includes('மெஷின்') ||
-      rawText.includes('breakdown') ||
-      rawText.includes('needle')
-    ) {
-      resolvedCategory = IssueCategory.MACHINE_BREAKDOWN;
-      confidence = 0.96;
-    } else if (
-      rawText.includes('நூல்') ||
-      rawText.includes('துணி') ||
-      rawText.includes('ஓட்டை') ||
-      rawText.includes('gsm') ||
-      rawText.includes('defect') ||
-      rawText.includes('holes')
-    ) {
-      resolvedCategory = IssueCategory.FABRIC_DEFECT;
-      confidence = 0.94;
-    } else if (
-      rawText.includes('ஆட்கள்') ||
-      rawText.includes('லீவு') ||
-      rawText.includes('பற்றாக்குறை') ||
-      rawText.includes('labour') ||
-      rawText.includes('absent')
-    ) {
-      resolvedCategory = IssueCategory.LABOUR_SHORTAGE;
-      confidence = 0.95;
-    } else if (
-      rawText.includes('தாமதம்') ||
-      rawText.includes('பிரிண்டிங்') ||
-      rawText.includes('வாஷிங்') ||
-      rawText.includes('subcontractor')
-    ) {
-      resolvedCategory = IssueCategory.SUBCONTRACTOR_DELAY;
-      confidence = 0.92;
-    }
-
-    const issue = await prisma.issueClassification.findFirst({
-      where: { productionUpdateId: updateId },
-    });
-
-    if (issue) {
-      await prisma.issueClassification.update({
-        where: { id: issue.id },
-        data: {
-          category: resolvedCategory,
-          confidenceScore: confidence,
-          classifiedBy: 'TAMIL_NLP_CLASSIFIER_V2',
-        },
+    try {
+      const classification = await AIService.classifyIssueNote(notes || '', {
+        productionUpdateId: updateId,
+        orderId,
       });
+
+      const issue = await prisma.issueClassification.findFirst({
+        where: { productionUpdateId: updateId },
+      });
+
+      const resolvedCategory =
+        initialCategory && initialCategory !== IssueCategory.OTHER
+          ? initialCategory
+          : classification.category;
+
+      const resolvedConfidence =
+        initialCategory && initialCategory !== IssueCategory.OTHER
+          ? 1.0
+          : classification.confidenceScore;
+
+      const isKeypad = Boolean(initialCategory && initialCategory !== IssueCategory.OTHER);
+
+      if (issue) {
+        await prisma.issueClassification.update({
+          where: { id: issue.id },
+          data: {
+            category: resolvedCategory,
+            confidenceScore: resolvedConfidence,
+            needsReview: isKeypad ? false : classification.needsReview,
+            isConfirmed: isKeypad ? true : (classification.confidenceScore >= 0.90 && !classification.needsReview),
+            rawTamilText: notes || issue.rawTamilText,
+            translatedText: classification.translatedText || classification.englishSummary,
+            classifiedBy: isKeypad ? 'SUPERVISOR_KEYPAD' : classification.classifiedBy,
+          },
+        });
+      } else {
+        await prisma.issueClassification.create({
+          data: {
+            productionUpdateId: updateId,
+            category: resolvedCategory,
+            confidenceScore: resolvedConfidence,
+            needsReview: isKeypad ? false : classification.needsReview,
+            isConfirmed: isKeypad ? true : (classification.confidenceScore >= 0.90 && !classification.needsReview),
+            rawTamilText: notes || null,
+            translatedText: classification.translatedText || classification.englishSummary,
+            classifiedBy: isKeypad ? 'SUPERVISOR_KEYPAD' : classification.classifiedBy,
+          },
+        });
+      }
+    } catch (err: any) {
+      console.warn(`[ProductionService] AI classification job exception:`, err?.message);
     }
   }
 
