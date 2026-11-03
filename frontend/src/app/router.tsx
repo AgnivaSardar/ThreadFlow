@@ -7,6 +7,9 @@ import { OrderDetailPage } from '../features/orders/OrderDetailPage';
 import { RiskPage } from '../features/risk/RiskPage';
 import { MyWorkPage } from '../features/supervisor/MyWorkPage';
 import { BuyerPortalPage } from '../features/buyer/BuyerPortalPage';
+import { OverviewPage } from '../features/dashboard/OverviewPage';
+import { AuditPage } from '../features/audit/AuditPage';
+import { ReportsPage } from '../features/reports/ReportsPage';
 import { useAuthStore } from '../features/auth/authStore';
 
 const RoleBasedIndexRedirect: React.FC = () => {
@@ -52,6 +55,18 @@ export const router = createBrowserRouter([
       {
         path: 'buyer-portal',
         element: <BuyerPortalPage />,
+      },
+      {
+        path: 'dashboard',
+        element: <OverviewPage />,
+      },
+      {
+        path: 'audit',
+        element: <AuditPage />,
+      },
+      {
+        path: 'reports',
+        element: <ReportsPage />,
       },
     ],
   },

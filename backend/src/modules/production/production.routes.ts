@@ -43,6 +43,19 @@ router.get(
   ProductionController.verifyMilestoneAuditChain
 );
 
+// Shift Cut-off Missing Updates Detector (Feature 13)
+router.get(
+  '/missing-shift-updates',
+  requireRole(Role.SUPERVISOR, Role.MERCHANDISER, Role.ADMIN),
+  ProductionController.getMissingShiftUpdates
+);
+
+router.post(
+  '/log-nudge',
+  requireRole(Role.MERCHANDISER, Role.ADMIN),
+  ProductionController.logWhatsAppNudge
+);
+
 // Retrieve history
 router.get(
   '/history',

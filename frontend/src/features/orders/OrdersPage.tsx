@@ -24,6 +24,7 @@ import { CustomSelect, Option } from '../../components/CustomSelect';
 import { OrderForm } from './OrderForm';
 import { BulkShiftModal } from './BulkShiftModal';
 import { useAuthStore } from '../auth/authStore';
+import { ShiftCutoffBanner } from '../dashboard/ShiftCutoffBanner';
 
 export const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
@@ -305,6 +306,9 @@ export const OrdersPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Shift Cut-Off Missing Update Detector (Feature 13 - Compact Alert) */}
+      <ShiftCutoffBanner />
 
       {/* Filter Bar (Relative on mobile so it never covers content when scrolling; Sticky on sm+) */}
       <div className="relative sm:sticky sm:top-0 z-10 bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-xs space-y-3">

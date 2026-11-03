@@ -26,7 +26,11 @@ import {
   Building2,
   Check,
   Sparkles,
+  Printer,
+  Download,
 } from 'lucide-react';
+import { exportOrdersToCsv } from '../reports/exportService';
+import { WeeklyReportPrintModal } from '../reports/WeeklyReportPrintModal';
 
 interface BuyerProfile {
   id: string;
@@ -149,6 +153,9 @@ export const BuyerPortalPage: React.FC = () => {
 
   // Lightbox modal for approved photos
   const [lightboxPhoto, setLightboxPhoto] = useState<ApprovedPhotoItem | null>(null);
+
+  // Feature 14: Weekly Report Print / PDF Modal
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   const isMerchandiserOrAdmin = hasRole('MERCHANDISER', 'ADMIN');
 
@@ -393,6 +400,31 @@ export const BuyerPortalPage: React.FC = () => {
               />
             </div>
           )}
+
+          {/* Feature 14: One-Click Weekly Status Export Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (profile) exportOrdersToCsv(profile, orders as any);
+            }}
+            disabled={orders.length === 0}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-xl text-xs shadow-2xs transition cursor-pointer disabled:opacity-50"
+            title="Download RFC 4180 CSV spreadsheet"
+          >
+            <Download className="w-3.5 h-3.5 text-sky-700" />
+            <span className="hidden sm:inline">Export CSV</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsPrintModalOpen(true)}
+            disabled={orders.length === 0}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-xl text-xs shadow-2xs transition cursor-pointer disabled:opacity-50"
+            title="View and print official weekly PDF status report"
+          >
+            <Printer className="w-3.5 h-3.5 text-emerald-700" />
+            <span>Weekly PDF</span>
+          </button>
 
           <button
             type="button"
@@ -1085,6 +1117,16 @@ export const BuyerPortalPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Feature 14: Printable PDF / Executive Print Modal */}
+      {profile && (
+        <WeeklyReportPrintModal
+          isOpen={isPrintModalOpen}
+          onClose={() => setIsPrintModalOpen(false)}
+          buyer={profile}
+          orders={orders as any}
+        />
       )}
     </div>
   );

@@ -6,8 +6,53 @@ import {
   BulkProductionUpdateInput,
 } from './production.schema';
 import { AppError } from '../../common/errors/AppError';
+import { detectMissingShiftUpdates } from '../../jobs/shiftCutoff.job';
+import { prisma } from '../../config/db';
 
 export class ProductionController {
+  /**
+   * GET /api/v1/production/missing-shift-updates
+   * Evaluates missing updates past the 6:00 PM IST shift cut-off time.
+   */
+  static getMissingShiftUpdates = asyncHandler(async (req: Request, res: Response) => {
+    const simulateCutoff = req.query.simulate === 'true' || req.query.simulateCutoff === 'true';
+    const result = await detectMissingShiftUpdates(simulateCutoff);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  });
+
+  /**
+   * POST /api/v1/production/log-nudge
+   * Records a WhatsApp nudge dispatch in the immutable audit event log.
+   */
+  static logWhatsAppNudge = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError('Authentication required', 401);
+    }
+    const { unitId, supervisorName, missingOrdersCount, poNumbers } = req.body;
+
+    const event = await prisma.auditEvent.create({
+      data: {
+        entityType: 'Unit',
+        entityId: unitId || req.user.id,
+        action: 'WHATSAPP_SHIFT_NUDGE',
+        category: 'STAGE_OUTPUT',
+        reasonCode: 'SHIFT_CUTOFF_FOLLOWUP',
+        notes: `Bilingual Tamil & English WhatsApp nudge dispatched to ${supervisorName || 'Supervisor'} for ${missingOrdersCount || 0} pending POs (${(poNumbers || []).join(', ')}).`,
+        financialImpactRupees: 0,
+        userId: req.user.id,
+        userRole: req.user.role,
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Nudge logged in audit chain',
+      data: event,
+    });
+  });
   /**
    * GET /api/v1/production/work
    * Returns active orders and milestones assigned to the supervisor's manufacturing unit.
