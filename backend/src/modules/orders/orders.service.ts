@@ -727,6 +727,17 @@ export class OrdersService {
           },
           orderBy: { timestamp: 'desc' },
         },
+        productionUpdates: {
+          include: {
+            supervisor: { select: { id: true, name: true, email: true, role: true } },
+            photos: true,
+            issueClassification: true,
+            sizeBreakdownLines: {
+              include: { orderLine: true },
+            },
+          },
+          orderBy: { clientEventAt: 'desc' },
+        },
         riskWarnings: {
           include: {
             mitigationActions: {

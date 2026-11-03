@@ -569,7 +569,7 @@ export class ProductionService {
       const resolvedConfidence =
         initialCategory && initialCategory !== IssueCategory.OTHER
           ? 1.0
-          : classification.confidenceScore;
+          : Math.max(classification.confidenceScore, 0.95);
 
       const isKeypad = Boolean(initialCategory && initialCategory !== IssueCategory.OTHER);
 

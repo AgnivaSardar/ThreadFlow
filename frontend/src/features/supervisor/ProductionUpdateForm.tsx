@@ -387,6 +387,12 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             .filter((l) => l.goodQuantity > 0 || l.rejectedQuantity > 0)
         : undefined;
 
+    const finalFormattedNote = notes.trim()
+      ? aiPreview?.summary && !notes.includes('[English:')
+        ? `${notes.trim()}\n[English: ${aiPreview.summary}]`
+        : notes.trim()
+      : undefined;
+
     const payload = {
       orderId: order.orderId,
       poNumber: order.poNumber,
@@ -397,7 +403,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       machineLine,
       goodQuantity: goodQty,
       rejectedQuantity: rejectedQty,
-      notes: notes.trim() || undefined,
+      notes: finalFormattedNote,
       issueCategory: selectedChip?.category || undefined,
       compressedPhotoBase64: compressedPhoto || undefined,
       clientEventAt: new Date().toISOString(),
@@ -929,9 +935,17 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
               </span>
             </div>
             {aiPreview.summary && !aiPreview.isLoading && (
-              <p className="mt-1 text-[11px] text-slate-600 font-medium italic line-clamp-2">
-                "{aiPreview.summary}"
-              </p>
+              <div className="mt-2 pt-2 border-t border-indigo-200/60">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  {lang === 'ta' ? 'பதிவான தமிழ் உரை & ஆங்கில மொழிபெயர்ப்பு:' : 'Spoken Tamil & English Translation:'}
+                </div>
+                <div className="text-xs font-semibold text-slate-900 bg-white/80 p-2 rounded-lg border border-slate-200/60 shadow-2xs whitespace-pre-wrap">
+                  {notes}
+                </div>
+                <div className="mt-1.5 text-xs font-bold text-indigo-800 bg-indigo-100/80 p-2 rounded-lg border border-indigo-200 shadow-2xs">
+                  [English: {aiPreview.summary}]
+                </div>
+              </div>
             )}
           </div>
         )}

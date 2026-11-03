@@ -17,6 +17,10 @@ import {
   Send,
   Zap,
   Mail,
+  Camera,
+  MessageSquare,
+  Sparkles,
+  Maximize2,
 } from 'lucide-react';
 import { OrderDetail, UpdateExFactoryDatePayload, RiskEvaluationResult } from '../../types';
 import { apiRequest } from '../../services/api';
@@ -41,6 +45,14 @@ export const OrderDetailPage: React.FC = () => {
   const [updatingDate, setUpdatingDate] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [directiveSent, setDirectiveSent] = useState(false);
+
+  // Lightbox Image Modal state
+  const [selectedImageModal, setSelectedImageModal] = useState<{
+    url: string;
+    stage?: string;
+    supervisorName?: string;
+    date?: string;
+  } | null>(null);
 
   const fetchRiskEvaluation = async (orderId: string, milestoneId: string) => {
     try {
@@ -341,6 +353,155 @@ export const OrderDetailPage: React.FC = () => {
         </div>
       )}
 
+      {/* Floor Work Logs & Production Updates Section */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-sky-600" />
+            <div>
+              <h3 className="text-base font-bold text-slate-800">
+                Floor Work Logs & Shift Production Updates
+              </h3>
+              <p className="text-xs text-slate-500">
+                Live chronological updates logged by floor supervisors, bilingual voice notes & defect photos
+              </p>
+            </div>
+          </div>
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-sky-50 text-sky-800 border border-sky-200">
+            {order.productionUpdates?.length || 0} Shift Logs
+          </span>
+        </div>
+
+        {(!order.productionUpdates || order.productionUpdates.length === 0) ? (
+          <div className="text-center py-8 px-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <Clock className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+            <p className="text-sm font-semibold text-slate-700">No shift updates recorded yet</p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Floor supervisors can log completed quantities, defect notes, and Tamil voice remarks from the Supervisor PWA.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {order.productionUpdates.map((update) => {
+              const classification = update.issueClassification;
+              const hasPhotos = update.photos && update.photos.length > 0;
+              const noteText = update.notes || '';
+              const hasNote = Boolean(noteText.trim());
+
+              return (
+                <div
+                  key={update.id}
+                  className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition-all space-y-3"
+                >
+                  {/* Top Bar: Stage, Shift, Time, Supervisor */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-1 rounded-md text-xs font-black uppercase tracking-wider bg-slate-900 text-white shadow-2xs">
+                        {update.stage.replace(/_/g, ' ')}
+                      </span>
+                      <span className="text-xs font-bold text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
+                        {update.shift || 'DAY'} Shift · {update.machineLine || 'Line 1'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <span className="font-semibold text-slate-700">
+                        {update.supervisor?.name || 'Floor Supervisor'}
+                      </span>
+                      <span>•</span>
+                      <span>
+                        {new Date(update.clientEventAt).toLocaleString(undefined, {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Quantity Breakdown Badges */}
+                  <div className="flex items-center gap-3">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-lg border border-emerald-200 text-xs font-bold">
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>+{update.goodQuantity.toLocaleString()} pcs Good Output</span>
+                    </div>
+
+                    {update.rejectedQuantity > 0 && (
+                      <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 text-rose-800 rounded-lg border border-rose-200 text-xs font-bold">
+                        <span>{update.rejectedQuantity} pcs Rejection</span>
+                      </div>
+                    )}
+
+                    {classification && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-900 border border-amber-300">
+                        <Sparkles className="w-3 h-3 text-amber-600" />
+                        {classification.category.replace(/_/g, ' ')} ({Math.round(classification.confidenceScore * 100)}%)
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Notes & Bilingual Translation Display */}
+                  {hasNote && (
+                    <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1.5 shadow-2xs">
+                      <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                        <MessageSquare className="w-3 h-3 text-slate-500" />
+                        <span>Floor Supervisor Note & AI Bilingual Summary</span>
+                      </div>
+                      <div className="text-xs font-medium text-slate-900 whitespace-pre-wrap">
+                        {noteText}
+                      </div>
+                      {classification?.translatedText && !noteText.includes('[English:') && (
+                        <div className="text-xs font-bold text-indigo-800 bg-indigo-50/80 p-2 rounded border border-indigo-100">
+                          [English: {classification.translatedText}]
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Floor Defect Photo & Open Image Lightbox */}
+                  {hasPhotos && (
+                    <div className="pt-2 flex flex-wrap items-center gap-3">
+                      {update.photos.map((photo) => (
+                        <div
+                          key={photo.id}
+                          className="flex items-center gap-2 p-1.5 pr-3 bg-white rounded-xl border border-slate-200 shadow-2xs hover:border-sky-400 transition cursor-pointer group"
+                          onClick={() =>
+                            setSelectedImageModal({
+                              url: photo.s3Url,
+                              stage: update.stage,
+                              supervisorName: update.supervisor?.name,
+                              date: new Date(update.clientEventAt).toLocaleString(),
+                            })
+                          }
+                        >
+                          <img
+                            src={photo.s3Url}
+                            alt="Floor Defect Proof"
+                            className="w-12 h-12 object-cover rounded-lg border border-slate-200"
+                          />
+                          <div>
+                            <div className="text-xs font-bold text-slate-800 flex items-center gap-1">
+                              <Camera className="w-3.5 h-3.5 text-sky-600" />
+                              <span>Floor Photo Evidence</span>
+                            </div>
+                            <span className="text-[11px] font-extrabold text-sky-600 group-hover:underline flex items-center gap-1 mt-0.5">
+                              <Maximize2 className="w-3 h-3" />
+                              Open Image
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Order Change History Table */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -561,6 +722,45 @@ export const OrderDetailPage: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Full-Screen Image Lightbox Modal */}
+      {selectedImageModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in"
+          onClick={() => setSelectedImageModal(null)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl border border-slate-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Camera className="w-4 h-4 text-sky-400" />
+                <span className="text-sm font-bold">
+                  Floor Evidence Proof ({selectedImageModal.stage?.replace(/_/g, ' ')})
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedImageModal(null)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 bg-slate-950 flex items-center justify-center min-h-[300px] max-h-[70vh] overflow-hidden">
+              <img
+                src={selectedImageModal.url}
+                alt="Defect Full View"
+                className="max-h-[65vh] w-auto object-contain rounded-lg shadow-lg"
+              />
+            </div>
+            <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
+              <span>Logged by: <strong>{selectedImageModal.supervisorName || 'Floor Supervisor'}</strong></span>
+              <span>Timestamp: <strong>{selectedImageModal.date}</strong></span>
+            </div>
           </div>
         </div>
       )}

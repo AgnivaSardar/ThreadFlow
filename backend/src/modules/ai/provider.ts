@@ -44,6 +44,19 @@ export const TAMIL_FALLBACK_DICTIONARY: Record<IssueCategory, RegExp[]> = {
     /cutter\s*jam/i,
     /belt\s*cut/i,
     /machine\s*repair/i,
+    /சிக்கல்/i,
+    /இறுதிக்கோடு/i,
+    /பழுது/i,
+    /கோளாறு/i,
+    /சூடான/i,
+    /ஹீட்டர்/i,
+    /finishing\s*line/i,
+    /line\s*problem/i,
+    /overheat/i,
+    /overhearing/i,
+    /பிரச்சனை/i,
+    /iron\s*problem/i,
+    /heat\s*press/i,
   ],
   FABRIC_DEFECT: [
     /துணி/i,
@@ -334,8 +347,6 @@ export async function classifyWithGemini(
     return runDeterministicFallback(rawText, startTime, 'Missing GEMINI_API_KEY');
   }
 
-  const endpointUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
   // Build abort controller for native network cancellation
   const abortController = new AbortController();
 
@@ -346,93 +357,115 @@ export async function classifyWithGemini(
       reject(new Error(`AI_TIMEOUT: Exceeded ${timeoutMs}ms SLA threshold`));
     }, timeoutMs);
 
-    // Unref timer if available in Node so it doesn't hold event loop
     if (timer.unref) timer.unref();
   });
 
-  // Construct Gemini API Call Promise
+  // Construct Gemini API Call Promise with Resilient Multi-Model Cascade
   const geminiPromise = (async (): Promise<ClassificationResult> => {
-    const response = await fetch(endpointUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      signal: abortController.signal,
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: SYSTEM_PROMPT }],
-        },
-        contents: [
-          {
-            parts: [
+    // Model cascade: try fast and active model first, with fallback to gemini-3.1-flash-lite and gemini-3-flash-preview
+    const candidateModels = Array.from(
+      new Set(['gemini-flash-lite-latest', model, 'gemini-3-flash-preview'])
+    );
+
+    let lastError = '';
+
+    for (const m of candidateModels) {
+      try {
+        const endpointUrl = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
+        const modelAbort = new AbortController();
+        const subTimer = setTimeout(() => modelAbort.abort(), 2200);
+
+        const response = await fetch(endpointUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: abortController.signal,
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: SYSTEM_PROMPT }],
+            },
+            contents: [
               {
-                text: `Classify this Tamil/Tanglish garment factory note: "${rawText.trim()}"`,
+                parts: [
+                  {
+                    text: `Classify this Tamil/Tanglish garment factory note: "${rawText.trim()}"`,
+                  },
+                ],
               },
             ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.1,
-          responseMimeType: 'application/json',
-        },
-      }),
-    });
+            generationConfig: {
+              temperature: 0.1,
+              responseMimeType: 'application/json',
+            },
+          }),
+        }).finally(() => clearTimeout(subTimer));
 
-    if (response.status === 429) {
-      aiCircuitBreaker.recordFailure();
-      throw new Error(`AI_RATE_LIMIT: HTTP 429 Too Many Requests`);
+        // If the model is throttled with 503 high demand or 429, try the next model in cascade
+        if (response.status === 503 || response.status === 429 || response.status === 404) {
+          lastError = `Model ${m} returned HTTP ${response.status}`;
+          continue;
+        }
+
+        if (!response.ok) {
+          const errBody = await response.text().catch(() => '');
+          lastError = `Model ${m} HTTP ${response.status} - ${errBody.slice(0, 150)}`;
+          continue;
+        }
+
+        const data: any = await response.json();
+        const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!candidateText) {
+          lastError = `Model ${m} returned empty candidates`;
+          continue;
+        }
+
+        // Clean JSON response if enclosed in markdown backticks
+        const cleanedJson = candidateText.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+        const parsed = JSON.parse(cleanedJson);
+
+        // Validate category against Prisma enum
+        const validCategory = Object.values(IssueCategory).includes(parsed.category)
+          ? (parsed.category as IssueCategory)
+          : IssueCategory.OTHER;
+
+        const confidenceScore = typeof parsed.confidence === 'number' ? parsed.confidence : 0.85;
+        const threshold = config.ai.confidenceThreshold || 0.65;
+        const latencyMs = Date.now() - startTime;
+
+        // Trigger deterministic fallback if LLM confidence is low (< 0.65)
+        if (confidenceScore < threshold) {
+          return runDeterministicFallback(
+            rawText,
+            startTime,
+            `Low LLM confidence score: ${confidenceScore.toFixed(2)} < ${threshold}`
+          );
+        }
+
+        aiCircuitBreaker.recordSuccess();
+
+        return {
+          category: validCategory,
+          confidenceScore,
+          englishSummary: parsed.englishSummary || `Issue classified as ${validCategory}`,
+          needsReview: false,
+          classifiedBy: m.includes('3.1') ? 'GEMINI_3_1_FLASH_LITE' : ('GEMINI_3_1_FLASH_LITE' as any),
+          latencyMs,
+          rawTamilText: rawText.trim(),
+          translatedText: parsed.englishSummary || '',
+          severity: parsed.severity || inferSeverityFromCategory(validCategory),
+          estimatedDowntimeHours: parsed.estimatedDowntimeHours ?? null,
+          impactedStage: parsed.impactedStage ?? null,
+        };
+      } catch (err: any) {
+        if (err.name === 'AbortError') throw err;
+        lastError = err?.message || String(err);
+      }
     }
 
-    if (!response.ok) {
-      aiCircuitBreaker.recordFailure();
-      const errBody = await response.text().catch(() => '');
-      throw new Error(`AI_HTTP_ERROR: HTTP ${response.status} - ${errBody.slice(0, 200)}`);
-    }
-
-    const data: any = await response.json();
-    const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!candidateText) {
-      throw new Error('AI_EMPTY_RESPONSE: No candidates returned from Gemini');
-    }
-
-    // Clean JSON response if enclosed in markdown backticks
-    const cleanedJson = candidateText.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
-    const parsed = JSON.parse(cleanedJson);
-
-    // Validate category against Prisma enum
-    const validCategory = Object.values(IssueCategory).includes(parsed.category)
-      ? (parsed.category as IssueCategory)
-      : IssueCategory.OTHER;
-
-    const confidenceScore = typeof parsed.confidence === 'number' ? parsed.confidence : 0.80;
-    const threshold = config.ai.confidenceThreshold || 0.65;
-    const latencyMs = Date.now() - startTime;
-
-    // Trigger deterministic fallback if LLM confidence is low (< 0.65)
-    if (confidenceScore < threshold) {
-      return runDeterministicFallback(
-        rawText,
-        startTime,
-        `Low LLM confidence score: ${confidenceScore.toFixed(2)} < ${threshold}`
-      );
-    }
-
-    aiCircuitBreaker.recordSuccess();
-
-    return {
-      category: validCategory,
-      confidenceScore,
-      englishSummary: parsed.englishSummary || `Issue classified as ${validCategory}`,
-      needsReview: false,
-      classifiedBy: 'GEMINI_3_1_FLASH_LITE',
-      latencyMs,
-      rawTamilText: rawText.trim(),
-      translatedText: parsed.englishSummary || '',
-      severity: parsed.severity || inferSeverityFromCategory(validCategory),
-      estimatedDowntimeHours: parsed.estimatedDowntimeHours ?? null,
-      impactedStage: parsed.impactedStage ?? null,
-    };
+    aiCircuitBreaker.recordFailure();
+    throw new Error(`AI_CASCADE_EXHAUSTED: ${lastError}`);
   })();
 
   // Execute 3,000 ms Promise Race

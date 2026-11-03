@@ -173,11 +173,63 @@ export interface SizeProgress {
   lagDeficit: number;
 }
 
+export interface FloorPhoto {
+  id: string;
+  s3Url: string;
+  stage: Stage;
+  approvalStatus: ApprovalStatus;
+  isBuyerVisible: boolean;
+  createdAt: string;
+}
+
+export interface FloorIssueClassification {
+  id: string;
+  category: string;
+  confidenceScore: number;
+  needsReview: boolean;
+  isConfirmed: boolean;
+  rawTamilText?: string | null;
+  translatedText?: string | null;
+  classifiedBy?: string | null;
+  createdAt: string;
+}
+
+export interface FloorProductionUpdate {
+  id: string;
+  idempotencyKey: string;
+  stage: Stage;
+  shift?: string | null;
+  machineLine?: string | null;
+  goodQuantity: number;
+  rejectedQuantity: number;
+  notes?: string | null;
+  clientEventAt: string;
+  approvalStatus: ApprovalStatus;
+  supervisor: {
+    id: string;
+    name: string;
+    email: string;
+    role?: Role;
+  };
+  photos: FloorPhoto[];
+  issueClassification?: FloorIssueClassification | null;
+  sizeBreakdownLines?: Array<{
+    id: string;
+    goodQuantity: number;
+    rejectedQuantity: number;
+    orderLine?: {
+      size: string;
+      color: string;
+    };
+  }>;
+}
+
 export interface OrderDetail extends Omit<OrderListItem, 'sizeProgress'> {
   version: number;
   hasSkewWarning: boolean;
   sizeProgress: SizeProgress[];
   auditEvents: AuditEvent[];
+  productionUpdates?: FloorProductionUpdate[];
   latestRiskWarning?: RiskWarning | null;
   criticalPathAlert?: {
     stage: Stage;

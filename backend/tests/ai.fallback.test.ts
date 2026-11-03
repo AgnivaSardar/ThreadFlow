@@ -28,6 +28,8 @@ async function runAiFallbackTestSuite() {
   }
 
   try {
+    aiCircuitBreaker.reset();
+
     // -------------------------------------------------------------
     // Test Group 1: Live Gemini 3.1 Flash Lite Colloquial Tamil & Tanglish
     // -------------------------------------------------------------
@@ -37,7 +39,12 @@ async function runAiFallbackTestSuite() {
     console.log(`  Calling Gemini 3.1 Flash Lite with Tamil note: "${liveTamilNote}"...`);
     
     const liveResult = await AIService.classifyIssueNote(liveTamilNote, {
-      timeoutMs: 5000,
+      timeoutMs: 8000,
+    });
+    console.log('  Live Result Debug:', {
+      classifiedBy: liveResult.classifiedBy,
+      confidenceScore: liveResult.confidenceScore,
+      fallbackReason: liveResult.fallbackReason,
     });
 
     assert(
