@@ -6,6 +6,19 @@ import { OrdersPage } from '../features/orders/OrdersPage';
 import { OrderDetailPage } from '../features/orders/OrderDetailPage';
 import { RiskPage } from '../features/risk/RiskPage';
 import { MyWorkPage } from '../features/supervisor/MyWorkPage';
+import { BuyerPortalPage } from '../features/buyer/BuyerPortalPage';
+import { useAuthStore } from '../features/auth/authStore';
+
+const RoleBasedIndexRedirect: React.FC = () => {
+  const { user } = useAuthStore();
+  if (user?.role === 'BUYER') {
+    return <Navigate to="/buyer-portal" replace />;
+  }
+  if (user?.role === 'SUPERVISOR') {
+    return <Navigate to="/supervisor/my-work" replace />;
+  }
+  return <Navigate to="/orders" replace />;
+};
 
 export const router = createBrowserRouter([
   {
@@ -18,7 +31,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="/orders" replace />,
+        element: <RoleBasedIndexRedirect />,
       },
       {
         path: 'orders',
@@ -36,10 +49,14 @@ export const router = createBrowserRouter([
         path: 'supervisor/my-work',
         element: <MyWorkPage />,
       },
+      {
+        path: 'buyer-portal',
+        element: <BuyerPortalPage />,
+      },
     ],
   },
   {
     path: '*',
-    element: <Navigate to="/orders" replace />,
+    element: <RoleBasedIndexRedirect />,
   },
 ]);

@@ -100,12 +100,17 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
 
     let simRisk: RiskLevel = 'GREEN';
     let exp = 0;
+    // Calculate dynamic late penalty that scales with simulated days late
+    const dailyLatePenalty = daysLate > 0
+      ? (financialExposureRupees / daysLate)
+      : (financialExposureRupees > 0 ? financialExposureRupees / 5 : 35000);
+
     if (simLate > 0) {
       simRisk = 'RED';
-      exp = financialExposureRupees > 0 ? financialExposureRupees : 350000;
+      exp = Math.round(dailyLatePenalty * simLate);
     } else if (variance < 0 || effDays < 2) {
       simRisk = 'AMBER';
-      exp = Math.round((financialExposureRupees || 350000) * 0.3);
+      exp = Math.round((financialExposureRupees || 105000) * 0.25 * (Math.abs(variance) / Math.max(1, req)));
     }
 
     const today = new Date('2026-11-02T10:00:00Z');
@@ -185,7 +190,14 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
 
   // Air freight conversion liability: ~0.30 kg/pc, ₹450/kg international air cargo freight vs ocean vessel
   const airFreightPenaltyPerPiece = 135; // ₹135/pc
-  const airFreightLiability = Math.round(mathBreakdown.remainingPieces * airFreightPenaltyPerPiece);
+  const airFreightLiability = Math.round(piecesInDeficit * airFreightPenaltyPerPiece);
+  const baselineTotalLoss = financialExposureRupees + airFreightLiability;
+
+  // Dynamically reactive simulation metrics based on active simulated pcs/day
+  const activeDeficitPieces = Math.max(0, mathBreakdown.remainingPieces - (activeResult.simulatedRate * effWorkingDays));
+  const activeAirFreightLiability = Math.round(activeDeficitPieces * airFreightPenaltyPerPiece);
+  const activeTotalProjectedLoss = activeResult.financialExposureRupees + activeAirFreightLiability;
+  const activeAmountSaved = Math.max(0, baselineTotalLoss - activeTotalProjectedLoss);
 
   // =========================================================================
   // Compact COMPLETED Card View (when required pcs/day === 0 or remaining === 0)
@@ -593,23 +605,23 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
                 <span>Air Freight Conversion Costing:</span>
               </div>
               <div className="font-mono text-xs font-bold text-rose-900">
-                {mathBreakdown.remainingPieces.toLocaleString()} pcs × ₹135/pc (0.30 kg @ ₹450/kg) ={' '}
-                <span className="text-rose-700 font-extrabold text-sm">₹{airFreightLiability.toLocaleString()}</span>
+                {activeDeficitPieces.toLocaleString()} delayed pcs × ₹135/pc (0.30 kg @ ₹450/kg) ={' '}
+                <span className="text-rose-700 font-extrabold text-sm">₹{activeAirFreightLiability.toLocaleString()}</span>
               </div>
             </div>
           )}
 
-          {/* Plain English Pace Explanation with Amount Saved or Lost */}
+          {/* Plain English Pace Explanation with Dynamic Amount Saved or Lost */}
           <div className="text-[11px] text-slate-700 pt-1 font-medium bg-white/70 p-2.5 rounded-lg border border-slate-200/80 leading-relaxed">
             {activeResult.variance < 0 || activeResult.daysLate > 0 ? (
               <span>
                 At <strong className="text-slate-900">{activeResult.simulatedRate.toLocaleString()} pcs/day</strong>, completing the remaining{' '}
                 <strong className="text-slate-900">{mathBreakdown.remainingPieces.toLocaleString()} pcs</strong> will take{' '}
                 <strong className="text-rose-700">{activeResult.workingDaysNeeded} working days</strong> — exceeding the{' '}
-                {mathBreakdown.workingDaysTotal - mathBreakdown.downstreamBufferDays}-day window by{' '}
+                {effWorkingDays}-day window by{' '}
                 <strong className="text-rose-700">{activeResult.daysLate} days</strong>.{' '}
                 <span className="text-rose-800 font-bold bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200 ml-1 inline-block">
-                  Projected Loss: ₹{(activeResult.financialExposureRupees + airFreightLiability).toLocaleString()} (Late Penalty: ₹{activeResult.financialExposureRupees.toLocaleString()} + Air Freight: ₹{airFreightLiability.toLocaleString()})
+                  Projected Loss: ₹{activeTotalProjectedLoss.toLocaleString()} (Late Penalty: ₹{activeResult.financialExposureRupees.toLocaleString()} + Air Freight: ₹{activeAirFreightLiability.toLocaleString()})
                 </span>
               </span>
             ) : (
@@ -617,10 +629,10 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
                 At <strong className="text-slate-900">{activeResult.simulatedRate.toLocaleString()} pcs/day</strong>, completing the remaining{' '}
                 <strong className="text-slate-900">{mathBreakdown.remainingPieces.toLocaleString()} pcs</strong> will take{' '}
                 <strong className="text-emerald-700">{activeResult.workingDaysNeeded} working days</strong> — on time within the{' '}
-                {mathBreakdown.workingDaysTotal - mathBreakdown.downstreamBufferDays}-day window with buffers intact.{' '}
-                {(financialExposureRupees > 0 || actualRollingRate < requiredDailyRate) && (
+                {effWorkingDays}-day window with buffers intact.{' '}
+                {activeAmountSaved > 0 && (
                   <span className="text-emerald-800 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 ml-1 inline-block">
-                    Amount Saved: +₹{(financialExposureRupees + airFreightLiability).toLocaleString()} protected against delay penalties & air freight
+                    Amount Saved: +₹{activeAmountSaved.toLocaleString()} protected against delay penalties & air freight
                   </span>
                 )}
               </span>

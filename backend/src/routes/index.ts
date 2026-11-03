@@ -4,6 +4,7 @@ import { ordersRoutes } from '../modules/orders/orders.routes';
 import { riskRoutes } from '../modules/risk/risk.routes';
 import { productionRoutes } from '../modules/production/production.routes';
 import { aiRoutes } from '../modules/ai/ai.routes';
+import { buyerPortalRoutes } from '../modules/buyer-portal/buyer.routes';
 
 const router = Router();
 
@@ -12,6 +13,7 @@ router.use('/orders', ordersRoutes);
 router.use('/risk', riskRoutes);
 router.use('/production', productionRoutes);
 router.use('/ai', aiRoutes);
+router.use('/buyer-portal', buyerPortalRoutes);
 
 // Health check endpoint
 router.get('/health', (_req, res) => {
