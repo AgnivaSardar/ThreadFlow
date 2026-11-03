@@ -386,14 +386,14 @@ export const OrderDetailPage: React.FC = () => {
             <table className="w-full table-fixed text-left text-xs border-collapse">
               <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
                 <tr>
-                  <th className="py-2 px-2 w-[11%]">Date / Time</th>
-                  <th className="py-2 px-1.5 w-[9%]">Stage</th>
-                  <th className="py-2 px-2 w-[11%]">Shift · Line</th>
-                  <th className="py-2 px-2 w-[9%] text-right">Output</th>
-                  <th className="py-2 px-2 w-[14%]">Issue Reason</th>
-                  <th className="py-2 px-2 w-[11%]">Logged By</th>
-                  <th className="py-2 px-1 w-[5%] text-center">Photo</th>
-                  <th className="py-2 px-2 w-[30%]">Supervisor Note & AI Summary</th>
+                  <th className="py-2 px-2 w-[10%]">Date / Time</th>
+                  <th className="py-2 px-1.5 w-[8%]">Stage</th>
+                  <th className="py-2 px-2 w-[10%]">Shift · Line</th>
+                  <th className="py-2 px-1 w-[6%] text-right">Output</th>
+                  <th className="py-2 px-2 w-[11%]">Issue Reason</th>
+                  <th className="py-2 px-2 w-[9%]">Logged By</th>
+                  <th className="py-2 px-1 w-[4%] text-center">Photo</th>
+                  <th className="py-2 px-3 w-[42%]">Supervisor Note & AI Summary</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
@@ -454,36 +454,33 @@ export const OrderDetailPage: React.FC = () => {
                         </span>
                         <span className="text-slate-400 mx-0.5">·</span>
                         <span
-                          className="text-slate-600 font-medium truncate inline-block max-w-[70px] align-bottom"
+                          className="text-slate-600 font-medium truncate inline-block max-w-[65px] align-bottom"
                           title={update.machineLine || ''}
                         >
                           {lineName}
                         </span>
                       </td>
 
-                      {/* 4. Output Qty */}
-                      <td className="py-2 px-2 text-right">
-                        <span className="inline-flex items-center gap-0.5 font-mono font-bold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200 text-[11px] whitespace-nowrap">
+                      {/* 4. Output Qty (Narrowed) */}
+                      <td className="py-2 px-1 text-right">
+                        <span className="inline-flex items-center font-mono font-bold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200 text-[10px] whitespace-nowrap">
                           +{update.goodQuantity.toLocaleString()}
                         </span>
                         {update.rejectedQuantity > 0 && (
-                          <div className="text-[10px] text-rose-600 font-semibold leading-none mt-0.5 whitespace-nowrap">
+                          <div className="text-[9px] text-rose-600 font-semibold leading-none mt-0.5 whitespace-nowrap">
                             {update.rejectedQuantity} rej
                           </div>
                         )}
                       </td>
 
-                      {/* 5. Issue Category */}
+                      {/* 5. Issue Category (Clean text without yellow capsule or emoji) */}
                       <td className="py-2 px-2">
                         {classification ? (
                           <span
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-300 max-w-full truncate"
+                            className="text-[11px] font-semibold text-slate-700 block truncate"
                             title={`${classification.category.replace(/_/g, ' ')} (${Math.round(classification.confidenceScore * 100)}%)`}
                           >
-                            <Sparkles className="w-2.5 h-2.5 text-amber-600 shrink-0" />
-                            <span className="truncate">
-                              {classification.category.replace(/_/g, ' ')} ({Math.round(classification.confidenceScore * 100)}%)
-                            </span>
+                            {classification.category.replace(/_/g, ' ')}
                           </span>
                         ) : (
                           <span className="text-slate-300 font-mono text-[11px]">—</span>
@@ -522,15 +519,15 @@ export const OrderDetailPage: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 8. Supervisor Notes & Bilingual Summary (Multi-line text wraps without expanding width) */}
-                      <td className="py-2 px-2">
+                      {/* 8. Supervisor Notes & Bilingual Summary (Expanded width: 42%) */}
+                      <td className="py-2 px-3">
                         {hasNote ? (
                           <div className="space-y-0.5 leading-snug">
                             <div className="text-[11px] text-slate-900 break-words whitespace-normal font-medium">
                               {noteText}
                             </div>
                             {classification?.translatedText && !noteText.includes('[English:') && (
-                              <div className="text-[10px] font-bold text-indigo-700 bg-indigo-50/80 px-1 py-0.5 rounded border border-indigo-100 inline-block mt-0.5 break-words whitespace-normal">
+                              <div className="text-[10px] font-bold text-indigo-700 bg-indigo-50/80 px-1.5 py-0.5 rounded border border-indigo-100 inline-block mt-0.5 break-words whitespace-normal">
                                 [English: {classification.translatedText}]
                               </div>
                             )}
