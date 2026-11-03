@@ -45,6 +45,7 @@ export interface MathExplanationPayload {
 
 export interface RiskEvaluationResult {
   riskLevel: RiskLevel;
+  isCompleted?: boolean;
   requiredDailyRate: number;
   actualRollingRate: number;
   varianceQtyPerDay: number;
@@ -223,11 +224,13 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
   const actualRollingRate = wma.rate;
 
   // 7. Variance (Actual - Required)
+  const isCompleted = remainingPieces === 0 || requiredDailyRate === 0;
   const varianceQtyPerDay = actualRollingRate - requiredDailyRate;
-  const differencePill =
-    varianceQtyPerDay >= 0
-      ? `+${varianceQtyPerDay} pcs/day (On Track)`
-      : `${varianceQtyPerDay} pcs/day (Deficit)`;
+  const differencePill = isCompleted
+    ? 'Completed'
+    : varianceQtyPerDay >= 0
+    ? `+${varianceQtyPerDay} pcs/day (On Track)`
+    : `${varianceQtyPerDay} pcs/day (Deficit)`;
 
   // 8. Projected Completion and Days Late
   // Days needed at current actual rate (realistic estimation, preventing absurd year-2030 extrapolations)
@@ -269,7 +272,12 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
   const priceInr = (input.fobPricePerPiece || 10) * (input.exchangeRate || 100);
   const remainingValueInr = Math.round(remainingPieces * priceInr);
 
-  if (daysLate > 0 || bufferRemaining < 0) {
+  if (isCompleted) {
+    riskLevel = RiskLevel.GREEN;
+    financialExposureRupees = 0;
+    daysLate = 0;
+    rulesTriggered.push('Production completed: 0 pcs remaining for this stage.');
+  } else if (daysLate > 0 || bufferRemaining < 0) {
     riskLevel = RiskLevel.RED;
     // Disruption penalty / air-freight contingency proportional to delayed pieces and delay duration
     const penaltyPct = Math.min(0.40, 0.10 + daysLate * 0.02);
@@ -318,7 +326,9 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
   const mathBreakdown: MathExplanationPayload = {
     requiredRateMath: {
       formula: 'Required Daily Rate = Remaining Pieces / (Working Days To Ship - Downstream Buffers)',
-      substituted: `${remainingPieces.toLocaleString()} pcs / (${workingDaysToShip}d - ${downstreamBufferDays}d) = ${requiredDailyRate} pcs/day`,
+      substituted: isCompleted
+        ? '0 pcs remaining (Stage Completed)'
+        : `${remainingPieces.toLocaleString()} pcs / (${workingDaysToShip}d - ${downstreamBufferDays}d) = ${requiredDailyRate} pcs/day`,
       result: requiredDailyRate,
     },
     actualRateMath: {
@@ -328,12 +338,16 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
     },
     varianceMath: {
       formula: 'Variance = Actual Rolling Rate - Required Daily Rate',
-      substituted: `${actualRollingRate} pcs/day - ${requiredDailyRate} pcs/day = ${varianceQtyPerDay > 0 ? `+${varianceQtyPerDay}` : varianceQtyPerDay} pcs/day`,
+      substituted: isCompleted
+        ? 'Target Met (Stage Completed)'
+        : `${actualRollingRate} pcs/day - ${requiredDailyRate} pcs/day = ${varianceQtyPerDay > 0 ? `+${varianceQtyPerDay}` : varianceQtyPerDay} pcs/day`,
       result: varianceQtyPerDay,
     },
     daysLateMath: {
       formula: 'Days Late = Projected Completion Date - Planned Stage End Date (Excl. Sundays)',
-      substituted: `${projectedCompletionDate.toISOString().split('T')[0]} - ${plannedStageEnd.toISOString().split('T')[0]} = ${daysLate} days`,
+      substituted: isCompleted
+        ? '0 days (Completed on Schedule)'
+        : `${projectedCompletionDate.toISOString().split('T')[0]} - ${plannedStageEnd.toISOString().split('T')[0]} = ${daysLate} days`,
       result: daysLate,
     },
     workingDaysTotal: workingDaysToShip,
@@ -347,6 +361,7 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
 
   return {
     riskLevel,
+    isCompleted,
     requiredDailyRate,
     actualRollingRate,
     varianceQtyPerDay,

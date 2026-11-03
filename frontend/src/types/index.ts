@@ -312,6 +312,7 @@ export interface MathExplanationPayload {
 
 export interface RiskEvaluationResult {
   riskLevel: RiskLevel;
+  isCompleted?: boolean;
   requiredDailyRate: number;
   actualRollingRate: number;
   varianceQtyPerDay: number;
@@ -333,10 +334,11 @@ export interface RiskItem {
   totalQuantity: number;
   exFactoryDate: string;
   workingDaysLeft: number;
-  shipWeek: number;
+  shipWeek?: number;
   activeStage: Stage;
-  milestoneId: string;
+  milestoneId?: string;
   riskLevel: RiskLevel;
+  isCompleted?: boolean;
   requiredDailyRate: number;
   actualRollingRate: number;
   varianceQtyPerDay: number;
@@ -347,7 +349,7 @@ export interface RiskItem {
   financialExposureRupees: number;
   mathBreakdown: MathExplanationPayload;
   rulesTriggered: string[];
-  recentDailyLogs: { date: string; quantity: number }[];
+  recentDailyLogs?: { date: string; quantity: number }[];
 }
 
 export interface RiskSummary {
@@ -355,6 +357,7 @@ export interface RiskSummary {
   redCount: number;
   amberCount: number;
   greenCount: number;
+  completedCount?: number;
   totalExposureRupees: number;
 }
 
