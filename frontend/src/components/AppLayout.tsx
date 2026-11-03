@@ -183,11 +183,18 @@ export const AppLayout: React.FC = () => {
 
           {/* Right: Online/Offline Badge + Language Toggle + User Avatar Dropdown */}
           <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
+            {/* On header left side of Online/Offline capsule: Write queue pending when offline or pending exists */}
+            {(!isOnline || isSimulated || pendingCount > 0) && (
+              <span className="text-[10px] sm:text-[11px] font-black text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl shadow-2xs">
+                {pendingCount} Pending
+              </span>
+            )}
+
             {/* Online / Offline Simulator Pill in Main Header */}
             <button
               type="button"
               onClick={handleToggleSimulation}
-              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-bold transition-all shadow-2xs ${
+              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer ${
                 !isOnline || isSimulated
                   ? 'bg-rose-50 text-rose-800 border border-rose-300 hover:bg-rose-100'
                   : 'bg-emerald-50 text-emerald-900 border border-emerald-300 hover:bg-emerald-100'
@@ -215,22 +222,6 @@ export const AppLayout: React.FC = () => {
                 </>
               )}
             </button>
-
-            {/* Sync Queue Action Pill (Shown whenever items are queued) */}
-            {pendingCount > 0 && (
-              <button
-                type="button"
-                onClick={handleManualSync}
-                disabled={isSyncing || !isOnline}
-                className="inline-flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 transition-all shadow-2xs disabled:opacity-50"
-                title="Synchronize offline queue now"
-              >
-                <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
-                <span className="text-[10px] sm:text-[11px]">
-                  {lang === 'ta' ? 'சேமி' : 'Sync'} ({pendingCount})
-                </span>
-              </button>
-            )}
 
             {/* Language Toggle (தமிழ் / EN) */}
             <button

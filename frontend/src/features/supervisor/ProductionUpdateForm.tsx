@@ -114,10 +114,12 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
     transcript,
     interimTranscript,
     error: speechError,
+    speechLang,
+    setSpeechLang,
     startListening,
     stopListening,
     resetTranscript,
-  } = useTamilSpeechRecognition();
+  } = useTamilSpeechRecognition(lang === 'ta' ? 'ta-IN' : 'en-IN');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -387,8 +389,9 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             .filter((l) => l.goodQuantity > 0 || l.rejectedQuantity > 0)
         : undefined;
 
+    const isTamilScript = /[\u0B80-\u0BFF]/.test(notes);
     const finalFormattedNote = notes.trim()
-      ? aiPreview?.summary && !notes.includes('[English:')
+      ? isTamilScript && aiPreview?.summary && !notes.includes('[English:')
         ? `${notes.trim()}\n[English: ${aiPreview.summary}]`
         : notes.trim()
       : undefined;
@@ -852,13 +855,43 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           </span>
         </div>
 
-        {/* Voice Recognition Button */}
-        <div className="mb-3">
+        {/* Voice Recognition Controls with Speech Language Selector */}
+        <div className="mb-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-500">
+              {lang === 'ta' ? 'குரல் பதிவு மொழி:' : 'Voice Input Language:'}
+            </span>
+            <div className="flex items-center gap-1 p-0.5 bg-slate-100 rounded-lg border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setSpeechLang('ta-IN')}
+                className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer ${
+                  speechLang === 'ta-IN'
+                    ? 'bg-white text-indigo-900 shadow-2xs font-extrabold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                🇮🇳 தமிழ் (Tamil)
+              </button>
+              <button
+                type="button"
+                onClick={() => setSpeechLang('en-IN')}
+                className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer ${
+                  speechLang === 'en-IN'
+                    ? 'bg-white text-indigo-900 shadow-2xs font-extrabold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                🇬🇧 English
+              </button>
+            </div>
+          </div>
+
           <button
             type="button"
             onClick={handleToggleVoice}
             disabled={!isSpeechSupported}
-            className={`w-full min-h-[52px] rounded-xl font-black text-sm flex items-center justify-center gap-2.5 transition-all shadow-sm cursor-pointer ${
+            className={`w-full min-h-[50px] rounded-xl font-black text-sm flex items-center justify-center gap-2.5 transition-all shadow-sm cursor-pointer ${
               isListening
                 ? 'bg-rose-600 text-white animate-pulse ring-4 ring-rose-200'
                 : 'bg-indigo-50 border-2 border-indigo-200 text-indigo-900 hover:bg-indigo-100 active:scale-95'
@@ -867,12 +900,18 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             {isListening ? (
               <>
                 <MicOff className="w-5 h-5 text-white animate-bounce" />
-                <span>{t.voiceListening} ({t.voiceStop})</span>
+                <span>
+                  {speechLang === 'ta-IN'
+                    ? `${t.voiceListening} (${t.voiceStop})`
+                    : 'Listening in English... (Stop)'}
+                </span>
               </>
             ) : (
               <>
                 <Mic className="w-5 h-5 text-indigo-700" />
-                <span>{t.voiceStart}</span>
+                <span>
+                  {speechLang === 'ta-IN' ? 'தமிழில் பேசுக (Mic)' : 'Speak English (Mic)'}
+                </span>
               </>
             )}
           </button>
@@ -900,7 +939,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           className="w-full text-xs font-medium text-slate-900 bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-blue-500 focus:bg-white resize-none"
         />
 
-        {/* Live AI Classification Preview Badge (Upgradation 1) */}
+        {/* Live AI Classification Preview Badge */}
         {aiPreview && (
           <div className="mt-2.5 p-2.5 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50/90 to-blue-50/90 shadow-2xs transition-all animate-fadeIn">
             <div className="flex items-center justify-between gap-2">
@@ -918,33 +957,26 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
                     : getAiCategoryLabel(aiPreview.category, lang)}
                 </span>
               </div>
-              <span
-                className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
-                  aiPreview.confidence >= 0.8
-                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                    : 'bg-amber-100 text-amber-800 border border-amber-300'
-                }`}
-              >
-                {Math.round(aiPreview.confidence * 100)}% (
-                {aiPreview.classifiedBy.includes('GEMINI')
-                  ? 'Gemini 3.1 Flash Lite'
-                  : lang === 'ta'
-                  ? 'அகராதி'
-                  : 'Fallback'}
-                )
-              </span>
             </div>
             {aiPreview.summary && !aiPreview.isLoading && (
               <div className="mt-2 pt-2 border-t border-indigo-200/60">
                 <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  {lang === 'ta' ? 'பதிவான தமிழ் உரை & ஆங்கில மொழிபெயர்ப்பு:' : 'Spoken Tamil & English Translation:'}
+                  {/[\u0B80-\u0BFF]/.test(notes)
+                    ? lang === 'ta'
+                      ? 'பதிவான தமிழ் உரை & ஆங்கில மொழிபெயர்ப்பு:'
+                      : 'Spoken Tamil & English Translation:'
+                    : lang === 'ta'
+                    ? 'பதிவான குறிப்பு:'
+                    : 'Recorded Floor Note:'}
                 </div>
                 <div className="text-xs font-semibold text-slate-900 bg-white/80 p-2 rounded-lg border border-slate-200/60 shadow-2xs whitespace-pre-wrap">
                   {notes}
                 </div>
-                <div className="mt-1.5 text-xs font-bold text-indigo-800 bg-indigo-100/80 p-2 rounded-lg border border-indigo-200 shadow-2xs">
-                  [English: {aiPreview.summary}]
-                </div>
+                {/[\u0B80-\u0BFF]/.test(notes) && (
+                  <div className="mt-1.5 text-xs font-bold text-indigo-800 bg-indigo-100/80 p-2 rounded-lg border border-indigo-200 shadow-2xs">
+                    [English: {aiPreview.summary}]
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -6,23 +6,28 @@ interface IWindow extends Window {
   webkitSpeechRecognition?: any;
 }
 
+export type SpeechLanguage = 'ta-IN' | 'en-IN';
+
 export interface SpeechRecognitionHook {
   isListening: boolean;
   isSupported: boolean;
   transcript: string;
   interimTranscript: string;
   error: string | null;
+  speechLang: SpeechLanguage;
+  setSpeechLang: (lang: SpeechLanguage) => void;
   startListening: () => void;
   stopListening: () => void;
   resetTranscript: () => void;
 }
 
-export function useTamilSpeechRecognition(): SpeechRecognitionHook {
+export function useTamilSpeechRecognition(initialLang: SpeechLanguage = 'ta-IN'): SpeechRecognitionHook {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSupported, setIsSupported] = useState(true);
+  const [speechLang, setSpeechLangState] = useState<SpeechLanguage>(initialLang);
 
   const recognitionRef = useRef<any>(null);
 
@@ -37,7 +42,7 @@ export function useTamilSpeechRecognition(): SpeechRecognitionHook {
 
     try {
       const recognition = new SpeechRec();
-      recognition.lang = 'ta-IN'; // Indian Tamil
+      recognition.lang = speechLang;
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.maxAlternatives = 1;
@@ -96,38 +101,41 @@ export function useTamilSpeechRecognition(): SpeechRecognitionHook {
         }
       }
     };
+  }, [speechLang]);
+
+  const setSpeechLang = useCallback((lang: SpeechLanguage) => {
+    setSpeechLangState(lang);
+    if (recognitionRef.current) {
+      recognitionRef.current.lang = lang;
+    }
   }, []);
 
   const startListening = useCallback(() => {
     if (!recognitionRef.current) {
-      setError('இந்த உலாவியில் தமிழ் குரல் பதிவு வசதி இல்லை (Speech API not supported)');
+      setError('இந்த உலாவியில் குரல் பதிவு வசதி இல்லை (Speech API not supported)');
       return;
     }
     setError(null);
     setInterimTranscript('');
     try {
+      recognitionRef.current.lang = speechLang;
       recognitionRef.current.start();
     } catch (err: any) {
-      // If already started, stop and restart
-      try {
-        recognitionRef.current.stop();
-        setTimeout(() => recognitionRef.current?.start(), 100);
-      } catch {
-        setError('குரல் பதிவை தொடங்க முடியவில்லை');
+      if (err.name !== 'InvalidStateError') {
+        setError(`தொடங்க முடியவில்லை: ${err.message || 'Start failed'}`);
+        setIsListening(false);
       }
     }
-  }, []);
+  }, [speechLang]);
 
   const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // ignore
-      }
+    if (!recognitionRef.current) return;
+    try {
+      recognitionRef.current.stop();
+    } catch {
+      // ignore
     }
     setIsListening(false);
-    setInterimTranscript('');
   }, []);
 
   const resetTranscript = useCallback(() => {
@@ -141,6 +149,8 @@ export function useTamilSpeechRecognition(): SpeechRecognitionHook {
     transcript,
     interimTranscript,
     error,
+    speechLang,
+    setSpeechLang,
     startListening,
     stopListening,
     resetTranscript,
