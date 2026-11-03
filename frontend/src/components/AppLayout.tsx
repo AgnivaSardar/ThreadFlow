@@ -248,9 +248,18 @@ export const AppLayout: React.FC = () => {
           </div>
         </header>
 
-        {/* Scrollable Content Container (Smooth, Responsive, Fits any screen) with Textile Wave Canvas Background */}
-        <main className="flex-1 overflow-y-auto w-full smooth-scroll bg-[#EEF2F6] bg-[url('/images/threadflow-bg.jpg')] bg-cover bg-center bg-fixed bg-no-repeat">
-          <div className="min-h-full backdrop-blur-[0.5px] bg-slate-100/35 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        {/* Scrollable Content Container with Soft Subtle Textile Watermark (Decreased Opacity & Contrast) */}
+        <main
+          className="flex-1 overflow-y-auto w-full smooth-scroll bg-[#F1F5F9]"
+          style={{
+            backgroundImage: "linear-gradient(rgba(241, 245, 249, 0.82), rgba(241, 245, 249, 0.82)), url('/images/threadflow-bg.jpg')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed',
+            backgroundRepeat: 'no-repeat',
+          }}
+        >
+          <div className="p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
             <Outlet />
           </div>
         </main>
