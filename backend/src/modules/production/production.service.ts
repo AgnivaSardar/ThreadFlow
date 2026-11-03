@@ -394,6 +394,25 @@ export class ProductionService {
             },
           });
         }
+      } else if (input.goodQuantity > 0 && order.orderLines && order.orderLines.length > 0) {
+        // Automatically distribute general output proportionally across order lines
+        const totalPlanned = order.orderLines.reduce((acc, l) => acc + l.plannedQty, 0);
+        let allocated = 0;
+        for (let i = 0; i < order.orderLines.length; i++) {
+          const line = order.orderLines[i];
+          const share =
+            i === order.orderLines.length - 1
+              ? Math.max(0, input.goodQuantity - allocated)
+              : Math.round((line.plannedQty / totalPlanned) * input.goodQuantity);
+          allocated += share;
+
+          await tx.orderLine.update({
+            where: { id: line.id },
+            data: {
+              completedQty: { increment: share },
+            },
+          });
+        }
       }
 
       // Record classification if issue notes or category present

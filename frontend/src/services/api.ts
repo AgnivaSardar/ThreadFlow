@@ -9,7 +9,7 @@ export class ApiError extends Error {
 }
 
 let currentAccessToken: string | null = null;
-let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
 
 export const setApiAccessToken = (token: string | null) => {
   currentAccessToken = token;
@@ -41,39 +41,44 @@ export async function apiRequest<T>(
     throw new ApiError(err.message || 'Network request failed', 0);
   }
 
-  // Handle Token Expiration (401)
-  if (response.status === 401 && !endpoint.includes('/auth/login')) {
-    if (!endpoint.includes('/auth/refresh') && !isRefreshing) {
-      isRefreshing = true;
-      try {
-        const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
-          method: 'POST',
-          credentials: 'include',
-        });
-        const refreshData = await refreshRes.json();
+  // Handle Token Expiration (401) with Promise Sharing (Prevents Concurrent Refresh Race Conditions)
+  if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/refresh')) {
+    if (!refreshPromise) {
+      refreshPromise = (async () => {
+        try {
+          const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+          const refreshData = await refreshRes.json();
 
-        if (refreshRes.ok && refreshData.accessToken) {
-          currentAccessToken = refreshData.accessToken;
-          localStorage.setItem('threadflow_token', refreshData.accessToken);
-          if (refreshData.user) {
-            localStorage.setItem('threadflow_user', JSON.stringify(refreshData.user));
+          if (refreshRes.ok && refreshData.accessToken) {
+            currentAccessToken = refreshData.accessToken;
+            localStorage.setItem('threadflow_token', refreshData.accessToken);
+            if (refreshData.user) {
+              localStorage.setItem('threadflow_user', JSON.stringify(refreshData.user));
+            }
+            return refreshData.accessToken as string;
           }
-          isRefreshing = false;
-
-          // Retry original request with fresh token
-          headers.set('Authorization', `Bearer ${currentAccessToken}`);
-          const retryRes = await fetch(url, { ...options, headers, credentials: 'include' });
-          const retryData = await retryRes.json().catch(() => ({}));
-          if (!retryRes.ok) {
-            throw new ApiError(retryData.message || `Request failed (${retryRes.status})`, retryRes.status);
-          }
-          return retryData as T;
+          return null;
+        } catch {
+          return null;
+        } finally {
+          refreshPromise = null;
         }
-      } catch {
-        // Refresh failed
-      } finally {
-        isRefreshing = false;
+      })();
+    }
+
+    const newToken = await refreshPromise;
+
+    if (newToken) {
+      headers.set('Authorization', `Bearer ${newToken}`);
+      const retryRes = await fetch(url, { ...options, headers, credentials: 'include' });
+      const retryData = await retryRes.json().catch(() => ({}));
+      if (!retryRes.ok) {
+        throw new ApiError(retryData.message || `Request failed (${retryRes.status})`, retryRes.status);
       }
+      return retryData as T;
     }
 
     // Unrecoverable 401: clear session and redirect to login automatically
