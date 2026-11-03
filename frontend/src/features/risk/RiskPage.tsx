@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Plane,
 } from 'lucide-react';
 
 const STAGE_LABELS: Record<Stage, string> = {
@@ -433,10 +434,21 @@ export const RiskPage: React.FC = () => {
                         Completed
                       </span>
                     ) : item.riskLevel === 'RED' ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded-full border border-rose-300">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" />
-                        Critical Deficit ({item.varianceQtyPerDay} pcs/d)
-                      </span>
+                      <>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded-full border border-rose-300">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" />
+                          Critical Deficit ({item.varianceQtyPerDay} pcs/d)
+                        </span>
+                        {item.daysLate > 0 && (
+                          <span
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-900 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200"
+                            title="Estimated conversion penalty if switched to air cargo"
+                          >
+                            <Plane className="w-3 h-3 text-rose-600" />
+                            Air Risk: ₹{Math.round((item.mathBreakdown?.remainingPieces || 0) * 135).toLocaleString()}
+                          </span>
+                        )}
+                      </>
                     ) : item.riskLevel === 'AMBER' ? (
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
                         Buffer Caution

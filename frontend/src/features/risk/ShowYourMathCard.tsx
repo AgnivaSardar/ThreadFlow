@@ -15,6 +15,7 @@ import {
   Zap,
   Users,
   RotateCcw,
+  Plane,
 } from 'lucide-react';
 
 interface ShowYourMathCardProps {
@@ -46,6 +47,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
   daysLate,
   projectedCompletionDate,
   financialExposureRupees,
+  plannedStageEnd,
   poNumber,
   styleName,
   stageName,
@@ -179,6 +181,33 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
   const piecesInDeficit = Math.max(0, mathBreakdown.remainingPieces - (actualRollingRate * effWorkingDays));
   const estOvertimeCost = Math.round(Math.max(4500, piecesInDeficit * 10));
   const netRoi = Math.max(0, financialExposureRupees - estOvertimeCost);
+
+  // Air freight conversion liability: ~0.30 kg/pc, ₹450/kg international air cargo freight vs ocean vessel
+  const airFreightPenaltyPerPiece = 135; // ₹135/pc
+  const airFreightLiability = Math.round(mathBreakdown.remainingPieces * airFreightPenaltyPerPiece);
+
+  // Corrective Prescriptions calculation
+  const deficitQty = Math.max(0, requiredDailyRate - actualRollingRate);
+  const otHoursPerDay = Math.min(3.5, Math.max(1, Number(((deficitQty / Math.max(1, actualRollingRate)) * 8).toFixed(1))));
+  const operatorsNeeded = Math.max(2, Math.ceil(deficitQty / 18));
+  const seaDispatchQty = Math.max(0, Math.round(actualRollingRate * effWorkingDays));
+  const airBalanceQty = Math.max(0, mathBreakdown.remainingPieces - seaDispatchQty);
+  const airBalancePenalty = Math.round(airBalanceQty * airFreightPenaltyPerPiece);
+
+  const [copiedSplitProposal, setCopiedSplitProposal] = useState(false);
+  const handleCopySplitProposal = () => {
+    const text = [
+      `[PROPOSAL: PHASED SPLIT SHIPMENT]`,
+      `Order: ${poNumber || 'PO'} | Style: ${styleName || 'Apparel'}`,
+      `• Total Milestone Qty: ${mathBreakdown.remainingPieces.toLocaleString()} pcs`,
+      `• Feasible Sea Shipment (On-Time): ${seaDispatchQty.toLocaleString()} pcs on ex-factory date (${formatDate(plannedStageEnd || projectedCompletionDate)})`,
+      `• Expedited Air Balance: ${airBalanceQty.toLocaleString()} pcs dispatch with capped freight charge (~₹${airBalancePenalty.toLocaleString()})`,
+      `• Benefit: Prevents complete vessel miss and avoids full ₹${airFreightLiability.toLocaleString()} emergency air freight claim.`,
+    ].join('\n');
+    navigator.clipboard.writeText(text);
+    setCopiedSplitProposal(true);
+    setTimeout(() => setCopiedSplitProposal(false), 2500);
+  };
 
   // =========================================================================
   // Compact COMPLETED Card View (when required pcs/day === 0 or remaining === 0)
@@ -477,8 +506,164 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
               ₹{activeResult.financialExposureRupees.toLocaleString()} At Risk
             </span>
           )}
+
+          {/* Air Freight Conversion Liability Tag */}
+          {!isCompleted && activeResult.daysLate > 0 && (
+            <span
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-rose-50 text-rose-900 border border-rose-300"
+              title="Emergency Air Freight Penalty Exposure if vessel departure missed"
+            >
+              <Plane className="w-3 h-3 text-rose-600" />
+              ₹{airFreightLiability.toLocaleString()} Air Freight Risk
+            </span>
+          )}
         </div>
       </div>
+
+      {/* High-Impact Air Freight Conversion Penalty Banner */}
+      {!isCompleted && activeResult.daysLate > 0 && (
+        <div className="bg-gradient-to-r from-rose-50 via-amber-50/50 to-white p-2.5 rounded-xl border border-rose-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Plane className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-black text-rose-950 flex items-center gap-1.5 flex-wrap">
+                <span>Air Freight Conversion Liability:</span>
+                <span className="font-mono text-rose-700 font-extrabold text-sm">
+                  ₹{airFreightLiability.toLocaleString()}
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded border border-rose-200">
+                  {activeResult.daysLate}d Overdue Risk
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 mt-0.5">
+                Missing ocean vessel departure forces air cargo shipment ({mathBreakdown.remainingPieces.toLocaleString()} pcs @ ₹135/pc), which erases export order profit margins.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setShowSimulator(true);
+              handleSliderChange(requiredDailyRate);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-800 active:scale-95 text-white text-xs font-bold shadow-xs transition cursor-pointer shrink-0 self-start sm:self-auto"
+          >
+            <Zap className="w-3.5 h-3.5" />
+            <span>Simulate Safe Pace</span>
+          </button>
+        </div>
+      )}
+
+      {/* AI Actionable Prescriptions ("1-Click Corrective Actions") */}
+      {!isCompleted && activeResult.variance < 0 && (
+        <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-200 space-y-2">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-200/70">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-sky-600" />
+              <span className="text-xs font-bold text-slate-900">
+                Operational Recovery Prescriptions
+              </span>
+            </div>
+            <span className="text-[10px] text-slate-500 font-medium">
+              3 concrete floor options to bridge the {Math.abs(activeResult.variance)} pcs/day deficit
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+            {/* Prescription 1: Overtime */}
+            <div className="bg-white p-2.5 rounded-lg border border-slate-200 hover:border-amber-300 transition flex flex-col justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                    Option A · Overtime
+                  </span>
+                  <span className="text-[11px] font-mono font-bold text-slate-800">
+                    +{Math.abs(activeResult.variance)} pcs/d
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-700 leading-snug">
+                  Run <strong>{otHoursPerDay} hrs/shift</strong> overtime across active sewing lines for <strong>{effWorkingDays} working days</strong>.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSimulator(true);
+                  handleSliderChange(requiredDailyRate);
+                }}
+                className="mt-2.5 w-full inline-flex items-center justify-center gap-1 py-1 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-900 text-[11px] font-bold border border-amber-200 transition cursor-pointer"
+              >
+                <Target className="w-3 h-3 text-amber-600" />
+                <span>Apply to Simulator</span>
+              </button>
+            </div>
+
+            {/* Prescription 2: Operator Transfer */}
+            <div className="bg-white p-2.5 rounded-lg border border-slate-200 hover:border-indigo-300 transition flex flex-col justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">
+                    Option B · Line Transfer
+                  </span>
+                  <span className="text-[11px] font-mono font-bold text-slate-800">
+                    +{operatorsNeeded * 18} pcs/d
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-700 leading-snug">
+                  Shift <strong>{operatorsNeeded} operators</strong> from completed orders to boost line throughput.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSimulator(true);
+                  handleSliderChange(actualRollingRate + (operatorsNeeded * 18));
+                }}
+                className="mt-2.5 w-full inline-flex items-center justify-center gap-1 py-1 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-800 text-[11px] font-bold border border-indigo-200 transition cursor-pointer"
+              >
+                <Users className="w-3 h-3 text-indigo-600" />
+                <span>Simulate Transfer</span>
+              </button>
+            </div>
+
+            {/* Prescription 3: Split Shipment */}
+            <div className="bg-white p-2.5 rounded-lg border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                    Option C · Phased Split
+                  </span>
+                  <span className="text-[11px] font-mono font-bold text-emerald-700">
+                    Protect Margin
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-700 leading-snug">
+                  Sea-ship <strong>{seaDispatchQty.toLocaleString()} pcs</strong> on schedule; air balance <strong>{airBalanceQty.toLocaleString()} pcs</strong>.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCopySplitProposal}
+                className="mt-2.5 w-full inline-flex items-center justify-center gap-1 py-1 rounded-md bg-slate-50 hover:bg-slate-100 text-slate-700 text-[11px] font-bold border border-slate-200 transition cursor-pointer"
+              >
+                {copiedSplitProposal ? (
+                  <>
+                    <Check className="w-3 h-3 text-emerald-600" />
+                    <span className="text-emerald-700 font-bold">Copied Proposal!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3 text-slate-500" />
+                    <span>Copy Split Memo</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Interactive "What-If" Capacity Simulation Slider */}
       {showSimulator && (

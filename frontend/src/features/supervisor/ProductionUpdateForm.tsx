@@ -888,7 +888,18 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                🇮🇳 தமிழ் (Tamil)
+                🇮🇳 தமிழ்
+              </button>
+              <button
+                type="button"
+                onClick={() => setSpeechLang('hi-IN')}
+                className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer ${
+                  speechLang === 'hi-IN'
+                    ? 'bg-white text-indigo-900 shadow-2xs font-extrabold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                🇮🇳 हिन्दी
               </button>
               <button
                 type="button"
@@ -920,6 +931,8 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
                 <span>
                   {speechLang === 'ta-IN'
                     ? `${t.voiceListening} (${t.voiceStop})`
+                    : speechLang === 'hi-IN'
+                    ? 'सुन रहे हैं... (रोकें)'
                     : 'Listening in English... (Stop)'}
                 </span>
               </>
@@ -927,7 +940,11 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
               <>
                 <Mic className="w-5 h-5 text-indigo-700" />
                 <span>
-                  {speechLang === 'ta-IN' ? 'தமிழில் பேசுக (Mic)' : 'Speak English (Mic)'}
+                  {speechLang === 'ta-IN'
+                    ? 'தமிழில் பேசுக (Mic)'
+                    : speechLang === 'hi-IN'
+                    ? 'हिन्दी में बोलें (Mic)'
+                    : 'Speak English (Mic)'}
                 </span>
               </>
             )}

@@ -6,7 +6,7 @@ interface IWindow extends Window {
   webkitSpeechRecognition?: any;
 }
 
-export type SpeechLanguage = 'ta-IN' | 'en-IN';
+export type SpeechLanguage = 'ta-IN' | 'hi-IN' | 'en-IN';
 
 export interface SpeechRecognitionHook {
   isListening: boolean;
