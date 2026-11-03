@@ -120,6 +120,7 @@ export class RiskService {
   static async listActiveRisks(filters: RiskFilterQuery, user: AuthenticatedUser) {
     const whereClause: any = {
       deletedAt: null,
+      status: 'ACTIVE',
     };
 
     // Multi-tenant buyer restriction
@@ -218,7 +219,12 @@ export class RiskService {
         activeStageSequence: activeMilestone?.sequenceOrder || 7,
         activeMilestoneId: activeMilestone?.id,
         riskLevel: evaluation.riskLevel,
-        isCompleted: evaluation.isCompleted || (evaluation.mathBreakdown?.remainingPieces === 0) || evaluation.requiredDailyRate === 0,
+        isCompleted:
+          order.status === 'COMPLETED' ||
+          evaluation.isCompleted ||
+          (evaluation.mathBreakdown?.remainingPieces === 0) ||
+          evaluation.requiredDailyRate === 0 ||
+          order.milestones.every((m) => m.completedQuantity >= m.targetQuantity),
         requiredDailyRate: evaluation.requiredDailyRate,
         actualRollingRate: evaluation.actualRollingRate,
         varianceQtyPerDay: evaluation.varianceQtyPerDay,
@@ -232,70 +238,36 @@ export class RiskService {
       };
     });
 
-    // Sort order:
-    // 1. Problematic active orders first: sorted ascending by varianceQtyPerDay (actualRollingRate - requiredDailyRate)
-    //    so the most severely negative variance appears at the top.
-    // 2. Completed orders (remainingPieces === 0 or requiredDailyRate === 0) pushed to the very bottom.
-    evaluatedRisks.sort((a, b) => {
-      const aCompleted = Boolean(a.isCompleted || a.mathBreakdown?.remainingPieces === 0 || a.requiredDailyRate === 0);
-      const bCompleted = Boolean(b.isCompleted || b.mathBreakdown?.remainingPieces === 0 || b.requiredDailyRate === 0);
+    // Exclude completed orders completely from Risk & Delays
+    const activeEvaluatedRisks = evaluatedRisks.filter((r) => !r.isCompleted);
 
-      // Push completed orders to the bottom
-      if (aCompleted && !bCompleted) return 1;
-      if (!aCompleted && bCompleted) return -1;
-      if (aCompleted && bCompleted) {
-        return new Date(a.exFactoryDate).getTime() - new Date(b.exFactoryDate).getTime();
-      }
-
-      // Both active: sort ascending by varianceQtyPerDay (most negative first)
+    // Problematic active orders first: sorted ascending by varianceQtyPerDay (actualRollingRate - requiredDailyRate)
+    // so the most severely negative variance appears at the top.
+    activeEvaluatedRisks.sort((a, b) => {
       if (a.varianceQtyPerDay !== b.varianceQtyPerDay) {
         return a.varianceQtyPerDay - b.varianceQtyPerDay;
       }
-
       return b.financialExposureRupees - a.financialExposureRupees;
     });
 
     // Filter by riskLevel if requested
-    let filtered = evaluatedRisks;
+    let filtered = activeEvaluatedRisks;
     if (filters.riskLevel && filters.riskLevel !== 'ALL') {
-      if (filters.riskLevel === 'COMPLETED') {
-        filtered = filtered.filter(
-          (r) => r.isCompleted || (r.mathBreakdown?.remainingPieces === 0) || r.requiredDailyRate === 0
-        );
-      } else if (filters.riskLevel === 'GREEN') {
-        filtered = filtered.filter(
-          (r) =>
-            r.riskLevel === RiskLevel.GREEN &&
-            !r.isCompleted &&
-            (r.mathBreakdown?.remainingPieces ?? 1) > 0 &&
-            r.requiredDailyRate > 0
-        );
-      } else {
-        filtered = filtered.filter((r) => r.riskLevel === filters.riskLevel);
-      }
+      filtered = filtered.filter((r) => r.riskLevel === filters.riskLevel);
     }
 
     if (filters.stage && filters.stage !== 'ALL') {
       filtered = filtered.filter((r) => r.activeStage === filters.stage);
     }
 
-    // High-level summary metrics
-    const completedCount = evaluatedRisks.filter(
-      (r) => r.isCompleted || (r.mathBreakdown?.remainingPieces === 0) || r.requiredDailyRate === 0
-    ).length;
-    const activeGreenCount = evaluatedRisks.filter(
-      (r) =>
-        r.riskLevel === RiskLevel.GREEN &&
-        !(r.isCompleted || (r.mathBreakdown?.remainingPieces === 0) || r.requiredDailyRate === 0)
-    ).length;
-
+    // High-level summary metrics for active monitored orders
     const summary = {
-      totalMonitoredOrders: evaluatedRisks.length,
-      redCount: evaluatedRisks.filter((r) => r.riskLevel === RiskLevel.RED).length,
-      amberCount: evaluatedRisks.filter((r) => r.riskLevel === RiskLevel.AMBER).length,
-      greenCount: activeGreenCount,
-      completedCount,
-      totalExposureRupees: evaluatedRisks.reduce((sum, r) => sum + r.financialExposureRupees, 0),
+      totalMonitoredOrders: activeEvaluatedRisks.length,
+      redCount: activeEvaluatedRisks.filter((r) => r.riskLevel === RiskLevel.RED).length,
+      amberCount: activeEvaluatedRisks.filter((r) => r.riskLevel === RiskLevel.AMBER).length,
+      greenCount: activeEvaluatedRisks.filter((r) => r.riskLevel === RiskLevel.GREEN).length,
+      completedCount: 0,
+      totalExposureRupees: activeEvaluatedRisks.reduce((sum, r) => sum + r.financialExposureRupees, 0),
     };
 
     return {

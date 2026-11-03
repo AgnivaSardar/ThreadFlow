@@ -50,7 +50,7 @@ export const RiskPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Filters
-  const [riskLevelFilter, setRiskLevelFilter] = useState<'ALL' | RiskLevel | 'COMPLETED'>('ALL');
+  const [riskLevelFilter, setRiskLevelFilter] = useState<'ALL' | RiskLevel>('ALL');
   const [buyerFilter, setBuyerFilter] = useState<string>('ALL');
   const [unitFilter, setUnitFilter] = useState<string>('ALL');
   const [stageFilter, setStageFilter] = useState<string>('ALL');
@@ -120,28 +120,23 @@ export const RiskPage: React.FC = () => {
     fetchRisks();
   };
 
-  // Sort Order:
-  // 1. Most severely lagging active orders first (varianceQtyPerDay most negative).
-  // 2. Completed orders (remaining = 0 or req = 0) pushed down to the very bottom.
+  // Active monitored orders only - completed orders removed from Risk & Delays
   const sortedRisks = useMemo(() => {
-    return [...risks].sort((a, b) => {
-      const aCompleted = Boolean(a.isCompleted || a.mathBreakdown?.remainingPieces === 0 || a.requiredDailyRate === 0);
-      const bCompleted = Boolean(b.isCompleted || b.mathBreakdown?.remainingPieces === 0 || b.requiredDailyRate === 0);
-
-      // Completed orders pushed to the bottom
-      if (aCompleted && !bCompleted) return 1;
-      if (!aCompleted && bCompleted) return -1;
-      if (aCompleted && bCompleted) {
-        return new Date(a.exFactoryDate).getTime() - new Date(b.exFactoryDate).getTime();
-      }
-
-      // Active orders: sort ascending by varianceQtyPerDay (most negative first)
-      if (a.varianceQtyPerDay !== b.varianceQtyPerDay) {
-        return a.varianceQtyPerDay - b.varianceQtyPerDay;
-      }
-
-      return b.financialExposureRupees - a.financialExposureRupees;
-    });
+    return risks
+      .filter((r) => {
+        const isDone = Boolean(
+          r.isCompleted ||
+          r.mathBreakdown?.remainingPieces === 0 ||
+          r.requiredDailyRate === 0
+        );
+        return !isDone;
+      })
+      .sort((a, b) => {
+        if (a.varianceQtyPerDay !== b.varianceQtyPerDay) {
+          return a.varianceQtyPerDay - b.varianceQtyPerDay;
+        }
+        return b.financialExposureRupees - a.financialExposureRupees;
+      });
   }, [risks]);
 
   // Client-side pagination for Monitored Orders
@@ -206,8 +201,8 @@ export const RiskPage: React.FC = () => {
         </button>
       </div>
 
-      {/* KPI Metric Cards (Compact 6-Card Grid) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+      {/* KPI Metric Cards (Compact 5-Card Grid) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
         <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
             Monitored Orders
@@ -241,16 +236,6 @@ export const RiskPage: React.FC = () => {
           <div className="text-lg font-bold text-emerald-700 mt-0.5 font-mono">{summary.greenCount}</div>
         </div>
 
-        <div className="bg-white p-3 rounded-xl border border-emerald-300 bg-emerald-50/30 shadow-xs">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-            Completed
-          </div>
-          <div className="text-lg font-bold text-emerald-800 mt-0.5 font-mono">
-            {summary.completedCount || 0}
-          </div>
-        </div>
-
         <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs col-span-2 sm:col-span-1 lg:col-span-1">
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
             Financial Exposure
@@ -267,7 +252,7 @@ export const RiskPage: React.FC = () => {
           {/* Status Segmented Buttons & Mobile Filter Toggle */}
           <div className="flex items-center justify-between gap-1.5">
             <div className="inline-flex p-1 bg-slate-100 rounded-xl gap-1 overflow-x-auto no-scrollbar">
-              {(['ALL', 'RED', 'AMBER', 'GREEN', 'COMPLETED'] as const).map((lvl) => (
+              {(['ALL', 'RED', 'AMBER', 'GREEN'] as const).map((lvl) => (
                 <button
                   key={lvl}
                   type="button"
@@ -289,8 +274,6 @@ export const RiskPage: React.FC = () => {
                     'Buffer Caution'
                   ) : lvl === 'GREEN' ? (
                     'On Track'
-                  ) : lvl === 'COMPLETED' ? (
-                    'Completed'
                   ) : (
                     lvl
                   )}

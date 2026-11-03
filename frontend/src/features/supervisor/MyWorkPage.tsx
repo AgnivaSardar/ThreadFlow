@@ -257,26 +257,19 @@ export const MyWorkPage: React.FC = () => {
     setIsQueueDrawerOpen(true);
   };
 
-  // Sort: active floor jobs first, completed jobs pushed down totally to the bottom
+  // Only active, incomplete floor jobs - completed jobs removed
   const sortedOrders = useMemo(() => {
     if (!workData?.orders) return [];
-    return [...workData.orders].sort((a, b) => {
-      const aCompleted = Boolean(
-        !a.activeMilestone ||
-        a.activeMilestone.remainingQuantity === 0 ||
-        a.activeMilestone.completedQuantity >= a.activeMilestone.targetQuantity ||
-        (a as any).isCompleted
+    return workData.orders.filter((order) => {
+      const activeStage = order.activeMilestone;
+      const isCompleted = Boolean(
+        !activeStage ||
+        activeStage.remainingQuantity === 0 ||
+        activeStage.completedQuantity >= activeStage.targetQuantity ||
+        (order as any).isCompleted ||
+        (order.milestones && order.milestones.every((m) => m.completedQuantity >= m.targetQuantity))
       );
-      const bCompleted = Boolean(
-        !b.activeMilestone ||
-        b.activeMilestone.remainingQuantity === 0 ||
-        b.activeMilestone.completedQuantity >= b.activeMilestone.targetQuantity ||
-        (b as any).isCompleted
-      );
-
-      if (aCompleted && !bCompleted) return 1;
-      if (!aCompleted && bCompleted) return -1;
-      return 0;
+      return !isCompleted;
     });
   }, [workData?.orders]);
 
@@ -355,14 +348,14 @@ export const MyWorkPage: React.FC = () => {
             <div className="flex items-center justify-between mb-3.5 px-1">
               <h2 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                 <Package className="w-4 h-4 text-sky-600" />
-                {t.activeOrders} ({workData?.orders.length || 0})
+                {t.activeOrders} ({sortedOrders.length})
               </h2>
               <span className="text-xs font-semibold text-slate-500">
                 {t.clickToLog}
               </span>
             </div>
 
-            {workData?.orders.length === 0 ? (
+            {sortedOrders.length === 0 ? (
               <div className="bg-white rounded-2xl p-10 text-center border border-slate-200/90 shadow-2xs">
                 <p className="text-sm font-semibold text-slate-500">
                   {t.noActiveOrders}

@@ -214,22 +214,16 @@ export class ProductionService {
       };
     });
 
-    // Push completed orders to the bottom
-    workItems.sort((a, b) => {
-      const aCompleted = Boolean(
-        !a.activeMilestone ||
-        a.activeMilestone.remainingQuantity === 0 ||
-        a.activeMilestone.completedQuantity >= a.activeMilestone.targetQuantity
+    // Exclude completed orders from floor work
+    const activeOrders = workItems.filter((item) => {
+      const isDone = Boolean(
+        item.isCompleted ||
+        !item.activeMilestone ||
+        item.activeMilestone.remainingQuantity === 0 ||
+        item.activeMilestone.completedQuantity >= item.activeMilestone.targetQuantity ||
+        (item.milestones && item.milestones.every((m) => m.completedQuantity >= m.targetQuantity))
       );
-      const bCompleted = Boolean(
-        !b.activeMilestone ||
-        b.activeMilestone.remainingQuantity === 0 ||
-        b.activeMilestone.completedQuantity >= b.activeMilestone.targetQuantity
-      );
-
-      if (aCompleted && !bCompleted) return 1;
-      if (!aCompleted && bCompleted) return -1;
-      return new Date(a.exFactoryDate).getTime() - new Date(b.exFactoryDate).getTime();
+      return !isDone;
     });
 
     const recentUpdates = await prisma.productionUpdate.findMany({
@@ -249,8 +243,8 @@ export class ProductionService {
 
     return {
       unit: unit ? { id: unit.id, name: unit.name, code: unit.code, type: unit.type } : null,
-      assignedOrdersCount: workItems.length,
-      orders: workItems,
+      assignedOrdersCount: activeOrders.length,
+      orders: activeOrders,
       recentUpdates: recentUpdates.map((u) => ({
         id: u.id,
         idempotencyKey: u.idempotencyKey,
@@ -570,6 +564,21 @@ export class ProductionService {
           userRole: user.role,
         },
       });
+
+      // Automatically mark order as COMPLETED if all milestones have reached target quantity
+      const allMilestones = await tx.tnaMilestone.findMany({
+        where: { orderId: order.id },
+        select: { targetQuantity: true, completedQuantity: true },
+      });
+      const isOrderFullyComplete =
+        allMilestones.length > 0 &&
+        allMilestones.every((m) => m.completedQuantity >= m.targetQuantity);
+      if (isOrderFullyComplete) {
+        await tx.order.update({
+          where: { id: order.id },
+          data: { status: 'COMPLETED' },
+        });
+      }
 
       return { update, updatedMilestone };
     });
