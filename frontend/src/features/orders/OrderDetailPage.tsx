@@ -539,18 +539,22 @@ export const OrderDetailPage: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 8. Supervisor Notes & Bilingual Summary (Expanded width: 42%) */}
+                      {/* 8. Supervisor Notes (English Translation Only) */}
                       <td className="py-2 px-3">
-                        {hasNote ? (
-                          <div className="space-y-0.5 leading-snug">
-                            <div className="text-[11px] text-slate-900 break-words whitespace-normal font-medium">
-                              {noteText}
-                            </div>
-                            {classification?.translatedText && !noteText.includes('[English:') && (
-                              <div className="text-[10px] font-bold text-indigo-700 bg-indigo-50/80 px-1.5 py-0.5 rounded border border-indigo-100 inline-block mt-0.5 break-words whitespace-normal">
-                                [English: {classification.translatedText}]
-                              </div>
-                            )}
+                        {hasNote || classification?.translatedText ? (
+                          <div className="text-[11px] text-slate-900 break-words whitespace-normal font-medium leading-snug">
+                            {(() => {
+                              // If note has [English: ...], display only the clean English inside
+                              if (noteText.includes('[English:')) {
+                                const parts = noteText.split('[English:');
+                                return parts[1]?.replace(/\]$/, '').trim() || parts[0].trim();
+                              }
+                              // If AI translated text exists, prefer the English translation
+                              if (classification?.translatedText) {
+                                return classification.translatedText;
+                              }
+                              return noteText;
+                            })()}
                           </div>
                         ) : (
                           <span className="text-slate-400 italic text-[11px]">No notes</span>

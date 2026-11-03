@@ -456,6 +456,15 @@ export class ProductionService {
             classifiedBy: input.issueCategory ? 'SUPERVISOR_KEYPAD' : (aiResult?.classifiedBy || 'AI'),
           },
         });
+
+        // Ensure note is saved exclusively in clean English translation as requested
+        const cleanEnglishNote = aiResult?.translatedText || aiResult?.englishSummary;
+        if (cleanEnglishNote && cleanEnglishNote !== update.notes) {
+          await tx.productionUpdate.update({
+            where: { id: update.id },
+            data: { notes: cleanEnglishNote },
+          });
+        }
       }
 
       // Record tamper-evident SHA-256 audit event

@@ -132,12 +132,89 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
     isLoading: boolean;
   } | null>(null);
 
-  // Synchronize transcribed Tamil speech into the notes input
+  // Smart speech entity extractor: parses good quantity, rejected quantity, and issue reasons
+  const parseAndAutofillFromSpeech = (spokenText: string) => {
+    if (!spokenText.trim()) return;
+
+    // 1. Extract Good Output Quantity
+    // Matches patterns like "300 good outputs", "300 pieces done", "output 300", "completed 250 pcs", etc.
+    const goodQtyRegex =
+      /(\d+)\s*(?:good\s*(?:output|outputs|pcs|pieces)?|output|outputs|pieces|pcs|completed|done|finished)/i;
+    const goodQtyRegex2 =
+      /(?:good\s*output|good\s*outputs|output|produced|done|completed|finished)\s*(?:is|was|were|of)?\s*(\d+)/i;
+
+    let extractedGood: number | null = null;
+    const matchG1 = spokenText.match(goodQtyRegex);
+    const matchG2 = spokenText.match(goodQtyRegex2);
+
+    if (matchG1) {
+      extractedGood = parseInt(matchG1[1], 10);
+    } else if (matchG2) {
+      extractedGood = parseInt(matchG2[1], 10);
+    } else {
+      const numMatch = spokenText.match(/(\d+)\s*(?:have\s*been\s*done|produced|made)/i);
+      if (numMatch) extractedGood = parseInt(numMatch[1], 10);
+    }
+
+    if (extractedGood !== null && !isNaN(extractedGood) && extractedGood > 0) {
+      setGoodQty(extractedGood);
+      distributeTotalAcrossSizes(extractedGood);
+    }
+
+    // 2. Extract Rejected Quantity
+    const rejRegex =
+      /(\d+)\s*(?:reject|rejected|rejection|defect|defects|damaged|damage|waste|alteration)/i;
+    const rejRegex2 =
+      /(?:reject|rejected|rejection|defect|defects|damaged|damage)\s*(?:is|was|were|of)?\s*(\d+)/i;
+
+    let extractedRej: number | null = null;
+    const matchR1 = spokenText.match(rejRegex);
+    const matchR2 = spokenText.match(rejRegex2);
+    if (matchR1) extractedRej = parseInt(matchR1[1], 10);
+    else if (matchR2) extractedRej = parseInt(matchR2[1], 10);
+
+    if (extractedRej !== null && !isNaN(extractedRej) && extractedRej > 0) {
+      setRejectedQty(extractedRej);
+    }
+
+    // 3. Extract Issue Reason & Auto-select Chip
+    const lower = spokenText.toLowerCase();
+    let matchedCategory: string | null = null;
+
+    if (
+      /machine\s*breakdown|needle\s*break|motor|cutter\s*jam|stitching\s*stop|overlock|mechanic|மெஷின்|ஊசி|ரிப்பேர்/i.test(
+        lower
+      )
+    ) {
+      matchedCategory = 'MACHINE_BREAKDOWN';
+    } else if (/power\s*cut|power\s*outage|eb\s*off|generator|கரண்ட்|மின்சாரம்|மின்வெட்டு/i.test(lower)) {
+      matchedCategory = 'POWER_OUTAGE';
+    } else if (/fabric\s*defect|shade|gsm|dye|color\s*patch|hole|துணி|சாயம்/i.test(lower)) {
+      matchedCategory = 'FABRIC_DEFECT';
+    } else if (/subcontract|printing|washing|embroidery|gate\s*pass|challan|பிரிண்டிங்|வாஷிங்/i.test(lower)) {
+      matchedCategory = 'SUBCONTRACTOR_DELAY';
+    } else if (/labour\s*shortage|tailor\s*leave|tailor\s*shortage|operator\s*absent|workers\s*absent|ஆட்கள்/i.test(lower)) {
+      matchedCategory = 'LABOUR_SHORTAGE';
+    } else if (/quality\s*hold|audit\s*hold|measurement|rejection\s*high|ஆடிட்/i.test(lower)) {
+      matchedCategory = 'QUALITY_HOLD';
+    }
+
+    if (matchedCategory) {
+      const targetChip = SUPERVISOR_ISSUE_CHIPS.find((c) => c.category === matchedCategory);
+      if (targetChip) {
+        setSelectedChip(targetChip);
+      }
+    }
+  };
+
+  // Synchronize transcribed speech into notes input and autofill quantities/issues
   useEffect(() => {
     if (transcript) {
       setNotes((prev) => {
         const trimmed = prev.trim();
-        return trimmed ? `${trimmed} ${transcript}` : transcript;
+        const combined = trimmed ? `${trimmed} ${transcript}` : transcript;
+        parseAndAutofillFromSpeech(combined);
+        return combined;
       });
       resetTranscript();
     }
@@ -389,12 +466,14 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             .filter((l) => l.goodQuantity > 0 || l.rejectedQuantity > 0)
         : undefined;
 
-    const isTamilScript = /[\u0B80-\u0BFF]/.test(notes);
-    const finalFormattedNote = notes.trim()
-      ? isTamilScript && aiPreview?.summary && !notes.includes('[English:')
-        ? `${notes.trim()}\n[English: ${aiPreview.summary}]`
-        : notes.trim()
-      : undefined;
+    // Save exclusively in clean English translation as requested
+    const englishText = aiPreview?.summary
+      ? aiPreview.summary
+      : notes.includes('[English:')
+      ? notes.split('[English:')[1]?.replace(/\]$/, '').trim()
+      : notes.trim();
+
+    const finalFormattedNote = englishText || undefined;
 
     const payload = {
       orderId: order.orderId,
@@ -861,60 +940,19 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
         </div>
       </div>
 
-      {/* TAMIL VOICE-TO-TEXT & NOTES */}
+      {/* VOICE-TO-TEXT & NOTES (Auto-detecting single speak button) */}
       <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-black uppercase tracking-wider text-slate-800">
             {t.notesVoiceTitle}
           </span>
           <span className="text-[10px] font-bold text-slate-400">
-            {lang === 'ta' ? 'தமிழ் குரல் பதிவு (ta-IN)' : 'Tamil Speech (ta-IN)'}
+            Auto-Detect Voice & AI Autofill
           </span>
         </div>
 
-        {/* Voice Recognition Controls with Speech Language Selector */}
+        {/* Voice Recognition Control: Single Clean Speak Button */}
         <div className="mb-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500">
-              {lang === 'ta' ? 'குரல் பதிவு மொழி:' : 'Voice Input Language:'}
-            </span>
-            <div className="flex items-center gap-1 p-0.5 bg-slate-100 rounded-lg border border-slate-200">
-              <button
-                type="button"
-                onClick={() => setSpeechLang('ta-IN')}
-                className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer ${
-                  speechLang === 'ta-IN'
-                    ? 'bg-white text-indigo-900 shadow-2xs font-extrabold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                🇮🇳 தமிழ்
-              </button>
-              <button
-                type="button"
-                onClick={() => setSpeechLang('hi-IN')}
-                className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer ${
-                  speechLang === 'hi-IN'
-                    ? 'bg-white text-indigo-900 shadow-2xs font-extrabold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                🇮🇳 हिन्दी
-              </button>
-              <button
-                type="button"
-                onClick={() => setSpeechLang('en-IN')}
-                className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer ${
-                  speechLang === 'en-IN'
-                    ? 'bg-white text-indigo-900 shadow-2xs font-extrabold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                🇬🇧 English
-              </button>
-            </div>
-          </div>
-
           <button
             type="button"
             onClick={handleToggleVoice}
@@ -928,24 +966,12 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             {isListening ? (
               <>
                 <MicOff className="w-5 h-5 text-white animate-bounce" />
-                <span>
-                  {speechLang === 'ta-IN'
-                    ? `${t.voiceListening} (${t.voiceStop})`
-                    : speechLang === 'hi-IN'
-                    ? 'सुन रहे हैं... (रोकें)'
-                    : 'Listening in English... (Stop)'}
-                </span>
+                <span>Listening... Speak in any language (Tap to stop)</span>
               </>
             ) : (
               <>
                 <Mic className="w-5 h-5 text-indigo-700" />
-                <span>
-                  {speechLang === 'ta-IN'
-                    ? 'தமிழில் பேசுக (Mic)'
-                    : speechLang === 'hi-IN'
-                    ? 'हिन्दी में बोलें (Mic)'
-                    : 'Speak English (Mic)'}
-                </span>
+                <span>Tap to Speak (Auto-detects language & autofills output)</span>
               </>
             )}
           </button>
