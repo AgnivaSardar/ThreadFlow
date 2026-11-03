@@ -111,8 +111,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Brand Header */}
           <div className="h-16 flex items-center justify-between px-5 border-b border-[#143D60]/60">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-[#0C2D48] shadow-md shrink-0">
-                <Factory className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-xl bg-white p-1 flex items-center justify-center text-[#0C2D48] shadow-md shrink-0 overflow-hidden">
+                <img src="/logo.png" alt="ThreadFlow Logo" className="w-full h-full object-contain" />
               </div>
               <div>
                 <div className="text-base font-bold tracking-tight text-white font-mono leading-none">

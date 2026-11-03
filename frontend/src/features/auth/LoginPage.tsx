@@ -71,8 +71,8 @@ export const LoginPage: React.FC = () => {
       <div className="w-full lg:w-[42%] h-full bg-[#0C2D48] flex flex-col justify-between p-6 sm:p-10 lg:p-12 relative z-10 border-r border-[#143D60]">
         {/* Top Brand Header */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#0C2D48] shadow-md shadow-black/20">
-            <Factory className="w-5 h-5 text-[#0C2D48]" />
+          <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center text-[#0C2D48] shadow-md shadow-black/20 overflow-hidden">
+            <img src="/logo.png" alt="ThreadFlow Logo" className="w-full h-full object-contain" />
           </div>
           <div>
             <span className="text-xl font-bold tracking-tight text-white font-mono leading-none">

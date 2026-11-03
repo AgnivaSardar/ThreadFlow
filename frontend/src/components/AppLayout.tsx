@@ -150,14 +150,17 @@ export const AppLayout: React.FC = () => {
           {/* Left: Mobile Menu Toggle + Authoritative Server Date & Time */}
           <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
             {/* Hamburger Button for Mobile */}
-            <button
-              type="button"
-              onClick={() => setIsMobileSidebarOpen(true)}
-              className="lg:hidden p-1.5 sm:p-2 rounded-xl text-slate-700 hover:bg-slate-100 active:scale-95 transition-all shrink-0"
-              aria-label="Open Navigation Menu"
-            >
-              <Menu className="w-5 h-5 text-slate-800" />
-            </button>
+            <div className="flex items-center gap-1.5 lg:hidden">
+              <button
+                type="button"
+                onClick={() => setIsMobileSidebarOpen(true)}
+                className="p-1.5 rounded-xl text-slate-700 hover:bg-slate-100 active:scale-95 transition-all shrink-0"
+                aria-label="Open Navigation Menu"
+              >
+                <Menu className="w-5 h-5 text-slate-800" />
+              </button>
+              <img src="/logo.png" alt="ThreadFlow" className="w-6 h-6 object-contain shrink-0" />
+            </div>
 
             {/* Server Date & Time Badge */}
             <div className="flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-slate-50 border border-slate-200/90 text-slate-700 text-xs shadow-2xs shrink-0">
