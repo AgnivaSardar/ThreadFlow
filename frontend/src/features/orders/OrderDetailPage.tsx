@@ -78,6 +78,92 @@ export const OrderDetailPage: React.FC = () => {
     auditPage * auditLimit
   );
 
+  const renderPaginationButtons = (
+    currentPage: number,
+    totalPages: number,
+    onSelectPage: (p: number) => void
+  ) => {
+    if (totalPages <= 1) return null;
+    const buttons = [];
+
+    if (totalPages <= 5) {
+      for (let p = 1; p <= totalPages; p++) {
+        buttons.push(
+          <button
+            key={p}
+            type="button"
+            onClick={() => onSelectPage(p)}
+            className={`w-7 h-7 rounded-lg text-xs font-bold cursor-pointer transition flex items-center justify-center ${
+              currentPage === p
+                ? 'bg-[#0C2D48] text-white shadow-xs'
+                : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+            }`}
+          >
+            {p}
+          </button>
+        );
+      }
+      return buttons;
+    }
+
+    // Fixed first three pages: 1, 2, 3
+    [1, 2, 3].forEach((p) => {
+      buttons.push(
+        <button
+          key={p}
+          type="button"
+          onClick={() => onSelectPage(p)}
+          className={`w-7 h-7 rounded-lg text-xs font-bold cursor-pointer transition flex items-center justify-center ${
+            currentPage === p
+              ? 'bg-[#0C2D48] text-white shadow-xs'
+              : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+          }`}
+        >
+          {p}
+        </button>
+      );
+    });
+
+    if (currentPage > 3 && currentPage < totalPages) {
+      if (currentPage > 4) {
+        buttons.push(<span key="ellip-mid-start" className="text-slate-500 text-xs font-bold px-1">...</span>);
+      }
+      buttons.push(
+        <button
+          key={currentPage}
+          type="button"
+          onClick={() => onSelectPage(currentPage)}
+          className="w-7 h-7 rounded-lg text-xs font-bold cursor-pointer transition flex items-center justify-center bg-[#0C2D48] text-white shadow-xs"
+        >
+          {currentPage}
+        </button>
+      );
+      if (currentPage < totalPages - 1) {
+        buttons.push(<span key="ellip-mid-end" className="text-slate-500 text-xs font-bold px-1">...</span>);
+      }
+    } else {
+      buttons.push(<span key="ellip-end" className="text-slate-500 text-xs font-bold px-1">...</span>);
+    }
+
+    // Last page
+    buttons.push(
+      <button
+        key={totalPages}
+        type="button"
+        onClick={() => onSelectPage(totalPages)}
+        className={`w-7 h-7 rounded-lg text-xs font-bold cursor-pointer transition flex items-center justify-center ${
+          currentPage === totalPages
+            ? 'bg-[#0C2D48] text-white shadow-xs'
+            : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+        }`}
+      >
+        {totalPages}
+      </button>
+    );
+
+    return buttons;
+  };
+
   const fetchRiskEvaluation = async (orderId: string, milestoneId: string) => {
     try {
       const res = await apiRequest<{ success: boolean; data: RiskEvaluationResult }>(
@@ -854,40 +940,27 @@ export const OrderDetailPage: React.FC = () => {
               {Math.min(logPage * logLimit, order.productionUpdates.length)} of{' '}
               {order.productionUpdates.length} shift logs
             </span>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <button
                 type="button"
                 onClick={() => setLogPage((p) => Math.max(1, p - 1))}
                 disabled={logPage <= 1}
-                className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
+                className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white text-slate-700 shadow-2xs cursor-pointer transition flex items-center justify-center"
                 title="Previous page"
               >
-                <ChevronLeft className="w-3.5 h-3.5" />
+                <ChevronLeft className="w-4 h-4 stroke-[2.5] text-slate-800" />
               </button>
 
-              {Array.from({ length: totalLogPages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setLogPage(p)}
-                  className={`w-6 h-6 text-xs font-bold rounded-md transition cursor-pointer ${
-                    p === logPage
-                      ? 'bg-[#0C2D48] text-white shadow-xs'
-                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
+              {renderPaginationButtons(logPage, totalLogPages, setLogPage)}
 
               <button
                 type="button"
                 onClick={() => setLogPage((p) => Math.min(totalLogPages, p + 1))}
                 disabled={logPage >= totalLogPages}
-                className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
+                className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white text-slate-700 shadow-2xs cursor-pointer transition flex items-center justify-center"
                 title="Next page"
               >
-                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-4 h-4 stroke-[2.5] text-slate-800" />
               </button>
             </div>
           </div>
@@ -898,115 +971,131 @@ export const OrderDetailPage: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <History className="w-4 h-4 text-slate-600" />
-            <h3 className="text-base font-bold text-slate-800">Order Change History</h3>
+            <History className="w-4 h-4 text-sky-600" />
+            <div>
+              <h3 className="text-base font-bold text-slate-900 leading-tight">Order Change History</h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Immutable compliance log of schedule alterations, buyer dispatches, and milestone shifts
+              </p>
+            </div>
           </div>
-          <span className="text-xs text-slate-500 font-medium">
+          <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full border border-slate-200">
             {order.auditEvents.length} Recorded Changes
           </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
-              <tr>
-                <th className="py-2.5 px-3 text-slate-100">Date & Time</th>
-                <th className="py-2.5 px-3 text-slate-100">Action</th>
-                <th className="py-2.5 px-3 text-slate-100">Reason</th>
-                <th className="py-2.5 px-3 text-slate-100">Change Summary</th>
-                <th className="py-2.5 px-3 text-slate-100">User & Role</th>
-                <th className="py-2.5 px-3 text-center text-slate-100">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 font-normal">
-              {paginatedAuditEvents.map((ev) => {
-                let prev = '-';
-                let next = '-';
-                try {
-                  if (ev.previousValue) prev = JSON.parse(ev.previousValue).exFactoryDate?.split('T')[0] || '-';
-                  if (ev.newValue) next = JSON.parse(ev.newValue).exFactoryDate?.split('T')[0] || '-';
-                } catch {
-                  // fallback
-                }
+        {/* Unified Table Container */}
+        <div className="w-full rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs table-fixed">
+              <colgroup>
+                <col className="w-[18%]" />
+                <col className="w-[18%]" />
+                <col className="w-[16%]" />
+                <col className="w-[20%]" />
+                <col className="w-[18%]" />
+                <col className="w-[10%]" />
+              </colgroup>
+              <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
+                <tr>
+                  <th className="py-3 px-3 text-slate-100">Date & Time</th>
+                  <th className="py-3 px-3 text-slate-100">Action</th>
+                  <th className="py-3 px-3 text-slate-100">Reason</th>
+                  <th className="py-3 px-3 text-slate-100">Change Summary</th>
+                  <th className="py-3 px-3 text-slate-100">User & Role</th>
+                  <th className="py-3 px-3 text-center text-slate-100">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-normal">
+                {paginatedAuditEvents.map((ev) => {
+                  let prev = '-';
+                  let next = '-';
+                  try {
+                    if (ev.previousValue) prev = JSON.parse(ev.previousValue).exFactoryDate?.split('T')[0] || '-';
+                    if (ev.newValue) next = JSON.parse(ev.newValue).exFactoryDate?.split('T')[0] || '-';
+                  } catch {
+                    // fallback
+                  }
 
-                const friendlyReason =
-                  ev.action === 'BUYER_SCHEDULE_NOTIFICATION'
-                    ? 'Automated Dispatch'
-                    : ev.action === 'BUYER_DAILY_RESPONSE'
-                    ? 'Shift Floor Sign-off'
-                    : ev.reasonCode === 'BUYER_REQUEST'
-                    ? 'Buyer Request'
-                    : ev.reasonCode === 'FABRIC_DELAY'
-                    ? 'Fabric Delay'
-                    : ev.reasonCode === 'LABOUR_SHORTAGE'
-                    ? 'Labour Shortage'
-                    : ev.reasonCode === 'MACHINE_BREAKDOWN'
-                    ? 'Machine Breakdown'
-                    : ev.reasonCode === 'POWER_OUTAGE'
-                    ? 'Power Interruption'
-                    : ev.reasonCode === 'QUALITY_HOLD'
-                    ? 'Quality Hold'
-                    : ev.reasonCode === 'SUBCONTRACTOR_DELAY'
-                    ? 'Subcontractor Delay'
-                    : ev.reasonCode === 'INITIAL_PO_CREATION'
-                    ? 'New Order'
-                    : ev.reasonCode || 'Schedule Update';
+                  const friendlyReason =
+                    ev.action === 'BUYER_SCHEDULE_NOTIFICATION'
+                      ? 'Automated Dispatch'
+                      : ev.action === 'BUYER_DAILY_RESPONSE'
+                      ? 'Shift Floor Sign-off'
+                      : ev.reasonCode === 'BUYER_REQUEST'
+                      ? 'Buyer Request'
+                      : ev.reasonCode === 'FABRIC_DELAY'
+                      ? 'Fabric Delay'
+                      : ev.reasonCode === 'LABOUR_SHORTAGE'
+                      ? 'Labour Shortage'
+                      : ev.reasonCode === 'MACHINE_BREAKDOWN'
+                      ? 'Machine Breakdown'
+                      : ev.reasonCode === 'POWER_OUTAGE'
+                      ? 'Power Interruption'
+                      : ev.reasonCode === 'QUALITY_HOLD'
+                      ? 'Quality Hold'
+                      : ev.reasonCode === 'SUBCONTRACTOR_DELAY'
+                      ? 'Subcontractor Delay'
+                      : ev.reasonCode === 'INITIAL_PO_CREATION'
+                      ? 'New Order'
+                      : ev.reasonCode || 'Schedule Update';
 
-                const friendlyAction =
-                  ev.action === 'UPDATE_EX_FACTORY_DATE'
-                    ? 'Ex-Factory Revised'
-                    : ev.action === 'BULK_UPDATE_EX_FACTORY_DATE'
-                    ? 'Bulk Schedule Shift'
-                    : ev.action === 'BUYER_SCHEDULE_NOTIFICATION'
-                    ? 'Buyer Notification'
-                    : ev.action === 'BUYER_DAILY_RESPONSE'
-                    ? 'Buyer Daily Response'
-                    : ev.action === 'CREATE_ORDER'
-                    ? 'Order Created'
-                    : ev.action;
+                  const friendlyAction =
+                    ev.action === 'UPDATE_EX_FACTORY_DATE'
+                      ? 'Ex-Factory Revised'
+                      : ev.action === 'BULK_UPDATE_EX_FACTORY_DATE'
+                      ? 'Bulk Schedule Shift'
+                      : ev.action === 'BUYER_SCHEDULE_NOTIFICATION'
+                      ? 'Buyer Notification'
+                      : ev.action === 'BUYER_DAILY_RESPONSE'
+                      ? 'Buyer Daily Response'
+                      : ev.action === 'CREATE_ORDER'
+                      ? 'Order Created'
+                      : ev.action;
 
-                return (
-                  <tr key={ev.id} className="even:bg-slate-50/80 odd:bg-white hover:bg-sky-50/60 transition">
-                    <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
-                      {new Date(ev.timestamp).toLocaleString(undefined, {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </td>
-                    <td className="py-2.5 px-3 font-semibold text-slate-800 whitespace-nowrap">
-                      {friendlyAction}
-                    </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap">
-                      <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
-                        ev.action === 'BUYER_DAILY_RESPONSE'
-                          ? 'bg-sky-50 text-sky-900 border-sky-200'
-                          : 'bg-amber-50 text-amber-900 border-amber-200'
-                      }`}>
-                        {friendlyReason}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 font-medium text-slate-700 max-w-xs truncate" title={ev.action === 'BUYER_DAILY_RESPONSE' ? ev.notes || '' : undefined}>
-                      {ev.action === 'BUYER_DAILY_RESPONSE'
-                        ? ev.notes || 'Buyer daily sign-off'
-                        : prev !== '-' ? `${prev} → ${next}` : next}
-                    </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap text-slate-600">
-                      {ev.user?.name || 'System'} ({ev.userRole})
-                    </td>
-                    <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 font-semibold text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                        Logged
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                  return (
+                    <tr key={ev.id} className="even:bg-slate-50/70 odd:bg-white hover:bg-sky-50/50 transition-colors">
+                      <td className="py-3 px-3 text-slate-600 font-medium whitespace-nowrap">
+                        {new Date(ev.timestamp).toLocaleString(undefined, {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </td>
+                      <td className="py-3 px-3 font-bold text-slate-800 whitespace-nowrap">
+                        {friendlyAction}
+                      </td>
+                      <td className="py-3 px-3 whitespace-nowrap">
+                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                          ev.action === 'BUYER_DAILY_RESPONSE'
+                            ? 'bg-sky-50 text-sky-900 border-sky-200/80'
+                            : 'bg-amber-50 text-amber-900 border-amber-200/80'
+                        }`}>
+                          {friendlyReason}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 font-medium text-slate-700 max-w-0 truncate" title={ev.action === 'BUYER_DAILY_RESPONSE' ? ev.notes || '' : (prev !== '-' ? `${prev} → ${next}` : next)}>
+                        {ev.action === 'BUYER_DAILY_RESPONSE'
+                          ? ev.notes || 'Buyer daily sign-off'
+                          : prev !== '-' ? `${prev} → ${next}` : next}
+                      </td>
+                      <td className="py-3 px-3 whitespace-nowrap text-slate-600 text-[11px] truncate" title={`${ev.user?.name || 'System'} (${ev.userRole})`}>
+                        {ev.user?.name || 'System'} ({ev.userRole})
+                      </td>
+                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 font-semibold text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                          Logged
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Pagination Controls for Order Change History */}
@@ -1017,40 +1106,27 @@ export const OrderDetailPage: React.FC = () => {
               {Math.min(auditPage * auditLimit, order.auditEvents.length)} of{' '}
               {order.auditEvents.length} recorded changes
             </span>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <button
                 type="button"
                 onClick={() => setAuditPage((p) => Math.max(1, p - 1))}
                 disabled={auditPage <= 1}
-                className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
+                className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white text-slate-700 shadow-2xs cursor-pointer transition flex items-center justify-center"
                 title="Previous page"
               >
-                <ChevronLeft className="w-3.5 h-3.5" />
+                <ChevronLeft className="w-4 h-4 stroke-[2.5] text-slate-800" />
               </button>
 
-              {Array.from({ length: totalAuditPages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setAuditPage(p)}
-                  className={`w-6 h-6 text-xs font-bold rounded-md transition cursor-pointer ${
-                    p === auditPage
-                      ? 'bg-[#0C2D48] text-white shadow-xs'
-                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
+              {renderPaginationButtons(auditPage, totalAuditPages, setAuditPage)}
 
               <button
                 type="button"
                 onClick={() => setAuditPage((p) => Math.min(totalAuditPages, p + 1))}
                 disabled={auditPage >= totalAuditPages}
-                className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
+                className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white text-slate-700 shadow-2xs cursor-pointer transition flex items-center justify-center"
                 title="Next page"
               >
-                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-4 h-4 stroke-[2.5] text-slate-800" />
               </button>
             </div>
           </div>
