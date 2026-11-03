@@ -457,25 +457,25 @@ export const OrdersPage: React.FC = () => {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs min-w-[760px]">
-              <thead className="bg-slate-50/80 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+              <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
                 <tr>
                   <th className="py-3.5 px-3 text-center w-10">
                     <input
                       type="checkbox"
                       checked={orders.length > 0 && selectedOrderIds.length === orders.length}
                       onChange={toggleSelectAll}
-                      className="rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                      className="rounded border-white/30 bg-white/20 text-sky-400 focus:ring-sky-400 cursor-pointer"
                       title="Select all orders on this page"
                     />
                   </th>
-                  <th className="py-3.5 px-4">PO & Style</th>
-                  <th className="py-3.5 px-4">Buyer & Market</th>
-                  <th className="py-3.5 px-4">Assigned Unit</th>
-                  <th className="py-3.5 px-4 text-right">Order Qty</th>
-                  <th className="py-3.5 px-4">Active Stage & Progress</th>
-                  <th className="py-3.5 px-4">Ex-Factory</th>
-                  <th className="py-3.5 px-4 text-center">Status</th>
-                  <th className="py-3.5 px-4 text-right">Action</th>
+                  <th className="py-3.5 px-4 text-slate-100">PO & Style</th>
+                  <th className="py-3.5 px-4 text-slate-100">Buyer & Market</th>
+                  <th className="py-3.5 px-4 text-slate-100">Assigned Unit</th>
+                  <th className="py-3.5 px-4 text-right text-slate-100">Order Qty</th>
+                  <th className="py-3.5 px-4 text-slate-100">Active Stage & Progress</th>
+                  <th className="py-3.5 px-4 text-slate-100">Ex-Factory</th>
+                  <th className="py-3.5 px-4 text-center text-slate-100">Status</th>
+                  <th className="py-3.5 px-4 text-right text-slate-100">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-normal">
@@ -491,10 +491,8 @@ export const OrdersPage: React.FC = () => {
                       onClick={() => navigate(`/orders/${order.id}`)}
                       className={`transition group cursor-pointer select-none ${
                         isSelected
-                          ? 'bg-sky-50/80 hover:bg-sky-50'
-                          : isCompleted
-                          ? 'bg-slate-50/50 hover:bg-slate-100/60'
-                          : 'hover:bg-sky-50/50'
+                          ? 'bg-sky-100/90 hover:bg-sky-100'
+                          : 'even:bg-slate-50/80 odd:bg-white hover:bg-sky-50/60'
                       }`}
                     >
                       {/* Checkbox Column */}

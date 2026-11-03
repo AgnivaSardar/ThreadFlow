@@ -192,42 +192,42 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
           : 'border-slate-200 bg-slate-50/50'
       }`}
     >
-      {/* Top Header Bar with PO, Style, Stage and Exact Date & Time */}
-      <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+      {/* Top Header Bar Styled with Dark Navy Matching Sidebar & Table Headers */}
+      <div className="px-4 py-2.5 bg-[#0C2D48] text-white border-b border-[#143D60] flex flex-wrap items-center justify-between gap-2 text-xs">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono font-black text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
+          <span className="font-mono font-black text-sky-200 bg-white/10 px-2 py-0.5 rounded border border-white/20">
             {alert.poNumber}
           </span>
-          <span className="font-bold text-slate-800">{alert.style}</span>
-          <span className="text-slate-300">•</span>
-          <span className="font-medium text-slate-600">{alert.buyer.name}</span>
-          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-sky-50 text-sky-800 border border-sky-200">
+          <span className="font-bold text-white">{alert.style.split(' (')[0].split(' - ')[0]}</span>
+          <span className="text-white/40">•</span>
+          <span className="font-medium text-sky-100">{alert.buyer.name}</span>
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-sky-900/90 text-sky-200 border border-sky-600/80">
             {alert.stage.replace(/_/g, ' ')}
           </span>
         </div>
 
         {/* Status Badge & Recorded Date/Time */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 bg-white px-2 py-0.5 rounded-lg border border-slate-200">
-            <Calendar className="w-3 h-3 text-slate-400" />
+          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-200 bg-white/10 px-2 py-0.5 rounded-lg border border-white/15">
+            <Calendar className="w-3 h-3 text-sky-300" />
             <span>{recordedDateTime}</span>
           </span>
 
           {isPending && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
-              <Clock className="w-3.5 h-3.5 text-amber-700" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-400 text-amber-950 border border-amber-300 shadow-2xs">
+              <Clock className="w-3.5 h-3.5 text-amber-900" />
               {lang === 'ta' ? 'மதிப்பாய்வு நிலுவை' : 'Pending Review'}
             </span>
           )}
           {isConfirmed && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
-              <Eye className="w-3.5 h-3.5 text-emerald-700" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-400 text-emerald-950 border border-emerald-300 shadow-2xs">
+              <Eye className="w-3.5 h-3.5 text-emerald-900" />
               {lang === 'ta' ? 'வாங்குபவருக்குத் தெரிவிக்கப்பட்டது' : 'Buyer Informed'}
             </span>
           )}
           {isOverridden && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-700 border border-slate-300">
-              <EyeOff className="w-3.5 h-3.5 text-slate-600" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-800 border border-slate-300 shadow-2xs">
+              <EyeOff className="w-3.5 h-3.5 text-slate-700" />
               {lang === 'ta' ? 'உள்ளகமாகத் தீர்க்கப்பட்டது' : 'Handled Internally'}
             </span>
           )}

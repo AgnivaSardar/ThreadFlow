@@ -61,7 +61,8 @@ export class ProductionController {
     if (!req.user) {
       throw new AppError('Authentication required', 401);
     }
-    const data = await ProductionService.getSupervisorWork(req.user);
+    const unitId = typeof req.query.unitId === 'string' ? req.query.unitId : undefined;
+    const data = await ProductionService.getSupervisorWork(req.user, unitId);
     res.status(200).json({
       success: true,
       data,

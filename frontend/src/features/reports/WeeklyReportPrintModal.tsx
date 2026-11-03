@@ -134,20 +134,20 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border border-slate-300">
-                <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] tracking-wider border-b border-slate-300">
+                <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
                   <tr>
-                    <th className="py-2 px-2.5 border-r border-slate-300">PO Number</th>
-                    <th className="py-2 px-2.5 border-r border-slate-300">Style</th>
-                    <th className="py-2 px-2 text-right border-r border-slate-300">Quantity</th>
-                    <th className="py-2 px-2 border-r border-slate-300">Ex-Factory</th>
-                    <th className="py-2 px-2 border-r border-slate-300">Active Stage</th>
-                    <th className="py-2 px-2 text-center border-r border-slate-300">Progress</th>
-                    <th className="py-2 px-3">Confirmed Delivery Directives</th>
+                    <th className="py-2.5 px-2.5 text-slate-100 border-r border-[#143D60]">PO Number</th>
+                    <th className="py-2.5 px-2.5 text-slate-100 border-r border-[#143D60]">Style</th>
+                    <th className="py-2.5 px-2 text-right text-slate-100 border-r border-[#143D60]">Quantity</th>
+                    <th className="py-2.5 px-2 text-slate-100 border-r border-[#143D60]">Ex-Factory</th>
+                    <th className="py-2.5 px-2 text-slate-100 border-r border-[#143D60]">Active Stage</th>
+                    <th className="py-2.5 px-2 text-center text-slate-100 border-r border-[#143D60]">Progress</th>
+                    <th className="py-2.5 px-3 text-slate-100">Confirmed Delivery Directives</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {orders.map((o) => (
-                    <tr key={o.id} className="hover:bg-slate-50/50">
+                    <tr key={o.id} className="even:bg-slate-50 odd:bg-white hover:bg-sky-50/50">
                       <td className="py-2 px-2.5 font-mono font-bold text-slate-900 border-r border-slate-300">
                         {o.poNumber}
                       </td>

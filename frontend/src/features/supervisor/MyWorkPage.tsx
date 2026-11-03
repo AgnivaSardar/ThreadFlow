@@ -36,6 +36,7 @@ import {
   PendingUpdateRecord,
   StorageQuotaInfo,
 } from '../../offline/db';
+import { CustomSelect, Option } from '../../components/CustomSelect';
 import {
   Layers,
   ChevronRight,
@@ -68,6 +69,7 @@ export const MyWorkPage: React.FC = () => {
 
   // Work Data state
   const [workData, setWorkData] = useState<SupervisorWorkResponse | null>(null);
+  const [selectedUnitFilter, setSelectedUnitFilter] = useState<string>('ALL');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -105,11 +107,15 @@ export const MyWorkPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
 
-    const cacheKey = `work_${user?.assignedUnitId || 'default'}`;
+    const cacheKey = `work_${selectedUnitFilter || user?.assignedUnitId || 'default'}`;
+    const url =
+      selectedUnitFilter && selectedUnitFilter !== 'ALL'
+        ? `/production/work?unitId=${selectedUnitFilter}`
+        : '/production/work';
 
     if (isEffectiveOnline()) {
       try {
-        const response = await apiRequest<{ data: SupervisorWorkResponse }>('/production/work');
+        const response = await apiRequest<{ data: SupervisorWorkResponse }>(url);
         setWorkData(response.data);
         await cacheSupervisorWork(cacheKey, response.data);
       } catch (err: any) {
@@ -137,7 +143,11 @@ export const MyWorkPage: React.FC = () => {
       }
       setIsLoading(false);
     }
-  }, [user?.assignedUnitId, lang]);
+  }, [user?.assignedUnitId, selectedUnitFilter, lang]);
+
+  useEffect(() => {
+    fetchWork();
+  }, [fetchWork]);
 
   // Synchronize language changes & queue updates
   useEffect(() => {
@@ -314,9 +324,25 @@ export const MyWorkPage: React.FC = () => {
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
 
-          <div className="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-xl text-xs shadow-xs transition">
-            <Building2 className="w-4 h-4 text-sky-700" />
-            <span>{translateUnit(workData?.unit?.name || 'Unit 1 (Cotton Hub - Own)', lang)}</span>
+          <div className="w-52 sm:w-60">
+            <CustomSelect
+              value={selectedUnitFilter}
+              options={[
+                { value: 'ALL', label: lang === 'ta' ? 'அனைத்து பிரிவுகள்' : 'All Manufacturing Units' },
+                ...(workData?.allUnits || [
+                  { id: 'unit-1', name: 'Unit 1 (Cotton Hub - Own)', code: 'UNIT_1', type: 'OWN' },
+                  { id: 'unit-2', name: 'Unit 2 (Stitching Hub - Own)', code: 'UNIT_2', type: 'OWN' },
+                  { id: 'sub-1', name: 'Subcontract - PrintTex', code: 'PRINTTEX', type: 'SUBCONTRACTOR' },
+                ]).map((u: any) => ({
+                  value: u.id,
+                  label: translateUnit(u.name, lang),
+                  badge: u.type === 'SUBCONTRACTOR' ? 'Subcontract' : 'In-House',
+                })),
+              ]}
+              onChange={(val) => setSelectedUnitFilter(val)}
+              placeholder="Select Unit"
+              buttonClassName="bg-white border-slate-200 py-1.5 text-xs font-semibold text-slate-800"
+            />
           </div>
         </div>
       </div>
@@ -378,6 +404,7 @@ export const MyWorkPage: React.FC = () => {
 
                   const isSelected = selectedOrder?.orderId === order.orderId;
                   const isOptimistic = (order as any).hasOptimisticPending;
+                  const primaryStyleName = order.style.split(' (')[0].split(' - ')[0];
 
                   return (
                     <div
@@ -387,63 +414,73 @@ export const MyWorkPage: React.FC = () => {
                           setSelectedOrder(order);
                         }
                       }}
-                      className={`bg-white rounded-2xl p-5 border transition-all cursor-pointer shadow-2xs hover:shadow-md relative overflow-hidden flex flex-col justify-between group ${
+                      className={`bg-white rounded-2xl border transition-all cursor-pointer shadow-2xs hover:shadow-md overflow-hidden flex flex-col justify-between group ${
                         isSelected
                           ? 'border-amber-500 ring-2 ring-amber-400/50 shadow-md'
                           : isCompleted
-                          ? 'border-emerald-200/90 bg-emerald-50/10 hover:border-emerald-300'
+                          ? 'border-emerald-200/90 hover:border-emerald-300'
                           : 'border-slate-200/90 hover:border-slate-300'
                       }`}
                     >
-                      <div>
-                        {/* Top Metadata Row */}
-                        <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-                          <div className="flex items-center gap-1.5">
-                            {isCompleted ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-300">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                                {lang === 'ta' ? 'முடிந்தது' : 'Completed'} ({stageLabel})
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-900 border border-blue-200/80">
-                                <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
-                                {stageLabel}
-                              </span>
-                            )}
-                            {/* Optimistic Local Indicator */}
-                            {isOptimistic && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-900 border border-amber-300 animate-pulse">
-                                <Clock className="w-3 h-3 text-amber-600" />
-                                <span>{t.optimisticPendingBadge}</span>
+                      {/* Top Header Bar Styled with Dark Navy Matching Table Headers */}
+                      <div className="bg-[#0C2D48] text-white px-4 py-2.5 flex items-center justify-between border-b border-[#143D60] gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-mono font-black text-sky-200 bg-white/10 px-2 py-0.5 rounded border border-white/20 text-xs shrink-0">
+                            {order.poNumber}
+                          </span>
+                          <span className="font-bold text-white text-xs sm:text-sm truncate">
+                            {primaryStyleName}
+                          </span>
+                        </div>
+                        <div className="shrink-0 flex items-center gap-1.5">
+                          {isCompleted ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-white shadow-2xs">
+                              <CheckCircle2 className="w-3 h-3 text-white" />
+                              {lang === 'ta' ? 'முடிந்தது' : 'Done'}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-sky-900/90 text-sky-200 border border-sky-600/80">
+                              <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse"></span>
+                              {stageLabel}
+                            </span>
+                          )}
+                          {isOptimistic && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-amber-950 animate-pulse">
+                              <Clock className="w-2.5 h-2.5" />
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Card Content Area */}
+                      <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
+                        <div>
+                          {/* Buyer & Delivery Date */}
+                          <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
+                            <span className="font-bold text-slate-800">{order.buyer.name}</span>
+                            <span className="flex items-center gap-1 text-slate-500 font-medium">
+                              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                              {formatDateLocalized(order.exFactoryDate, lang)}
+                            </span>
+                          </div>
+
+                          {/* Assigned Unit Display */}
+                          <div className="mt-2.5 flex items-center gap-1.5 text-xs">
+                            <Building2 className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                            <span className="font-semibold text-slate-700 truncate">
+                              {translateUnit(order.unit?.name || 'Unit 1 (Cotton Hub - Own)', lang)}
+                            </span>
+                            {order.unit?.type === 'SUBCONTRACTOR' && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300 shrink-0">
+                                Subcontract
                               </span>
                             )}
                           </div>
-                          <span className="text-xs font-black text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200/60 font-mono">
-                            {order.poNumber}
-                          </span>
-                        </div>
-
-                        {/* Style Name & Buyer Info */}
-                        <h3 className="text-base font-extrabold text-slate-900 group-hover:text-sky-700 transition-colors line-clamp-1">
-                          {order.style}
-                        </h3>
-                        <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
-                          {order.description || 'Export Knitwear Order'}
-                        </p>
-
-                        <div className="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-100">
-                          <span className="font-semibold text-slate-700">
-                            {order.buyer.name}
-                          </span>
-                          <span className="flex items-center gap-1 text-slate-500 font-medium">
-                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                            {formatDateLocalized(order.exFactoryDate, lang)}
-                          </span>
                         </div>
 
                         {/* Stage Progress Bar */}
                         {activeStage && (
-                          <div className="mt-3.5 pt-3 border-t border-slate-100">
+                          <div className="pt-2 border-t border-slate-100">
                             <div className="flex items-center justify-between text-xs font-bold mb-1.5">
                               <span className="text-slate-600">
                                 {t.completedPcs}:{' '}
@@ -452,14 +489,16 @@ export const MyWorkPage: React.FC = () => {
                                 </span>{' '}
                                 / {activeStage.targetQuantity.toLocaleString()} {t.pieces}
                               </span>
-                              <span className="text-sky-700 font-extrabold">
+                              <span className="text-sky-800 font-black font-mono">
                                 {activeStage.progressPct}%
                               </span>
                             </div>
-                            <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/80">
                               <div
-                                className="bg-sky-600 h-2.5 rounded-full transition-all duration-500"
-                                style={{ width: `${activeStage.progressPct}%` }}
+                                className={`h-full rounded-full transition-all duration-300 ${
+                                  activeStage.progressPct >= 100 ? 'bg-emerald-500' : 'bg-sky-600'
+                                }`}
+                                style={{ width: `${Math.min(100, activeStage.progressPct)}%` }}
                               />
                             </div>
                           </div>
@@ -467,7 +506,7 @@ export const MyWorkPage: React.FC = () => {
 
                         {/* Per-Size Breakdown Pills (S, M, L, XL separately) */}
                         {order.orderLines && order.orderLines.length > 0 && (
-                          <div className="mt-3 pt-2.5 border-t border-slate-100">
+                          <div className="pt-2 border-t border-slate-100">
                             <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 mb-1.5">
                               <span className="flex items-center gap-1 text-slate-700">
                                 <Layers className="w-3 h-3 text-sky-600" />
@@ -520,27 +559,27 @@ export const MyWorkPage: React.FC = () => {
                             </div>
                           </div>
                         )}
-                      </div>
 
-                      {/* Bottom Action Footer */}
-                      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                        {isCompleted ? (
-                          <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-300 flex items-center gap-1.5">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                            Completed (0 pcs left)
-                          </span>
-                        ) : (
-                          <span className="text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/60">
-                            {t.remainingPcs}: {activeStage?.remainingQuantity.toLocaleString()} {t.pieces}
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1 text-xs font-black text-sky-700 group-hover:text-sky-900 group-hover:translate-x-0.5 transition-all cursor-pointer"
-                        >
-                          <span>{isCompleted ? 'View / Log' : t.logOutput}</span>
-                          <ChevronRight className="w-4 h-4" />
-                        </button>
+                        {/* Bottom Action Footer */}
+                        <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                          {isCompleted ? (
+                            <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-300 flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              Completed (0 pcs left)
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/60">
+                              {t.remainingPcs}: {activeStage?.remainingQuantity.toLocaleString()} {t.pieces}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1 text-xs font-black text-sky-700 group-hover:text-sky-900 group-hover:translate-x-0.5 transition-all cursor-pointer"
+                          >
+                            <span>{isCompleted ? 'View / Log' : t.logOutput}</span>
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );

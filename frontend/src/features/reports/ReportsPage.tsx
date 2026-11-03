@@ -309,15 +309,15 @@ export const ReportsPage: React.FC = () => {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/50 text-slate-500 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-200">
+            <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
               <tr>
-                <th className="py-2.5 px-3">PO Number</th>
-                <th className="py-2.5 px-3">Style</th>
-                <th className="py-2.5 px-3 text-right">Quantity</th>
-                <th className="py-2.5 px-3">Ex-Factory</th>
-                <th className="py-2.5 px-3">Active Stage</th>
-                <th className="py-2.5 px-3">Manufacturing Unit</th>
-                <th className="py-2.5 px-3">Directives & Supervisor Notes</th>
+                <th className="py-2.5 px-3 text-slate-100">PO Number</th>
+                <th className="py-2.5 px-3 text-slate-100">Style</th>
+                <th className="py-2.5 px-3 text-right text-slate-100">Quantity</th>
+                <th className="py-2.5 px-3 text-slate-100">Ex-Factory</th>
+                <th className="py-2.5 px-3 text-slate-100">Active Stage</th>
+                <th className="py-2.5 px-3 text-slate-100">Manufacturing Unit</th>
+                <th className="py-2.5 px-3 text-slate-100">Directives & Supervisor Notes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -329,7 +329,7 @@ export const ReportsPage: React.FC = () => {
                 </tr>
               ) : (
                 data.orders.map((o) => (
-                  <tr key={o.id} className="hover:bg-slate-50/50">
+                  <tr key={o.id} className="even:bg-slate-50/80 odd:bg-white hover:bg-sky-50/60 transition">
                     <td className="py-2.5 px-3 font-mono font-bold text-slate-900">{o.poNumber}</td>
                     <td className="py-2.5 px-3 font-semibold text-slate-800">{o.style}</td>
                     <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">{o.totalQuantity.toLocaleString()} pcs</td>

@@ -458,7 +458,7 @@ export interface SupervisorWorkOrderItem {
   totalQuantity: number;
   exFactoryDate: string;
   buyer: { id: string; name: string; code: string };
-  unit: { id: string; name: string; code: string };
+  unit: { id: string; name: string; code: string; type?: string };
   activeMilestone: SupervisorActiveMilestone | null;
   isCompleted?: boolean;
   milestones: {
@@ -475,6 +475,7 @@ export interface SupervisorWorkOrderItem {
 
 export interface SupervisorWorkResponse {
   unit: { id: string; name: string; code: string; type: string } | null;
+  allUnits?: { id: string; name: string; code: string; type: string }[];
   assignedOrdersCount: number;
   orders: SupervisorWorkOrderItem[];
   recentUpdates: {

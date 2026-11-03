@@ -15,6 +15,7 @@ import { useTamilSpeechRecognition } from '../../hooks/useTamilSpeechRecognition
 import { compressImage, blobToBase64, formatByteSize } from '../../offline/compression';
 import { enqueueFloorUpdate, isEffectiveOnline, generateUUIDv4 } from '../../offline/queue/queue';
 import { apiRequest } from '../../services/api';
+import { CustomSelect, Option } from '../../components/CustomSelect';
 import {
   Mic,
   MicOff,
@@ -75,6 +76,34 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
   const [selectedStage, setSelectedStage] = useState<Stage>(activeMilestone.stage);
   const [shift, setShift] = useState<'DAY' | 'NIGHT'>('DAY');
   const [machineLine, setMachineLine] = useState('Line 1');
+
+  // Production stage restriction: only applicable for current and immediate next stage, not previous
+  const activeIndex = order.milestones.findIndex(
+    (m) => m.stage === activeMilestone.stage || m.id === activeMilestone.id
+  );
+  const selectableMilestones = order.milestones.filter((_, idx) => {
+    if (activeIndex === -1) return true;
+    return idx === activeIndex || idx === activeIndex + 1;
+  });
+
+  const stageOptions: Option[] = selectableMilestones.map((m) => {
+    const isCurrent = m.stage === activeMilestone.stage;
+    return {
+      value: m.stage,
+      label: STAGE_TRANSLATIONS[m.stage]?.[lang] || m.stage,
+      badge: isCurrent
+        ? (lang === 'ta' ? 'தற்போது' : 'Current')
+        : (lang === 'ta' ? 'அடுத்து' : 'Next Stage'),
+    };
+  });
+
+  const machineLineOptions: Option[] = [
+    { value: 'Line 1', label: lang === 'ta' ? 'வரிசை 1' : 'Line 1' },
+    { value: 'Line 2', label: lang === 'ta' ? 'வரிசை 2' : 'Line 2' },
+    { value: 'Line 3', label: lang === 'ta' ? 'வரிசை 3' : 'Line 3' },
+    { value: 'Line 4', label: lang === 'ta' ? 'வரிசை 4' : 'Line 4' },
+    { value: 'Subcontract', label: t.outsideUnit },
+  ];
 
   // Quantities
   const [goodQty, setGoodQty] = useState<number>(0);
@@ -712,34 +741,28 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           {order.description || (lang === 'ta' ? 'ஏற்றுமதி பின்னலாடை ஆர்டர்' : 'Export Knitwear Style')}
         </div>
 
-        {/* Stage Selector */}
-        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-          <div className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+        {/* Stage Selector (Restricted to current stage and immediate next stage only) */}
+        <div className="mt-3 pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="text-xs font-bold text-slate-700 flex items-center gap-1.5 shrink-0">
             <Layers className="w-3.5 h-3.5 text-blue-600" />
             {t.stageLabel}:
           </div>
-          <div className="relative">
-            <select
+          <div className="w-full sm:w-64">
+            <CustomSelect
               value={selectedStage}
-              onChange={(e) => setSelectedStage(e.target.value as Stage)}
-              className="appearance-none bg-slate-100 text-slate-900 font-bold text-xs rounded-lg pl-3 pr-7 py-1.5 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {order.milestones.map((m) => (
-                <option key={m.id} value={m.stage}>
-                  {STAGE_TRANSLATIONS[m.stage]?.[lang] || m.stage}{' '}
-                  {m.isCompleted ? (lang === 'ta' ? ' (முடிந்தது)' : ' (Done)') : ''}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+              options={stageOptions}
+              onChange={(val) => setSelectedStage(val as Stage)}
+              placeholder="Select Stage"
+              buttonClassName="bg-slate-100 hover:bg-slate-200/80 border-slate-200 py-1.5 text-xs font-bold"
+            />
           </div>
         </div>
       </div>
 
       {/* Shift & Line Selectors */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         {/* Shift Toggle */}
-        <div className="bg-white rounded-xl p-2.5 border border-slate-200 flex items-center justify-between gap-2">
+        <div className="bg-white rounded-xl p-3 border border-slate-200 flex items-center justify-between gap-2 shadow-2xs">
           <span className="text-xs font-bold text-slate-700 flex items-center gap-1 shrink-0">
             <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
             <span>{t.shiftLabel}:</span>
@@ -776,20 +799,18 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           </div>
         </div>
 
-        {/* Machine Line Selector */}
-        <div className="bg-white rounded-xl p-2.5 border border-slate-200 flex items-center justify-between gap-2">
+        {/* Machine Line Selector with CustomSelect & comfortable spacing */}
+        <div className="bg-white rounded-xl p-3 border border-slate-200 flex items-center justify-between gap-3 shadow-2xs">
           <span className="text-xs font-bold text-slate-700 shrink-0">{t.lineSelector}:</span>
-          <select
-            value={machineLine}
-            onChange={(e) => setMachineLine(e.target.value)}
-            className="flex-1 max-w-[150px] bg-slate-100 text-slate-900 font-bold text-xs rounded-lg px-2 py-1.5 border border-slate-200 focus:outline-none truncate"
-          >
-            <option value="Line 1">{lang === 'ta' ? 'வரிசை 1' : 'Line 1'}</option>
-            <option value="Line 2">{lang === 'ta' ? 'வரிசை 2' : 'Line 2'}</option>
-            <option value="Line 3">{lang === 'ta' ? 'வரிசை 3' : 'Line 3'}</option>
-            <option value="Line 4">{lang === 'ta' ? 'வரிசை 4' : 'Line 4'}</option>
-            <option value="Subcontract">{t.outsideUnit}</option>
-          </select>
+          <div className="flex-1 max-w-[170px]">
+            <CustomSelect
+              value={machineLine}
+              options={machineLineOptions}
+              onChange={(val) => setMachineLine(val)}
+              placeholder="Select Line"
+              buttonClassName="bg-slate-100 hover:bg-slate-200/80 border-slate-200 py-1.5 text-xs font-bold"
+            />
+          </div>
         </div>
       </div>
 
@@ -891,57 +912,58 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
         </div>
       )}
 
-      {/* ONE-TAP QUICK-INCREMENT KEYPAD (Good Output Total) */}
+      {/* GOOD OUTPUT QUANTITY COUNTER (Compact Single-Row matching Rejections) */}
       <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
             {t.goodQuantity}
           </span>
-          <button
-            type="button"
-            onClick={handleResetGoodQty}
-            className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-red-600 px-2 py-1 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            {t.reset}
-          </button>
-        </div>
-
-        {/* Numeric Display & Direct Input */}
-        <div className="relative mb-3">
-          <input
-            type="number"
-            min={0}
-            value={goodQty === 0 ? '' : goodQty}
-            onChange={(e) => {
-              const val = parseInt(e.target.value, 10);
-              const safeVal = isNaN(val) ? 0 : Math.max(0, val);
-              setGoodQty(safeVal);
-              distributeTotalAcrossSizes(safeVal);
-              setFormError(null);
-            }}
-            placeholder="0"
-            className="w-full text-center text-4xl font-black text-slate-900 tracking-tight bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all shadow-inner font-mono"
-          />
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
-            {t.pieces.toUpperCase()}
-          </span>
-        </div>
-
-        {/* One-Tap Increments Grid */}
-        <div className="grid grid-cols-4 gap-2">
-          {[50, 100, 250, 500].map((amount) => (
+          {goodQty > 0 && (
             <button
-              key={amount}
               type="button"
-              onClick={() => handleAddGoodQty(amount)}
-              className="min-h-[52px] bg-slate-100 hover:bg-emerald-600 active:scale-95 text-slate-900 hover:text-white font-black text-base rounded-xl border border-slate-300 shadow-sm transition-all flex flex-col items-center justify-center cursor-pointer"
+              onClick={handleResetGoodQty}
+              className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-red-600 px-2 py-0.5 rounded cursor-pointer"
             >
-              <span className="text-xs font-semibold opacity-70">+</span>
-              <span>{amount}</span>
+              <RotateCcw className="w-3 h-3" />
+              {t.reset}
             </button>
-          ))}
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <input
+              type="number"
+              min={0}
+              value={goodQty === 0 ? '' : goodQty}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10);
+                const safeVal = isNaN(val) ? 0 : Math.max(0, val);
+                setGoodQty(safeVal);
+                distributeTotalAcrossSizes(safeVal);
+                setFormError(null);
+              }}
+              placeholder="0"
+              className="w-full text-center text-2xl font-black text-emerald-800 bg-emerald-50 border-2 border-emerald-200 rounded-xl py-2 px-3 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all shadow-inner font-mono"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-emerald-600 pointer-events-none">
+              {t.pieces.toUpperCase()}
+            </span>
+          </div>
+
+          <div className="flex gap-1.5 shrink-0">
+            {[50, 100, 250, 500].map((amount) => (
+              <button
+                key={amount}
+                type="button"
+                onClick={() => handleAddGoodQty(amount)}
+                className="px-2.5 py-2 bg-slate-100 hover:bg-emerald-600 active:scale-95 text-slate-800 hover:text-white font-bold text-xs rounded-xl border border-slate-300 transition-all cursor-pointer shadow-2xs"
+              >
+                +{amount}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

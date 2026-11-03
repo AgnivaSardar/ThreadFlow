@@ -84,3 +84,42 @@ body {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* ==========================================================================
+   Table & Card Header Theme (ThreadFlow Dark Navy Sidebar Harmonization)
+   ========================================================================== */
+
+/* Dark navy table headers matching the sidebar */
+table thead,
+.table-header-navy {
+  background-color: #0C2D48 !important;
+  color: #FFFFFF !important;
+  border-bottom: 1px solid #143D60 !important;
+}
+
+table thead th,
+.table-header-navy th {
+  color: #F1F5F9 !important;
+  font-weight: 700 !important;
+}
+
+/* Table alternating row distinction across the entire project */
+table tbody tr:nth-child(even) {
+  background-color: #F8FAFC;
+}
+
+table tbody tr:nth-child(odd) {
+  background-color: #FFFFFF;
+}
+
+table tbody tr:hover {
+  background-color: #F0F7FF !important;
+}
+
+/* Standardized Card Head Bar matching sidebar & table head bars */
+.card-head-navy {
+  background-color: #0C2D48 !important;
+  color: #FFFFFF !important;
+  border-bottom: 1px solid #143D60 !important;
+}
+

@@ -63,44 +63,57 @@ export class ProductionService {
   /**
    * Retrieves active production work assigned to the supervisor's manufacturing unit.
    */
-  static async getSupervisorWork(user: AuthenticatedUser) {
-    let unitId = user.assignedUnitId;
+  static async getSupervisorWork(user: AuthenticatedUser, requestedUnitId?: string) {
+    let unitId: string | null = null;
 
-    if (!unitId) {
-      const dbUser = await prisma.user.findUnique({
-        where: { id: user.id },
-        select: { assignedUnitId: true },
-      });
-      unitId = dbUser?.assignedUnitId || null;
-    }
-
-    if (!unitId) {
-      const defaultUnit = await prisma.unit.findFirst({
-        where: { code: 'UNIT_1' },
-      });
-      unitId = defaultUnit?.id || null;
+    if (requestedUnitId && requestedUnitId !== 'ALL') {
+      unitId = requestedUnitId;
+    } else if (user.role === Role.SUPERVISOR) {
+      unitId = user.assignedUnitId || null;
+      if (!unitId) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { assignedUnitId: true },
+        });
+        unitId = dbUser?.assignedUnitId || null;
+      }
+      if (!unitId) {
+        const defaultUnit = await prisma.unit.findFirst({
+          where: { code: 'UNIT_1' },
+        });
+        unitId = defaultUnit?.id || null;
+      }
     }
 
     const unit = unitId
       ? await prisma.unit.findUnique({ where: { id: unitId } })
       : null;
 
+    const allUnits = await prisma.unit.findMany({
+      orderBy: { code: 'asc' },
+      select: { id: true, name: true, code: true, type: true },
+    });
+
     const orders = await prisma.order.findMany({
       where: {
         deletedAt: null,
         status: 'ACTIVE',
-        OR: [
-          unitId ? { unitId } : {},
-          unitId ? { milestones: { some: { unitId } } } : {},
-        ],
+        ...(unitId
+          ? {
+              OR: [
+                { unitId },
+                { milestones: { some: { unitId } } },
+              ],
+            }
+          : {}),
       },
       include: {
         buyer: { select: { id: true, name: true, code: true } },
-        unit: { select: { id: true, name: true, code: true } },
+        unit: { select: { id: true, name: true, code: true, type: true } },
         milestones: {
           orderBy: { sequenceOrder: 'asc' },
           include: {
-            unit: { select: { id: true, name: true, code: true } },
+            unit: { select: { id: true, name: true, code: true, type: true } },
           },
         },
         orderLines: {
@@ -243,6 +256,7 @@ export class ProductionService {
 
     return {
       unit: unit ? { id: unit.id, name: unit.name, code: unit.code, type: unit.type } : null,
+      allUnits,
       assignedOrdersCount: activeOrders.length,
       orders: activeOrders,
       recentUpdates: recentUpdates.map((u) => ({

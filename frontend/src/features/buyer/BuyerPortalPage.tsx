@@ -623,37 +623,37 @@ export const BuyerPortalPage: React.FC = () => {
                   key={order.id}
                   className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all overflow-hidden"
                 >
-                  {/* Order Header Bar */}
-                  <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+                  {/* Order Header Bar Styled with Dark Navy */}
+                  <div className="px-4 py-3 bg-[#0C2D48] text-white border-b border-[#143D60] flex flex-wrap items-center justify-between gap-2.5 text-xs">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono font-black text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
+                      <span className="font-mono font-black text-sky-200 bg-white/10 px-2 py-0.5 rounded border border-white/20">
                         {order.poNumber}
                       </span>
-                      <span className="font-bold text-slate-800">{order.style}</span>
-                      <span className="text-slate-300">•</span>
-                      <span className="font-medium text-slate-600">
+                      <span className="font-bold text-white">{order.style.split(' (')[0].split(' - ')[0]}</span>
+                      <span className="text-white/40">•</span>
+                      <span className="font-medium text-sky-100">
                         {order.totalQuantity.toLocaleString()} pcs
                       </span>
                       {order.currency && (
-                        <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-200/70 text-slate-700">
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-white/15 text-sky-200 border border-white/20">
                           {order.currency}
                         </span>
                       )}
                     </div>
 
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      <div className="text-xs text-slate-500 flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Ex-Factory: <strong className="text-slate-800 font-semibold">{formatDate(order.exFactoryDate)}</strong></span>
+                      <div className="text-xs text-slate-300 flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-sky-300" />
+                        <span>Ex-Factory: <strong className="text-white font-semibold">{formatDate(order.exFactoryDate)}</strong></span>
                       </div>
 
                       <span
-                        className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border ${
+                        className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border shadow-2xs ${
                           order.daysToExFactory <= 5
-                            ? 'bg-rose-50 text-rose-800 border-rose-300'
+                            ? 'bg-rose-500 text-white border-rose-400'
                             : order.daysToExFactory <= 14
-                            ? 'bg-amber-50 text-amber-900 border-amber-300'
-                            : 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                            ? 'bg-amber-400 text-amber-950 border-amber-300'
+                            : 'bg-emerald-400 text-emerald-950 border-emerald-300'
                         }`}
                       >
                         {order.daysToExFactory > 0

@@ -294,15 +294,15 @@ export const AuditPage: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-200">
+            <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
               <tr>
-                <th className="py-2.5 px-3">Date & Time</th>
-                <th className="py-2.5 px-3">Action</th>
-                <th className="py-2.5 px-3">Reason Code</th>
-                <th className="py-2.5 px-3">Target Entity</th>
-                <th className="py-2.5 px-3">Author & Role</th>
-                <th className="py-2.5 px-3">Notes & Details</th>
-                <th className="py-2.5 px-3 text-center">Cryptographic Hash</th>
+                <th className="py-2.5 px-3 text-slate-100">Date & Time</th>
+                <th className="py-2.5 px-3 text-slate-100">Action</th>
+                <th className="py-2.5 px-3 text-slate-100">Reason Code</th>
+                <th className="py-2.5 px-3 text-slate-100">Target Entity</th>
+                <th className="py-2.5 px-3 text-slate-100">Author & Role</th>
+                <th className="py-2.5 px-3 text-slate-100">Notes & Details</th>
+                <th className="py-2.5 px-3 text-center text-slate-100">Cryptographic Hash</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-normal">
@@ -317,7 +317,7 @@ export const AuditPage: React.FC = () => {
                   <tr
                     key={ev.id}
                     onClick={() => setInspectedEvent(ev)}
-                    className="hover:bg-slate-50/70 transition cursor-pointer"
+                    className="even:bg-slate-50/80 odd:bg-white hover:bg-sky-50/60 transition cursor-pointer"
                   >
                     <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap font-mono text-[11px]">
                       {new Date(ev.timestamp).toLocaleString(undefined, {

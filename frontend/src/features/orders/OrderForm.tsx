@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Plus, Trash2, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { Buyer, Unit, CreateOrderPayload } from '../../types';
 import { apiRequest } from '../../services/api';
+import { CustomSelect, Option } from '../../components/CustomSelect';
 
 interface OrderFormProps {
   isOpen: boolean;
@@ -135,30 +137,50 @@ export const OrderForm: React.FC<OrderFormProps> = ({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+  const buyerOptions: Option[] = buyers.map((b) => ({
+    value: b.id,
+    label: `${b.name} (${b.code})`,
+    sublabel: b.country ? `${b.country} Market` : 'Global Market',
+  }));
+
+  const unitOptions: Option[] = units.map((u) => ({
+    value: u.id,
+    label: u.name,
+    badge: u.type === 'SUBCONTRACTOR' ? 'Subcontractor' : 'In-House Facility',
+  }));
+
+  const currencyOptions: Option[] = [
+    { value: 'INR', label: 'INR (₹)' },
+    { value: 'GBP', label: 'GBP (£)' },
+    { value: 'EUR', label: 'EUR (€)' },
+    { value: 'USD', label: 'USD ($)' },
+  ];
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-slate-900/70 backdrop-blur-xs animate-in fade-in duration-150">
       <div
         style={{ colorScheme: 'light' }}
-        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl overflow-hidden my-8 animate-in fade-in duration-200 text-slate-900"
+        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden text-slate-900"
       >
-        {/* Header */}
-        <div className="bg-[#0C2D48] px-6 py-4 text-white flex items-center justify-between">
+        {/* Header - Fixed & Pinned */}
+        <div className="bg-[#0C2D48] px-5 py-3.5 text-white flex items-center justify-between shrink-0 border-b border-[#143D60]">
           <div>
-            <h2 className="text-lg font-bold text-white">New Export Purchase Order</h2>
-            <p className="text-xs text-sky-200/80">
+            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">New Export Purchase Order</h2>
+            <p className="text-xs text-sky-200/90 font-medium">
               Configure order specifications, size distribution, and production schedule
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-sky-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition"
+            className="text-sky-200 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition cursor-pointer"
+            aria-label="Close Modal"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 bg-white text-slate-900">
+        {/* Form Body - Scrollable only if needed */}
+        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 bg-white text-slate-900 smooth-scroll">
           {errorMessage && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -167,9 +189,9 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           )}
 
           {/* Section 1: Order Meta */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-800 mb-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
                 PO Number <span className="text-rose-500">*</span>
               </label>
               <input
@@ -177,13 +199,13 @@ export const OrderForm: React.FC<OrderFormProps> = ({
                 value={poNumber}
                 onChange={(e) => setPoNumber(e.target.value)}
                 placeholder="e.g. B-PO-88290"
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 uppercase font-mono bg-white text-slate-900 placeholder:text-slate-400"
+                className="w-full px-3 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 uppercase font-mono bg-white text-slate-900 placeholder:text-slate-400 font-semibold"
                 required
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-xs font-semibold text-slate-800 mb-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
                 Style Code / Name <span className="text-rose-500">*</span>
               </label>
               <input
@@ -191,55 +213,45 @@ export const OrderForm: React.FC<OrderFormProps> = ({
                 value={style}
                 onChange={(e) => setStyle(e.target.value)}
                 placeholder="e.g. Mercerized Cotton Rib Polo"
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white text-slate-900 placeholder:text-slate-400"
+                className="w-full px-3 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white text-slate-900 placeholder:text-slate-400 font-medium"
                 required
               />
             </div>
           </div>
 
-          {/* Section 2: Buyer & Unit */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Section 2: Buyer & Unit with CustomSelect */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-800 mb-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
                 Foreign Buyer <span className="text-rose-500">*</span>
               </label>
-              <select
+              <CustomSelect
                 value={buyerId}
-                onChange={(e) => setBuyerId(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white text-slate-900"
-                required
-              >
-                {buyers.map((b) => (
-                  <option className="bg-white text-slate-900" key={b.id} value={b.id}>
-                    {b.name} ({b.code}) – {b.country || 'Global'}
-                  </option>
-                ))}
-              </select>
+                options={buyerOptions}
+                onChange={(val) => setBuyerId(val)}
+                placeholder="Select Foreign Buyer"
+                buttonClassName="bg-white border-slate-300 py-1.5 text-xs sm:text-sm"
+              />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-800 mb-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
                 Assigned Unit <span className="text-rose-500">*</span>
               </label>
-              <select
+              <CustomSelect
                 value={unitId}
-                onChange={(e) => setUnitId(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white text-slate-900"
-                required
-              >
-                {units.map((u) => (
-                  <option className="bg-white text-slate-900" key={u.id} value={u.id}>
-                    {u.name} ({u.type === 'SUBCONTRACTOR' ? 'Subcontractor' : 'Own Facility'})
-                  </option>
-                ))}
-              </select>
+                options={unitOptions}
+                onChange={(val) => setUnitId(val)}
+                placeholder="Select Assigned Unit"
+                buttonClassName="bg-white border-slate-300 py-1.5 text-xs sm:text-sm"
+              />
             </div>
           </div>
 
           {/* Section 3: Quantity, Logistics, Pricing */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-800 mb-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
                 Total Order Qty (pcs) <span className="text-rose-500">*</span>
               </label>
               <input
@@ -247,53 +259,50 @@ export const OrderForm: React.FC<OrderFormProps> = ({
                 min={1}
                 value={totalQuantity}
                 onChange={(e) => setTotalQuantity(Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 font-mono bg-white text-slate-900"
+                className="w-full px-3 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 font-mono font-bold bg-white text-slate-900"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-800 mb-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
                 Ex-Factory Date <span className="text-rose-500">*</span>
               </label>
               <input
                 type="date"
                 value={exFactoryDate}
                 onChange={(e) => setExFactoryDate(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 font-medium bg-white text-slate-900"
+                className="w-full px-3 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 font-medium bg-white text-slate-900"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-800 mb-1">Currency</label>
-              <select
+              <label className="block text-xs font-bold text-slate-700 mb-1">Currency</label>
+              <CustomSelect
                 value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 bg-white text-slate-900"
-              >
-                <option className="bg-white text-slate-900" value="INR">INR (₹)</option>
-                <option className="bg-white text-slate-900" value="GBP">GBP (£)</option>
-                <option className="bg-white text-slate-900" value="EUR">EUR (€)</option>
-                <option className="bg-white text-slate-900" value="USD">USD ($)</option>
-              </select>
+                options={currencyOptions}
+                onChange={(val) => setCurrency(val)}
+                placeholder="Currency"
+                buttonClassName="bg-white border-slate-300 py-1.5 text-xs sm:text-sm"
+              />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-800 mb-1">FOB / Piece</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">FOB / Piece</label>
               <input
                 type="number"
                 min={0}
                 step="0.01"
                 value={fobPricePerPiece}
                 onChange={(e) => setFobPricePerPiece(Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 font-mono bg-white text-slate-900"
+                className="w-full px-3 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 font-mono font-bold bg-white text-slate-900"
               />
             </div>
           </div>
 
           {/* Section 4: Size Breakdown Matrix */}
-          <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/60 space-y-3">
+          <div className="border border-slate-200 rounded-xl p-3 sm:p-4 bg-slate-50/70 space-y-2.5">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
@@ -307,23 +316,23 @@ export const OrderForm: React.FC<OrderFormProps> = ({
               <button
                 type="button"
                 onClick={handleAddRow}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-sky-700 bg-sky-100 hover:bg-sky-200 rounded-lg transition"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-sky-700 bg-sky-100 hover:bg-sky-200 rounded-lg transition cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Add Ratio
               </button>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {sizeRows.map((row, idx) => (
-                <div key={idx} className="flex items-center gap-3">
-                  <div className="w-28">
+                <div key={idx} className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-24 sm:w-28">
                     <input
                       type="text"
                       value={row.size}
                       onChange={(e) => handleRowChange(idx, 'size', e.target.value)}
-                      placeholder="Size (e.g. S)"
-                      className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-md uppercase font-bold text-center bg-white text-slate-900"
+                      placeholder="Size"
+                      className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg uppercase font-bold text-center bg-white text-slate-900"
                       required
                     />
                   </div>
@@ -334,19 +343,19 @@ export const OrderForm: React.FC<OrderFormProps> = ({
                       value={row.color}
                       onChange={(e) => handleRowChange(idx, 'color', e.target.value)}
                       placeholder="Color / Shade"
-                      className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-md bg-white text-slate-900 placeholder:text-slate-400"
+                      className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg bg-white text-slate-900 placeholder:text-slate-400 font-medium"
                       required
                     />
                   </div>
 
-                  <div className="w-36">
+                  <div className="w-32 sm:w-36">
                     <input
                       type="number"
                       min={1}
                       value={row.plannedQty}
                       onChange={(e) => handleRowChange(idx, 'plannedQty', e.target.value)}
                       placeholder="Pieces"
-                      className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-md font-mono text-right bg-white text-slate-900"
+                      className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg font-mono font-bold text-right bg-white text-slate-900"
                       required
                     />
                   </div>
@@ -355,7 +364,8 @@ export const OrderForm: React.FC<OrderFormProps> = ({
                     type="button"
                     onClick={() => handleRemoveRow(idx)}
                     disabled={sizeRows.length <= 1}
-                    className="text-slate-400 hover:text-rose-600 disabled:opacity-30 p-1.5"
+                    className="text-slate-400 hover:text-rose-600 disabled:opacity-30 p-1.5 transition cursor-pointer"
+                    title="Remove ratio row"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -365,7 +375,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
 
             {/* Live Size Sum Invariant Checker */}
             <div
-              className={`flex items-center justify-between p-3 rounded-xl border text-xs font-medium transition ${
+              className={`flex items-center justify-between p-2.5 rounded-xl border text-xs font-semibold transition ${
                 isSumMatched
                   ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                   : 'bg-amber-50 border-amber-300 text-amber-800'
@@ -390,19 +400,19 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           </div>
 
           {/* Modal Actions */}
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+          <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100 shrink-0">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition"
+              className="px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || !isSumMatched}
-              className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-[#0C2D48] hover:bg-[#143D60] disabled:bg-slate-300 disabled:cursor-not-allowed rounded-xl shadow-md transition"
+              className="inline-flex items-center gap-2 px-5 py-2 text-xs sm:text-sm font-semibold text-white bg-[#0C2D48] hover:bg-[#143D60] disabled:bg-slate-300 disabled:cursor-not-allowed rounded-xl shadow-md transition cursor-pointer"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               Create Export Order
@@ -410,6 +420,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

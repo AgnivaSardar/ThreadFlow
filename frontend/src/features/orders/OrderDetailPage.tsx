@@ -513,19 +513,19 @@ export const OrderDetailPage: React.FC = () => {
           /* Floor Shift Production Updates Table (High Density, Fixed-Width Responsive - No Horizontal Scroll) */
           <div className="w-full rounded-xl border border-slate-200 overflow-hidden bg-white shadow-2xs">
             <table className="w-full table-fixed text-left text-xs border-collapse">
-              <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+              <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
                 <tr>
-                  <th className="py-2 px-2 w-[10%]">Date / Time</th>
-                  <th className="py-2 px-1.5 w-[7%]">Stage</th>
-                  <th className="py-2 px-2 w-[9%]">Shift · Line</th>
-                  <th className="py-2 px-1 w-[6%] text-right">Output</th>
-                  <th className="py-2 px-2 w-[16%] whitespace-nowrap">Issue Reason</th>
-                  <th className="py-2 px-2 w-[9%]">Logged By</th>
-                  <th className="py-2 px-1 w-[4%] text-center">Photo</th>
-                  <th className="py-2 px-3 w-[39%]">Supervisor Note & AI Summary</th>
+                  <th className="py-2.5 px-2 w-[10%] text-slate-100">Date / Time</th>
+                  <th className="py-2.5 px-1.5 w-[7%] text-slate-100">Stage</th>
+                  <th className="py-2.5 px-2 w-[9%] text-slate-100">Shift · Line</th>
+                  <th className="py-2.5 px-1 w-[6%] text-right text-slate-100">Output</th>
+                  <th className="py-2.5 px-2 w-[16%] whitespace-nowrap text-slate-100">Issue Reason</th>
+                  <th className="py-2.5 px-2 w-[9%] text-slate-100">Logged By</th>
+                  <th className="py-2.5 px-1 w-[4%] text-center text-slate-100">Photo</th>
+                  <th className="py-2.5 px-3 w-[39%] text-slate-100">Supervisor Note & AI Summary</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody className="divide-y divide-slate-100">
                 {paginatedLogs.map((update) => {
                   const classification = update.issueClassification;
                   const hasPhotos = update.photos && update.photos.length > 0;
@@ -557,7 +557,7 @@ export const OrderDetailPage: React.FC = () => {
                   return (
                     <tr
                       key={update.id}
-                      className="hover:bg-slate-50/70 transition-colors align-top"
+                      className="even:bg-slate-50/80 odd:bg-white hover:bg-sky-50/60 transition-colors align-top"
                     >
                       {/* 1. Date & Time (Stacked for maximum horizontal savings) */}
                       <td className="py-2 px-2 font-mono leading-tight">
@@ -739,14 +739,14 @@ export const OrderDetailPage: React.FC = () => {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-200">
+            <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
               <tr>
-                <th className="py-2.5 px-3">Date & Time</th>
-                <th className="py-2.5 px-3">Action</th>
-                <th className="py-2.5 px-3">Reason</th>
-                <th className="py-2.5 px-3">Change Summary</th>
-                <th className="py-2.5 px-3">User & Role</th>
-                <th className="py-2.5 px-3 text-center">Status</th>
+                <th className="py-2.5 px-3 text-slate-100">Date & Time</th>
+                <th className="py-2.5 px-3 text-slate-100">Action</th>
+                <th className="py-2.5 px-3 text-slate-100">Reason</th>
+                <th className="py-2.5 px-3 text-slate-100">Change Summary</th>
+                <th className="py-2.5 px-3 text-slate-100">User & Role</th>
+                <th className="py-2.5 px-3 text-center text-slate-100">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-normal">
@@ -797,7 +797,7 @@ export const OrderDetailPage: React.FC = () => {
                     : ev.action;
 
                 return (
-                  <tr key={ev.id} className="hover:bg-slate-50/50 transition">
+                  <tr key={ev.id} className="even:bg-slate-50/80 odd:bg-white hover:bg-sky-50/60 transition">
                     <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
                       {new Date(ev.timestamp).toLocaleString(undefined, {
                         day: '2-digit',
