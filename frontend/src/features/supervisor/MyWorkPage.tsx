@@ -269,6 +269,18 @@ export const MyWorkPage: React.FC = () => {
   };
 
   // Only active, incomplete floor jobs - completed jobs removed
+  // Close modal or drawer on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (selectedOrder) setSelectedOrder(null);
+        if (isQueueDrawerOpen) setIsQueueDrawerOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedOrder, isQueueDrawerOpen]);
+
   const sortedOrders = useMemo(() => {
     if (!workData?.orders) return [];
     return workData.orders.filter((order) => {

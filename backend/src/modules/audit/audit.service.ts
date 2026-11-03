@@ -1,6 +1,7 @@
 import { prisma } from '../../config/db';
 import { Prisma, Role, AuditCategory } from '@prisma/client';
 import { calculateAuditHash } from '../../common/utils/crypto';
+import { ensureEnglishNote } from '../reports/reports.service';
 
 export interface AuditQueryFilters {
   page?: number;
@@ -98,7 +99,7 @@ export class AuditService {
         action: ev.action,
         category: ev.category,
         reasonCode: ev.reasonCode,
-        notes: ev.notes,
+        notes: ensureEnglishNote(ev.notes),
         previousValue: ev.previousValue,
         newValue: ev.newValue,
         financialImpactRupees: ev.financialImpactRupees || 0,

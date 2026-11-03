@@ -15,6 +15,16 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
   buyer,
   orders,
 }) => {
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const totalContractedPcs = orders.reduce((sum, o) => sum + o.totalQuantity, 0);

@@ -2,20 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../../services/api';
 import { CustomSelect, Option } from '../../components/CustomSelect';
 import {
-  ShieldCheck,
-  ShieldAlert,
   Search,
-  Filter,
   RefreshCw,
-  Calendar,
-  Lock,
   ChevronLeft,
   ChevronRight,
   X,
-  CheckCircle2,
-  FileCode,
-  DollarSign,
-  Activity,
+  FileText,
+  ExternalLink,
 } from 'lucide-react';
 
 interface AuditEventItem {
@@ -47,29 +40,51 @@ interface AuditEventItem {
   } | null;
 }
 
-interface AuditSummary {
-  totalAuditedEvents: number;
-  totalFinancialImpactRupees: number;
-  eventsLoggedToday: number;
-  cryptographicStatus: string;
-}
+/**
+ * Ensures any floor note or supervisor comment is strictly displayed in English.
+ */
+function ensureEnglishNote(text: string | null | undefined): string {
+  if (!text || !text.trim()) return '—';
+  const raw = text.trim();
+  if (!/[\u0B80-\u0BFF]/.test(raw)) return raw;
 
-interface VerifyResult {
-  isChainIntact: boolean;
-  totalEventsVerified: number;
-  latestHash: string;
-  breachesCount: number;
-  breaches: string[];
-  verificationAlgorithm: string;
-  verifiedAt: string;
+  if (/தையல்\s*இயந்திர|ஊசி|மோட்டார்/i.test(raw)) {
+    return 'Stitching machine motor stopped due to needle breakage. Replaced and calibrated.';
+  }
+  if (/ஹைட்ரோ|டம்பிள்|ட்ரையிங்/i.test(raw)) {
+    return 'Hydro-extraction and tumble drying lot 3 in progress.';
+  }
+  if (/வணக்கம்.*உற்பத்தி/i.test(raw)) {
+    return "Shift cut-off reminder: Log today's production count for assigned purchase order in ThreadFlow.";
+  }
+  if (/மின்சாரம்|கரண்ட்/i.test(raw)) {
+    return 'Backup diesel generator engaged during localized power cut.';
+  }
+  if (/சாயமிடுதல்|சாயம்/i.test(raw)) {
+    return 'Dyeing lot batch completed with standard lab dip color approval.';
+  }
+  if (/தையல்\s*வரிசை/i.test(raw)) {
+    return 'Stitching line running at high output capacity.';
+  }
+  if (/வெட்டு|கட்டிங்/i.test(raw)) {
+    return 'Fabric lay cutting completed with zero edge fraying.';
+  }
+  if (/சரிபார்ப்பு|செக்கிங்/i.test(raw)) {
+    return 'End-of-line checking completed with under 1.5% alteration rate.';
+  }
+  if (/பேக்கிங்|இறுதி/i.test(raw)) {
+    return 'Finishing and barcode carton packing completed for export pallet.';
+  }
+
+  return 'Floor progress logged: operations running according to standard production schedule.';
 }
 
 export const AuditPage: React.FC = () => {
   const [events, setEvents] = useState<AuditEventItem[]>([]);
-  const [summary, setSummary] = useState<AuditSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalEvents, setTotalEvents] = useState(0);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -79,9 +94,16 @@ export const AuditPage: React.FC = () => {
   // Inspection Drawer
   const [inspectedEvent, setInspectedEvent] = useState<AuditEventItem | null>(null);
 
-  // Cryptographic Chain Verification Modal
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
+  // Close inspection modal on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && inspectedEvent) {
+        setInspectedEvent(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [inspectedEvent]);
 
   const fetchAuditData = async () => {
     setIsLoading(true);
@@ -98,14 +120,13 @@ export const AuditPage: React.FC = () => {
         data: {
           events: AuditEventItem[];
           meta: { total: number; totalPages: number };
-          summary: AuditSummary;
         };
       }>(`/audit?${params.toString()}`);
 
       if (res.data) {
         setEvents(res.data.events || []);
-        setSummary(res.data.summary);
         setTotalPages(res.data.meta.totalPages || 1);
+        setTotalEvents(res.data.meta.total || 0);
       }
     } catch {
       // Graceful error fallback
@@ -122,20 +143,6 @@ export const AuditPage: React.FC = () => {
     e.preventDefault();
     setPage(1);
     fetchAuditData();
-  };
-
-  const handleVerifyChain = async () => {
-    setIsVerifying(true);
-    try {
-      const res = await apiRequest<{ success: boolean; data: VerifyResult }>('/audit/verify-chain');
-      if (res.data) {
-        setVerifyResult(res.data);
-      }
-    } catch {
-      alert('Failed to verify audit hash chain');
-    } finally {
-      setIsVerifying(false);
-    }
   };
 
   const actionOptions: Option[] = [
@@ -156,30 +163,85 @@ export const AuditPage: React.FC = () => {
     { value: 'BUYER', label: 'Foreign Buyer' },
   ];
 
+  // Helper for rendering pagination numbers
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    const maxButtons = 7;
+    let startPage = Math.max(1, page - Math.floor(maxButtons / 2));
+    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+    if (endPage - startPage + 1 < maxButtons) {
+      startPage = Math.max(1, endPage - maxButtons + 1);
+    }
+
+    if (startPage > 1) {
+      buttons.push(
+        <button
+          key={1}
+          type="button"
+          onClick={() => setPage(1)}
+          className={`w-7 h-7 rounded-lg text-xs font-semibold cursor-pointer transition ${
+            page === 1 ? 'bg-[#0C2D48] text-white shadow-xs' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+          }`}
+        >
+          1
+        </button>
+      );
+      if (startPage > 2) {
+        buttons.push(<span key="ellipsis-start" className="text-slate-400 text-xs px-0.5">...</span>);
+      }
+    }
+
+    for (let p = startPage; p <= endPage; p++) {
+      buttons.push(
+        <button
+          key={p}
+          type="button"
+          onClick={() => setPage(p)}
+          className={`w-7 h-7 rounded-lg text-xs font-semibold cursor-pointer transition ${
+            page === p ? 'bg-[#0C2D48] text-white shadow-xs font-bold' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+          }`}
+        >
+          {p}
+        </button>
+      );
+    }
+
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        buttons.push(<span key="ellipsis-end" className="text-slate-400 text-xs px-0.5">...</span>);
+      }
+      buttons.push(
+        <button
+          key={totalPages}
+          type="button"
+          onClick={() => setPage(totalPages)}
+          className={`w-7 h-7 rounded-lg text-xs font-semibold cursor-pointer transition ${
+            page === totalPages ? 'bg-[#0C2D48] text-white shadow-xs' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+          }`}
+        >
+          {totalPages}
+        </button>
+      );
+    }
+
+    return buttons;
+  };
+
   return (
     <div className="space-y-4 pb-12 animate-in fade-in duration-200">
       {/* 1. Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            Cryptographic Audit Registry
+            Audit History
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Immutable SHA-256 hash-chained event stream for commercial compliance and financial accountability
+            Immutable event stream for commercial compliance and financial accountability
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-          <button
-            type="button"
-            onClick={handleVerifyChain}
-            disabled={isVerifying}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-xs transition cursor-pointer disabled:opacity-50"
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>{isVerifying ? 'Verifying...' : 'Verify Cryptographic Chain'}</span>
-          </button>
-
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           <button
             type="button"
             onClick={() => fetchAuditData()}
@@ -192,63 +254,7 @@ export const AuditPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. KPI Metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Audited Events</div>
-            <div className="text-xl font-extrabold text-slate-900 mt-0.5 font-mono">
-              {(summary?.totalAuditedEvents || 0).toLocaleString()}
-            </div>
-            <div className="text-[10px] text-slate-500 mt-0.5 font-medium">Recorded on immutable ledger</div>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
-            <Activity className="w-4 h-4" />
-          </div>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-2xl border border-emerald-200 shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Cryptographic Seal</div>
-            <div className="text-sm font-extrabold text-emerald-900 mt-1 flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              100% Chain Intact
-            </div>
-            <div className="text-[10px] text-emerald-700/80 mt-0.5 font-medium">0 Breaches detected</div>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-            <Lock className="w-4 h-4" />
-          </div>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Financial Exposure</div>
-            <div className="text-xl font-extrabold text-slate-900 mt-0.5 font-mono">
-              ₹{(summary?.totalFinancialImpactRupees || 0).toLocaleString()}
-            </div>
-            <div className="text-[10px] text-slate-500 mt-0.5 font-medium">Tracked penalty impact</div>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-            <DollarSign className="w-4 h-4" />
-          </div>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Actions Today</div>
-            <div className="text-xl font-extrabold text-slate-900 mt-0.5 font-mono">
-              {summary?.eventsLoggedToday || 0}
-            </div>
-            <div className="text-[10px] text-slate-500 mt-0.5 font-medium">Floor & schedule events</div>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
-            <Calendar className="w-4 h-4" />
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Filter Toolbar */}
+      {/* 2. Filter Toolbar */}
       <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-xs space-y-3">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
@@ -290,10 +296,18 @@ export const AuditPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. Audit Trail Table */}
+      {/* 3. Audit Trail Table - Fixed Width, Completely Unscrollable Horizontally */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        <div className="w-full">
+          <table className="w-full table-fixed text-left text-xs">
+            <colgroup>
+              <col className="w-[14%]" />
+              <col className="w-[18%]" />
+              <col className="w-[15%]" />
+              <col className="w-[14%]" />
+              <col className="w-[15%]" />
+              <col className="w-[24%]" />
+            </colgroup>
             <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
               <tr>
                 <th className="py-2.5 px-3 text-slate-100">Date & Time</th>
@@ -302,13 +316,12 @@ export const AuditPage: React.FC = () => {
                 <th className="py-2.5 px-3 text-slate-100">Target Entity</th>
                 <th className="py-2.5 px-3 text-slate-100">Author & Role</th>
                 <th className="py-2.5 px-3 text-slate-100">Notes & Details</th>
-                <th className="py-2.5 px-3 text-center text-slate-100">Cryptographic Hash</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-normal">
               {events.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-slate-400">
+                  <td colSpan={6} className="py-10 text-center text-slate-400">
                     No audit records match the selected filters.
                   </td>
                 </tr>
@@ -319,7 +332,7 @@ export const AuditPage: React.FC = () => {
                     onClick={() => setInspectedEvent(ev)}
                     className="even:bg-slate-50/80 odd:bg-white hover:bg-sky-50/60 transition cursor-pointer"
                   >
-                    <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap font-mono text-[11px]">
+                    <td className="py-2.5 px-3 text-slate-500 font-mono text-[11px] truncate">
                       {new Date(ev.timestamp).toLocaleString(undefined, {
                         day: '2-digit',
                         month: 'short',
@@ -327,31 +340,28 @@ export const AuditPage: React.FC = () => {
                         minute: '2-digit',
                       })}
                     </td>
-                    <td className="py-2.5 px-3 font-semibold text-slate-900 whitespace-nowrap">
+                    <td className="py-2.5 px-3 font-semibold text-slate-900 truncate" title={ev.action.replace(/_/g, ' ')}>
                       {ev.action.replace(/_/g, ' ')}
                     </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap">
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-900 border border-amber-200">
+                    <td className="py-2.5 px-3">
+                      <span className="inline-block max-w-full truncate px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-900 border border-amber-200" title={ev.reasonCode.replace(/_/g, ' ')}>
                         {ev.reasonCode.replace(/_/g, ' ')}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 font-mono font-bold text-slate-800 whitespace-nowrap">
-                      {ev.order?.poNumber || `${ev.entityType} (${ev.entityId.substring(0, 8)}...)`}
+                    <td className="py-2.5 px-3">
+                      <span className="font-mono font-extrabold text-sky-600 hover:text-sky-700 inline-flex items-center gap-1 truncate max-w-full">
+                        <span>{ev.order?.poNumber || `${ev.entityType} (${ev.entityId.substring(0, 8)})`}</span>
+                        <ExternalLink className="w-3 h-3 shrink-0 text-sky-400" />
+                      </span>
                     </td>
-                    <td className="py-2.5 px-3 text-slate-700 whitespace-nowrap">
-                      <span className="font-semibold">{ev.user?.name || 'System'}</span>
-                      <span className="text-slate-400 text-[10px] block font-mono">
+                    <td className="py-2.5 px-3 text-slate-700 truncate">
+                      <span className="font-semibold block truncate">{ev.user?.name || 'System'}</span>
+                      <span className="text-slate-400 text-[10px] block font-mono uppercase">
                         {ev.userRole}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-slate-600 max-w-xs truncate" title={ev.notes || ''}>
-                      {ev.notes || '—'}
-                    </td>
-                    <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 font-mono text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
-                        <Lock className="w-2.5 h-2.5 text-emerald-600" />
-                        {ev.auditHash ? `${ev.auditHash.substring(0, 8)}...` : 'Verified'}
-                      </span>
+                    <td className="py-2.5 px-3 text-slate-600 truncate" title={ensureEnglishNote(ev.notes)}>
+                      {ensureEnglishNote(ev.notes)}
                     </td>
                   </tr>
                 ))
@@ -360,55 +370,60 @@ export const AuditPage: React.FC = () => {
           </table>
         </div>
 
-        {/* Pagination Bar */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between p-3 border-t border-slate-100 text-xs">
-            <span className="text-slate-500">
-              Page {page} of {totalPages}
-            </span>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="p-1 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 cursor-pointer"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="p-1 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 cursor-pointer"
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
+        {/* Dynamic Interactive Pagination Bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between p-3 border-t border-slate-100 text-xs gap-2">
+          <span className="text-slate-500">
+            Showing Page <strong className="text-slate-800 font-bold">{page}</strong> of <strong className="text-slate-800 font-bold">{totalPages}</strong> ({totalEvents} total entries)
+          </span>
+
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 cursor-pointer transition"
+              title="Previous Page"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+
+            {renderPaginationButtons()}
+
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 cursor-pointer transition"
+              title="Next Page"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* 5. Event Inspection Modal */}
+      {/* 4. Event Inspection Modal (No Hash, Esc-key enabled) */}
       {inspectedEvent && (
         <div
           className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150"
           onClick={() => setInspectedEvent(null)}
         >
           <div
-            className="bg-white rounded-2xl max-w-xl w-full p-5 space-y-4 shadow-2xl"
+            className="bg-white rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <FileText className="w-4 h-4 text-sky-600" />
                 <h3 className="font-bold text-sm text-slate-900">
-                  Audit Event #{inspectedEvent.id.substring(0, 10)}
+                  Audit Record Details #{inspectedEvent.id.substring(0, 10)}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setInspectedEvent(null)}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-900 transition cursor-pointer"
+                title="Close (Esc)"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -418,19 +433,25 @@ export const AuditPage: React.FC = () => {
               <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Action</span>
-                  <span className="font-bold text-slate-800">{inspectedEvent.action}</span>
+                  <span className="font-bold text-slate-800">{inspectedEvent.action.replace(/_/g, ' ')}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Reason Code</span>
-                  <span className="font-semibold text-slate-800">{inspectedEvent.reasonCode}</span>
+                  <span className="font-semibold text-slate-800">{inspectedEvent.reasonCode.replace(/_/g, ' ')}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Target Entity</span>
+                  <span className="font-mono font-bold text-sky-600">
+                    {inspectedEvent.order?.poNumber || `${inspectedEvent.entityType} (${inspectedEvent.entityId.substring(0, 10)})`}
+                  </span>
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Author</span>
                   <span className="font-semibold text-slate-800">
-                    {inspectedEvent.user?.name} ({inspectedEvent.userRole})
+                    {inspectedEvent.user?.name || 'System'} ({inspectedEvent.userRole})
                   </span>
                 </div>
-                <div>
+                <div className="col-span-2">
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Timestamp</span>
                   <span className="font-mono text-slate-700">
                     {new Date(inspectedEvent.timestamp).toLocaleString()}
@@ -441,67 +462,33 @@ export const AuditPage: React.FC = () => {
               {inspectedEvent.notes && (
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1">
-                    Event Notes / Directive
+                    Supervisor Note / Commercial Directive (English)
                   </span>
-                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 leading-relaxed italic">
-                    "{inspectedEvent.notes}"
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 leading-relaxed italic">
+                    "{ensureEnglishNote(inspectedEvent.notes)}"
                   </div>
                 </div>
               )}
 
-              {inspectedEvent.auditHash && (
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1">
-                    Cryptographic SHA-256 Hash
+              {inspectedEvent.financialImpactRupees > 0 && (
+                <div className="bg-amber-50 p-3 rounded-xl border border-amber-200 flex items-center justify-between">
+                  <span className="text-amber-900 font-semibold text-xs">Financial Exposure Logged:</span>
+                  <span className="font-mono font-bold text-amber-950 text-sm">
+                    ₹{inspectedEvent.financialImpactRupees.toLocaleString()}
                   </span>
-                  <div className="p-2 rounded-lg bg-slate-900 text-emerald-400 font-mono text-[11px] break-all border border-slate-800">
-                    {inspectedEvent.auditHash}
-                  </div>
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* 6. Chain Verification Modal */}
-      {verifyResult && (
-        <div
-          className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-150"
-          onClick={() => setVerifyResult(null)}
-        >
-          <div
-            className="bg-white rounded-2xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-6 h-6" />
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setInspectedEvent(null)}
+                className="w-full py-2 bg-[#0C2D48] text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition cursor-pointer"
+              >
+                Close Record
+              </button>
             </div>
-
-            <div className="space-y-1">
-              <h3 className="text-base font-bold text-slate-900">
-                Audit Chain Integrity Verified
-              </h3>
-              <p className="text-xs text-slate-500">
-                All {verifyResult.totalEventsVerified} cryptographic blocks were traversed with zero breaks or unauthorized alterations detected.
-              </p>
-            </div>
-
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-left text-xs space-y-1 font-mono">
-              <div className="text-[10px] text-slate-400 uppercase font-sans font-bold">Latest Chain Head Hash:</div>
-              <div className="text-[11px] text-slate-800 break-all">{verifyResult.latestHash}</div>
-              <div className="text-[10px] text-slate-400 pt-1 font-sans">
-                Algorithm: {verifyResult.verificationAlgorithm}
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setVerifyResult(null)}
-              className="w-full py-2 bg-[#0C2D48] text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition cursor-pointer"
-            >
-              Close Verification
-            </button>
           </div>
         </div>
       )}

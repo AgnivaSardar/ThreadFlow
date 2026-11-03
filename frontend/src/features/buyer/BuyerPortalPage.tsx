@@ -158,6 +158,18 @@ export const BuyerPortalPage: React.FC = () => {
   // Feature 14: Weekly Report Print / PDF Modal
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
+  // Close modals on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (lightboxPhoto) setLightboxPhoto(null);
+        if (isPrintModalOpen) setIsPrintModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxPhoto, isPrintModalOpen]);
+
   const isMerchandiserOrAdmin = hasRole('MERCHANDISER', 'ADMIN');
 
   // Fetch available buyers for merchandiser dropdown
@@ -371,10 +383,6 @@ export const BuyerPortalPage: React.FC = () => {
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               {profile?.name || 'Company B (UK)'}
             </h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              Verified Sourcing Partner
-            </span>
           </div>
 
           <div className="flex items-center gap-2 mt-1.5 flex-wrap text-sm font-semibold text-slate-600">
@@ -440,172 +448,46 @@ export const BuyerPortalPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ======================================================== */}
-      {/* 2. KPI METRIC CARDS (Standard ThreadFlow 4-Card Grid)    */}
-      {/* ======================================================== */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Contracted Export POs
-            </div>
-            <div className="text-xl font-extrabold text-slate-900 mt-1 font-mono">
-              {orders.length}
-            </div>
-            <div className="text-[10px] text-slate-500 mt-0.5 font-medium">
-              Active verified orders
-            </div>
+      {/* 2. FILTER BAR WITH CUSTOM DROPDOWNS & SEARCH */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-xs space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          {/* Search Input */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search PO number or garment style..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 transition"
+            />
           </div>
-          <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
-            <Package className="w-5 h-5" />
-          </div>
-        </div>
 
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Total Garment Pieces
-            </div>
-            <div className="text-xl font-extrabold text-slate-900 mt-1 font-mono">
-              {totalContractedPcs.toLocaleString()}
-            </div>
-            <div className="text-[10px] text-slate-500 mt-0.5 font-medium">
-              Pieces contracted
-            </div>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-            <Layers className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-2xl border border-emerald-200 shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Approved Visual Proof
-            </div>
-            <div className="text-xl font-extrabold text-emerald-900 mt-1 font-mono">
-              {allApprovedPhotos.length} Photos
-            </div>
-            <div className="text-[10px] text-emerald-700/80 mt-0.5 font-medium">
-              Vetted quality records
-            </div>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-            <ImageIcon className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Production Hub
-            </div>
-            <div className="text-sm font-extrabold text-slate-900 mt-1 truncate max-w-[130px]" title={orders[0]?.unit.name || 'Unit 1 (Cotton Hub)'}>
-              {orders[0]?.unit.name || 'Unit 1 (Cotton Hub)'}
-            </div>
-            <div className="text-[10px] text-slate-500 mt-0.5 font-medium">
-              {orders[0]?.unit.location || 'Tiruppur Hub'}
-            </div>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-            <Building2 className="w-5 h-5" />
-          </div>
-        </div>
-      </div>
-
-      {/* ======================================================== */}
-      {/* 3. BUTTON SELECTION TABS (RiskPage & OrdersPage Style)    */}
-      {/* ======================================================== */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-        <div className="inline-flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveTab('ORDERS')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
-              activeTab === 'ORDERS'
-                ? 'bg-sky-100 text-sky-900 border-2 border-sky-600 shadow-xs'
-                : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs'
-            }`}
-          >
-            <Package className={`w-4 h-4 ${activeTab === 'ORDERS' ? 'text-sky-700' : 'text-slate-500'}`} />
-            <span>Purchase Orders</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white border border-slate-200 font-mono">
-              {filteredOrders.length}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('GALLERY')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
-              activeTab === 'GALLERY'
-                ? 'bg-sky-100 text-sky-900 border-2 border-sky-600 shadow-xs'
-                : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs'
-            }`}
-          >
-            <ImageIcon className={`w-4 h-4 ${activeTab === 'GALLERY' ? 'text-sky-700' : 'text-slate-500'}`} />
-            <span>Visual Proof Gallery</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white border border-slate-200 font-mono">
-              {allApprovedPhotos.length}
-            </span>
-          </button>
-        </div>
-
-        {/* Certified Quality Compliance Tag */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium self-start sm:self-auto">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-          <span>Sedex SMETA & OEKO-TEX Standard 100</span>
-        </div>
-      </div>
-
-      {/* ======================================================== */}
-      {/* 4. FILTER BAR WITH CUSTOM DROPDOWNS & SEARCH             */}
-      {/* ======================================================== */}
-      {activeTab === 'ORDERS' && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-xs space-y-3">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search PO number or garment style..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 transition"
+          {/* Custom Dropdowns */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="w-40 sm:w-44">
+              <CustomSelect
+                value={statusFilter}
+                options={statusOptions}
+                onChange={setStatusFilter}
+                placeholder="Filter Status"
               />
             </div>
 
-            {/* Custom Dropdowns */}
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <div className="w-40 sm:w-44">
-                <CustomSelect
-                  value={statusFilter}
-                  options={statusOptions}
-                  onChange={setStatusFilter}
-                  placeholder="Filter Status"
-                />
-              </div>
-
-              <div className="w-48 sm:w-52">
-                <CustomSelect
-                  value={stageFilter}
-                  options={stageOptions}
-                  onChange={setStageFilter}
-                  placeholder="Filter TNA Stage"
-                />
-              </div>
+            <div className="w-48 sm:w-52">
+              <CustomSelect
+                value={stageFilter}
+                options={stageOptions}
+                onChange={setStageFilter}
+                placeholder="Filter TNA Stage"
+              />
             </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* ======================================================== */}
-      {/* 5. TAB 1: ORDERS LIST VIEW (7-Stage TNA Progress)        */}
-      {/* ======================================================== */}
-      {activeTab === 'ORDERS' && (
-        <div className="space-y-4">
+      {/* 3. ORDERS LIST VIEW (7-Stage TNA Progress) */}
+      <div className="space-y-4">
           {filteredOrders.length === 0 ? (
             <div className="p-10 text-center bg-white rounded-2xl border border-slate-200 space-y-2">
               <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto mb-2">
@@ -636,6 +518,10 @@ export const BuyerPortalPage: React.FC = () => {
                       <span className="text-white/40">•</span>
                       <span className="font-medium text-sky-100">
                         {order.totalQuantity.toLocaleString()} pcs
+                      </span>
+                      <span className="text-white/40">•</span>
+                      <span className="font-semibold text-sky-200">
+                        Production Hub: {order.unit?.name || 'Unit 1 (Cotton Hub)'}
                       </span>
                       {order.currency && (
                         <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-white/15 text-sky-200 border border-white/20">
@@ -995,79 +881,9 @@ export const BuyerPortalPage: React.FC = () => {
             })
           )}
         </div>
-      )}
 
       {/* ======================================================== */}
-      {/* 6. TAB 2: VISUAL PROOF GALLERY TAB                       */}
-      {/* ======================================================== */}
-      {activeTab === 'GALLERY' && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs text-slate-500">
-            <span>
-              Verified inspection records approved by merchandising quality gates for{' '}
-              <strong className="text-slate-800">{profile?.name}</strong>.
-            </span>
-            <span className="font-bold text-slate-900 font-mono">{allApprovedPhotos.length} Photos</span>
-          </div>
-
-          {allApprovedPhotos.length === 0 ? (
-            <div className="p-10 text-center bg-white rounded-2xl border border-slate-200 space-y-2">
-              <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto mb-2">
-                <ImageIcon className="w-5 h-5" />
-              </div>
-              <h4 className="text-sm font-bold text-slate-800">No Quality Photos Approved Yet</h4>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
-                Inspection evidence recorded by factory supervisors will appear here once verified by the merchandising team.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {allApprovedPhotos.map((photo) => (
-                <div
-                  key={photo.id}
-                  className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden group hover:border-sky-400 transition"
-                >
-                  <div
-                    onClick={() => setLightboxPhoto(photo)}
-                    className="relative aspect-4/3 bg-slate-100 overflow-hidden cursor-pointer"
-                  >
-                    <img
-                      src={getSafeImageUrl(photo.s3Url, photo.stage)}
-                      onError={(e) => handleImageError(e, photo.stage)}
-                      alt="Inspection evidence"
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                    />
-                    <div className="absolute top-2 left-2 bg-slate-900/80 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-xs">
-                      {photo.stage.replace(/_/g, ' ')}
-                    </div>
-                    <div className="absolute top-2 right-2 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
-                      <ShieldCheck className="w-3 h-3" />
-                      <span>Approved</span>
-                    </div>
-                  </div>
-
-                  <div className="p-3 text-xs space-y-1">
-                    <div className="font-bold text-slate-900 flex items-center justify-between">
-                      <span className="font-mono">{photo.poNumber}</span>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        {photo.shift} Shift
-                      </span>
-                    </div>
-                    <div className="text-slate-600 text-[11px] truncate">{photo.style}</div>
-                    <div className="text-slate-400 text-[10px] pt-1 border-t border-slate-100 flex items-center justify-between">
-                      <span>{photo.machineLine}</span>
-                      <span>{formatDate(photo.timestamp)}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ======================================================== */}
-      {/* 7. LIGHTBOX MODAL FOR INSPECTION EVIDENCE                */}
+      {/* 6. LIGHTBOX MODAL FOR INSPECTION EVIDENCE                */}
       {/* ======================================================== */}
       {lightboxPhoto && (
         <div

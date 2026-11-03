@@ -10,6 +10,8 @@ import {
   LogOut,
   TrendingUp,
   X,
+  Activity,
+  Clock,
 } from 'lucide-react';
 import { useAuthStore } from '../features/auth/authStore';
 import {
@@ -179,28 +181,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Bottom Section */}
         <div className="p-3 space-y-3">
-          {/* Run-rate Recovery CTA Banner */}
-          {hasRole('MERCHANDISER', 'ADMIN') && (
-            <div className="rounded-2xl p-3.5 bg-gradient-to-br from-[#1E5676] to-[#0E3652] border border-sky-400/20 text-white shadow-lg relative overflow-hidden">
-              <div className="flex items-center gap-2 mb-1">
-                <TrendingUp className="w-4 h-4 text-amber-400" />
-                <span className="text-xs font-bold text-white tracking-wide">{t.shiftRunRate}</span>
+          {/* Live Floor Shift & Operations Hub Widget */}
+          <div className="rounded-2xl p-3.5 bg-gradient-to-br from-[#103859] to-[#0A2338] border border-sky-400/20 text-white shadow-lg relative overflow-hidden">
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-xs font-bold text-white tracking-wide">Live Shift Status</span>
               </div>
-              <p className="text-[11px] text-sky-100/80 leading-relaxed mb-2.5">
-                {t.shiftRunRateDesc}
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  if (onCloseMobile) onCloseMobile();
-                  navigate('/risk');
-                }}
-                className="w-full py-1.5 px-3 bg-white hover:bg-slate-50 text-[#0C2D48] rounded-lg text-xs font-bold shadow transition-all cursor-pointer text-center"
-              >
-                {t.openSimulator}
-              </button>
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                ACTIVE
+              </span>
             </div>
-          )}
+            <div className="text-[11px] font-medium text-sky-100 flex items-center gap-1.5 mb-1">
+              <Clock className="w-3 h-3 text-sky-300 shrink-0" />
+              <span>Day Shift (06:00 - 14:00 IST)</span>
+            </div>
+            <p className="text-[10px] text-sky-200/70 mb-2.5">
+              Unit 1, Unit 2 & Subcontractors operational
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                if (onCloseMobile) onCloseMobile();
+                navigate('/floor-work');
+              }}
+              className="w-full py-1.5 px-3 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-lg text-xs font-bold shadow transition-all cursor-pointer text-center flex items-center justify-center gap-1.5"
+            >
+              <Factory className="w-3.5 h-3.5" />
+              <span>View Floor Work</span>
+            </button>
+          </div>
 
           {/* Logout Action Bar */}
           <div className="pt-2 border-t border-[#143D60]/60">

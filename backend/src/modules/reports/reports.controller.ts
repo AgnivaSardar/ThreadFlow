@@ -5,7 +5,8 @@ import { ReportsService } from './reports.service';
 export class ReportsController {
   static getWeeklySummary = asyncHandler(async (req: Request, res: Response) => {
     const buyerId = req.query.buyerId as string | undefined;
-    const summary = await ReportsService.getWeeklySummary(buyerId);
+    const week = req.query.week as string | undefined;
+    const summary = await ReportsService.getWeeklySummary(buyerId, week);
     res.status(200).json({
       success: true,
       data: summary,
