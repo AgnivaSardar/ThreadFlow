@@ -5,6 +5,7 @@ import { useAuthStore } from '../features/auth/authStore';
 import { Clock, Menu, Wifi, WifiOff, RefreshCw, Languages } from 'lucide-react';
 import { syncServerTime, getAuthoritativeServerDate } from '../services/api';
 import { UserMenuDropdown } from './UserMenuDropdown';
+import { OfflineQueueDrawer } from './OfflineQueueDrawer';
 import {
   getPendingOfflineCount,
 } from '../offline/queue/queue';
@@ -28,6 +29,7 @@ export const AppLayout: React.FC = () => {
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isQueueDrawerOpen, setIsQueueDrawerOpen] = useState(false);
 
   // Language state
   const [lang, setLang] = useState<'ta' | 'en'>(
@@ -76,11 +78,16 @@ export const AppLayout: React.FC = () => {
       refreshPending();
     };
 
+    const handleOpenDrawerEvent = () => {
+      setIsQueueDrawerOpen(true);
+    };
+
     window.addEventListener('online', handleNetworkChange);
     window.addEventListener('offline', handleNetworkChange);
     window.addEventListener('threadflow-network-change', handleNetworkChange);
     window.addEventListener('threadflow-queue-changed', handleQueueChange);
     window.addEventListener('threadflow-queue-synced', handleQueueChange);
+    window.addEventListener('threadflow-open-queue-drawer', handleOpenDrawerEvent);
 
     return () => {
       clearInterval(timer);
@@ -91,13 +98,13 @@ export const AppLayout: React.FC = () => {
       window.removeEventListener('threadflow-network-change', handleNetworkChange);
       window.removeEventListener('threadflow-queue-changed', handleQueueChange);
       window.removeEventListener('threadflow-queue-synced', handleQueueChange);
+      window.removeEventListener('threadflow-open-queue-drawer', handleOpenDrawerEvent);
     };
   }, [refreshPending]);
 
   // Manual Trigger Sync & Open Drawer from Main Dashboard Header
   const handleManualSync = async () => {
-    // Open the drawer immediately so user has full visibility and can discard/retry
-    window.dispatchEvent(new CustomEvent('threadflow-open-queue-drawer'));
+    setIsQueueDrawerOpen(true);
     if (typeof navigator !== 'undefined' && !navigator.onLine) return;
     setIsSyncing(true);
     try {
@@ -243,6 +250,16 @@ export const AppLayout: React.FC = () => {
             <Outlet />
           </div>
         </main>
+
+        {/* Global Offline Queue Drawer (Accessible from any page via Pending pill) */}
+        <OfflineQueueDrawer
+          isOpen={isQueueDrawerOpen}
+          onClose={() => {
+            setIsQueueDrawerOpen(false);
+            refreshPending();
+          }}
+          lang={lang}
+        />
       </div>
     </div>
   );
