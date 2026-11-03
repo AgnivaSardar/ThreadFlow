@@ -112,11 +112,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             : 'fixed inset-y-0 left-0 -translate-x-full lg:static lg:translate-x-0'
         }`}
       >
-        <div>
+        <div className="flex-1 overflow-y-auto smooth-scroll min-h-0">
           {/* Brand Header */}
-          <div className="h-16 flex items-center justify-between px-5 border-b border-[#143D60]/60">
+          <div className="h-14 sm:h-16 flex items-center justify-between px-5 border-b border-[#143D60]/60 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white p-1 flex items-center justify-center text-[#0C2D48] shadow-md shrink-0 overflow-hidden">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white p-1 flex items-center justify-center text-[#0C2D48] shadow-md shrink-0 overflow-hidden">
                 <img src="/logo.png" alt="ThreadFlow Logo" className="w-full h-full object-contain" />
               </div>
               <div>
@@ -142,10 +142,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* Main Navigation */}
-          <div className="px-3 py-4">
-            <div className="text-[10px] uppercase font-bold text-sky-200/40 px-3 mb-2 tracking-wider">
-              {t.productionOps}
-            </div>
+          <div className="px-3 py-2.5">
             <nav className="space-y-1">
               {navItems
                 .filter((item) => item.visible)
@@ -157,7 +154,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       if (onCloseMobile) onCloseMobile();
                     }}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all relative ${
+                      `flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all relative ${
                         isActive
                           ? 'bg-[#164368] text-white shadow-inner font-semibold'
                           : 'text-sky-100/70 hover:text-white hover:bg-[#103859]/60'
@@ -168,7 +165,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <>
                         {/* Active indicator bar */}
                         {isActive && (
-                          <div className="absolute left-0 top-2 bottom-2 w-1.5 rounded-r bg-amber-400 shadow-sm shadow-amber-400/50" />
+                          <div className="absolute left-0 top-1.5 bottom-1.5 w-1.5 rounded-r bg-amber-400 shadow-sm shadow-amber-400/50" />
                         )}
                         <span className={isActive ? 'text-amber-400' : 'text-sky-200/60'}>
                           {item.icon}
@@ -182,13 +179,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* Bottom Section */}
-        <div className="p-3 space-y-3">
+        {/* Bottom Section (Fixed at bottom, never cut off) */}
+        <div className="p-2.5 sm:p-3 space-y-2 shrink-0 border-t border-[#143D60]/60 bg-[#0C2D48]">
           {/* Full-fledged Month Calendar with Single Event Related Dots */}
           <SidebarCalendar />
 
           {/* Logout Action Bar */}
-          <div className="pt-2 border-t border-[#143D60]/60">
+          <div>
             <button
               type="button"
               onClick={handleLogout}

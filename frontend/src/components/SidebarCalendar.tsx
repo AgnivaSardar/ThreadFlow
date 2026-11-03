@@ -91,18 +91,18 @@ export const SidebarCalendar: React.FC = () => {
 
   return (
     <>
-      {/* Light-Themed Month Calendar Card */}
-      <div className="rounded-2xl p-3 bg-white text-slate-800 shadow-md border border-slate-200/90 select-none">
+      {/* Elevated Navy Calendar Card (Brought up with gradient, border highlights & 3D shadow) */}
+      <div className="rounded-2xl p-2.5 bg-gradient-to-b from-[#133F63] to-[#0A263D] border border-sky-400/35 text-white shadow-xl shadow-black/35 select-none relative z-10 backdrop-blur-xs">
         {/* Month Header with Navigation */}
-        <div className="flex items-center justify-between mb-2.5 px-0.5">
-          <span className="text-xs font-black uppercase tracking-wider text-slate-900 font-mono">
+        <div className="flex items-center justify-between mb-1.5 px-1">
+          <span className="text-[11px] font-black uppercase tracking-wider text-sky-100 font-mono drop-shadow-xs">
             {monthTitle}
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <button
               type="button"
               onClick={prevMonth}
-              className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+              className="p-1 rounded-lg hover:bg-white/15 text-sky-200/80 hover:text-white transition-colors cursor-pointer"
               title="Previous Month"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
@@ -110,7 +110,7 @@ export const SidebarCalendar: React.FC = () => {
             <button
               type="button"
               onClick={nextMonth}
-              className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+              className="p-1 rounded-lg hover:bg-white/15 text-sky-200/80 hover:text-white transition-colors cursor-pointer"
               title="Next Month"
             >
               <ChevronRight className="w-3.5 h-3.5" />
@@ -119,12 +119,12 @@ export const SidebarCalendar: React.FC = () => {
         </div>
 
         {/* Days of Week Row */}
-        <div className="grid grid-cols-7 gap-1 text-center mb-1.5 border-b border-slate-100 pb-1">
+        <div className="grid grid-cols-7 gap-1 text-center mb-1 border-b border-sky-500/20 pb-0.5">
           {weekDayHeaders.map((w, idx) => (
             <span
               key={idx}
-              className={`text-[10px] font-black uppercase font-mono ${
-                idx === 0 || idx === 6 ? 'text-rose-500' : 'text-slate-400'
+              className={`text-[9px] font-black uppercase font-mono ${
+                idx === 0 || idx === 6 ? 'text-amber-300/80' : 'text-sky-200/50'
               }`}
             >
               {w}
@@ -139,7 +139,7 @@ export const SidebarCalendar: React.FC = () => {
               return (
                 <div
                   key={cell.key}
-                  className="h-6 flex items-center justify-center text-[10px] font-medium text-slate-300 cursor-default"
+                  className="h-5.5 flex items-center justify-center text-[10px] text-sky-200/25 cursor-default font-mono"
                 >
                   {cell.day}
                 </div>
@@ -156,12 +156,12 @@ export const SidebarCalendar: React.FC = () => {
                 key={cell.key}
                 type="button"
                 onClick={() => handleDayClick(cell.day, true)}
-                className={`h-6 rounded-lg text-[10px] font-bold font-mono relative flex flex-col items-center justify-center transition-all cursor-pointer ${
+                className={`h-5.5 rounded-lg text-[10px] font-bold font-mono relative flex flex-col items-center justify-center transition-all cursor-pointer ${
                   cell.isToday
-                    ? 'bg-amber-400 text-slate-950 font-black shadow-xs ring-2 ring-amber-300/80 scale-105'
+                    ? 'bg-amber-400 text-slate-950 font-black shadow-md ring-2 ring-amber-300 scale-105 z-10'
                     : isSelected
-                    ? 'bg-[#0C2D48] text-white font-black shadow-xs'
-                    : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                    ? 'bg-sky-500 text-white font-black shadow-md'
+                    : 'text-sky-100 hover:bg-white/15 hover:text-white'
                 }`}
                 title={`View planned work for ${monthNames[month]} ${cell.day}, ${year}`}
               >
@@ -174,7 +174,7 @@ export const SidebarCalendar: React.FC = () => {
                         ? 'bg-slate-950'
                         : isSelected
                         ? 'bg-amber-300'
-                        : 'bg-amber-500'
+                        : 'bg-amber-400 shadow-2xs'
                     }`}
                   />
                 )}
@@ -184,9 +184,9 @@ export const SidebarCalendar: React.FC = () => {
         </div>
 
         {/* Quick Footer Prompt */}
-        <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 px-0.5">
+        <div className="mt-1.5 pt-1.5 border-t border-sky-500/20 flex items-center justify-between text-[9px] text-sky-200/70 px-1">
           <span className="flex items-center gap-1.5 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-xs" />
             <span>Event planned</span>
           </span>
           <button
@@ -195,7 +195,7 @@ export const SidebarCalendar: React.FC = () => {
               setSelectedDate(new Date(2026, 10, 4));
               setIsModalOpen(true);
             }}
-            className="text-amber-600 hover:text-amber-700 font-bold hover:underline cursor-pointer"
+            className="text-amber-300 hover:text-amber-200 font-bold hover:underline cursor-pointer"
           >
             Today (Nov 04)
           </button>
