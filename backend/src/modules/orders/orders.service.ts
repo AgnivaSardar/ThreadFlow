@@ -629,11 +629,14 @@ export class OrdersService {
         workingDaysLeft = 0;
       }
 
-      // Health status based on completion, risk warnings, or buffer compression
+      // Health status based on final finishing milestone completion, risk warnings, or buffer compression
       const latestWarning = order.riskWarnings[0];
-      const isCompleted =
-        (activeMilestone?.stage === 'FINISHING' && activeMilestone.completedQuantity >= activeMilestone.targetQuantity) ||
-        (overallCompletionPct >= 100);
+      const finalMilestone =
+        order.milestones.find((m) => m.stage === 'FINISHING') ||
+        order.milestones[order.milestones.length - 1];
+      const isCompleted = Boolean(
+        finalMilestone && finalMilestone.completedQuantity >= finalMilestone.targetQuantity
+      );
 
       let healthStatus: 'GREEN' | 'AMBER' | 'RED' | 'COMPLETED' = 'GREEN';
       if (isCompleted) {

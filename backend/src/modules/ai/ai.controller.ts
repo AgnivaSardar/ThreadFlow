@@ -8,13 +8,14 @@ export class AIController {
    * Direct classification of raw Tamil/Tanglish floor notes.
    */
   static classifyText = asyncHandler(async (req: Request, res: Response) => {
-    const { rawText, timeoutMs, skipLlm, orderId, productionUpdateId } = req.body;
+    const { rawText, timeoutMs, skipLlm, orderId, productionUpdateId, context } = req.body;
 
     const result = await AIService.classifyIssueNote(rawText, {
       timeoutMs,
       skipLlm,
       orderId,
       productionUpdateId,
+      context,
     });
 
     res.status(200).json({

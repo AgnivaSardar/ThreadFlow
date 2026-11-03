@@ -1,6 +1,22 @@
 import { IssueCategory } from '@prisma/client';
 import { config } from '../../config/env';
 
+export interface GarmentContext {
+  orderId?: string;
+  style?: string;
+  buyer?: string;
+  stage?: string;
+  sizes?: string[];
+  colors?: string[];
+  orderLines?: Array<{
+    id: string;
+    size: string;
+    color: string;
+    plannedQty?: number;
+    completedQty?: number;
+  }>;
+}
+
 export interface ClassificationResult {
   category: IssueCategory;
   confidenceScore: number;
@@ -14,6 +30,9 @@ export interface ClassificationResult {
   estimatedDowntimeHours: number | null;
   impactedStage: string | null;
   fallbackReason?: string;
+  totalGoodOutput?: number | null;
+  totalRejected?: number | null;
+  sizeBreakdown?: Record<string, number> | null;
 }
 
 /**
@@ -95,6 +114,9 @@ export const TAMIL_FALLBACK_DICTIONARY: Record<IssueCategory, RegExp[]> = {
     /line\s*empty/i,
     /workers\s*absent/i,
     /தொழிலாளர்/i,
+    /labour\s*shortage/i,
+    /level\s*short\s*age/i,
+    /label\s*short\s*age/i,
   ],
   QUALITY_HOLD: [
     /ஆடிட்/i,
@@ -156,6 +178,157 @@ class LLMCircuitBreaker {
 export const aiCircuitBreaker = new LLMCircuitBreaker();
 
 /**
+ * Extracts entities (quantities, sizes, and phonetic corrections) deterministically
+ * using Tiruppur textile domain rules and order context.
+ */
+export function extractDeterministicEntities(
+  rawText: string,
+  context?: GarmentContext
+): {
+  cleanText: string;
+  totalGoodOutput: number | null;
+  totalRejected: number | null;
+  sizeBreakdown: Record<string, number> | null;
+  extractedCategory?: IssueCategory;
+} {
+  let clean = rawText;
+
+  // 1. Phonetic fixes for common speech recognition audio errors in Tiruppur textile context
+  clean = clean
+    .replace(/\blevel\s*short\s*age\b/gi, 'labour shortage')
+    .replace(/\blabel\s*short\s*age\b/gi, 'labour shortage')
+    .replace(/\baxis\s*vintage\b/gi, 'XS Vintage Olive')
+    .replace(/\baxis\b/gi, 'XS')
+    .replace(/\bwinters\s*all\s*live\b/gi, 'Vintage Olive')
+    .replace(/\ball\s*live\b/gi, 'Vintage Olive')
+    .replace(/\bwinters\b/gi, 'Vintage Olive')
+    .replace(/(\d+)\s*hour\s*of\b/gi, '$1 pcs of');
+
+  // 2. Extract total good output
+  let totalGoodOutput: number | null = null;
+  const goodMatch1 = rawText.match(
+    /(?:total\s*of\s*)?(\d+)\s*(?:good\s*(?:output|outputs|pcs|pieces)?|output|outputs|pieces|pcs|completed|done|finished)/i
+  );
+  const goodMatch2 = rawText.match(
+    /(?:good\s*output|good\s*outputs|output|completed|produced|finished)\s*(?:is|was|were|of)?\s*(\d+)/i
+  );
+  if (goodMatch1) totalGoodOutput = parseInt(goodMatch1[1], 10);
+  else if (goodMatch2) totalGoodOutput = parseInt(goodMatch2[1], 10);
+
+  // 3. Extract total rejected
+  let totalRejected: number | null = null;
+  const rejMatch1 = rawText.match(
+    /(\d+)\s*(?:reject|rejected|rejection|defect|defects|damaged|waste|alteration)/i
+  );
+  const rejMatch2 = rawText.match(
+    /(?:reject|rejected|rejection|defect|defects|damaged)\s*(?:is|was|were|of)?\s*(\d+)/i
+  );
+  if (rejMatch1) totalRejected = parseInt(rejMatch1[1], 10);
+  else if (rejMatch2) totalRejected = parseInt(rejMatch2[1], 10);
+
+  // 4. Extract sizes breakdown
+  const targetSizes =
+    context?.sizes && context.sizes.length > 0
+      ? context.sizes
+      : ['XS', 'S', 'M', 'L', 'XL', '2XL', 'XXL'];
+
+  const sizeBreakdown: Record<string, number> = {};
+  let totalExplicitSizes = 0;
+  let remainingSizeTarget: string | null = null;
+
+  for (const s of targetSizes) {
+    const sUpper = s.toUpperCase();
+    const sNamePattern =
+      sUpper === 'M'
+        ? '(?:medium|m\\b)'
+        : sUpper === 'S'
+        ? '(?:small|s\\b)'
+        : sUpper === 'XS'
+        ? '(?:xs\\b|extra\\s*small|axis\\b)'
+        : sUpper === 'L'
+        ? '(?:large|l\\b)'
+        : sUpper === 'XL'
+        ? '(?:xl\\b|extra\\s*large)'
+        : s;
+
+    // Matches patterns like "100 are of medium", "50 hour of small", "100 pcs medium", "100 of M"
+    const r1 = new RegExp(
+      `(\\d+)(?:\\s+(?:pcs|pieces|are|hour|hours|of|good))+\\s+${sNamePattern}`,
+      'i'
+    );
+    const r2 = new RegExp(`${sNamePattern}\\s*(?:is|was|were|of|:)?\\s*(\\d+)`, 'i');
+
+    const m1 = rawText.match(r1) || clean.match(r1);
+    const m2 = rawText.match(r2) || clean.match(r2);
+
+    if (m1) {
+      const q = parseInt(m1[1], 10);
+      sizeBreakdown[s] = q;
+      totalExplicitSizes += q;
+    } else if (m2) {
+      const q = parseInt(m2[1], 10);
+      sizeBreakdown[s] = q;
+      totalExplicitSizes += q;
+    }
+  }
+
+  // Check for phrases indicating the remainder, e.g. "others are of Axis Vintage", "rest are XS", "balance are of M"
+  for (const s of targetSizes) {
+    const sUpper = s.toUpperCase();
+    const sNamePattern =
+      sUpper === 'M'
+        ? '(?:medium|m\\b)'
+        : sUpper === 'S'
+        ? '(?:small|s\\b)'
+        : sUpper === 'XS'
+        ? '(?:xs\\b|extra\\s*small|axis\\b)'
+        : sUpper === 'L'
+        ? '(?:large|l\\b)'
+        : sUpper === 'XL'
+        ? '(?:xl\\b|extra\\s*large)'
+        : s;
+
+    const otherRegex = new RegExp(
+      `(?:others?|remaining|rest|balance)(?:\\s+(?:are|is|of|for|in|the))+\\s+${sNamePattern}`,
+      'i'
+    );
+    if (otherRegex.test(rawText) || otherRegex.test(clean)) {
+      remainingSizeTarget = s;
+      break;
+    }
+  }
+
+  if (remainingSizeTarget && totalGoodOutput && totalGoodOutput > totalExplicitSizes) {
+    const remainder = totalGoodOutput - totalExplicitSizes;
+    sizeBreakdown[remainingSizeTarget] = remainder;
+  }
+
+  // Infer category if explicitly mentioned in clean
+  let extractedCategory: IssueCategory | undefined;
+  if (/labour\s*shortage|operator\s*shortage|tailor\s*leave/i.test(clean)) {
+    extractedCategory = IssueCategory.LABOUR_SHORTAGE;
+  } else if (/machine\s*breakdown|needle\s*break|motor\s*problem/i.test(clean)) {
+    extractedCategory = IssueCategory.MACHINE_BREAKDOWN;
+  } else if (/power\s*cut|power\s*outage|eb\s*off/i.test(clean)) {
+    extractedCategory = IssueCategory.POWER_OUTAGE;
+  } else if (/fabric\s*defect|shade\s*variation|gsm\s*variation/i.test(clean)) {
+    extractedCategory = IssueCategory.FABRIC_DEFECT;
+  } else if (/subcontract|printing\s*late|washing\s*late/i.test(clean)) {
+    extractedCategory = IssueCategory.SUBCONTRACTOR_DELAY;
+  } else if (/quality\s*hold|audit\s*fail|measurement\s*issue/i.test(clean)) {
+    extractedCategory = IssueCategory.QUALITY_HOLD;
+  }
+
+  return {
+    cleanText: clean.trim(),
+    totalGoodOutput,
+    totalRejected,
+    sizeBreakdown: Object.keys(sizeBreakdown).length > 0 ? sizeBreakdown : null,
+    extractedCategory,
+  };
+}
+
+/**
  * Deterministic Regex Fallback Matcher.
  * Scans raw colloquial text against Tiruppur textile patterns.
  * Sets confidenceScore = 0.50 and needsReview = true as per operational spec.
@@ -163,68 +336,93 @@ export const aiCircuitBreaker = new LLMCircuitBreaker();
 export function runDeterministicFallback(
   rawText: string,
   startTime: number,
-  fallbackReason: string
+  fallbackReason: string,
+  context?: GarmentContext
 ): ClassificationResult {
-  const cleanText = rawText.trim();
+  const extracted = extractDeterministicEntities(rawText, context);
+  const cleanText = extracted.cleanText;
   const latencyMs = Date.now() - startTime;
 
-  for (const [category, patterns] of Object.entries(TAMIL_FALLBACK_DICTIONARY) as [
-    IssueCategory,
-    RegExp[]
-  ][]) {
-    for (const pattern of patterns) {
-      if (pattern.test(cleanText)) {
-        return {
-          category,
-          confidenceScore: 0.50,
-          englishSummary: generateFallbackSummary(category, cleanText),
-          needsReview: true,
-          classifiedBy: 'LOCAL_REGEX_FALLBACK',
-          latencyMs,
-          rawTamilText: cleanText,
-          translatedText: generateFallbackSummary(category, cleanText),
-          severity: inferSeverityFromCategory(category),
-          estimatedDowntimeHours: extractDowntimeHours(cleanText),
-          impactedStage: inferImpactedStage(category),
-          fallbackReason,
-        };
+  let matchedCategory: IssueCategory | null = extracted.extractedCategory || null;
+
+  if (!matchedCategory) {
+    for (const [category, patterns] of Object.entries(TAMIL_FALLBACK_DICTIONARY) as [
+      IssueCategory,
+      RegExp[]
+    ][]) {
+      for (const pattern of patterns) {
+        if (pattern.test(cleanText) || pattern.test(rawText)) {
+          matchedCategory = category;
+          break;
+        }
       }
+      if (matchedCategory) break;
     }
   }
 
-  // Safe fallback if zero regex patterns match
+  const category = matchedCategory || IssueCategory.OTHER;
+  const summary = generateFallbackSummary(category, cleanText, extracted, context);
+
   return {
-    category: IssueCategory.OTHER,
-    confidenceScore: 0.30,
-    englishSummary: `Unclassified floor note: "${cleanText}"`,
+    category,
+    confidenceScore: category === IssueCategory.OTHER ? 0.35 : 0.65,
+    englishSummary: summary,
     needsReview: true,
-    classifiedBy: 'FALLBACK_DEFAULT',
+    classifiedBy: 'LOCAL_REGEX_FALLBACK',
     latencyMs,
     rawTamilText: cleanText,
-    translatedText: `Unclassified floor remark: "${cleanText}"`,
-    severity: 'LOW',
-    estimatedDowntimeHours: null,
-    impactedStage: null,
-    fallbackReason: `${fallbackReason} (No regex match, assigned OTHER)`,
+    translatedText: summary,
+    severity: inferSeverityFromCategory(category),
+    estimatedDowntimeHours: extractDowntimeHours(cleanText),
+    impactedStage: inferImpactedStage(category),
+    fallbackReason,
+    totalGoodOutput: extracted.totalGoodOutput,
+    totalRejected: extracted.totalRejected,
+    sizeBreakdown: extracted.sizeBreakdown,
   };
 }
 
-function generateFallbackSummary(category: IssueCategory, text: string): string {
+function generateFallbackSummary(
+  category: IssueCategory,
+  text: string,
+  extracted?: {
+    totalGoodOutput: number | null;
+    totalRejected: number | null;
+    sizeBreakdown: Record<string, number> | null;
+  },
+  context?: GarmentContext
+): string {
+  let outputPart = '';
+  if (extracted?.totalGoodOutput) {
+    outputPart = ` Completed ${extracted.totalGoodOutput} good pcs`;
+    if (extracted.sizeBreakdown) {
+      const parts = Object.entries(extracted.sizeBreakdown).map(([sz, qty]) => `${qty} ${sz}`);
+      outputPart += ` (${parts.join(', ')})`;
+    }
+    outputPart += '.';
+  }
+  if (extracted?.totalRejected) {
+    outputPart += ` Rejections: ${extracted.totalRejected} pcs.`;
+  }
+
   switch (category) {
     case IssueCategory.POWER_OUTAGE:
-      return `Power outage / electrical interruption reported on factory line (${text})`;
+      return `Power outage / electrical interruption reported on factory line.${outputPart}`;
     case IssueCategory.MACHINE_BREAKDOWN:
-      return `Machine mechanical breakdown or needle defect reported (${text})`;
+      return `Machine mechanical breakdown or needle defect reported.${outputPart}`;
     case IssueCategory.FABRIC_DEFECT:
-      return `Fabric quality variance, GSM mismatch, or dye defect reported (${text})`;
+      return `Fabric quality variance, GSM mismatch, or dye defect reported.${outputPart}`;
     case IssueCategory.SUBCONTRACTOR_DELAY:
-      return `Subcontractor processing delay (printing/washing/gate pass) reported (${text})`;
+      return `Subcontractor processing delay (printing/washing/gate pass) reported.${outputPart}`;
     case IssueCategory.LABOUR_SHORTAGE:
-      return `Floor labor / operator shortage or tailor absenteeism reported (${text})`;
+      return `Floor labor / operator shortage reported.${outputPart}`;
     case IssueCategory.QUALITY_HOLD:
-      return `Quality audit hold, dimension measurement discrepancy, or high rejection reported (${text})`;
+      return `Quality audit hold or dimension measurement discrepancy reported.${outputPart}`;
     default:
-      return `Operational issue reported: ${text}`;
+      if (outputPart) {
+        return `Floor update:${outputPart}`;
+      }
+      return `Operational floor note: ${text}`;
   }
 }
 
@@ -273,12 +471,20 @@ function extractDowntimeHours(text: string): number | null {
 
 /**
  * System instruction prompt for Gemini 3.1 Flash Lite.
- * Encodes Tiruppur garment export domain ontology and strict JSON schema rules.
+ * Encodes Tiruppur garment export domain ontology, speech phonetic correction,
+ * and strict JSON schema rules.
  */
 const SYSTEM_PROMPT = `
-You are the production AI classifier for ThreadFlow, an apparel ERP deployed in export garment factories in Tiruppur, India.
-Supervisors submit brief shift floor notes in colloquial Tamil, Tanglish (Tamil written in English script), or English.
-Your task is to classify the note into ONE standardized operational category and translate it into a concise, professional English summary for European fashion buyers and head-office merchandisers.
+You are the production AI classifier and entity extractor for ThreadFlow, an apparel ERP deployed in export garment factories in Tiruppur, India.
+Supervisors submit brief shift floor notes via voice dictation in colloquial Tamil, Tanglish (Tamil written in English script), or English.
+Speech-to-text engines often produce phonetic errors (e.g., "level short age" -> "labour shortage", "Axis" -> "XS", "small winters" -> "Small size Vintage Olive", "50 hour" -> "50 pcs").
+
+Your task:
+1. Fix any speech recognition phonetic errors using the provided factory/order context (style, colors, available sizes).
+2. Classify the note into ONE standardized operational category.
+3. Extract total good output quantity and total rejected quantity if mentioned.
+4. Extract the per-size breakdown matching the order's available sizes. If the speaker specifies quantities for some sizes and indicates "others" or "remaining" are of another size, calculate the remaining quantity (e.g. Total 300 - 100 Medium - 50 Small = 150 XS).
+5. Translate/summarize into a clean, concise, 100% professional English summary suitable for European buyers and merchandisers. MUST NOT contain garbled speech artifacts or phonetics.
 
 ALLOWED CATEGORIES (Strict Prisma Enum):
 1. MACHINE_BREAKDOWN (needle break, motor failure, cutter jam, overlock stoppage, sewing machine repair)
@@ -294,10 +500,13 @@ Return pure, valid JSON with no markdown wrapping or markdown code blocks:
 {
   "category": "MACHINE_BREAKDOWN" | "POWER_OUTAGE" | "FABRIC_DEFECT" | "SUBCONTRACTOR_DELAY" | "LABOUR_SHORTAGE" | "QUALITY_HOLD" | "OTHER",
   "confidence": 0.0 to 1.0,
-  "englishSummary": "Concise professional 1-sentence English description",
+  "englishSummary": "Clean professional 1-sentence English description",
   "severity": "LOW" | "MEDIUM" | "HIGH" | "CRITICAL",
   "estimatedDowntimeHours": number or null,
-  "impactedStage": "KNITTING" | "DYEING_WASHING" | "PRINTING" | "CUTTING" | "STITCHING" | "CHECKING" | "FINISHING" | null
+  "impactedStage": "KNITTING" | "DYEING_WASHING" | "PRINTING" | "CUTTING" | "STITCHING" | "CHECKING" | "FINISHING" | null,
+  "totalGoodOutput": number or null,
+  "totalRejected": number or null,
+  "sizeBreakdown": { "SIZE_NAME": number } or null
 }
 `;
 
@@ -311,7 +520,8 @@ Return pure, valid JSON with no markdown wrapping or markdown code blocks:
  */
 export async function classifyWithGemini(
   rawText: string,
-  timeoutMs: number = config.ai.timeoutMs || 3000
+  timeoutMs: number = config.ai.timeoutMs || 3000,
+  context?: GarmentContext
 ): Promise<ClassificationResult> {
   const startTime = Date.now();
 
@@ -328,15 +538,22 @@ export async function classifyWithGemini(
       severity: 'LOW',
       estimatedDowntimeHours: null,
       impactedStage: null,
+      totalGoodOutput: null,
+      totalRejected: null,
+      sizeBreakdown: null,
     };
   }
+
+  // Pre-calculate deterministic extraction to serve as baseline / safety net
+  const deterministicBase = extractDeterministicEntities(rawText, context);
 
   // Circuit breaker fast-path
   if (aiCircuitBreaker.isOpen()) {
     return runDeterministicFallback(
       rawText,
       startTime,
-      'Circuit breaker open (consecutive API errors)'
+      'Circuit breaker open (consecutive API errors)',
+      context
     );
   }
 
@@ -344,7 +561,7 @@ export async function classifyWithGemini(
   const model = config.ai.model || 'gemini-3.1-flash-lite';
 
   if (!apiKey) {
-    return runDeterministicFallback(rawText, startTime, 'Missing GEMINI_API_KEY');
+    return runDeterministicFallback(rawText, startTime, 'Missing GEMINI_API_KEY', context);
   }
 
   // Build abort controller for native network cancellation
@@ -369,6 +586,15 @@ export async function classifyWithGemini(
 
     let lastError = '';
 
+    const contextSnippet = context
+      ? `Factory Floor Context:
+- Style: ${context.style || 'N/A'}
+- Stage: ${context.stage || 'N/A'}
+- Buyer: ${context.buyer || 'N/A'}
+- Available Sizes: ${context.sizes?.join(', ') || 'N/A'}
+- Colors: ${context.colors?.join(', ') || 'N/A'}`
+      : '';
+
     for (const m of candidateModels) {
       try {
         const endpointUrl = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
@@ -389,7 +615,7 @@ export async function classifyWithGemini(
               {
                 parts: [
                   {
-                    text: `Classify this Tamil/Tanglish garment factory note: "${rawText.trim()}"`,
+                    text: `Analyze and classify this floor note:\n"${rawText.trim()}"\n\n${contextSnippet}`,
                   },
                 ],
               },
@@ -428,7 +654,7 @@ export async function classifyWithGemini(
         // Validate category against Prisma enum
         const validCategory = Object.values(IssueCategory).includes(parsed.category)
           ? (parsed.category as IssueCategory)
-          : IssueCategory.OTHER;
+          : (deterministicBase.extractedCategory || IssueCategory.OTHER);
 
         const confidenceScore = typeof parsed.confidence === 'number' ? parsed.confidence : 0.85;
         const threshold = config.ai.confidenceThreshold || 0.65;
@@ -439,11 +665,25 @@ export async function classifyWithGemini(
           return runDeterministicFallback(
             rawText,
             startTime,
-            `Low LLM confidence score: ${confidenceScore.toFixed(2)} < ${threshold}`
+            `Low LLM confidence score: ${confidenceScore.toFixed(2)} < ${threshold}`,
+            context
           );
         }
 
         aiCircuitBreaker.recordSuccess();
+
+        const totalGood =
+          typeof parsed.totalGoodOutput === 'number'
+            ? parsed.totalGoodOutput
+            : deterministicBase.totalGoodOutput;
+        const totalRej =
+          typeof parsed.totalRejected === 'number'
+            ? parsed.totalRejected
+            : deterministicBase.totalRejected;
+        const breakdown =
+          parsed.sizeBreakdown && typeof parsed.sizeBreakdown === 'object'
+            ? parsed.sizeBreakdown
+            : deterministicBase.sizeBreakdown;
 
         return {
           category: validCategory,
@@ -457,6 +697,9 @@ export async function classifyWithGemini(
           severity: parsed.severity || inferSeverityFromCategory(validCategory),
           estimatedDowntimeHours: parsed.estimatedDowntimeHours ?? null,
           impactedStage: parsed.impactedStage ?? null,
+          totalGoodOutput: totalGood,
+          totalRejected: totalRej,
+          sizeBreakdown: breakdown,
         };
       } catch (err: any) {
         if (err.name === 'AbortError') throw err;
@@ -475,10 +718,10 @@ export async function classifyWithGemini(
     const errorMsg = err?.message || String(err);
     if (errorMsg.includes('AI_TIMEOUT')) {
       aiCircuitBreaker.recordFailure();
-      return runDeterministicFallback(rawText, startTime, `Timeout exceeded (> ${timeoutMs}ms)`);
+      return runDeterministicFallback(rawText, startTime, `Timeout exceeded (> ${timeoutMs}ms)`, context);
     }
 
     aiCircuitBreaker.recordFailure();
-    return runDeterministicFallback(rawText, startTime, errorMsg);
+    return runDeterministicFallback(rawText, startTime, errorMsg, context);
   }
 }

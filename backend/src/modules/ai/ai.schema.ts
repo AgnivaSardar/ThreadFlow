@@ -8,6 +8,25 @@ export const classifyNoteSchema = z.object({
     skipLlm: z.boolean().optional().default(false),
     orderId: z.string().optional(),
     productionUpdateId: z.string().optional(),
+    context: z
+      .object({
+        style: z.string().optional(),
+        stage: z.string().optional(),
+        sizes: z.array(z.string()).optional(),
+        colors: z.array(z.string()).optional(),
+        orderLines: z
+          .array(
+            z.object({
+              id: z.string(),
+              size: z.string(),
+              color: z.string().optional(),
+              plannedQty: z.number().optional(),
+              completedQty: z.number().optional(),
+            })
+          )
+          .optional(),
+      })
+      .optional(),
   }),
 });
 

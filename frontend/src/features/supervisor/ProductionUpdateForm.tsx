@@ -132,6 +132,18 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
     isLoading: boolean;
   } | null>(null);
 
+  // Track original raw speech for transparency
+  const [rawSpokenText, setRawSpokenText] = useState<string>('');
+
+  const isListeningRef = useRef(isListening);
+  useEffect(() => {
+    isListeningRef.current = isListening;
+    // When listening ends and we have an English summary, update notes to clean English
+    if (!isListening && aiPreview?.summary) {
+      setNotes(aiPreview.summary);
+    }
+  }, [isListening, aiPreview?.summary]);
+
   // Smart speech entity extractor: parses good quantity, rejected quantity, and issue reasons
   const parseAndAutofillFromSpeech = (spokenText: string) => {
     if (!spokenText.trim()) return;
@@ -156,11 +168,6 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       if (numMatch) extractedGood = parseInt(numMatch[1], 10);
     }
 
-    if (extractedGood !== null && !isNaN(extractedGood) && extractedGood > 0) {
-      setGoodQty(extractedGood);
-      distributeTotalAcrossSizes(extractedGood);
-    }
-
     // 2. Extract Rejected Quantity
     const rejRegex =
       /(\d+)\s*(?:reject|rejected|rejection|defect|defects|damaged|damage|waste|alteration)/i;
@@ -177,7 +184,70 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       setRejectedQty(extractedRej);
     }
 
-    // 3. Extract Issue Reason & Auto-select Chip
+    // 3. Extract Per-Size Breakdown with Order Context (handling "others are of XS", "50 of small", etc.)
+    const targetLines = order.orderLines || [];
+    const sizeMap: Record<string, number> = {};
+    let totalExplicit = 0;
+    let remainingTargetId: string | null = null;
+
+    targetLines.forEach((line) => {
+      const sUpper = line.size.toUpperCase();
+      const sNamePattern =
+        sUpper === 'M'
+          ? '(?:medium|m\\b)'
+          : sUpper === 'S'
+          ? '(?:small|s\\b)'
+          : sUpper === 'XS'
+          ? '(?:xs\\b|extra\\s*small|axis\\b)'
+          : sUpper === 'L'
+          ? '(?:large|l\\b)'
+          : sUpper === 'XL'
+          ? '(?:xl\\b|extra\\s*large)'
+          : line.size;
+
+      const r1 = new RegExp(
+        `(\\d+)(?:\\s+(?:pcs|pieces|are|hour|hours|of|good))+\\s+${sNamePattern}`,
+        'i'
+      );
+      const r2 = new RegExp(`${sNamePattern}\\s*(?:is|was|were|of|:)?\\s*(\\d+)`, 'i');
+
+      const m1 = spokenText.match(r1);
+      const m2 = spokenText.match(r2);
+
+      if (m1) {
+        const q = parseInt(m1[1], 10);
+        sizeMap[line.id] = q;
+        totalExplicit += q;
+      } else if (m2) {
+        const q = parseInt(m2[1], 10);
+        sizeMap[line.id] = q;
+        totalExplicit += q;
+      }
+
+      const otherRegex = new RegExp(
+        `(?:others?|remaining|rest|balance)(?:\\s+(?:are|is|of|for|in|the))+\\s+${sNamePattern}`,
+        'i'
+      );
+      if (otherRegex.test(spokenText)) {
+        remainingTargetId = line.id;
+      }
+    });
+
+    if (extractedGood !== null && !isNaN(extractedGood) && extractedGood > 0) {
+      setGoodQty(extractedGood);
+      if (remainingTargetId && extractedGood > totalExplicit) {
+        sizeMap[remainingTargetId] = extractedGood - totalExplicit;
+      }
+      if (Object.keys(sizeMap).length > 0) {
+        setSizeQuantities((prev) => ({ ...prev, ...sizeMap }));
+      } else {
+        distributeTotalAcrossSizes(extractedGood);
+      }
+    } else if (Object.keys(sizeMap).length > 0) {
+      setSizeQuantities((prev) => ({ ...prev, ...sizeMap }));
+    }
+
+    // 4. Extract Issue Reason & Auto-select Chip
     const lower = spokenText.toLowerCase();
     let matchedCategory: string | null = null;
 
@@ -193,7 +263,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       matchedCategory = 'FABRIC_DEFECT';
     } else if (/subcontract|printing|washing|embroidery|gate\s*pass|challan|பிரிண்டிங்|வாஷிங்/i.test(lower)) {
       matchedCategory = 'SUBCONTRACTOR_DELAY';
-    } else if (/labour\s*shortage|tailor\s*leave|tailor\s*shortage|operator\s*absent|workers\s*absent|ஆட்கள்/i.test(lower)) {
+    } else if (/labour\s*shortage|tailor\s*leave|tailor\s*shortage|operator\s*absent|workers\s*absent|ஆட்கள்|level\s*short\s*age|label\s*short\s*age/i.test(lower)) {
       matchedCategory = 'LABOUR_SHORTAGE';
     } else if (/quality\s*hold|audit\s*hold|measurement|rejection\s*high|ஆடிட்/i.test(lower)) {
       matchedCategory = 'QUALITY_HOLD';
@@ -210,6 +280,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
   // Synchronize transcribed speech into notes input and autofill quantities/issues
   useEffect(() => {
     if (transcript) {
+      setRawSpokenText((prev) => (prev ? `${prev} ${transcript}` : transcript));
       setNotes((prev) => {
         const trimmed = prev.trim();
         const combined = trimmed ? `${trimmed} ${transcript}` : transcript;
@@ -239,7 +310,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
         else if (/ஊசி|மெஷின்|motor|needle/i.test(lower)) cat = 'MACHINE_BREAKDOWN';
         else if (/துணி|சாயம்|gsm|shade|hole/i.test(lower)) cat = 'FABRIC_DEFECT';
         else if (/பிரிண்டிங்|வாஷிங்|printtex|gate\s*pass/i.test(lower)) cat = 'SUBCONTRACTOR_DELAY';
-        else if (/ஆட்கள்|tailor|leave|shift\s*empty/i.test(lower)) cat = 'LABOUR_SHORTAGE';
+        else if (/ஆட்கள்|tailor|leave|shift\s*empty|labour\s*shortage|level\s*short\s*age/i.test(lower)) cat = 'LABOUR_SHORTAGE';
         else if (/ஆடிட்|rejection|measurement/i.test(lower)) cat = 'QUALITY_HOLD';
 
         setAiPreview({
@@ -260,13 +331,24 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             confidenceScore: number;
             englishSummary: string;
             classifiedBy: string;
+            totalGoodOutput?: number | null;
+            totalRejected?: number | null;
+            sizeBreakdown?: Record<string, number> | null;
           };
         }>('/ai/classify', {
           method: 'POST',
           body: JSON.stringify({
             rawText: trimmed,
-            timeoutMs: 2500,
+            timeoutMs: 3000,
             orderId: order.orderId,
+            context: {
+              orderId: order.orderId,
+              style: order.style,
+              buyer: order.buyer?.name || (order as any).buyerName,
+              stage: selectedStage,
+              sizes: order.orderLines?.map((l) => l.size) || [],
+              colors: order.orderLines?.map((l) => l.color) || [],
+            },
           }),
         });
 
@@ -278,6 +360,43 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             classifiedBy: res.data.classifiedBy,
             isLoading: false,
           });
+
+          // Autofill good quantity if returned
+          if (res.data.totalGoodOutput && res.data.totalGoodOutput > 0) {
+            setGoodQty(res.data.totalGoodOutput);
+          }
+
+          // Autofill rejected quantity if returned
+          if (res.data.totalRejected && res.data.totalRejected > 0) {
+            setRejectedQty(res.data.totalRejected);
+          }
+
+          // Autofill per-size breakdown directly matching order lines
+          if (res.data.sizeBreakdown && Object.keys(res.data.sizeBreakdown).length > 0) {
+            const updatedSizes: Record<string, number> = {};
+            order.orderLines?.forEach((line) => {
+              const matchKey = Object.keys(res.data.sizeBreakdown!).find(
+                (k) => k.toUpperCase() === line.size.toUpperCase()
+              );
+              if (matchKey !== undefined) {
+                updatedSizes[line.id] = res.data.sizeBreakdown![matchKey];
+              }
+            });
+            if (Object.keys(updatedSizes).length > 0) {
+              setSizeQuantities((prev) => ({ ...prev, ...updatedSizes }));
+            }
+          }
+
+          // Auto-select issue chip
+          if (res.data.category) {
+            const chip = SUPERVISOR_ISSUE_CHIPS.find((c) => c.category === res.data.category);
+            if (chip) setSelectedChip(chip);
+          }
+
+          // Auto-refine notes input into clean English summary if not actively recording speech
+          if (res.data.englishSummary && !isListeningRef.current) {
+            setNotes(res.data.englishSummary);
+          }
         }
       } catch {
         setAiPreview({
@@ -291,7 +410,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
     }, 450);
 
     return () => clearTimeout(timer);
-  }, [notes, order.orderId]);
+  }, [notes, order.orderId, selectedStage]);
 
   // Haptic feedback helper for mobile touch
   const triggerHaptic = (ms = 40) => {
@@ -1020,21 +1139,22 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             </div>
             {aiPreview.summary && !aiPreview.isLoading && (
               <div className="mt-2 pt-2 border-t border-indigo-200/60">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  {/[\u0B80-\u0BFF]/.test(notes)
-                    ? lang === 'ta'
-                      ? 'பதிவான தமிழ் உரை & ஆங்கில மொழிபெயர்ப்பு:'
-                      : 'Spoken Tamil & English Translation:'
-                    : lang === 'ta'
-                    ? 'பதிவான குறிப்பு:'
-                    : 'Recorded Floor Note:'}
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    {lang === 'ta'
+                      ? 'சுத்தமான ஆங்கில மொழிபெயர்ப்பு (பதிவாகும் உரை):'
+                      : 'Clean English Note (Saved to Order Log):'}
+                  </div>
+                  <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                    {lang === 'ta' ? 'ஆங்கிலத்தில் சேமிக்கப்படும்' : 'English Translation Only'}
+                  </span>
                 </div>
-                <div className="text-xs font-semibold text-slate-900 bg-white/80 p-2 rounded-lg border border-slate-200/60 shadow-2xs whitespace-pre-wrap">
-                  {notes}
+                <div className="text-xs font-bold text-slate-900 bg-white p-2.5 rounded-lg border border-indigo-100 shadow-2xs whitespace-pre-wrap leading-relaxed">
+                  {aiPreview.summary}
                 </div>
-                {/[\u0B80-\u0BFF]/.test(notes) && (
-                  <div className="mt-1.5 text-xs font-bold text-indigo-800 bg-indigo-100/80 p-2 rounded-lg border border-indigo-200 shadow-2xs">
-                    [English: {aiPreview.summary}]
+                {rawSpokenText && rawSpokenText !== aiPreview.summary && (
+                  <div className="mt-1 text-[10px] text-slate-400 italic truncate" title={rawSpokenText}>
+                    Audio input: "{rawSpokenText}"
                   </div>
                 )}
               </div>

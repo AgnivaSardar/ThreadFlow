@@ -15,6 +15,7 @@ export interface ClassifyNoteOptions {
   skipLlm?: boolean;
   productionUpdateId?: string;
   orderId?: string;
+  context?: any;
 }
 
 export class AIService {
@@ -46,12 +47,13 @@ export class AIService {
       return runDeterministicFallback(
         rawText,
         Date.now(),
-        'Explicit deterministic fallback requested'
+        'Explicit deterministic fallback requested',
+        options.context
       );
     }
 
     const timeout = options.timeoutMs || 3000;
-    const result = await classifyWithGemini(rawText, timeout);
+    const result = await classifyWithGemini(rawText, timeout, options.context);
 
     // If linked to an order and has high/critical severity, trigger run-rate risk assessment
     if (

@@ -441,6 +441,14 @@ export class ProductionService {
           ? await AIService.classifyIssueNote(input.notes, {
               timeoutMs: 2500,
               orderId: order.id,
+              context: {
+                orderId: order.id,
+                style: order.style,
+                buyer: (order as any).buyer?.name,
+                stage: input.stage,
+                sizes: (order as any).orderLines?.map((l: any) => l.size) || [],
+                colors: (order as any).orderLines?.map((l: any) => l.color) || [],
+              },
             })
           : null;
 
