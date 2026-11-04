@@ -132,7 +132,7 @@ export const UserMenuDropdown: React.FC = () => {
               className="w-full px-4 py-2 text-left flex items-center gap-2.5 text-rose-600 hover:bg-rose-50 transition text-xs font-semibold"
             >
               <LogOut className="w-4 h-4" />
-              <span>{lang === 'ta' ? 'வெளியேறு' : 'Sign Out / Log Out'}</span>
+              <span>{lang === 'ta' ? 'வெளியேறு' : 'Logout'}</span>
             </button>
           </div>
         </div>
