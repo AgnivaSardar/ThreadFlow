@@ -557,8 +557,8 @@ export const MyWorkPage: React.FC = () => {
                                 <Layers className="w-3 h-3 text-sky-600" />
                                 <span>{t.sizeBreakdownTitle}</span>
                               </span>
-                              <span className="text-[10px] text-slate-400 font-mono">
-                                {order.orderLines.length} {t.sizesCount}
+                              <span className="text-[10px] text-slate-500 font-mono font-semibold">
+                                {order.orderLines.reduce((acc, l) => acc + l.completedQty, 0).toLocaleString()} pcs • {order.orderLines.length} {t.sizesCount}
                               </span>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">

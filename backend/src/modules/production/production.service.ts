@@ -143,47 +143,108 @@ export class ProductionService {
       const totalCompleted = order.milestones.reduce((acc, m) => acc + m.completedQuantity, 0);
       const overallProgress = totalPlanned > 0 ? Math.round((totalCompleted / totalPlanned) * 100) : 0;
 
-      // Calculate completed quantity for each orderLine in THIS active milestone:
+      // Calculate completed quantity for each orderLine in THIS active milestone so sum ALWAYS equals activeMilestone.completedQuantity:
       const activeMilestoneUpdates = activeMilestone
         ? (order as any).productionUpdates?.filter((u: any) => u.milestoneId === activeMilestone.id) || []
         : [];
 
       const stageLineCompletedMap = new Map<string, number>();
-      let hasLoggedLines = false;
       for (const update of activeMilestoneUpdates) {
         for (const line of update.sizeBreakdownLines) {
-          hasLoggedLines = true;
           const cur = stageLineCompletedMap.get(line.orderLineId) || 0;
           stageLineCompletedMap.set(line.orderLineId, cur + line.goodQuantity);
         }
       }
 
-      const activeMilestoneRatio =
-        activeMilestone && activeMilestone.targetQuantity > 0
-          ? activeMilestone.completedQuantity / activeMilestone.targetQuantity
-          : 0;
+      const targetMilestoneQty = activeMilestone ? activeMilestone.completedQuantity : 0;
+      const dbLinesCompletedSum = order.orderLines.reduce((acc, l) => acc + (l.completedQty || 0), 0);
+      const loggedTotal = Array.from(stageLineCompletedMap.values()).reduce((a, b) => a + b, 0);
 
-      const orderLines = order.orderLines.map((l) => {
-        let completedInStage = 0;
-        if (hasLoggedLines) {
-          completedInStage = stageLineCompletedMap.get(l.id) || 0;
-        } else if (activeMilestone && activeMilestone.completedQuantity > 0) {
-          completedInStage = Math.min(
-            l.plannedQty,
-            Math.round(l.plannedQty * activeMilestoneRatio)
-          );
-        } else {
-          completedInStage = 0;
-        }
+      let orderLines: Array<{
+        id: string;
+        size: string;
+        color: string;
+        plannedQty: number;
+        completedQty: number;
+      }> = [];
 
-        return {
+      if (targetMilestoneQty === 0) {
+        orderLines = order.orderLines.map((l) => ({
           id: l.id,
           size: l.size,
           color: l.color,
           plannedQty: l.plannedQty,
-          completedQty: completedInStage,
-        };
-      });
+          completedQty: 0,
+        }));
+      } else if (dbLinesCompletedSum === targetMilestoneQty) {
+        // Direct match with database OrderLine completed count (e.g. final stage garments)
+        orderLines = order.orderLines.map((l) => ({
+          id: l.id,
+          size: l.size,
+          color: l.color,
+          plannedQty: l.plannedQty,
+          completedQty: l.completedQty,
+        }));
+      } else if (loggedTotal === targetMilestoneQty) {
+        // Direct match with shift update size lines recorded for this milestone
+        orderLines = order.orderLines.map((l) => ({
+          id: l.id,
+          size: l.size,
+          color: l.color,
+          plannedQty: l.plannedQty,
+          completedQty: stageLineCompletedMap.get(l.id) || 0,
+        }));
+      } else if (loggedTotal > 0 && loggedTotal < targetMilestoneQty) {
+        // Blend recorded update lines with remaining unallocated pieces distributed by remaining capacity
+        const unallocated = targetMilestoneQty - loggedTotal;
+        const remainingCapacities = order.orderLines.map((l) => {
+          const base = stageLineCompletedMap.get(l.id) || 0;
+          return Math.max(0, l.plannedQty - base);
+        });
+        const totalRemainingCapacity = remainingCapacities.reduce((a, b) => a + b, 0);
+
+        let allocatedExtra = 0;
+        orderLines = order.orderLines.map((l, idx) => {
+          const base = stageLineCompletedMap.get(l.id) || 0;
+          const isLast = idx === order.orderLines.length - 1;
+          let extra = 0;
+
+          if (isLast) {
+            extra = Math.max(0, unallocated - allocatedExtra);
+          } else if (totalRemainingCapacity > 0) {
+            extra = Math.round((remainingCapacities[idx] / totalRemainingCapacity) * unallocated);
+            allocatedExtra += extra;
+          }
+
+          return {
+            id: l.id,
+            size: l.size,
+            color: l.color,
+            plannedQty: l.plannedQty,
+            completedQty: base + extra,
+          };
+        });
+      } else {
+        // Distribute targetMilestoneQty across lines proportional to plannedQty with zero rounding error
+        const totalPlannedLines = order.orderLines.reduce((acc, l) => acc + l.plannedQty, 0);
+        let allocatedSoFar = 0;
+
+        orderLines = order.orderLines.map((l, idx) => {
+          const isLast = idx === order.orderLines.length - 1;
+          const completed = isLast
+            ? Math.max(0, targetMilestoneQty - allocatedSoFar)
+            : Math.round((l.plannedQty / totalPlannedLines) * targetMilestoneQty);
+          allocatedSoFar += completed;
+
+          return {
+            id: l.id,
+            size: l.size,
+            color: l.color,
+            plannedQty: l.plannedQty,
+            completedQty: completed,
+          };
+        });
+      }
 
       return {
         orderId: order.id,
@@ -416,7 +477,7 @@ export class ProductionService {
           },
         });
       } catch (classifyErr) {
-        logger.warn('AI issue classification error outside transaction boundary:', classifyErr);
+        console.warn('AI issue classification error outside transaction boundary:', classifyErr);
       }
     }
 

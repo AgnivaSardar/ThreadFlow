@@ -359,7 +359,7 @@ export class OrdersService {
       });
 
       return updatedOrder;
-    });
+    }, { timeout: 25000, maxWait: 15000 });
   }
 
   /**
@@ -519,7 +519,7 @@ export class OrdersService {
         updatedCount: updatedOrders.length,
         orderIds: updatedOrders.map((o) => o.id),
       };
-    });
+    }, { timeout: 25000, maxWait: 15000 });
   }
 
   /**
@@ -1076,6 +1076,6 @@ export class OrdersService {
         actualCompleted,
         adjustDownstreamTargets: input.adjustDownstreamTargets,
       };
-    });
+    }, { timeout: 25000, maxWait: 15000 });
   }
 }
