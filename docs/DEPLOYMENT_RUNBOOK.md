@@ -109,26 +109,24 @@ Open your browser at `http://localhost:5173` to access the ThreadFlow workspace.
 
 ---
 
-## 4. Containerized Production Deployment (Docker & Docker Compose)
+## 4. Production Cloud Deployment: Render
 
-The repository includes production-ready multi-stage Dockerfiles for both frontend and backend.
+ThreadFlow deploys natively on Render without requiring container virtualization:
 
-### Running with Docker Compose
+### 1. Backend Web Service (Render Web Service)
+* **Environment:** `Node`
+* **Root Directory:** `backend`
+* **Build Command:** `npm install && npx prisma db push && npm run build`
+* **Start Command:** `npm start`
+* **Environment Variables:** Documented in Section 2 (e.g. `DATABASE_URL`, `JWT_ACCESS_SECRET`, `SENDGRID_API_KEY`, `APP_ORIGIN`).
 
-```bash
-# 1. Ensure .env has valid DATABASE_URL and JWT secrets
-# 2. Build and launch services
-docker-compose up -d --build
-
-# 3. Check container logs
-docker-compose logs -f
-```
-
-### Services Orchestrated
-| Service | Image/Context | Exposed Port | Purpose |
-| :--- | :--- | :--- | :--- |
-| `threadflow-backend` | `./backend/Dockerfile` (Node 20 Alpine) | `4000:4000` | Express REST API, Prisma ORM, Gemini AI bridge, PDF generator |
-| `threadflow-frontend` | `./frontend/Dockerfile` (Nginx Alpine) | `80:80`, `5173:80` | Production React SPA with client-side routing & `/api/v1` reverse proxy |
+### 2. Frontend Web Service (Render Static Site)
+* **Environment:** `Static Site`
+* **Root Directory:** `frontend`
+* **Build Command:** `npm install && npm run build`
+* **Publish Directory:** `dist`
+* **SPA Rewrite Rule:** Source: `/*` $\to$ Destination: `/index.html` (Action: `Rewrite`)
+* **Environment Variable:** `VITE_API_URL=https://<your-backend-service>.onrender.com/api/v1`
 
 ---
 

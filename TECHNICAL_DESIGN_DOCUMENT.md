@@ -4,7 +4,7 @@
 ---
 
 **Repository URL:** `https://github.com/AgnivaSardar/ThreadFlow`  
-**Live Application URL:** `https://github.com/AgnivaSardar/ThreadFlow` (Self-Hosted on Supabase + Docker)  
+**Live Application URL:** `https://github.com/AgnivaSardar/ThreadFlow` (Hosted on Render + Supabase)  
 **Author / Engineering Lead:** Principal Solutions Architect & Lead Engineer  
 **Document Version:** 2.0.0 (Production Blueprint & Submission Release)  
 **Target Delivery Window:** 6 Weeks | **Budget Cap:** ₹7,00,000 INR  
@@ -559,7 +559,7 @@ A floating bottom drawer allowing the evaluator to test edge cases in one click 
 
 | Milestone & Deliverables | Duration | Resource Allocation | Allocated Cost |
 | :--- | :---: | :--- | :---: |
-| **Phase 1: Foundation, Orders & TNA Architecture**<br>Docker, PostgreSQL, Prisma, Auth RBAC, Order CRUD, Size-Breakdown | Weeks 1–2 | 1 Senior Full-Stack Architect + 1 UI/UX Specialist | ₹2,20,000 |
+| **Phase 1: Foundation, Orders & TNA Architecture**<br>Node.js, PostgreSQL, Prisma, Auth RBAC, Order CRUD, Size-Breakdown | Weeks 1–2 | 1 Senior Full-Stack Architect + 1 UI/UX Specialist | ₹2,20,000 |
 | **Phase 2: Supervisor PWA, Offline Queue & Tamil UI**<br>IndexedDB queue, canvas compression, Tamil keypad, Web Speech API | Weeks 3–4 | 1 Frontend Mobile Specialist + 1 Backend Engineer | ₹2,40,000 |
 | **Phase 3: Run-Rate Engine, Tamil AI & Buyer Portal**<br>Deterministic math engine, Gemini integration, Buyer magic links | Week 5 | 1 Senior Solutions Architect | ₹1,40,000 |
 | **Phase 4: Factory Floor Pilot (Unit 1) & Security Audit**<br>Floor supervisor training in Tiruppur, penetration test, final handover | Week 6 | Full Project Team + On-site Floor Coordinator | ₹1,00,000 |

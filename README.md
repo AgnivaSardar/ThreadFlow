@@ -141,16 +141,17 @@ TOTAL: 128 PASSED | 0 FAILED (100% PASS RATE)
 
 ---
 
-## Containerized Deployment (Docker Compose)
+## Cloud Deployment (Render)
 
-Launch the full stack in production mode with a single command:
+ThreadFlow deploys natively on Render as a Node.js Web Service (backend) and Static Site (frontend):
 
-```bash
-docker-compose up -d --build
-```
-
-* Frontend: `http://localhost:80` (or `http://localhost:5173`)
-* Backend: `http://localhost:4000`
+1. **Backend Service:**
+   * Build Command: `npm install && npx prisma db push && npm run build`
+   * Start Command: `npm start`
+2. **Frontend Site:**
+   * Build Command: `npm install && npm run build`
+   * Publish Directory: `dist`
+   * Rewrite: `/*` $\to$ `/index.html`
 
 ---
 
@@ -159,7 +160,7 @@ docker-compose up -d --build
 The project documentation has been consolidated into 4 comprehensive guides:
 
 * [**Reviewer Evaluation Guide (`docs/REVIEWER_GUIDE.md`)**](docs/REVIEWER_GUIDE.md): Direct mapping to the 50% Quality / 30% Problem Solving / 20% Communication rubric with step-by-step persona test paths.
-* [**Technical Design Document (`TECHNICAL_DESIGN_DOCUMENT.md`)**](TECHNICAL_DESIGN_DOCUMENT.md): Exhaustive 34 KB TDD covering architectural decisions, relational invariants, and mathematical formulas.
-* [**Deployment & Operations Runbook (`docs/DEPLOYMENT_RUNBOOK.md`)**](docs/DEPLOYMENT_RUNBOOK.md): Complete setup guide, Docker orchestration, Supabase pooler tuning, and environment variable dictionary.
+* [**Technical Design Document (`TECHNICAL_DESIGN_DOCUMENT.md`)**](TECHNICAL_DESIGN_DOCUMENT.md): Exhaustive TDD covering architectural decisions, relational invariants, and mathematical formulas.
+* [**Deployment & Operations Runbook (`docs/DEPLOYMENT_RUNBOOK.md`)**](docs/DEPLOYMENT_RUNBOOK.md): Complete setup guide, Supabase pooler tuning, Render instructions, and environment variable dictionary.
 * [**API & Data Model Specification (`docs/API_AND_DATA_SPECIFICATION.md`)**](docs/API_AND_DATA_SPECIFICATION.md): Definitive entity dictionary, foreign key invariants, complete REST endpoints, and UI design tokens.
 * [**Client Brief & Problem Statement (`docs/PROBLEM_STATEMENT.md`)**](docs/PROBLEM_STATEMENT.md): Problem background, operational boundaries, and seed baseline parameters.

@@ -9,7 +9,7 @@ This guide maps the **ThreadFlow** implementation directly to the reviewer evalu
 | Required Deliverable | Repository Location | Summary |
 | :--- | :--- | :--- |
 | **Technical Design Document (TDD)** | [`TECHNICAL_DESIGN_DOCUMENT.md`](../TECHNICAL_DESIGN_DOCUMENT.md) | Comprehensive 34 KB design document detailing the ₹1.08 Cr loss analysis, Modular Monolith architecture, relational invariants, "Show-Your-Math" run-rate formulas, Tamil AI classifier, offline IndexedDB sync, and trade-offs. |
-| **Deployment Runbook** | [`docs/DEPLOYMENT_RUNBOOK.md`](DEPLOYMENT_RUNBOOK.md) | Step-by-step local setup, Docker Compose orchestration, Supabase PostgreSQL pooler configuration, health checks, and test runner. |
+| **Deployment Runbook** | [`docs/DEPLOYMENT_RUNBOOK.md`](DEPLOYMENT_RUNBOOK.md) | Step-by-step local setup, Render cloud deployment, Supabase PostgreSQL pooler configuration, health checks, and test runner. |
 | **API & Data Specification** | [`docs/API_AND_DATA_SPECIFICATION.md`](API_AND_DATA_SPECIFICATION.md) | Relational schema, 7-stage knitwear buffer schedule, REST API contracts (`/api/v1`), RBAC security matrix, and UI design tokens. |
 | **Problem Statement & Scope** | [`docs/PROBLEM_STATEMENT.md`](PROBLEM_STATEMENT.md) | Verbatim client brief, ₹1.08 Crore loss quantification, and calibrated baseline orders (`2026-11-02`). |
 

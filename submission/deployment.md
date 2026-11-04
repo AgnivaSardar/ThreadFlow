@@ -64,46 +64,25 @@ npm --prefix backend test
 
 ---
 
-## 2. Production Cloud Deployment: Render & Docker
+## 2. Production Cloud Deployment: Render (Native Web Service & Static Site)
 
-ThreadFlow is designed to deploy seamlessly either **natively on Render (Recommended for zero-friction setup)** or via **Docker / Docker Compose**.
+ThreadFlow is deployed natively on Render using standard Node.js runtime environments without requiring containers:
 
-### Option A: Render Cloud Deployment (Native — No Docker Required)
-
-Render natively supports full-stack Node.js environments and static SPAs without needing Docker locally:
-
-#### 1. Backend Web Service (Render Web Service)
+### 1. Backend Web Service (Render Web Service)
 * **Environment:** `Node`
 * **Root Directory:** `backend`
 * **Build Command:** `npm install && npx prisma db push && npm run build`
 * **Start Command:** `npm start`
-* **Environment Variables:** Set the environment variables listed in Section 3 (e.g. `DATABASE_URL`, `JWT_ACCESS_SECRET`, `SENDGRID_API_KEY`, `APP_ORIGIN`).
+* **Environment Variables:** Set the environment variables documented in Section 3 (e.g., `DATABASE_URL`, `JWT_ACCESS_SECRET`, `SENDGRID_API_KEY`, `APP_ORIGIN`).
 
-#### 2. Frontend Web Service (Render Static Site)
+### 2. Frontend Web Service (Render Static Site)
 * **Environment:** `Static Site`
 * **Root Directory:** `frontend`
 * **Build Command:** `npm install && npm run build`
 * **Publish Directory:** `dist`
-* **Rewrite Rule:** Add rewrite rule for client-side SPA routing:
+* **SPA Rewrite Rule:** Add a rewrite rule for client-side React SPA routing:
   * Source: `/*` $\to$ Destination: `/index.html` (Action: `Rewrite`)
-* **Environment Variable:** `VITE_API_URL=https://your-backend.onrender.com/api/v1`
-
----
-
-### Option B: Containerized Deployment via Docker & Docker Compose
-
-For local or VPS deployments using Docker:
-
-```bash
-# From the project root
-docker-compose up -d --build
-```
-
-### Services Orchestrated
-| Service | Image / Build Context | Port | Description |
-| :--- | :--- | :---: | :--- |
-| **`threadflow-backend`** | `./backend/Dockerfile` (Node 20 Alpine) | `4000` | Express REST API, Prisma ORM, Gemini AI bridge, PDF report generator |
-| **`threadflow-frontend`** | `./frontend/Dockerfile` (Nginx Alpine) | `80`, `5173` | React SPA production build with client-side SPA routing and `/api/v1` reverse proxy |
+* **Environment Variable:** `VITE_API_URL=https://<your-backend-service>.onrender.com/api/v1`
 
 ---
 
