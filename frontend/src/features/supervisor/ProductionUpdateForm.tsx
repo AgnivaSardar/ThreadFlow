@@ -26,6 +26,7 @@ import {
   RotateCcw,
   CheckCircle2,
   AlertTriangle,
+  AlertCircle,
   Sparkles,
   Layers,
   Clock,
@@ -166,6 +167,9 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
 
   // Track original raw speech for transparency
   const [rawSpokenText, setRawSpokenText] = useState<string>('');
+
+  // AI & Voice Size Guidance Notice
+  const [aiSizeNotice, setAiSizeNotice] = useState<string | null>(null);
 
   const isListeningRef = useRef(isListening);
   useEffect(() => {
@@ -316,11 +320,29 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       }
       if (Object.keys(sizeMap).length > 0) {
         setSizeQuantities((prev) => ({ ...prev, ...sizeMap }));
+        setAiSizeNotice(
+          lang === 'ta'
+            ? 'குரல் பதிவிலிருந்து அளவுகள் கண்டறியப்பட்டு தானாக நிரப்பப்பட்டன.'
+            : 'Individual size breakdown extracted from voice analysis and autofilled.'
+        );
       } else {
-        distributeTotalAcrossSizes(extractedGood);
+        // Voice note gave a total quantity, but said nothing about individual sizes.
+        // DO NOT AUTOFILL! Ask the supervisor to fill individual size quantities.
+        setAiSizeNotice(
+          lang === 'ta'
+            ? `குரல் குறிப்பில் அளவுகள் குறிப்பிடப்படவில்லை. தயவுசெய்து ${extractedGood} பீஸுக்குரிய தனித்தனி அளவுகளை (S, M, L, XL) உள்ளிடவும் (கூடுதல் சமமாக இருக்க வேண்டும்).`
+            : `Voice note did not specify individual sizes. Total is ${extractedGood} pcs — please fill in individual size quantities so their sum equals ${extractedGood} pcs.`
+        );
       }
     } else if (Object.keys(sizeMap).length > 0) {
       setSizeQuantities((prev) => ({ ...prev, ...sizeMap }));
+      const sum = Object.values(sizeMap).reduce((a, b) => a + b, 0);
+      setGoodQty(sum);
+      setAiSizeNotice(
+        lang === 'ta'
+          ? 'குரல் பதிவிலிருந்து அளவுகள் கண்டறியப்பட்டு தானாக நிரப்பப்பட்டன.'
+          : 'Individual size breakdown extracted from voice analysis and autofilled.'
+      );
     }
 
     // 4. Extract Issue Reason & Auto-select Chip
@@ -447,7 +469,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             setRejectedQty(res.data.totalRejected);
           }
 
-          // Autofill per-size breakdown directly matching order lines
+          // Autofill per-size breakdown directly matching order lines if detected in AI note analysis
           if (res.data.sizeBreakdown && Object.keys(res.data.sizeBreakdown).length > 0) {
             const updatedSizes: Record<string, number> = {};
             order.orderLines?.forEach((line) => {
@@ -460,7 +482,19 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             });
             if (Object.keys(updatedSizes).length > 0) {
               setSizeQuantities((prev) => ({ ...prev, ...updatedSizes }));
+              setAiSizeNotice(
+                lang === 'ta'
+                  ? 'AI குறிப்புப் பகுப்பாய்வு மூலம் அளவுகள் உறுதி செய்யப்பட்டு நிரப்பப்பட்டன.'
+                  : 'Individual sizes extracted by AI analysis and autofilled.'
+              );
             }
+          } else if (res.data.totalGoodOutput && res.data.totalGoodOutput > 0) {
+            // AI extracted a total but nothing said about individual sizes
+            setAiSizeNotice(
+              lang === 'ta'
+                ? `குறிப்பில் தனித்தனி அளவுகள் குறிப்பிடப்படவில்லை. தயவுசெய்து ${res.data.totalGoodOutput} பீஸுக்குரிய அளவுகளை உள்ளிடவும்.`
+                : `AI detected total ${res.data.totalGoodOutput} pcs, but no individual sizes were mentioned. Please fill the size breakdown.`
+            );
           }
 
           // Auto-select issue chip
@@ -522,7 +556,9 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
     const updated = { ...sizeQuantities, [lineId]: Math.max(0, val) };
     setSizeQuantities(updated);
     const sum = Object.values(updated).reduce((acc, curr) => acc + curr, 0);
-    setGoodQty(sum);
+    if (goodQty === 0) {
+      setGoodQty(sum);
+    }
     setFormError(null);
   };
 
@@ -533,12 +569,23 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
     handleSizeChange(lineId, current + delta);
   };
 
-  // Quick increment handlers for overall Good Quantity
+  // Quick increment handlers for overall Good Quantity (Does NOT autofill sizes unless spoken)
   const handleAddGoodQty = (amount: number) => {
     triggerHaptic(40);
     const newTotal = Math.max(0, goodQty + amount);
     setGoodQty(newTotal);
-    distributeTotalAcrossSizes(newTotal);
+    setFormError(null);
+  };
+
+  // Calculate sum of individual sizes
+  const sumOfSizes =
+    order.orderLines && order.orderLines.length > 0
+      ? order.orderLines.reduce((acc, line) => acc + (sizeQuantities[line.id] || 0), 0)
+      : 0;
+
+  const syncTotalToSizeSum = () => {
+    triggerHaptic(30);
+    setGoodQty(sumOfSizes);
     setFormError(null);
   };
 
@@ -636,6 +683,19 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
     if (goodQty <= 0 && rejectedQty <= 0 && !notes.trim() && !selectedChip) {
       setFormError(t.validationErrorQty);
       return;
+    }
+
+    // Compulsory individual size breakdown validation: sum of sizes MUST equal total good output
+    if (goodQty > 0 && order.orderLines && order.orderLines.length > 0) {
+      if (sumOfSizes !== goodQty) {
+        triggerHaptic(120);
+        setFormError(
+          lang === 'ta'
+            ? `அளவு வாரியாக எண்ணிக்கை கட்டாயமாக உள்ளிடப்பட வேண்டும்! அளவுகளின் கூடுதல் (${sumOfSizes} பீஸ்) மொத்த எண்ணிக்கையுடன் (${goodQty} பீஸ்) சரியாக பொருந்த வேண்டும். தயவுசெய்து அளவுகளை சரிபார்க்கவும்.`
+            : `Individual size quantities are compulsory! Sum of individual sizes (${sumOfSizes} pcs) must equal the total good output (${goodQty} pcs). Please fill or adjust individual sizes.`
+        );
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -869,14 +929,90 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       {order.orderLines && order.orderLines.length > 0 && (
         <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5 flex-wrap">
               <Layers className="w-3.5 h-3.5 text-sky-600" />
               <span>{t.sizeBreakdownTitle}</span>
+              <span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">
+                {lang === 'ta' ? 'கட்டாய பதிவு' : 'Compulsory'}
+              </span>
             </span>
             <span className="text-[11px] font-bold text-slate-400">
               {order.orderLines.length} {t.sizesCount}
             </span>
           </div>
+
+          {/* AI Size Analysis & Voice Parsing Advisory */}
+          {aiSizeNotice && (
+            <div className="mb-3 p-2.5 rounded-xl bg-sky-50 border border-sky-200 flex items-start gap-2 text-xs text-sky-900 animate-fadeIn">
+              <Sparkles className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+              <div className="flex-1 text-[11px] font-medium leading-relaxed">{aiSizeNotice}</div>
+              <button
+                type="button"
+                onClick={() => setAiSizeNotice(null)}
+                className="text-sky-400 hover:text-sky-700 text-xs px-1 font-bold cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {/* Live Size vs Total Output Reconciliation Status */}
+          {goodQty > 0 && (
+            <div className="mb-3">
+              {sumOfSizes === goodQty ? (
+                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs text-emerald-800 font-semibold animate-fadeIn">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>
+                      {lang === 'ta'
+                        ? `அளவுகளின் கூடுதல் (${sumOfSizes} பீஸ்) மொத்த எண்ணிக்கையுடன் சரியாக பொருந்துகிறது.`
+                        : `Size breakdown matches total good output (${goodQty} pcs).`}
+                    </span>
+                  </span>
+                  <span className="font-mono font-bold text-emerald-900 bg-emerald-100/80 px-2 py-0.5 rounded text-[11px] shrink-0">
+                    {sumOfSizes} / {goodQty} pcs
+                  </span>
+                </div>
+              ) : (
+                <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-300 text-xs text-amber-900 animate-fadeIn">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-start gap-1.5">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold">
+                          {lang === 'ta'
+                            ? 'தனித்தனி அளவுகள் கட்டாயமாக உள்ளிடப்பட வேண்டும்:'
+                            : 'Individual sizes are compulsory & must match total:'}
+                        </span>
+                        <p className="mt-0.5 text-[11px] text-amber-800">
+                          {sumOfSizes === 0
+                            ? lang === 'ta'
+                              ? `மொத்த எண்ணிக்கை ${goodQty} பீஸ். தயவுசெய்து அளவுகளை (S, M, L, XL) உள்ளிடவும்.`
+                              : `Total output is ${goodQty} pcs. Please enter individual size quantities below.`
+                            : sumOfSizes < goodQty
+                            ? lang === 'ta'
+                              ? `அளவுகளின் கூடுதல் (${sumOfSizes}) மொத்தத்தை விட (${goodQty}) குறைவு. இன்னும் ${goodQty - sumOfSizes} பீஸ் தேவை.`
+                              : `Sum of sizes (${sumOfSizes} pcs) is ${goodQty - sumOfSizes} pcs short of total (${goodQty} pcs).`
+                            : lang === 'ta'
+                              ? `அளவுகளின் கூடுதல் (${sumOfSizes}) மொத்தத்தை விட (${goodQty}) அதிகம். ${sumOfSizes - goodQty} பீஸ் கூடுதல்.`
+                              : `Sum of sizes (${sumOfSizes} pcs) exceeds total (${goodQty} pcs) by ${sumOfSizes - goodQty} pcs.`}
+                        </p>
+                      </div>
+                    </div>
+                    {sumOfSizes > 0 && (
+                      <button
+                        type="button"
+                        onClick={syncTotalToSizeSum}
+                        className="self-end sm:self-auto shrink-0 px-2.5 py-1 rounded-lg bg-amber-200 hover:bg-amber-300 text-amber-950 font-bold text-[10px] transition-colors cursor-pointer shadow-2xs"
+                      >
+                        {lang === 'ta' ? `மொத்தத்தை ${sumOfSizes} என மாற்று` : `Set Total = ${sumOfSizes} pcs`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <p className="text-[11px] text-slate-500 mb-3">
             {lang === 'ta'
@@ -992,7 +1128,6 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
                 const val = parseInt(e.target.value, 10);
                 const safeVal = isNaN(val) ? 0 : Math.max(0, val);
                 setGoodQty(safeVal);
-                distributeTotalAcrossSizes(safeVal);
                 setFormError(null);
               }}
               placeholder="0"
