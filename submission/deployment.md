@@ -64,11 +64,36 @@ npm --prefix backend test
 
 ---
 
-## 2. Production Deployment via Docker & Docker Compose
+## 2. Production Cloud Deployment: Render & Docker
 
-The project includes production-ready multi-stage Dockerfiles for both backend and frontend.
+ThreadFlow is designed to deploy seamlessly either **natively on Render (Recommended for zero-friction setup)** or via **Docker / Docker Compose**.
 
-### One-Command Deployment
+### Option A: Render Cloud Deployment (Native — No Docker Required)
+
+Render natively supports full-stack Node.js environments and static SPAs without needing Docker locally:
+
+#### 1. Backend Web Service (Render Web Service)
+* **Environment:** `Node`
+* **Root Directory:** `backend`
+* **Build Command:** `npm install && npx prisma db push && npm run build`
+* **Start Command:** `npm start`
+* **Environment Variables:** Set the environment variables listed in Section 3 (e.g. `DATABASE_URL`, `JWT_ACCESS_SECRET`, `SENDGRID_API_KEY`, `APP_ORIGIN`).
+
+#### 2. Frontend Web Service (Render Static Site)
+* **Environment:** `Static Site`
+* **Root Directory:** `frontend`
+* **Build Command:** `npm install && npm run build`
+* **Publish Directory:** `dist`
+* **Rewrite Rule:** Add rewrite rule for client-side SPA routing:
+  * Source: `/*` $\to$ Destination: `/index.html` (Action: `Rewrite`)
+* **Environment Variable:** `VITE_API_URL=https://your-backend.onrender.com/api/v1`
+
+---
+
+### Option B: Containerized Deployment via Docker & Docker Compose
+
+For local or VPS deployments using Docker:
+
 ```bash
 # From the project root
 docker-compose up -d --build
@@ -105,6 +130,8 @@ As required by the client brief, this table documents the required environment v
 | `AI_API_KEY` | Optional | Google Gemini API Key | API key for Gemini AI. *(If omitted, the app automatically uses the built-in deterministic Tiruppur textile regex fallback dictionary).* |
 | `AI_TIMEOUT_MS` | Optional | `3000` | SLA timeout in milliseconds before engaging instant local fallback |
 | `AI_CONFIDENCE_THRESHOLD` | Optional | `0.65` | Minimum AI confidence score before flagging for merchandiser review |
+| `SENDGRID_API_KEY` | Optional | SendGrid API key (`SG...`) | API key for automated password recovery OTP emails and notifications |
+| `SENDGRID_FROM_EMAIL` | Optional | Verified Sender Email | Verified sender address for transactional OTP emails |
 
 ---
 
@@ -120,6 +147,7 @@ All accounts use default password: `ThreadFlow@2026`
 | **UK Foreign Buyer** | `sourcing@company-b.co.uk` | `ThreadFlow@2026` | Scoped Buyer Portal viewing POs `B-PO-88213` and `B-PO-88240`, confirmed photos, milestones, and weekly reports with zero access to other brands' data. |
 | **German Foreign Buyer** | `compliance@company-c.de` | `ThreadFlow@2026` | Scoped Buyer Portal viewing PO `C-PO-0488` with verified multi-tenant isolation. |
 | **System Administrator** | `admin@threadflow.com` | `ThreadFlow@2026` | Global administrative oversight across all manufacturing units, orders, audit logs, and system settings. |
+| **System Administrator (Alt)** | `agniva.sardar@gmail.com` | `ThreadFlow@2026` | Second Administrator account for testing email OTP password resets and administrative control. |
 
 ---
 
