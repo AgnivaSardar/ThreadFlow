@@ -113,6 +113,20 @@ export class AuthController {
       user,
     });
   }
+
+  /**
+   * POST /api/v1/auth/forgot-password
+   * Request password reset instructions
+   */
+  public async forgotPassword(req: Request, res: Response): Promise<void> {
+    const { email } = req.body;
+    if (!email || typeof email !== 'string') {
+      throw new AppError('Valid work email address is required', 400);
+    }
+
+    const result = await authService.requestPasswordReset(email);
+    res.status(200).json(result);
+  }
 }
 
 export const authController = new AuthController();

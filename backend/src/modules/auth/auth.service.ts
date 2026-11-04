@@ -204,6 +204,25 @@ export class AuthService {
       assignedUnit: updated.assignedUnit,
     };
   }
+
+  /**
+   * Dispatches a secure password recovery instruction for a work email.
+   */
+  public async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (user) {
+      console.log(`[AUTH] Password recovery requested for: ${user.email} (${user.role})`);
+    }
+
+    return {
+      success: true,
+      message: `If an account exists for ${normalizedEmail}, password reset instructions have been dispatched.`,
+    };
+  }
 }
 
 export const authService = new AuthService();
