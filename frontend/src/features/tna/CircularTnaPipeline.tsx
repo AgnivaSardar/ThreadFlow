@@ -97,21 +97,28 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
     return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
   };
 
-  // Math for 7-Segment SVG Circular Gauge with distinct gap and separators
+  // Dynamic count of stages (e.g. 7 stages for printed styles, 6 stages for solid/unprinted garments)
+  const totalStages = sorted.length || 7;
+  const hasPrintingStage = sorted.some((m) => m.stage === 'PRINTING');
+
+  // Math for SVG Circular Gauge with distinct gap and separators adapting to stage count
   const R = 105;
   const C = 2 * Math.PI * R; // ~659.73
   const gapPx = 8;
-  const segmentLength = (C / 7) - gapPx;
+  const segmentLength = (C / totalStages) - gapPx;
 
   return (
     <div className="w-full bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
       {/* Header (Responsive on Mobile) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 sm:pb-4 border-b border-slate-100">
-        <div>
+        <div className="flex items-center gap-2.5 flex-wrap">
           <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            7-Stage Time & Action Pipeline
+            {totalStages}-Stage Time & Action Pipeline
           </h3>
+          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+            {hasPrintingStage ? '7 Stages (Includes Subcontracted Print)' : '6 Stages (Solid Dyed — Print Skipped)'}
+          </span>
         </div>
         <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 text-[11px] sm:text-xs font-semibold text-slate-500">
           <span className="flex items-center gap-1.5">
@@ -126,9 +133,9 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
         </div>
       </div>
 
-      {/* Main Grid: 7-Segment Radial Donut + Detailed Inspection Panel */}
+      {/* Main Grid: Radial Donut + Detailed Inspection Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-6">
-        {/* Left Side: 7-Segment Circular Donut (Takes 5 cols on lg) */}
+        {/* Left Side: Circular Donut (Takes 5 cols on lg) */}
         <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
           <div className="relative w-64 h-64 flex items-center justify-center select-none">
             <svg
@@ -145,7 +152,7 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
                 strokeWidth="20"
               />
 
-              {/* 7 Segment Arcs */}
+              {/* Segment Arcs */}
               {sorted.map((ms, idx) => {
                 const pct =
                   ms.targetQuantity > 0
@@ -165,8 +172,8 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
                   strokeColor = '#F59E0B'; // In Progress
                 }
 
-                // Calculate dash offset for 7 segments with centering gap
-                const dashOffset = -(idx * (C / 7)) - (gapPx / 2);
+                // Calculate dash offset adapting dynamically to total stage count
+                const dashOffset = -(idx * (C / totalStages)) - (gapPx / 2);
 
                 return (
                   <circle
@@ -196,8 +203,8 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
               })}
 
               {/* Crisp Radial White Dividers radiating between every stage */}
-              {Array.from({ length: 7 }).map((_, i) => {
-                const angleDeg = (i * 360) / 7;
+              {Array.from({ length: totalStages }).map((_, i) => {
+                const angleDeg = (i * 360) / totalStages;
                 const angleRad = (angleDeg * Math.PI) / 180;
                 const rInner = R - 13;
                 const rOuter = R + 13;
@@ -231,7 +238,7 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
                 {overallAvgPct}%
               </span>
               <span className="text-xs font-bold text-sky-700 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200">
-                Stage {selectedMilestone?.sequenceOrder || 1} of 7
+                Stage {selectedMilestone?.sequenceOrder || 1} of {totalStages}
               </span>
               <span className="text-[11px] font-semibold text-slate-600 mt-1 max-w-[140px] truncate">
                 {selectedMeta.label}
@@ -351,21 +358,26 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
             <div className="text-[10px] uppercase font-bold text-slate-400 mb-2 tracking-wider">
               Select Stage to Inspect
             </div>
-            <div className="grid grid-cols-7 gap-1.5">
+            <div
+              className="grid gap-1.5"
+              style={{ gridTemplateColumns: `repeat(${totalStages}, minmax(0, 1fr))` }}
+            >
               {sorted.map((m, idx) => {
                 const isSelected = selectedIndex === idx;
                 const pct =
                   m.targetQuantity > 0
                     ? Math.min(100, Math.round((m.completedQuantity / m.targetQuantity) * 100))
                     : 0;
+                const stageMeta = STAGE_METADATA[m.stage];
                 return (
                   <button
                     key={m.id || m.stage}
                     type="button"
                     onClick={() => setSelectedIndex(idx)}
-                    className={`py-1.5 rounded-lg text-xs font-bold flex flex-col items-center justify-center transition cursor-pointer ${
+                    title={`${m.sequenceOrder}. ${stageMeta?.label || m.stage} (${pct}%)`}
+                    className={`py-1.5 px-1 rounded-lg text-xs font-bold flex flex-col items-center justify-center transition cursor-pointer ${
                       isSelected
-                        ? 'bg-[#0C2D48] text-white shadow-xs'
+                        ? 'bg-[#0C2D48] text-white shadow-xs ring-2 ring-[#0C2D48]/30'
                         : pct >= 100
                         ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
                         : m.stage === currentStage
