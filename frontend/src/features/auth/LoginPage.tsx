@@ -169,8 +169,8 @@ export const LoginPage: React.FC = () => {
                 Work Email Address
               </label>
               <div className="relative rounded-xl">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-sky-400 z-10">
-                  <Mail className="h-4.5 w-4.5" />
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#0C2D48] z-10">
+                  <Mail className="h-4.5 w-4.5 stroke-[2.2]" />
                 </div>
                 <input
                   type="email"
@@ -179,7 +179,7 @@ export const LoginPage: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@threadflow.com"
-                  className="block w-full pl-12 pr-4 py-3.5 text-sm bg-[#081F33] border border-[#1E4E79] rounded-xl text-white placeholder-sky-200/40 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all shadow-inner [&:-webkit-autofill]:bg-[#081F33] [&:-webkit-autofill]:text-white [&:-webkit-autofill]:[-webkit-text-fill-color:white] [&:-webkit-autofill]:shadow-[0_0_0_1000px_#081F33_inset]"
+                  className="block w-full pl-12 pr-4 py-3.5 text-sm font-medium bg-[#EAF2FB] border border-[#BFDBFE]/80 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:bg-white transition-all shadow-inner [&:-webkit-autofill]:bg-[#EAF2FB] [&:-webkit-autofill]:text-slate-900 [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a] [&:-webkit-autofill]:shadow-[0_0_0_1000px_#EAF2FB_inset]"
                 />
               </div>
             </div>
@@ -199,8 +199,8 @@ export const LoginPage: React.FC = () => {
                 </button>
               </div>
               <div className="relative rounded-xl">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-sky-400 z-10">
-                  <Lock className="h-4.5 w-4.5" />
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#0C2D48] z-10">
+                  <Lock className="h-4.5 w-4.5 stroke-[2.2]" />
                 </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -209,16 +209,16 @@ export const LoginPage: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="block w-full pl-12 pr-12 py-3.5 text-sm bg-[#081F33] border border-[#1E4E79] rounded-xl text-white placeholder-sky-200/40 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all shadow-inner [&:-webkit-autofill]:bg-[#081F33] [&:-webkit-autofill]:text-white [&:-webkit-autofill]:[-webkit-text-fill-color:white] [&:-webkit-autofill]:shadow-[0_0_0_1000px_#081F33_inset]"
+                  className="block w-full pl-12 pr-12 py-3.5 text-sm font-medium bg-[#EAF2FB] border border-[#BFDBFE]/80 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:bg-white transition-all shadow-inner [&:-webkit-autofill]:bg-[#EAF2FB] [&:-webkit-autofill]:text-slate-900 [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a] [&:-webkit-autofill]:shadow-[0_0_0_1000px_#EAF2FB_inset]"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-sky-400 hover:text-white transition-colors cursor-pointer z-10"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-600 hover:text-slate-950 transition-colors cursor-pointer z-10"
                   tabIndex={-1}
                   title={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                  {showPassword ? <EyeOff className="h-4.5 w-4.5 stroke-[2.2]" /> : <Eye className="h-4.5 w-4.5 stroke-[2.2]" />}
                 </button>
               </div>
             </div>
@@ -284,19 +284,6 @@ export const LoginPage: React.FC = () => {
           backgroundPosition: 'center',
         }}
       >
-        {/* Top Pill Bar */}
-        <div className="flex items-center justify-between relative z-10 w-full">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 backdrop-blur-sm border border-slate-200/90 text-xs font-semibold text-slate-700 shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Live Manufacturing Intelligence</span>
-          </div>
-
-          <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-white/90 backdrop-blur-sm border border-slate-200/90 text-xs font-semibold text-slate-700 shadow-2xs">
-            <span className="text-amber-600 font-mono font-bold mr-1.5">4.8M+</span>
-            <span>garments monitored on-time</span>
-          </div>
-        </div>
-
         {/* Center Brand Statements & Value Pillars */}
         <div className="relative z-10 my-auto py-8 max-w-xl">
           <h2 className="text-3xl xl:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
