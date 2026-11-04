@@ -208,6 +208,7 @@ async function runOrdersTestSuite() {
             entityId: orderIds[0],
             action: 'BUYER_SCHEDULE_NOTIFICATION',
           },
+          orderBy: { timestamp: 'desc' },
         });
         assert(!!notifLog, 'Automated Buyer Notification AuditEvent recorded');
         assert(notifLog?.reasonCode === 'AUTOMATED_DISPATCH', 'Notification marked as AUTOMATED_DISPATCH');

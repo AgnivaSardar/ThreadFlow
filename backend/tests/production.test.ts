@@ -171,6 +171,15 @@ async function runProductionTestSuite() {
     });
     const orderForLogging = headroomOrder || targetOrder;
     const testMilestone = orderForLogging.milestones[0];
+    const originalMilestoneQty = testMilestone.completedQuantity;
+
+    // Ensure milestone has headroom for incremental test updates (+50, +10)
+    if (testMilestone.completedQuantity >= testMilestone.targetQuantity - 200) {
+      await prisma.tnaMilestone.update({
+        where: { id: testMilestone.id },
+        data: { completedQuantity: Math.max(0, testMilestone.targetQuantity - 1000) },
+      });
+    }
 
     // Clean prior test audit events for testMilestone to verify unbroken fresh chain
     await prisma.auditEvent.deleteMany({
@@ -431,6 +440,14 @@ async function runProductionTestSuite() {
     console.error('Unhandled test suite error:', err);
     process.exit(1);
   } finally {
+    try {
+      if (testMilestone) {
+        await prisma.tnaMilestone.update({
+          where: { id: testMilestone.id },
+          data: { completedQuantity: originalMilestoneQty },
+        });
+      }
+    } catch {}
     await prisma.$disconnect();
   }
 }

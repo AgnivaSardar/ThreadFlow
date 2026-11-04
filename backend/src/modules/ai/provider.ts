@@ -365,7 +365,7 @@ export function runDeterministicFallback(
 
   return {
     category,
-    confidenceScore: category === IssueCategory.OTHER ? 0.35 : 0.65,
+    confidenceScore: category === IssueCategory.OTHER ? 0.35 : 0.50,
     englishSummary: summary,
     needsReview: true,
     classifiedBy: 'LOCAL_REGEX_FALLBACK',
