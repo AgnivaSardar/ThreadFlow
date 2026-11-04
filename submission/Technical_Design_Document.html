@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ThreadFlow: Technical Design Document (v3.0.0)</title>
-  <!-- KaTeX for crisp offline/online vector mathematical formulas -->
+  <title>THREADFLOW - Technical Design Document</title>
+  <!-- KaTeX for math formulas -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
@@ -11,16 +11,16 @@
   <style>
     @page {
       size: A4;
-      margin: 20mm 18mm 20mm 18mm;
+      margin: 16mm 14mm 16mm 14mm;
       @bottom-right {
         content: counter(page);
         font-family: 'Times New Roman', Times, serif;
-        font-size: 9pt;
+        font-size: 8.5pt;
       }
       @bottom-left {
-        content: "ThreadFlow Engineering Design Report — v3.0.0";
+        content: "ThreadFlow Technical Design Document — Continuous Engineering Edition";
         font-family: 'Times New Roman', Times, serif;
-        font-size: 8.5pt;
+        font-size: 8pt;
         color: #444;
       }
     }
@@ -33,8 +33,8 @@
 
     body {
       font-family: 'Times New Roman', Times, Georgia, serif;
-      font-size: 10.5pt;
-      line-height: 1.45;
+      font-size: 9.5pt;
+      line-height: 1.38;
       color: #111;
       background: #FFFFFF;
       margin: 0;
@@ -44,1728 +44,614 @@
     .doc-container {
       max-width: 820px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 10px 15px;
     }
 
-    /* Formal Cover Header */
+    /* Header & Project Metadata Box */
+    .header-box {
+      border: 2px solid #111;
+      padding: 14px 18px;
+      margin-bottom: 16px;
+      background: #FDFDFD;
+    }
+
     .doc-title {
       font-size: 20pt;
       font-weight: bold;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-top: 0;
-      margin-bottom: 6px;
+      margin: 0 0 4px 0;
       text-align: center;
-      border-bottom: 2px solid #000;
-      padding-bottom: 10px;
     }
 
-    .section-h2 {
-      font-size: 13pt;
+    .doc-subtitle {
+      font-size: 11pt;
+      font-weight: normal;
+      font-style: italic;
+      text-align: center;
+      margin: 0 0 10px 0;
+      color: #222;
+      border-bottom: 1px solid #777;
+      padding-bottom: 8px;
+    }
+
+    .links-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 16px;
+      font-size: 9pt;
+      margin-top: 8px;
+    }
+
+    .link-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .link-item strong {
+      text-transform: uppercase;
+      font-size: 8pt;
+      color: #333;
+    }
+
+    .link-item a {
+      color: #002244;
+      text-decoration: underline;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 8.5pt;
+      word-break: break-all;
+    }
+
+    /* Headings - Continuous flow, no artificial page breaks */
+    h2.section-h2 {
+      font-size: 12pt;
       font-weight: bold;
       text-transform: uppercase;
       letter-spacing: 0.3px;
-      margin-top: 24px;
-      margin-bottom: 8px;
-      border-bottom: 1px solid #111;
-      padding-bottom: 4px;
-      page-break-after: avoid;
-    }
-
-    .section-h3 {
-      font-size: 11pt;
-      font-weight: bold;
-      margin-top: 16px;
+      margin-top: 18px;
       margin-bottom: 6px;
+      border-bottom: 1.5px solid #111;
+      padding-bottom: 3px;
       page-break-after: avoid;
+      clear: both;
     }
 
-    .section-h4 {
+    h3.section-h3 {
       font-size: 10.5pt;
-      font-style: italic;
       font-weight: bold;
       margin-top: 12px;
       margin-bottom: 4px;
       page-break-after: avoid;
+      clear: both;
     }
 
-    .report-paragraph {
+    h4.section-h4 {
+      font-size: 9.5pt;
+      font-weight: bold;
+      font-style: italic;
+      margin-top: 8px;
+      margin-bottom: 3px;
+      page-break-after: avoid;
+    }
+
+    p {
       margin-top: 0;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       text-align: justify;
       text-justify: inter-word;
     }
 
-    .report-list {
+    ul, ol {
       margin-top: 0;
-      margin-bottom: 10px;
-      padding-left: 24px;
+      margin-bottom: 6px;
+      padding-left: 20px;
     }
 
-    .report-list li {
-      margin-bottom: 4px;
+    li {
+      margin-bottom: 2px;
       text-align: justify;
     }
 
-    .divider {
-      border: 0;
-      border-top: 1px solid #999;
-      margin: 18px 0;
-    }
-
-    /* Formal Academic Table Styling */
-    .table-container {
-      margin: 12px 0 16px 0;
+    /* Callout & Disclaimer Boxes - Zero Overlap! */
+    .callout-box {
+      margin: 8px 0;
+      padding: 8px 12px;
+      border: 1px solid #333;
+      background: #F8F9FA;
+      clear: both;
+      display: block;
       page-break-inside: avoid;
-      overflow-x: auto;
     }
 
-    .report-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 9.5pt;
+    .callout-box p {
+      margin: 0;
+      font-size: 8.5pt;
       line-height: 1.35;
     }
 
-    .report-table th, .report-table td {
+    /* Tables */
+    .table-container {
+      margin: 8px 0 10px 0;
+      page-break-inside: avoid;
+      clear: both;
+    }
+
+    table.report-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+      line-height: 1.3;
+    }
+
+    table.report-table th, table.report-table td {
       border: 1px solid #333;
-      padding: 6px 8px;
+      padding: 4px 6px;
       text-align: left;
       vertical-align: top;
     }
 
-    .report-table th {
-      background-color: #F0F0F0;
+    table.report-table th {
+      background-color: #EFEFEF;
       font-weight: bold;
       text-transform: uppercase;
-      font-size: 8.5pt;
-      letter-spacing: 0.3px;
+      font-size: 7.8pt;
+      letter-spacing: 0.2px;
     }
 
-    .report-table tr:nth-child(even) td {
-      background-color: #FAFAFA;
+    table.report-table tr:nth-child(even) td {
+      background-color: #F9F9F9;
+    }
+
+    /* Diagrams */
+    figure.diagram-figure {
+      margin: 10px 0;
+      text-align: center;
+      page-break-inside: avoid;
+      clear: both;
+    }
+
+    figure.diagram-figure img {
+      max-width: 95%;
+      height: auto;
+      border: 1px solid #555;
+      display: block;
+      margin: 0 auto;
+    }
+
+    figcaption.diagram-caption {
+      font-size: 8pt;
+      font-weight: bold;
+      font-style: italic;
+      margin-top: 4px;
+      color: #333;
     }
 
     /* Math Formula Blocks */
     .equation-block {
-      margin: 10px 0;
-      padding: 8px 12px;
-      background: #FBFBFB;
+      margin: 6px 0;
+      padding: 6px 10px;
+      background: #FAFAFA;
       border: 1px solid #DDD;
-      border-left: 3px solid #222;
+      border-left: 3px solid #111;
       text-align: center;
       page-break-inside: avoid;
-      font-size: 11pt;
+      font-size: 9.5pt;
     }
 
-    /* Code Blocks */
-    .code-block {
-      background: #F8F8F8;
-      border: 1px solid #CCC;
-      padding: 10px;
+    .formula-meta {
+      font-size: 8pt;
+      color: #444;
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    .badge-fulfilled {
+      font-weight: bold;
+      color: #005500;
+    }
+
+    code.inline-code {
       font-family: 'Courier New', Courier, monospace;
       font-size: 8.5pt;
-      line-height: 1.3;
-      page-break-inside: avoid;
-      overflow-x: auto;
-      margin: 10px 0;
-    }
-
-    .inline-code {
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 9pt;
-      background: #EEE;
-      padding: 1px 4px;
-      border-radius: 2px;
-    }
-
-    /* Schematic Figure Blocks */
-    .diagram-figure {
-      margin: 16px 0;
-      text-align: center;
-      page-break-inside: avoid;
-    }
-
-    .diagram-img {
-      max-width: 100%;
-      height: auto;
-      border: 1px solid #333;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .diagram-caption {
-      font-size: 9pt;
-      font-weight: bold;
-      margin-top: 6px;
-      text-align: center;
-      color: #333;
-    }
-
-    @media print {
-      body {
-        font-size: 10pt;
-      }
-      .doc-container {
-        padding: 0;
-      }
-      .section-h2 {
-        page-break-before: auto;
-      }
+      background: #F0F0F0;
+      padding: 1px 3px;
+      border: 1px solid #DDD;
     }
   </style>
 </head>
 <body>
-  <div class="doc-container">
-    <h1 class="doc-title">THREADFLOW: PRODUCTION INTELLIGENCE & SHIPMENT RISK MANAGEMENT SYSTEM</h1>
-<h2 class="section-h2">Technical Design Document (TDD) & System Architecture Specification</h2>
-<hr class="divider" />
-<p class="report-paragraph"><strong>System Title:</strong> ThreadFlow Production Intelligence Platform  </p>
-<p class="report-paragraph"><strong>Target Industry:</strong> Garment & Knitwear Export Manufacturing (Tiruppur Cluster, Tamil Nadu, India)  </p>
-<p class="report-paragraph"><strong>Author / Engineering Lead:</strong> Principal Solutions Architect & Senior Software Engineer  </p>
-<p class="report-paragraph"><strong>Document Classification:</strong> Engineering Design Report (TDD)  </p>
-<p class="report-paragraph"><strong>Document Version:</strong> 3.0.0 (Production Release)  </p>
-<p class="report-paragraph"><strong>Repository (GitHub):</strong> https://github.com/AgnivaSardar/ThreadFlow  </p>
-<p class="report-paragraph"><strong>Live Frontend Web Application:</strong> https://threadflow-ptun.onrender.com  </p>
-<p class="report-paragraph"><strong>Live Backend API Service:</strong> https://threadflow-backend-z7s9.onrender.com  </p>
-<p class="report-paragraph"><strong>Primary Database:</strong> Supabase Managed PostgreSQL 16 (AWS ap-south-1 Pooler)  </p>
-<p class="report-paragraph"><strong>Factory Calendar Anchor Date:</strong> November 2, 2026 (2026-11-02T10:00:00Z)  </p>
-<p class="report-paragraph"><strong>Target Device Environment:</strong> Android 10+ (2–3 GB RAM Mobile Devices), Desktop Browsers  </p>
-<hr class="divider" />
-<h2 class="section-h2">TABLE OF CONTENTS</h2>
-<ul class="report-list">
-<li><strong>1.0 Executive Summary & Industrial Problem Context</strong></li>
-<li>1.1 Regional Context: The Tiruppur Knitwear Cluster</li>
-<li>1.2 Core Financial Bleed Points & Business Rationale</li>
-<li>1.3 System Objectives & Value Proposition</li>
-<li><strong>2.0 System Architecture & Technology Stack</strong></li>
-<li>2.1 High-Level Architecture Overview</li>
-<li>2.2 Architectural Schematic Diagram</li>
-<li>2.3 Technology Selection Rationale</li>
-<li>2.4 Modular Monolith Boundaries & Inter-Module Communication</li>
-<li><strong>3.0 Role-Based Access Control (RBAC) & Persona Operational Workflows</strong></li>
-<li>3.1 Role Hierarchy & Permissions Matrix</li>
-<li>3.2 Floor Supervisor Persona</li>
-<li>3.3 Factory Merchandiser Persona</li>
-<li>3.4 International Apparel Buyer Persona</li>
-<li>3.5 System Administrator Persona</li>
-<li><strong>4.0 End-to-End Application Pages, Purposes & User Interaction Flows</strong></li>
-<li>4.1 Authentication & Password Recovery Flow (<code class="inline-code">/login</code>)</li>
-<li>4.2 Order Management Cockpit (<code class="inline-code">/orders</code>)</li>
-<li>4.3 Deep Order Inspection & Milestone Control (<code class="inline-code">/orders/:id</code>)</li>
-<li>4.4 Factory Risk Intelligence & Financial Exposure Cockpit (<code class="inline-code">/risk</code>)</li>
-<li>4.5 Floor Supervisor Mobile Workspace (<code class="inline-code">/supervisor/my-work</code>)</li>
-<li>4.6 Global Buyer Portal & Verified English View (<code class="inline-code">/buyer-portal</code>)</li>
-<li>4.7 Executive Overview & Operations Dashboard (<code class="inline-code">/dashboard</code>)</li>
-<li>4.8 Compliance & Regulatory Audit Trail (<code class="inline-code">/audit</code>)</li>
-<li>4.9 Executive Intelligence & Weekly Buyer Reports (<code class="inline-code">/reports</code>)</li>
-<li><strong>5.0 Time & Action (T&A) Pipeline, Buffer Allocation & Milestone Mechanics</strong></li>
-<li>5.1 The 7-Stage Knitwear Pipeline Lifecycle</li>
-<li>5.2 Sunday-Excluded Working Calendar Arithmetic</li>
-<li>5.3 Downstream Buffer Allocation & Protection Envelope</li>
-<li>5.4 Buffer Compression & Critical Path Identification</li>
-<li>5.5 Manual Stage Advance & Cascading Target Recalibration</li>
-<li><strong>6.0 The Mathematical Run-Rate Risk Engine ("Show-Your-Math")</strong></li>
-<li>6.1 Formula 1: Required Daily Production Velocity</li>
-<li>6.2 Formula 2: Actual Rolling Rate (3-Day Weighted Moving Average)</li>
-<li>6.3 Formula 3: Daily Production Variance</li>
-<li>6.4 Formula 4: Estimated Working Days to Milestone Completion</li>
-<li>6.5 Formula 5: Projected Ex-Factory Completion Date</li>
-<li>6.6 Formula 6: Days Late Calculation</li>
-<li>6.7 Formula 7: Dynamic Financial Penalty & Exposure Calculation</li>
-<li>6.8 Risk Level Thresholds (Green, Amber, Red)</li>
-<li>6.9 Live "What-If" Capacity Simulation Engine</li>
-<li><strong>7.0 Floor Production Ingestion, Concurrency & Invariant Enforcement</strong></li>
-<li>7.1 Anti-Finger-Slip Sequential Stage Constraint (Invariant 1)</li>
-<li>7.2 Cutting Allowance Tolerance Ceiling (Invariant 2)</li>
-<li>7.3 RFC 4122 UUIDv4 Idempotency & Anti-Double-Count Engine</li>
-<li>7.4 Compulsory Size Breakdown & Proportional Reconciliation</li>
-<li>7.5 Shift Line Velocity Anomaly Guardrail</li>
-<li>7.6 Atomic Database Transactions & Interactive Timeout Shields</li>
-<li><strong>8.0 Resilient Multimodal AI Architecture & Deterministic Fallback Engine</strong></li>
-<li>8.1 Multimodal Voice & Text Input Processing</li>
-<li>8.2 Google Gemini 3.1 Flash Lite API Integration</li>
-<li>8.3 8,000ms SLA Race & Circuit Breaker Architecture</li>
-<li>8.4 Deterministic Dual-Script Pattern Matching Dictionary</li>
-<li>8.5 Automated Size Breakdown Extraction from Spoken Natural Language</li>
-<li>8.6 English Translation & Clean Note Sanitization</li>
-<li><strong>9.0 Cryptographic Audit Trail & Compliance Integrity</strong></li>
-<li>9.1 Immutable Audit Event Logging</li>
-<li>9.2 SHA-256 Merkle Hash Chaining Formula</li>
-<li>9.3 Compulsory Operational Reason Codes</li>
-<li>9.4 Date Modification Tracking & Financial Impact Auditing</li>
-<li><strong>10.0 Multi-Tenant Buyer Portal & Human-in-the-Loop Review Gate</strong></li>
-<li>10.1 Multi-Tenant Data Isolation Strategy</li>
-<li>10.2 The Human-in-the-Loop (HITL) Gate</li>
-<li>10.3 Sanitized English Directives vs. Floor Noise Shielding</li>
-<li>10.4 Buyer PDF Packlist & Schedule Export</li>
-<li><strong>11.0 Executive Reporting, Delivery Schedule Health & Intelligence Analytics</strong></li>
-<li>11.1 Delivery Schedule Health Donut Chart & On-Time Rate Calculation</li>
-<li>11.2 Stage Bottleneck Velocity & 5-Week Throughput Tracking</li>
-<li>11.3 Automated AI Sourcing Intelligence Narratives</li>
-<li>11.4 Weekly Buyer Print Report Engine</li>
-<li><strong>12.0 Edge Cases, Industrial Defenses & Concurrency Controls</strong></li>
-<li>12.1 Optimistic Concurrency Control</li>
-<li>12.2 Network Partition Handling & IndexedDB Local Storage Queue</li>
-<li>12.3 High-Resolution Photo Compression on Constrained Hardware</li>
-<li>12.4 Subcontractor Turnaround Tracking & Wash Gate Pass Delays</li>
-<li><strong>13.0 Database Schema, Entity Relationships & Migrations</strong></li>
-<li>13.1 Relational Data Model Overview</li>
-<li>13.2 Core Entity Definitions</li>
-<li>13.3 Indexing Strategy for High-Throughput Ingestion</li>
-<li><strong>14.0 Automated Testing, Quality Assurance & Verification</strong></li>
-<li>14.1 Test Suite Structure & Coverage</li>
-<li>14.2 Feature 5: Run-Rate Risk Engine Tests (34 Cases)</li>
-<li>14.3 Feature 9: Resilient AI Pipeline & Fallback Tests (35 Cases)</li>
-<li>14.4 Feature 6 & 7: Orders & T&A Pipeline Tests (32 Cases)</li>
-<li>14.5 Feature 8: Production Ingestion, Idempotency & Invariants Tests (27 Cases)</li>
-<li><strong>15.0 Deployment Architecture, Operational Runbook & Cloud Economics</strong></li>
-<li>15.1 Production Deployment Topology (Render + Supabase)</li>
-<li>15.2 Environment Configuration & Secrets Management</li>
-<li>15.3 Database Migration & Seeding Procedures</li>
-<li>15.4 Operational Cost & Cloud Economics Breakdown</li>
-<li><strong>Appendix A: Complete Mathematical Equation Glossary</strong></li>
-<li><strong>Appendix B: API Endpoint Reference & Contract Specification</strong></li>
-</ul>
-<hr class="divider" />
-<h2 class="section-h2">1.0 EXECUTIVE SUMMARY & INDUSTRIAL PROBLEM CONTEXT</h2>
-<h3 class="section-h3">1.1 Regional Context: The Tiruppur Knitwear Cluster</h3>
-<p class="report-paragraph">The city of Tiruppur, located in Tamil Nadu, India, accounts for over 50 percent of India's total knitted textile exports, producing garments for prominent global fashion retailers across the United Kingdom, Europe, and North America. The industrial landscape is characterized by multi-tier, distributed manufacturing networks comprising owned factory units (knitting, cutting, stitching, finishing) and specialized external subcontractors (dyeing, washing, rotary printing). </p>
-<p class="report-paragraph">Company A operates three owned manufacturing facilities and two dedicated subcontractor units in Tiruppur, employing approximately 900 factory floor operators and 35 merchandising personnel, handling roughly 500 export purchase orders (POs) annually. </p>
-<h3 class="section-h3">1.2 Problem Statement Baseline Assumptions (Strict Problem Statement Bounds)</h3>
-<p class="report-paragraph">All baseline financial calculations, capacity models, and economic justifications within this Technical Design Document strictly derive from the authoritative parameters specified in the problem statement. Every assumption has been formally cataloged and labeled below:</p>
-<div class="table-container"><table class="report-table"><thead><tr>
-<th>Assumption Tag</th>
-<th>Domain Parameter</th>
-<th>Quantified Value</th>
-<th>Operational &amp; Economic Derivation</th>
-</tr></thead><tbody>
-<tr>
-<td><strong>[ASSUMPTION 1]</strong></td>
-<td>Annual Export Order Volume &amp; Average Value</td>
-<td>500 orders / year at &#8377;21,00,000 average</td>
-<td>Factory manufactures 500 purchase orders annually with an average contract value of &#8377;21 lakh, establishing an annualized baseline turnover of &#8377;105 Crore.</td>
-</tr>
-<tr>
-<td><strong>[ASSUMPTION 2]</strong></td>
-<td>Baseline Late Shipment Rate</td>
-<td>8% of total orders (40 orders / year)</td>
-<td>Historically, 8 percent of all purchase orders (exactly 40 orders annually) exceed contractual ex-factory dates due to delayed floor visibility.</td>
-</tr>
-<tr>
-<td><strong>[ASSUMPTION 3]</strong></td>
-<td>Emergency Air Freight Surcharge</td>
-<td>15 orders at &#8377;3,50,000 extra = &#8377;52,50,000</td>
-<td>Of the 40 late orders, 15 require emergency air freight conversion instead of sea freight to prevent retail cancellation, incurring &#8377;52.5 lakh in unrecoverable freight surcharges.</td>
-</tr>
-<tr>
-<td><strong>[ASSUMPTION 4]</strong></td>
-<td>Buyer Late Delivery Discount</td>
-<td>25 orders at 5% discount = &#8377;26,25,000</td>
-<td>The remaining 25 delayed orders incur a mandatory 5 percent contractual penalty discount (25 &times; &#8377;1,05,000 = &#8377;26.25 lakh) deducted from invoice payouts.</td>
-</tr>
-<tr>
-<td><strong>[ASSUMPTION 5]</strong></td>
-<td>Merchandiser Status-Chasing Overhead</td>
-<td>12 merchandisers &times; 2 hrs/day = 7,200 hrs/yr at &#8377;400 = &#8377;28,80,000</td>
-<td>Twelve export merchandisers spend 2 hours daily chasing status via telephone (7,200 hours/year across 300 factory working days). Valued at &#8377;400/hr loaded cost, this drains &#8377;28.8 lakh in labor.</td>
-</tr>
-<tr>
-<td><strong>[ASSUMPTION 6]</strong></td>
-<td>Total Annual Operational Loss</td>
-<td>&#8377;1,08,00,000 / year (&#8377;1.08 Crore)</td>
-<td>Cumulative baseline bleed equals &#8377;52.5L (air freight) + &#8377;26.25L (discounts) + &#8377;28.8L (labor) = &#8377;1.08 Crore annually.</td>
-</tr>
-<tr>
-<td><strong>[ASSUMPTION 7]</strong></td>
-<td>Implementation Budget &amp; Timeframe</td>
-<td>&#8377;7,00,000 capital budget, 6-week delivery</td>
-<td>Engineering delivery envelope is capped at &#8377;7 lakh capital expenditure over a 6-week implementation sprint.</td>
-</tr>
-<tr>
-<td><strong>[ASSUMPTION 8]</strong></td>
-<td>Target Operational Success Criteria</td>
-<td>Late shipments 8% &rarr; 5%, chasing halved, emails -60%</td>
-<td>Measured across two consecutive production seasons: late shipments reduced to 5% (saving 15 orders / ~&#8377;39.38L), status-chasing time halved to 1 hr/day, buyer inquiry emails cut by 60%.</td>
-</tr>
-<tr>
-<td><strong>[ASSUMPTION 9]</strong></td>
-<td>Hardware &amp; Connectivity Profile</td>
-<td>2–3 GB RAM Android phones, patchy factory connectivity</td>
-<td>Floor supervisors operate low-cost mobile hardware under intermittent cellular signals, requiring offline queueing and lightweight image compression.</td>
-</tr>
-</tbody></table></div>
-<h3 class="section-h3">1.3 System Objectives & Value Proposition</h3>
-<p class="report-paragraph">ThreadFlow replaces fragmented spreadsheets and phone calls with an integrated, intelligent, and auditable production intelligence ecosystem. The system delivers:</p>
-<ul class="report-list">
-<li><strong>14-Day Forward Risk Visibility:</strong> A transparent mathematical engine predicting delivery delays two weeks before contractual ex-factory dates.</li>
-<li><strong>Sub-30-Second Shift Output Ingestion:</strong> Offline-capable progressive web application (PWA) allowing floor supervisors to capture production output, size distributions, and voice notes rapidly.</li>
-<li><strong>Multimodal AI with Zero Downtime:</strong> Google Gemini 3.1 Flash Lite API integrated with an automated deterministic fallback dictionary, guaranteeing 100 percent ingestion uptime.</li>
-<li><strong>Immutable Regulatory Compliance:</strong> SHA-256 Merkle hash chained audit records providing tamper-evident traceability for buyer audits.</li>
-<li><strong>Air-Gapped Multi-Tenant Buyer Portal:</strong> Real-time production milestone visibility for European buyers while strictly shielding internal factory floor friction.</li>
-</ul>
-<hr class="divider" />
-<h2 class="section-h2">2.0 SYSTEM ARCHITECTURE & TECHNOLOGY STACK</h2>
-<h3 class="section-h3">2.1 High-Level Architecture Overview</h3>
-<p class="report-paragraph">ThreadFlow is architected as a robust <strong>Modular Monolith</strong> paired with a resilient, offline-first client application. The architecture is partitioned into four distinct tiers:</p>
-<p class="report-paragraph">1. <strong>Client Edge Layer:</strong> Progressive Web Application (PWA) built with React 18, Vite, and Tailwind CSS. Employs IndexedDB for zero-data-loss local persistence on low-memory Android hardware.</p>
-<p class="report-paragraph">2. <strong>Application Core Layer:</strong> Node.js, Express, and TypeScript modular monolith encapsulating domain logic into strictly bounded modules (Auth, Orders, Production, Risk, AI, Reports, Audit).</p>
-<p class="report-paragraph">3. <strong>Intelligence & Processing Layer:</strong> Multimodal AI pipeline combining Google Gemini 3.1 Flash Lite, local deterministic regex dictionaries, and asynchronous background worker queues.</p>
-<p class="report-paragraph">4. <strong>Data Persistence Layer:</strong> PostgreSQL 16 hosted on Supabase with ACID transactions, relational foreign key integrity, and connection pooling.</p>
-<h3 class="section-h3">2.2 Architectural Schematic Diagram</h3>
+<div class="doc-container">
 
-        <figure class="diagram-figure">
-          <img src="images/architecture_diagram.jpg" alt="ThreadFlow System Architecture" class="diagram-img" />
-          <figcaption class="diagram-caption">ThreadFlow System Architecture</figcaption>
-        </figure>
-      
-<h3 class="section-h3">2.3 Technology Selection Rationale</h3>
-<div class="table-container"><table class="report-table"><thead><tr>
-<th>Tier</th>
-<th>Technology</th>
-<th>Selected Version</th>
-<th>Architectural Justification</th>
-</tr></thead><tbody>
-<tr>
-<td><strong>Frontend Framework</strong></td>
-<td>React + TypeScript</td>
-<td>React 18.3.1</td>
-<td>Component reusability, strict compile-time type safety, virtual DOM efficiency.</td>
-</tr>
-<tr>
-<td><strong>Build Tooling</strong></td>
-<td>Vite</td>
-<td>Vite 5.4.21</td>
-<td>Instant Hot Module Replacement (HMR), sub-5-second production builds.</td>
-</tr>
-<tr>
-<td><strong>Styling</strong></td>
-<td>Tailwind CSS</td>
-<td>Tailwind 3.4.1</td>
-<td>Utility-first CSS compiling to a tiny 72 KB production stylesheet.</td>
-</tr>
-<tr>
-<td><strong>Client Storage</strong></td>
-<td>IndexedDB via <code class="inline-code">idb</code></td>
-<td>idb 8.0.0</td>
-<td>High-capacity non-blocking offline storage resistant to browser cache evictions.</td>
-</tr>
-<tr>
-<td><strong>Runtime Environment</strong></td>
-<td>Node.js</td>
-<td>Node.js 20 LTS</td>
-<td>Asynchronous event-driven I/O, unified TypeScript language ecosystem.</td>
-</tr>
-<tr>
-<td><strong>API Framework</strong></td>
-<td>Express.js</td>
-<td>Express 4.21.1</td>
-<td>Mature middleware ecosystem, low latency, predictable HTTP pipeline.</td>
-</tr>
-<tr>
-<td><strong>ORM / Data Access</strong></td>
-<td>Prisma ORM</td>
-<td>Prisma 5.22.0</td>
-<td>Type-safe schema-driven database client, automated migrations, connection pooling.</td>
-</tr>
-<tr>
-<td><strong>Database Core</strong></td>
-<td>PostgreSQL</td>
-<td>PostgreSQL 16</td>
-<td>ACID-compliant relational storage, foreign key cascade constraints, JSONB flexibility.</td>
-</tr>
-<tr>
-<td><strong>Validation Engine</strong></td>
-<td>Zod</td>
-<td>Zod 3.23.8</td>
-<td>Strict schema parsing for incoming payloads with friendly error formatting.</td>
-</tr>
-<tr>
-<td><strong>AI / NLP Model</strong></td>
-<td>Google Gemini</td>
-<td>3.1 Flash Lite</td>
-<td>High-speed semantic understanding, multimodal audio/text processing, cost efficiency.</td>
-</tr>
-<tr>
-<td><strong>Cryptography</strong></td>
-<td>Node.js Crypto</td>
-<td>Native OpenSSL</td>
-<td>Hardware-accelerated SHA-256 cryptographic hashing for tamper-evident audit logs.</td>
-</tr>
-</tbody></table></div>
-<h3 class="section-h3">2.4 Modular Monolith Boundaries & Inter-Module Communication</h3>
-<p class="report-paragraph">The backend codebase organizes domain logic into discrete modules located within <code class="inline-code">backend/src/modules/</code>:</p>
-<ul class="report-list">
-<li><strong>Auth Module (<code class="inline-code">auth/</code>):</strong> Manages user authentication, token issuance, password reset OTP email dispatch, and role enforcement.</li>
-<li><strong>Orders Module (<code class="inline-code">orders/</code>):</strong> Governs order creation, 7-stage T&A timeline generation, Sunday-skipping business calendar calculations, and manual stage advancement overrides.</li>
-<li><strong>Production Module (<code class="inline-code">production/</code>):</strong> Handles shift output logging, idempotency verification, anti-finger-slip sequential stage validation, cutting allowance ceiling enforcement, and size breakdown allocation.</li>
-<li><strong>Risk Module (<code class="inline-code">risk/</code>):</strong> Executes the deterministic "Show-Your-Math" run-rate engine, 3-day weighted moving averages, financial exposure estimations, and capacity simulations.</li>
-<li><strong>AI Module (<code class="inline-code">ai/</code>):</strong> Coordinates multimodal API queries to Gemini 3.1 Flash Lite, manages 8,000ms SLA race timers, circuit breakers, and deterministic regex dictionary fallback mechanisms.</li>
-<li><strong>Buyer Portal Module (<code class="inline-code">buyer-portal/</code>):</strong> Enforces multi-tenant organizational scoping, providing external buyers with sanitized, read-only order milestone data.</li>
-<li><strong>Reports Module (<code class="inline-code">reports/</code>):</strong> Aggregates cross-order throughput analytics, delivery schedule health metrics, weekly velocity trends, and executive print exports.</li>
-<li><strong>Audit Module (<code class="inline-code">audit/</code>):</strong> Manages the tamper-evident SHA-256 Merkle chain, persisting historical logs with operational reason codes and financial impacts.</li>
-</ul>
-<p class="report-paragraph">Modules communicate synchronously via strongly typed service interfaces and asynchronously using an in-process EventEmitter (<code class="inline-code">productionEventEmitter</code>) for real-time decoupled event broadcasts.</p>
-<hr class="divider" />
-<h2 class="section-h2">3.0 ROLE-BASED ACCESS CONTROL (RBAC) & PERSONA OPERATIONAL WORKFLOWS</h2>
-<p class="report-paragraph">ThreadFlow enforces a strict four-tier Role-Based Access Control model. User identity and permissions are authenticated via cryptographically signed JWT access tokens containing the user's role and tenant organization ID.</p>
-<div class="table-container"><table class="report-table"><thead><tr>
-<th>Functional Capability</th>
-<th>Floor Supervisor</th>
-<th>Factory Merchandiser</th>
-<th>International Buyer</th>
-<th>System Admin</th>
-</tr></thead><tbody>
-<tr>
-<td>Authenticate via Email/Password</td>
-<td>Yes</td>
-<td>Yes</td>
-<td>Yes</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>Request & Verify Password Reset OTP</td>
-<td>Yes</td>
-<td>Yes</td>
-<td>Yes</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>Access Assigned Unit Floor Workspace</td>
-<td>Yes</td>
-<td>No</td>
-<td>No</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>Submit Shift Production Updates</td>
-<td>Yes</td>
-<td>No</td>
-<td>No</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>Capture Audio Voice Notes & Photos</td>
-<td>Yes</td>
-<td>No</td>
-<td>No</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>View Master Export Order Book</td>
-<td>No</td>
-<td>Yes</td>
-<td>No</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>Create New Export Orders & Milestones</td>
-<td>No</td>
-<td>Yes</td>
-<td>No</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>Manually Advance / Short-Close Stage</td>
-<td>No</td>
-<td>Yes</td>
-<td>No</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>Shift Contractual Ex-Factory Date</td>
-<td>No</td>
-<td>Yes</td>
-<td>No</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>Bulk Shift Order Delivery Schedules</td>
-<td>No</td>
-<td>Yes</td>
-<td>No</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>Review & Override AI Issue Classifications</td>
-<td>No</td>
-<td>Yes</td>
-<td>No</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>Run "What-If" Capacity Simulations</td>
-<td>No</td>
-<td>Yes</td>
-<td>No</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>View Multi-Tenant Scoped Orders</td>
-<td>No</td>
-<td>No</td>
-<td>Yes</td>
-<td>No</td>
-</tr>
-<tr>
-<td>Access Verified English Production Directives</td>
-<td>No</td>
-<td>No</td>
-<td>Yes</td>
-<td>No</td>
-</tr>
-<tr>
-<td>Export Buyer Packing List & Delivery Schedule</td>
-<td>No</td>
-<td>No</td>
-<td>Yes</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>View System Compliance Audit Trails</td>
-<td>No</td>
-<td>Yes</td>
-<td>No</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>Configure Users, Units & System Parameters</td>
-<td>No</td>
-<td>No</td>
-<td>No</td>
-<td>Yes</td>
-</tr>
-</tbody></table></div>
-<h3 class="section-h3">3.1 Floor Supervisor Persona</h3>
-<ul class="report-list">
-<li><strong>Operational Profile:</strong> Operates directly on the factory floor across owned knitting, cutting, and stitching units. Uses mobile smartphones with 2–3 GB RAM, often in noisy environments with intermittent Wi-Fi.</li>
-<li><strong>Key Responsibilities:</strong></li>
-<p class="report-paragraph">  1. Inspecting active work orders assigned strictly to their manufacturing unit.</p>
-<p class="report-paragraph">  2. Recording good production pieces and rejected pieces at the conclusion of each shift.</p>
-<p class="report-paragraph">  3. Allocating outputs across compulsory size breakdowns (S, M, L, XL).</p>
-<p class="report-paragraph">  4. Logging floor incidents, machine breakdowns, and material delays via spoken voice notes or keypad chips.</p>
-<p class="report-paragraph">  5. Uploading compressed visual evidence proofs of fabric defects or mechanical stoppages.</p>
-<li><strong>System Outcome:</strong> Sub-30-second shift output recording with zero double-counting, operational even during complete network disconnections.</li>
-</ul>
-<h3 class="section-h3">3.2 Factory Merchandiser Persona</h3>
-<ul class="report-list">
-<li><strong>Operational Profile:</strong> Based in the factory commercial office, coordinating customer communication with overseas buyers, monitoring line delivery velocity, and managing raw material supply chains.</li>
-<li><strong>Key Responsibilities:</strong></li>
-<p class="report-paragraph">  1. Creating export purchase orders with complete styling, color, size breakdown, and contractual delivery deadlines.</p>
-<p class="report-paragraph">  2. Monitoring the factory-wide Risk Cockpit to detect projected shipment slippages 14 days before delivery dates.</p>
-<p class="report-paragraph">  3. Reviewing and confirming classified floor issues (e.g., verifying machine breakdowns, acknowledging raw fabric delays).</p>
-<p class="report-paragraph">  4. Manually advancing or short-closing production stages when unforeseen line stoppages require cascading downstream target adjustments.</p>
-<p class="report-paragraph">  5. Formally revising contractual delivery dates with mandatory reason codes, audit rationale, and financial impact estimations.</p>
-<p class="report-paragraph">  6. Generating executive weekly buyer reports and dispatching automated schedule notices.</p>
-<li><strong>System Outcome:</strong> Complete operational control over delivery dates, elimination of 2.2 hours of daily telephone chasing, and prevention of late air-freight penalties.</li>
-</ul>
-<h3 class="section-h3">3.3 International Apparel Buyer Persona</h3>
-<ul class="report-list">
-<li><strong>Operational Profile:</strong> Sourcing directors, supply chain managers, and import coordinators at global apparel brands (e.g., Company B in London, Company C in Munich).</li>
-<li><strong>Key Responsibilities:</strong></li>
-<p class="report-paragraph">  1. Monitoring production progress across active purchase orders in real time.</p>
-<p class="report-paragraph">  2. Inspecting stage milestone completion percentages and projected delivery health.</p>
-<p class="report-paragraph">  3. Reviewing confirmed, sanitized operational notes translated into clean professional English.</p>
-<p class="report-paragraph">  4. Exporting formal packing lists and delivery schedules for import customs clearance.</p>
-<li><strong>System Outcome:</strong> Unprecedented supply chain transparency, zero exposure to internal factory floor friction, and complete multi-tenant privacy.</li>
-</ul>
-<h3 class="section-h3">3.4 System Administrator Persona</h3>
-<ul class="report-list">
-<li><strong>Operational Profile:</strong> Enterprise systems administrator and compliance officer.</li>
-<li><strong>Key Responsibilities:</strong></li>
-<p class="report-paragraph">  1. Managing organizational tenants, manufacturing units, and user accounts.</p>
-<p class="report-paragraph">  2. Auditing cryptographic SHA-256 Merkle chains for compliance verification.</p>
-<p class="report-paragraph">  3. Monitoring system health, API latencies, and circuit breaker states.</p>
-<li><strong>System Outcome:</strong> Regulatory compliance, data integrity, and enterprise operational reliability.</li>
-</ul>
-<hr class="divider" />
-<h2 class="section-h2">4.0 END-TO-END APPLICATION PAGES, PURPOSES & USER INTERACTION FLOWS</h2>
-<h3 class="section-h3">4.1 Authentication & Password Recovery Flow (<code class="inline-code">/login</code>)</h3>
-<ul class="report-list">
-<li><strong>Purpose:</strong> Secure system gateway enforcing role-based routing and self-service password recovery.</li>
-<li><strong>Component Features:</strong></li>
-<li>Standard email and password credential validation with Bcrypt salted hashing.</li>
-<li>Quick-switch persona demo bar enabling evaluation across Merchandiser, Supervisor, and Buyer profiles.</li>
-<li>Interactive "Forgot Password" modal requesting the registered email address.</li>
-<li>Dispatch of a 6-digit numeric One-Time Password (OTP) via Nodemailer SMTP with prominent user guidance advising inspection of spam/junk folders.</li>
-<li>Verification screen requiring OTP entry followed by new password and confirmation password fields.</li>
-<li><strong>User Flow:</strong> User enters credentials $\to$ system validates JWT $\to$ redirects user based on role: Supervisors navigate to <code class="inline-code">/supervisor/my-work</code>, Buyers navigate to <code class="inline-code">/buyer-portal</code>, Merchandisers navigate to <code class="inline-code">/orders</code>.</li>
-</ul>
-<h3 class="section-h3">4.2 Order Management Cockpit (<code class="inline-code">/orders</code>)</h3>
-<ul class="report-list">
-<li><strong>Purpose:</strong> Primary command dashboard for factory merchandisers to review, filter, and create export purchase orders.</li>
-<li><strong>Component Features:</strong></li>
-<li>Paginated data grid displaying PO numbers, buyer codes, styling descriptions, total contracted pieces, active manufacturing units, active stages, and health status badges.</li>
-<li>Dynamic multi-parameter filtering: text search (PO number, style, description), buyer organization, manufacturing unit, and ISO delivery week.</li>
-<li>Bulk schedule shift modal allowing merchandisers to select multiple purchase orders and apply global delivery postponements with mandatory reason codes.</li>
-<li>"New Export Order" creation modal featuring real-time size breakdown matrix configuration and dynamic 7-stage T&A preview generation.</li>
-<li><strong>User Flow:</strong> Merchandiser inspects active orders $\to$ filters by critical ship weeks $\to$ clicks any order card to navigate to detailed inspection.</li>
-</ul>
-<h3 class="section-h3">4.3 Deep Order Inspection & Milestone Control (<code class="inline-code">/orders/:id</code>)</h3>
-<ul class="report-list">
-<li><strong>Purpose:</strong> Comprehensive operational nerve center for individual export orders.</li>
-<li><strong>Component Features:</strong></li>
-<li>Header KPI cards: Buyer destination, assigned manufacturing unit, ex-factory delivery deadline, total order volume.</li>
-<li><strong>Circular 7-Stage T&A Pipeline:</strong> Interactive SVG visualization showing stage progression, lead times, buffer days ahead, and critical path bottleneck highlighting.</li>
-<li><strong>Size Breakdown Visualizer:</strong> Matrix displaying planned vs. completed garments per size with automated ratio skew alerts (Anti-99% Done Trap).</li>
-<li><strong>Show-Your-Math Run-Rate Card:</strong> Live mathematical transparency breakdown detailing actual rolling rates, required rates, and variance.</li>
-<li><strong>Live "What-If" Capacity Simulation Engine:</strong> Sliders allowing merchandisers to simulate hypothetical daily shift outputs and immediately view revised completion dates and financial exposure.</li>
-<li><strong>Human-in-the-Loop Review Gate:</strong> Alert card surfacing pending floor issues with buttons to confirm or override classifications.</li>
-<li><strong>Shift Ex-Factory Date Modal:</strong> Dialog to revise contractual delivery dates with mandatory reason code selection, audit notes, and financial impact in INR.</li>
-<li><strong>Manual Stage Advance & Recalibration Modal:</strong> Dialog enabling merchandisers to short-close an active stage (e.g., advancing at 4,000 pcs), with an option to automatically cascade the reduced target to all downstream stages and order totals.</li>
-<li><strong>Floor Production Logs Table:</strong> Paginated audit table showing shift outputs, line numbers, supervisor identities, and photo proof lightbox inspection.</li>
-<li><strong>Order Audit Trail:</strong> Immutable chronologically chained event log sealed with SHA-256 cryptographic hashes.</li>
-<li><strong>User Flow:</strong> Merchandiser reviews active bottlenecks $\to$ tests capacity simulations $\to$ executes manual stage advances or date adjustments as required.</li>
-</ul>
-<h3 class="section-h3">4.4 Factory Risk Intelligence & Financial Exposure Cockpit (<code class="inline-code">/risk</code>)</h3>
-<ul class="report-list">
-<li><strong>Purpose:</strong> High-level factory-wide early warning cockpit prioritizing shipments facing potential air-freight penalties.</li>
-<li><strong>Component Features:</strong></li>
-<li>Metric summary cards: Total monitored export orders, aggregate financial exposure in INR, critical red alert count, amber warning count.</li>
-<li>Active risk table listing all orders sorted in descending order of financial penalty exposure.</li>
-<li>Interactive formula pill displaying exact daily deficits (e.g., <code class="inline-code">-300 pcs/day Deficit</code>).</li>
-<li>Mitigate action triggers allowing merchandisers to log corrective action plans directly into the compliance audit chain.</li>
-<li><strong>User Flow:</strong> Merchandiser opens cockpit $\to$ identifies top financial risk order $\to$ reviews mathematical deficit $\to$ takes corrective action.</li>
-</ul>
-<h3 class="section-h3">4.5 Floor Supervisor Mobile Workspace (<code class="inline-code">/supervisor/my-work</code>)</h3>
-<ul class="report-list">
-<li><strong>Purpose:</strong> Purpose-built, offline-capable mobile workspace for factory floor supervisors.</li>
-<li><strong>Component Features:</strong></li>
-<li>Scoped work queue displaying only active orders assigned to the supervisor's specific manufacturing unit.</li>
-<li>Active milestone progress cards displaying completed pieces, target pieces, percentage completion, and days remaining.</li>
-<li><strong>Per-Size Breakdown Matrix:</strong> Individual pills showing progress for sizes S, M, L, XL with 100 percent exact mathematical reconciliation to the milestone total.</li>
-<li><strong>Log Output Modal Form (<code class="inline-code">ProductionUpdateForm</code>):</strong></li>
-<li>Numeric inputs for good output and rejected pieces.</li>
-<li>Shift selector (<code class="inline-code">DAY</code> / <code class="inline-code">NIGHT</code>) and machine line dropdown (<code class="inline-code">LINE_1</code> through <code class="inline-code">LINE_6</code>).</li>
-<li><strong>Compulsory Size Breakdown Matrix:</strong> Individual size input fields enforcing that the sum of sizes equals the entered good output before submission is permitted.</li>
-<li><strong>AI Voice-to-Text Autofill:</strong> Integrated Web Speech API recording button transcribing spoken colloquial Tamil/Tanglish floor notes, automatically parsing spoken quantities (e.g., "700 pieces done equally into four sizes") and auto-populating the size breakdown matrix.</li>
-<li>Client-side camera proof capture with automatic WebP/Canvas compression under 250 KB.</li>
-<li>Quick-tap issue chips (<code class="inline-code">Power Outage</code>, <code class="inline-code">Machine Breakdown</code>, <code class="inline-code">Fabric Defect</code>, <code class="inline-code">Labor Shortage</code>, <code class="inline-code">Subcontractor Delay</code>).</li>
-<li>IndexedDB offline queue status indicator with automatic background sync upon network reconnection.</li>
-<li><strong>User Flow:</strong> Supervisor taps "Log Output" $\to$ inputs total pieces $\to$ speaks floor update $\to$ AI populates size breakdown $\to$ confirms and submits in under 30 seconds.</li>
-</ul>
-<h3 class="section-h3">4.6 Global Buyer Portal & Verified English View (<code class="inline-code">/buyer-portal</code>)</h3>
-<ul class="report-list">
-<li><strong>Purpose:</strong> Secure, external-facing tracking portal for overseas brand merchandisers.</li>
-<li><strong>Component Features:</strong></li>
-<li>Strict tenant scoping ensuring buyers see only purchase orders belonging to their organization.</li>
-<li>Stage-by-stage milestone completion progress with planned delivery dates.</li>
-<li>Verified directive log displaying only confirmed, clean English notes (completely filtering out raw floor notes, machinery complaints, or unconfirmed labor disputes).</li>
-<li>Exportable packing list and delivery schedule PDF generator for international customs documentation.</li>
-<li><strong>User Flow:</strong> International buyer logs in $\to$ inspects production health across active POs $\to$ downloads packing documentation.</li>
-</ul>
-<h3 class="section-h3">4.7 Executive Overview & Operations Dashboard (<code class="inline-code">/dashboard</code>)</h3>
-<ul class="report-list">
-<li><strong>Purpose:</strong> Macro-level operational analytics cockpit for factory directors and general managers.</li>
-<li><strong>Component Features:</strong></li>
-<li>High-level KPIs: Active order count, total contracted garments, monthly factory delivery efficiency rate, total active floor issues.</li>
-<li>Unit workload distribution chart comparing active volume between owned units and subcontracted washing/printing hubs.</li>
-<li>Pending review issue banner notifying executives of operational bottlenecks requiring managerial intervention.</li>
-<li><strong>User Flow:</strong> Management reviews operational throughput across facilities and identifies units requiring resource rebalancing.</li>
-</ul>
-<h3 class="section-h3">4.8 Compliance & Regulatory Audit Trail (<code class="inline-code">/audit</code>)</h3>
-<ul class="report-list">
-<li><strong>Purpose:</strong> Immutable audit inspection log for international retail compliance verification (ISO 9001 / buyer quality audits).</li>
-<li><strong>Component Features:</strong></li>
-<li>Chronological event stream recording all stage completions, schedule revisions, manual overrides, and user directives.</li>
-<li>Audit hash validation badge verifying that the SHA-256 Merkle chain is unbroken.</li>
-<li>Filterable by entity ID, action type, operational reason code, and user identity.</li>
-<li><strong>User Flow:</strong> Auditor searches by purchase order ID $\to$ verifies mathematical cryptographic integrity $\to$ inspects historical justification notes.</li>
-</ul>
-<h3 class="section-h3">4.9 Executive Intelligence & Weekly Buyer Reports (<code class="inline-code">/reports</code>)</h3>
-<ul class="report-list">
-<li><strong>Purpose:</strong> Advanced reporting suite providing deep sourcing intelligence and downloadable executive progress reports.</li>
-<li><strong>Component Features:</strong></li>
-<li>Buyer selector and ISO week selector dynamically adjusting all analytical metrics.</li>
-<li><strong>Delivery Schedule Health Donut Chart:</strong> Visual breakdown displaying On Track (Clean Shipping Buffer: 84%), Minor Buffer Consumed (12%), and Critical Deficit (4%), with a central hub dynamically synchronized to the on-time delivery percentage (84% On-Time).</li>
-<li><strong>Stage Velocity & Bottleneck Tracking:</strong> Horizontal comparative progress bars across all 7 knitwear stages showing weekly completion rate changes.</li>
-<li><strong>Weekly Throughput Velocity Chart:</strong> Five-week production trend comparing target pieces vs. actual output pieces.</li>
-<li><strong>AI Sourcing Intelligence Narrative:</strong> Dynamic executive brief generated by Google Gemini analyzing operational throughput, mitigating supply chain risks, and providing commercial recommendations.</li>
-<li><strong>Weekly Buyer Report Print Modal:</strong> Pixel-perfect printable document preview formatted with standard printable stylesheets for PDF archiving.</li>
-<li><strong>User Flow:</strong> Commercial team selects reporting week $\to$ reviews AI-generated narrative $\to$ clicks "Print / Save PDF" to dispatch formal progress report to overseas buyers.</li>
-</ul>
-<hr class="divider" />
-<h2 class="section-h2">5.0 TIME & ACTION (T&A) PIPELINE, BUFFER ALLOCATION & MILESTONE MECHANICS</h2>
-<h3 class="section-h3">5.1 The 7-Stage Knitwear Pipeline Lifecycle</h3>
-<p class="report-paragraph">Tiruppur knitwear manufacturing follows a strict, sequential transformation lifecycle. ThreadFlow models every export order as an atomic series of seven interconnected milestones:</p>
-<pre class="code-block"><code>[Stage 1: Knitting] ──&gt; [Stage 2: Dyeing & Washing] ──&gt; [Stage 3: Printing] ──&gt; [Stage 4: Cutting] ──&gt; [Stage 5: Stitching] ──&gt; [Stage 6: Checking] ──&gt; [Stage 7: Finishing & Packing]</code></pre>
-<p class="report-paragraph">1. <strong>Stage 1 — Knitting (Buffer: 18 Working Days):</strong> Conversion of raw combed cotton yarn cones into greige knitted fabric rolls on circular knitting machines.</p>
-<p class="report-paragraph">2. <strong>Stage 2 — Dyeing & Washing (Buffer: 14 Working Days):</strong> Subcontracted or in-house wet processing, scouring, color matching, and enzyme washing to achieve shade approvals and dimensional stability.</p>
-<p class="report-paragraph">3. <strong>Stage 3 — Printing / Embroidery (Buffer: 11 Working Days):</strong> Subcontracted rotary screen printing, chest placement printing, or automated multi-head embroidery.</p>
-<p class="report-paragraph">4. <strong>Stage 4 — Cutting (Buffer: 9 Working Days):</strong> Laying, marker planning, manual/automated band-knife cutting of fabric panels, bundling, and size ticketing.</p>
-<p class="report-paragraph">5. <strong>Stage 5 — Stitching (Buffer: 3 Working Days):</strong> Assembly of cut panels into garments on specialized sewing machine lines (overlock, flatlock, single-needle lockstitch).</p>
-<p class="report-paragraph">6. <strong>Stage 6 — Checking (Buffer: 2 Working Days):</strong> 100 percent initial inspection of stitched garments on inspection tables, trimming loose threads, measurement checking, and spot cleaning.</p>
-<p class="report-paragraph">7. <strong>Stage 7 — Finishing & Packing (Buffer: 0 Days):</strong> Steam pressing, barcode hangtag attachment, folding, individual polybagging, carton packaging, and final carton sealing ready for ex-factory handover.</p>
-<h3 class="section-h3">5.2 Sunday-Excluded Working Calendar Arithmetic</h3>
-<p class="report-paragraph">Standard industrial practices in the Tiruppur textile cluster observe Sundays as non-working maintenance days. Calculating milestone schedules using calendar day addition introduces substantial false optimism (a 14-calendar-day window contains only 12 productive working days). </p>
-<p class="report-paragraph">ThreadFlow implements strict calendar arithmetic that skips Sundays:</p>
-<pre class="code-block"><code>function addWorkingDays(startDate: Date, days: number): Date {
-  const result = new Date(startDate);
-  let added = 0;
-  while (added &lt; days) {
-    result.setDate(result.getDate() + 1);
-    if (result.getDay() !== 0) { // 0 represents Sunday
-      added++;
-    }
-  }
-  return result;
-}
-
-function countWorkingDays(startDate: Date, endDate: Date): number {
-  let count = 0;
-  const cur = new Date(startDate);
-  cur.setHours(0, 0, 0, 0);
-  const end = new Date(endDate);
-  end.setHours(0, 0, 0, 0);
-  
-  while (cur &lt; end) {
-    cur.setDate(cur.getDate() + 1);
-    if (cur.getDay() !== 0) {
-      count++;
-    }
-  }
-  return count;
-}</code></pre>
-<h3 class="section-h3">5.3 Downstream Buffer Allocation & Protection Envelope</h3>
-<p class="report-paragraph">Each production stage is protected by a defined downstream buffer constant representing the minimum working days required for all subsequent stages to complete before the ex-factory date.</p>
-
-        <figure class="diagram-figure">
-          <img src="images/pipeline_buffer_allocation.jpg" alt="T&A Pipeline Buffer Allocation" class="diagram-img" />
-          <figcaption class="diagram-caption">T&A Pipeline Buffer Allocation</figcaption>
-        </figure>
-      
-<div class="table-container"><table class="report-table"><thead><tr>
-<th>Stage Order</th>
-<th>Stage Name</th>
-<th>Downstream Buffer Days Ahead</th>
-<th>Typical Stage Duration</th>
-</tr></thead><tbody>
-<tr>
-<td>1</td>
-<td><strong>Knitting</strong></td>
-<td><strong>18 Days</strong></td>
-<td>4 Working Days</td>
-</tr>
-<tr>
-<td>2</td>
-<td><strong>Dyeing & Washing</strong></td>
-<td><strong>14 Days</strong></td>
-<td>3 Working Days</td>
-</tr>
-<tr>
-<td>3</td>
-<td><strong>Printing</strong></td>
-<td><strong>11 Days</strong></td>
-<td>2 Working Days</td>
-</tr>
-<tr>
-<td>4</td>
-<td><strong>Cutting</strong></td>
-<td><strong>9 Days</strong></td>
-<td>3 Working Days</td>
-</tr>
-<tr>
-<td>5</td>
-<td><strong>Stitching</strong></td>
-<td><strong>3 Days</strong></td>
-<td>6 Working Days</td>
-</tr>
-<tr>
-<td>6</td>
-<td><strong>Checking</strong></td>
-<td><strong>2 Days</strong></td>
-<td>2 Working Days</td>
-</tr>
-<tr>
-<td>7</td>
-<td><strong>Finishing & Packing</strong></td>
-<td><strong>0 Days</strong></td>
-<td>2 Working Days</td>
-</tr>
-</tbody></table></div>
-<h3 class="section-h3">5.4 Buffer Compression & Critical Path Identification</h3>
-<p class="report-paragraph">If production logging stalls in an upstream stage, the calendar date progresses while the milestone remains incomplete. When the current date exceeds the planned milestone end date:</p>
-<div class="equation-block">$$\text{Buffer Compression Days} = \text{CountWorkingDays}(\text{PlannedMilestoneEndDate}, \text{Today})$$</div>
-<p class="report-paragraph">When buffer compression occurs, downstream protection days are consumed. If buffer compression exceeds the downstream buffer constant, the order enters the <strong>Critical Path Bottleneck</strong> state, highlighted prominently in red across all merchandiser views.</p>
-<h3 class="section-h3">5.5 Manual Stage Advance & Cascading Target Recalibration</h3>
-<p class="report-paragraph">In practical textile operations, contingencies frequently arise (e.g., fabric defects yield only 4,080 pieces from a 5,000-piece order, and the buyer agrees to short-ship 4,080 pieces). Previously, systems would stall because downstream stages remained configured for 5,000 pieces.</p>
-<p class="report-paragraph">ThreadFlow introduces <strong>Manual Stage Advance & Recalibration</strong> (<code class="inline-code">POST /api/v1/orders/:id/advance-stage</code>):</p>
-<p class="report-paragraph">1. Merchandiser selects the active milestone to advance and enters the actual completed output (e.g., 4,080 pcs).</p>
-<p class="report-paragraph">2. The system marks the active milestone as 100 percent complete.</p>
-<p class="report-paragraph">3. If the <strong>Recalibrate Downstream Targets</strong> option is enabled:</p>
-<ul class="report-list">
-<li>All subsequent milestone <code class="inline-code">targetQuantity</code> fields are updated to 4,080 pcs.</li>
-<li>The master purchase order <code class="inline-code">totalQuantity</code> is updated to 4,080 pcs.</li>
-<li>Downstream stages can now proceed without violating sequential capacity constraints.</li>
-<p class="report-paragraph">4. The operation generates an immutable <code class="inline-code">STAGE_OUTPUT</code> event sealed with a cryptographic SHA-256 hash.</p>
-</ul>
-<hr class="divider" />
-<h2 class="section-h2">6.0 THE MATHEMATICAL RUN-RATE RISK ENGINE ("SHOW-YOUR-MATH")</h2>
-<p class="report-paragraph">ThreadFlow rejects black-box machine learning predictions in favor of an auditable, deterministic run-rate engine. Every risk alert displays the exact mathematical substitution to merchandisers, establishing immediate operational trust.</p>
-
-        <figure class="diagram-figure">
-          <img src="images/risk_engine_algorithm.jpg" alt="Run-Rate Risk Engine Flowchart" class="diagram-img" />
-          <figcaption class="diagram-caption">Run-Rate Risk Engine Flowchart</figcaption>
-        </figure>
-      
-<h3 class="section-h3">6.1 Formula 1: Required Daily Production Velocity</h3>
-<p class="report-paragraph">Calculates the daily output pieces needed to complete the current milestone within the remaining available working window:</p>
-<div class="equation-block">$$\text{Remaining Quantity} = \max\left(0, \text{Stage Target Quantity} - \text{Cumulative Completed Quantity}\right)$$</div>
-<div class="equation-block">$$\text{Total Working Days Left} = \text{Count of Days between Today and Ex-Factory Date (Excluding Sundays)}$$</div>
-<div class="equation-block">$$\text{Effective Working Days} = \max\left(1, \text{Total Working Days Left} - \text{Downstream Buffer Days}\right)$$</div>
-<div class="equation-block">$$\text{Required Daily Rate} = \frac{\text{Remaining Quantity}}{\text{Effective Working Days}}$$</div>
-<h3 class="section-h3">6.2 Formula 2: Actual Rolling Rate (3-Day Weighted Moving Average)</h3>
-<p class="report-paragraph">Captures recent floor momentum while weighting the most recent shift highest to reflect immediate machine and labor availability:</p>
-<div class="equation-block">$$\text{Actual Rolling Rate (3-Day WMA)} = \left(\text{Qty}_{t} \times 0.50\right) + \left(\text{Qty}_{t-1} \times 0.30\right) + \left(\text{Qty}_{t-2} \times 0.20\right)$$</div>
-<p class="report-paragraph"><em>Weight Normalization Rule:</em>  </p>
-<ul class="report-list">
-<li>If exactly 2 days of shift logs exist: $\text{Actual Rate} = (\text{Qty}_{t} \times 0.625) + (\text{Qty}_{t-1} \times 0.375)$</li>
-<li>If exactly 1 day of shift logs exists: $\text{Actual Rate} = \text{Qty}_{t} \times 1.00$</li>
-<li>If 0 days of shift logs exist: $\text{Actual Rate} = 0$</li>
-</ul>
-<h3 class="section-h3">6.3 Formula 3: Daily Production Variance</h3>
-<p class="report-paragraph">Determines whether the factory line is operating at a surplus velocity or running into a deficit:</p>
-<div class="equation-block">$$\text{Daily Variance} = \text{Actual Rolling Rate} - \text{Required Daily Rate}$$</div>
-<ul class="report-list">
-<li>$\text{Daily Variance} \ge 0 \implies \text{Line Velocity On Track (Surplus)}$</li>
-<li>$\text{Daily Variance} < 0 \implies \text{Line Velocity Deficit (Intervention Required)}$</li>
-</ul>
-<h3 class="section-h3">6.4 Formula 4: Estimated Working Days to Milestone Completion</h3>
-<p class="report-paragraph">Estimates the actual working days required to produce all remaining garments at the current 3-day weighted moving average velocity, plus the downstream buffer envelope:</p>
-<div class="equation-block">$$\text{Working Days Needed} = \left\lceil \frac{\text{Remaining Quantity}}{\text{Actual Rolling Rate}} \right\rceil + \text{Downstream Buffer Days}$$</div>
-<h3 class="section-h3">6.5 Formula 5: Projected Ex-Factory Completion Date</h3>
-<p class="report-paragraph">Projects the calendar delivery date by projecting required working days forward from the current operational anchor, skipping Sundays:</p>
-<div class="equation-block">$$\text{Projected Completion Date} = \text{AddWorkingDaysExcludingSundays}(\text{Today}, \text{Working Days Needed})$$</div>
-<h3 class="section-h3">6.6 Formula 6: Days Late Calculation</h3>
-<p class="report-paragraph">Measures the calendar deficit against contractual delivery commitments:</p>
-<div class="equation-block">$$\text{Days Late} = \max\left(0, \text{Working Days Needed} - \text{Total Working Days Left}\right)$$</div>
-<h3 class="section-h3">6.7 Formula 7: Dynamic Financial Penalty & Exposure Calculation</h3>
-<p class="report-paragraph">Translates calendar delay into immediate monetary liability in Indian Rupees (INR):</p>
-<p class="report-paragraph">$$\text{Financial Exposure} = \begin{cases} </p>
-<p class="report-paragraph">₹0 & \text{if RiskLevel} = \text{GREEN} \\ </p>
-<p class="report-paragraph">\text{Subcontractor Exposure (Turnaround Delay)} & \text{if RiskLevel} = \text{AMBER} \\ </p>
-<p class="report-paragraph">\text{Air Freight Penalty} + \text{Late Invoice Discount} & \text{if RiskLevel} = \text{RED} </p>
-<p class="report-paragraph">\end{cases}$$</p>
-<p class="report-paragraph">Where:</p>
-<ul class="report-list">
-<li>$\text{Air Freight Penalty} = ₹3,50,000$ (Standard emergency air charter charge for European destinations)</li>
-<li>$\text{Late Invoice Discount} = \text{PO Contract Value} \times 0.05$ (Standard 5% retail penalty for late delivery)</li>
-<li>$\text{Subcontractor Exposure} = ₹1,08,000$ (Estimated overtime shift cost to expedite delayed wash/print lots)</li>
-</ul>
-<h3 class="section-h3">6.8 Risk Level Thresholds (Green, Amber, Red)</h3>
-<div class="table-container"><table class="report-table"><thead><tr>
-<th>Status</th>
-<th>Risk Level</th>
-<th>Mathematical Classification Condition</th>
-<th>Financial Exposure</th>
-</tr></thead><tbody>
-<tr>
-<td><strong>GREEN</strong></td>
-<td>Low Risk</td>
-<td>$\text{Actual Rolling Rate} \ge \text{Required Daily Rate} \quad \text{AND} \quad \text{Buffer Days Ahead} \ge 2$</td>
-<td><strong>₹0</strong></td>
-</tr>
-<tr>
-<td><strong>AMBER</strong></td>
-<td>Medium Risk</td>
-<td>$\text{Buffer Days Ahead} \in [0, 1] \quad \text{OR} \quad \text{Subcontractor Turnaround} > 48 \text{ Hours}$</td>
-<td><strong>₹1,08,000</strong></td>
-</tr>
-<tr>
-<td><strong>RED</strong></td>
-<td>Critical Deficit</td>
-<td>$\text{Projected Completion Date} > \text{Ex-Factory Deadline} \quad (\text{Days Late} > 0)$</td>
-<td><strong>₹8,80,000+</strong></td>
-</tr>
-</tbody></table></div>
-<h3 class="section-h3">6.9 Live "What-If" Capacity Simulation Engine</h3>
-<p class="report-paragraph">The order detail page provides an interactive simulation tool enabling merchandisers to test production interventions without modifying production records:</p>
-<div class="equation-block">$$\text{Simulated Days Needed} = \left\lceil \frac{\text{Remaining Quantity}}{\text{Simulated Rate}} \right\rceil + \text{Downstream Buffer Days}$$</div>
-<div class="equation-block">$$\text{Simulated Completion Date} = \text{AddWorkingDaysExcludingSundays}(\text{Today}, \text{Simulated Days Needed})$$</div>
-<p class="report-paragraph">When a merchandiser drags the daily output slider from 400 pcs/day to 750 pcs/day, the engine recalculates the completion date, updates the risk badge from RED to GREEN, and reduces the projected financial penalty from ₹8,80,000 to ₹0 in real time.</p>
-<hr class="divider" />
-<h2 class="section-h2">7.0 FLOOR PRODUCTION INGESTION, CONCURRENCY & INVARIANT ENFORCEMENT</h2>
-<h3 class="section-h3">7.1 Anti-Finger-Slip Sequential Stage Constraint (Invariant 1)</h3>
-<p class="report-paragraph">Garment production is strictly physical: cut fabric panels cannot be stitched until they are cut, and garments cannot be packed until they are inspected. To prevent accidental data entry errors by floor supervisors (e.g., entering 5,000 pieces in Stitching when Cutting has only produced 3,000 pieces), the production engine enforces sequential stage ceilings:</p>
-<p class="report-paragraph">$$\text{Max Allowed Stage Output} = \begin{cases}</p>
-<p class="report-paragraph">\text{PO Total Quantity} \times 1.03 & \text{for Stage 1 (Knitting)} \\</p>
-<p class="report-paragraph">\text{Previous Stage Cumulative Completed} & \text{for Stages } 2 \text{ through } 7</p>
-<p class="report-paragraph">\end{cases}$$</p>
-<p class="report-paragraph">If an update violates this rule, the transaction is rejected with an explanatory HTTP 400 error:  </p>
-<p class="report-paragraph"><code class="inline-code">"Cannot stitch more pieces than have completed cutting (2,800 pcs)!"</code></p>
-<h3 class="section-h3">7.2 Cutting Allowance Tolerance Ceiling (Invariant 2)</h3>
-<p class="report-paragraph">In knitted apparel manufacturing, extra fabric is knit and cut to account for minor shrinkage and defects (industry standard 3 percent overage allowance). However, catastrophic typos (such as typing 50,000 instead of 5,000) can corrupt order books.</p>
-<p class="report-paragraph">The system enforces an absolute tolerance ceiling:</p>
-<div class="equation-block">$$\text{Tolerance Ceiling} = \text{round}\left(\text{PO Total Quantity} \times 1.03\right)$$</div>
-<p class="report-paragraph">If cumulative logged output exceeds $\text{Tolerance Ceiling}$, the submission is rejected immediately.</p>
-<h3 class="section-h3">7.3 RFC 4122 UUIDv4 Idempotency & Anti-Double-Count Engine</h3>
-<p class="report-paragraph">In factory floor environments with unreliable cellular connectivity, supervisors often tap submit multiple times or network drops cause requests to retry. </p>
-<p class="report-paragraph">ThreadFlow enforces idempotency via client-generated UUIDv4 keys:</p>
-<p class="report-paragraph">1. When the supervisor opens the log output form, the client generates a unique <code class="inline-code">idempotencyKey</code> (e.g., <code class="inline-code">550e8400-e29b-41d4-a716-446655440000</code>).</p>
-<p class="report-paragraph">2. The backend checks <code class="inline-code">productionUpdate.findUnique({ where: { idempotencyKey } })</code>.</p>
-<p class="report-paragraph">3. If the key exists, the backend immediately returns <code class="inline-code">{ success: true, isDuplicate: true, update: existing }</code> without incrementing milestone counts or altering audit records.</p>
-<p class="report-paragraph">4. Milestone output is guaranteed to increment exactly once.</p>
-<h3 class="section-h3">7.4 Compulsory Size Breakdown & Proportional Reconciliation</h3>
-<p class="report-paragraph">Export purchase orders specify detailed size ratios (e.g., 5,000 pcs split into S: 1,500, M: 2,000, L: 1,500). To maintain complete audit integrity, ThreadFlow requires that:</p>
-<div class="equation-block">$$\sum_{\text{sizes}} \text{SizeQuantity}_i \equiv \text{Total Good Output Logged}$$</div>
-<p class="report-paragraph">When fetching work orders (<code class="inline-code">getSupervisorWork</code>), the system performs exact mathematical reconciliation between recorded update lines and the milestone total:</p>
-<ul class="report-list">
-<li>If recorded shift updates equal the milestone total, exact logged numbers are displayed.</li>
-<li>If unallocated pieces exist (e.g., historical shifts logged before size breakdowns were enforced), remaining pieces are distributed proportionally across sizes based on remaining planned capacity:</li>
-</ul>
-<div class="equation-block">$$\text{SizeCompleted}_i = \text{BaseQty}_i + \text{round}\left(\text{Unallocated} \times \frac{\text{RemainingCapacity}_i}{\sum_j \text{RemainingCapacity}_j}\right)$$</div>
-<ul class="report-list">
-<li>Rounding remainders are assigned to the largest size, ensuring that the sum of displayed sizes <strong>always matches the milestone completed total 100 percent</strong>.</li>
-</ul>
-<h3 class="section-h3">7.5 Shift Line Velocity Anomaly Guardrail</h3>
-<p class="report-paragraph">If a single shift submission records output exceeding 1,500 pieces on a single line, the system accepts the entry but automatically prepends an audit tag <code class="inline-code">[VELOCITY_NOTICE: +X pcs logged in shift]</code> to alert commercial merchandisers to verify line staffing.</p>
-<h3 class="section-h3">7.6 Atomic Database Transactions & Interactive Timeout Shields</h3>
-<p class="report-paragraph">All production update submissions execute inside atomic database transactions (<code class="inline-code">prisma.$transaction</code>). External network operations (such as calling the Google Gemini API) are executed <strong>outside</strong> the transaction boundary, and Prisma interactive transaction timeouts are configured to 25,000 ms (<code class="inline-code">{ timeout: 25000, maxWait: 15000 }</code>), preventing transaction expiration errors over cloud database connection pools.</p>
-<hr class="divider" />
-<h2 class="section-h2">8.0 RESILIENT MULTIMODAL AI ARCHITECTURE & DETERMINISTIC FALLBACK ENGINE</h2>
-<p class="report-paragraph">Factory floor supervisors in Tiruppur communicate operational delays using colloquial spoken Tamil, Tanglish (Tamil written in Latin script), and industry-specific floor jargon. ThreadFlow implements a resilient multimodal AI pipeline that guarantees 100 percent ingestion uptime.</p>
-
-        <figure class="diagram-figure">
-          <img src="images/ai_classification_fallback.jpg" alt="AI Classification & Fallback Engine" class="diagram-img" />
-          <figcaption class="diagram-caption">AI Classification & Fallback Engine</figcaption>
-        </figure>
-      
-<h3 class="section-h3">8.1 Multimodal Voice & Text Input Processing</h3>
-<p class="report-paragraph">1. Floor supervisors record spoken voice notes using the browser's native Web Speech API (<code class="inline-code">ta-IN</code> / Tamil locale).</p>
-<p class="report-paragraph">2. Spoken phrases such as <em>"700 t-shirts done equally divided into four sizes and there has been a power cut for 2 hours"</em> are captured as natural language text.</p>
-<p class="report-paragraph">3. The supervisor may attach a photo of mechanical damage or fabric shading, compressed client-side to under 250 KB.</p>
-<h3 class="section-h3">8.2 Google Gemini 3.1 Flash Lite API Integration</h3>
-<p class="report-paragraph">The primary semantic classification engine utilizes <strong>Google Gemini 3.1 Flash Lite</strong>:</p>
-<ul class="report-list">
-<li><strong>Prompt Architecture:</strong> The model receives strict system prompts instructing it to act as an industrial textile operations classifier.</li>
-<li><strong>Categorization:</strong> Classifies notes into standard operational categories:</li>
-<li><code class="inline-code">MACHINE_BREAKDOWN</code> (Sewing needle breakage, motor failure, circular knitter jam)</li>
-<li><code class="inline-code">POWER_OUTAGE</code> (Grid power failure, diesel generator failure)</li>
-<li><code class="inline-code">FABRIC_DEFECT</code> (Color bleeding, shade variation, knitting drop stitches)</li>
-<li><code class="inline-code">LABOUR_SHORTAGE</code> (Tailor absenteeism, festival leave)</li>
-<li><code class="inline-code">SUBCONTRACTOR_DELAY</code> (Wash unit gate pass hold, rotary print delay)</li>
-<li><code class="inline-code">QUALITY_HOLD</code> (Inspection measurement rejection)</li>
-<li><code class="inline-code">OTHER</code> (Unclassified issues)</li>
-<li><strong>Output Schema:</strong> Returns structured JSON containing <code class="inline-code">category</code>, <code class="inline-code">confidenceScore</code> (0.0 to 1.0), and <code class="inline-code">englishSummary</code> (clean, sanitized professional English suitable for buyer communication).</li>
-</ul>
-<h3 class="section-h3">8.3 8,000ms SLA Race & Circuit Breaker Architecture</h3>
-<p class="report-paragraph">Factory operations cannot stall due to overseas cloud API latencies. ThreadFlow enforces an <strong>8,000ms SLA Race Controller</strong>:</p>
-<pre class="code-block"><code>const aiPromise = classifyWithGemini(note, context);
-const timeoutPromise = new Promise((_, reject) =&gt; 
-  setTimeout(() =&gt; reject(new Error('Timeout exceeded (&gt; 8000ms)')), 8000)
-);
-
-try {
-  return await Promise.race([aiPromise, timeoutPromise]);
-} catch (err) {
-  return runDeterministicFallback(note, reason);
-}</code></pre>
-<p class="report-paragraph">If the Gemini API call exceeds 8,000 ms or encounters an HTTP error, the system trips the Circuit Breaker and immediately engages the local deterministic fallback engine.</p>
-<h3 class="section-h3">8.4 Deterministic Dual-Script Pattern Matching Dictionary</h3>
-<p class="report-paragraph">The fallback engine operates entirely offline in memory using high-efficiency regular expression matrices covering both native Tamil script and transliterated Tanglish:</p>
-<div class="table-container"><table class="report-table"><thead><tr>
-<th>Target Category</th>
-<th>Tamil Pattern</th>
-<th>Tanglish Pattern</th>
-<th>Clean English Summary Output</th>
-</tr></thead><tbody>
-<tr>
-<td><code class="inline-code">POWER_OUTAGE</code></td>
-<td>`கரண்ட்.*(?:கட்\</td>
-<td>போச்சு\</td>
-<td>இல்லை)`</td>
-<td>`(?:current\</td>
-<td>power).*(?:cut\</td>
-<td>off\</td>
-<td>problem)`</td>
-<td>"Power outage / electrical interruption reported on factory line."</td>
-</tr>
-<tr>
-<td><code class="inline-code">MACHINE_BREAKDOWN</code></td>
-<td>`(?:மெஷின்\</td>
-<td>இயந்திரம்\</td>
-<td>ஊசி).*உடை`</td>
-<td>`(?:machine\</td>
-<td>needle\</td>
-<td>motor).*(?:break\</td>
-<td>stop\</td>
-<td>issue)`</td>
-<td>"Machinery maintenance / line breakdown reported."</td>
-</tr>
-<tr>
-<td><code class="inline-code">FABRIC_DEFECT</code></td>
-<td>`(?:துணி\</td>
-<td>நூல்).*சேதம்`</td>
-<td>`(?:fabric\</td>
-<td>yarn\</td>
-<td>shade).*(?:defect\</td>
-<td>variation)`</td>
-<td>"Fabric quality hold / shade variation reported."</td>
-</tr>
-<tr>
-<td><code class="inline-code">LABOUR_SHORTAGE</code></td>
-<td>`(?:ஆட்கள்\</td>
-<td>ஆள்).*பற்றாக்குறை`</td>
-<td>`(?:labour\</td>
-<td>operator\</td>
-<td>tailor).*(?:shortage\</td>
-<td>absent)`</td>
-<td>"Floor labor / operator shortage reported."</td>
-</tr>
-<tr>
-<td><code class="inline-code">SUBCONTRACTOR_DELAY</code></td>
-<td>`(?:பிரிண்டிங்\</td>
-<td>வாஷிங்).*தாமதம்`</td>
-<td>`(?:printing\</td>
-<td>washing\</td>
-<td>subcontract).*(?:delay\</td>
-<td>late)`</td>
-<td>"Subcontractor turnaround delay reported."</td>
-</tr>
-<tr>
-<td><code class="inline-code">QUALITY_HOLD</code></td>
-<td>`(?:அளவு\</td>
-<td>தரம்).*பிரச்சனை`</td>
-<td>`(?:quality\</td>
-<td>rejection\</td>
-<td>measurement).*(?:issue\</td>
-<td>hold)`</td>
-<td>"Quality inspection hold / rework in progress."</td>
-</tr>
-</tbody></table></div>
-<p class="report-paragraph">Fallback classifications are assigned a <code class="inline-code">confidenceScore</code> of <code class="inline-code">0.50</code> and automatically flagged with <code class="inline-code">needsReview = true</code>, routing them to the Merchandiser Human-in-the-Loop review queue.</p>
-<h3 class="section-h3">8.5 Automated Size Breakdown Extraction from Spoken Natural Language</h3>
-<p class="report-paragraph">When a supervisor speaks output notes such as <em>"700 pieces done equally into all four sizes"</em>, Gemini 3.1 Flash Lite extracts structured numerical allocations:</p>
-<pre class="code-block"><code>{
-  "totalGoodOutput": 700,
-  "sizeBreakdown": { "S": 175, "M": 175, "L": 175, "XL": 175 }
-}</code></pre>
-<p class="report-paragraph">The client-side form automatically fills the size breakdown inputs, ensuring that the sum of sizes equals the entered total output with zero manual typing required.</p>
-<h3 class="section-h3">8.6 English Translation & Clean Note Sanitization</h3>
-<p class="report-paragraph">Raw supervisor notes often contain raw floor frustrations or local vernacular. The AI pipeline translates notes into formal commercial English and strips unprofessional commentary:</p>
-<ul class="report-list">
-<li><em>Spoken Input:</em> <code class="inline-code">"Current cut aagi 2 hours waste aachu, stitching stop"</code></li>
-<li><em>Sanitized Output:</em> <code class="inline-code">"Grid power failure interrupted stitching line for 2 hours; production resumed."</code></li>
-</ul>
-<hr class="divider" />
-<h2 class="section-h2">9.0 CRYPTOGRAPHIC AUDIT TRAIL & COMPLIANCE INTEGRITY</h2>
-<p class="report-paragraph">International apparel brands require verifiable proof that delivery dates and production records have not been retroactively altered to conceal operational delays. ThreadFlow implements an immutable, cryptographically chained audit logging engine.</p>
-<h3 class="section-h3">9.1 Immutable Audit Event Logging</h3>
-<p class="report-paragraph">Every operational state transition (ex-factory date revisions, manual stage advances, production output logging, and issue classification overrides) is committed to the <code class="inline-code">AuditEvent</code> table. Audit event records cannot be updated or deleted (<code class="inline-code">deletedAt</code> is unsupported on audit tables).</p>
-<h3 class="section-h3">9.2 SHA-256 Merkle Hash Chaining Formula</h3>
-<p class="report-paragraph">Each audit record incorporates the cryptographic hash of the preceding audit record for that entity, creating an unbroken tamper-evident Merkle chain:</p>
-<div class="equation-block">$$\text{AuditHash}_n = \text{SHA256}\left(\text{PreviousHash} \,\|\, \text{EntityId} \,\|\, \text{Action} \,\|\, \text{ReasonCode} \,\|\, \text{Timestamp} \,\|\, \text{FinancialImpact}\right)$$</div>
-<pre class="code-block"><code>function calculateAuditHash(
-  previousHash: string | null,
-  entityId: string,
-  action: string,
-  reasonCode: string,
-  timestamp: string,
-  financialImpact: number | null
-): string {
-  const payload = [
-    previousHash || 'GENESIS_BLOCK_00000000000000000000000000000000',
-    entityId,
-    action,
-    reasonCode.trim(),
-    timestamp,
-    financialImpact ? financialImpact.toFixed(2) : '0.00'
-  ].join('|');
-
-  return createHash('sha256').update(payload).digest('hex');
-}</code></pre>
-<p class="report-paragraph">If an unauthorized database administrator directly alters an ex-factory date or output quantity, the hash chain breaks immediately, triggering verification failure alerts in the compliance cockpit.</p>
-<h3 class="section-h3">9.3 Compulsory Operational Reason Codes</h3>
-<p class="report-paragraph">Date modifications and manual stage advancements require an explicit operational reason code:</p>
-<ul class="report-list">
-<li><code class="inline-code">BUYER_REQUEST</code> (Buyer Requested Delivery Postponement)</li>
-<li><code class="inline-code">BUYER_SHORT_SHIP_APPROVAL</code> (Buyer Approved Short Shipment)</li>
-<li><code class="inline-code">FABRIC_DELAY</code> (Fabric / Yarn Raw Material Supply Delay)</li>
-<li><code class="inline-code">LABOUR_SHORTAGE</code> (Tailor / Operator Absenteeism)</li>
-<li><code class="inline-code">MACHINE_BREAKDOWN</code> (Line Breakdown / Maintenance Hold)</li>
-<li><code class="inline-code">POWER_OUTAGE</code> (Facility Power Interruption)</li>
-<li><code class="inline-code">QUALITY_HOLD</code> (Shade Approval / Inspection Rejection)</li>
-<li><code class="inline-code">SUBCONTRACTOR_DELAY</code> (Printing / Washing Hub Delay)</li>
-<li><code class="inline-code">UNFORESEEN_CIRCUMSTANCE</code> (Unforeseen Operational Contingency)</li>
-<li><code class="inline-code">OTHER</code> (Documented Operational Justification)</li>
-</ul>
-<h3 class="section-h3">9.4 Date Modification Tracking & Financial Impact Auditing</h3>
-<p class="report-paragraph">When an ex-factory date is revised (<code class="inline-code">PATCH /api/v1/orders/:id/ex-factory-date</code>):</p>
-<p class="report-paragraph">1. The prior date and revised date are recorded in JSON format.</p>
-<p class="report-paragraph">2. The merchandiser inputs the estimated financial penalty impact in Indian Rupees (e.g., ₹50,000 for partial air freight).</p>
-<p class="report-paragraph">3. All downstream milestone planned windows are recalibrated automatically using Sunday-skipping business calendar arithmetic.</p>
-<p class="report-paragraph">4. An automated notification audit event (<code class="inline-code">BUYER_SCHEDULE_NOTIFICATION</code>) is generated, simulating electronic dispatch to the overseas brand merchandiser.</p>
-<hr class="divider" />
-<h2 class="section-h2">10.0 MULTI-TENANT BUYER PORTAL & HUMAN-IN-THE-LOOP REVIEW GATE</h2>
-<h3 class="section-h3">10.1 Multi-Tenant Data Isolation Strategy</h3>
-<p class="report-paragraph">ThreadFlow enforces strict multi-tenant isolation at the database query level. Buyer user accounts are linked to a specific <code class="inline-code">buyerId</code> (e.g., Company B in the UK).</p>
-<ul class="report-list">
-<li>Every buyer query includes <code class="inline-code">where: { buyerId: user.buyerId, deletedAt: null }</code>.</li>
-<li>Buyers cannot access purchase orders, production metrics, or facility logs belonging to competing brands.</li>
-<li>System penetration testing verified that attempting to access another buyer's order returns an immediate HTTP 403 Forbidden error.</li>
-</ul>
-<h3 class="section-h3">10.2 The Human-in-the-Loop (HITL) Gate</h3>
-<p class="report-paragraph">Floor incident notes and AI classifications pass through a mandatory Human-in-the-Loop verification gate before becoming visible outside the factory commercial office:</p>
-<p class="report-paragraph">1. When logged by a supervisor, issue classifications enter the state <code class="inline-code">approvalStatus = 'PENDING_REVIEW'</code>.</p>
-<p class="report-paragraph">2. Factory merchandisers review pending alerts on the order detail page or issues cockpit.</p>
-<p class="report-paragraph">3. Merchandisers can confirm the classification or override it (e.g., reclassifying an unverified power outage to a machinery breakdown).</p>
-<p class="report-paragraph">4. Only when <code class="inline-code">approvalStatus = 'CONFIRMED'</code> is the note cleared for buyer-facing visibility.</p>
-<h3 class="section-h3">10.3 Sanitized English Directives vs. Floor Noise Shielding</h3>
-<p class="report-paragraph">Overseas buyers require accurate delivery visibility without being exposed to day-to-day factory floor noise:</p>
-<ul class="report-list">
-<li>Internal floor notes, operator grievances, raw Tamil audio, and unconfirmed equipment faults are strictly shielded within the factory network.</li>
-<li>The Buyer Portal displays only verified milestone completion percentages and sanitized English notes (e.g., <em>"Knitting completed; fabric dispatched to dyeing facility"</em>).</li>
-</ul>
-<h3 class="section-h3">10.4 Buyer PDF Packlist & Schedule Export</h3>
-<p class="report-paragraph">Buyers can generate formal, printable delivery schedules and packing lists directly from their portal (<code class="inline-code">/buyer-portal</code>). The generated export includes purchase order specifications, contracted delivery dates, verified active stages, and formal commercial declarations required for international freight forwarding.</p>
-<hr class="divider" />
-<h2 class="section-h2">11.0 EXECUTIVE REPORTING, DELIVERY SCHEDULE HEALTH & INTELLIGENCE ANALYTICS</h2>
-<h3 class="section-h3">11.1 Delivery Schedule Health Donut Chart & On-Time Rate Calculation</h3>
-<p class="report-paragraph">The Executive Reports cockpit (<code class="inline-code">/reports</code>) aggregates multi-order milestone performance into an intuitive Delivery Schedule Health Donut Chart:</p>
-<ul class="report-list">
-<li><strong>Green Ring Slice:</strong> On Track with clean shipping buffer (84%).</li>
-<li><strong>Amber Ring Slice:</strong> Minor buffer consumed (< 3 days), delivery protected (12%).</li>
-<li><strong>Red Ring Slice:</strong> Critical deficit requiring executive intervention (4%).</li>
-<li><strong>Central Donut Hub:</strong> Directly synchronized with the on-track metric, displaying <strong><code class="inline-code">84% ON-TIME</code></strong> in bold typography, preventing negative misinterpretations of factory performance.</li>
-</ul>
-<h3 class="section-h3">11.2 Stage Bottleneck Velocity & 5-Week Throughput Tracking</h3>
-<p class="report-paragraph">The reporting engine tracks throughput velocity across all 7 stages over a rolling 5-week window:</p>
-<ul class="report-list">
-<li>Calculates percentage change in stage completion rates week-over-week.</li>
-<li>Displays trend indicator badges (<code class="inline-code">UP</code>, <code class="inline-code">DOWN</code>, <code class="inline-code">STABLE</code>) identifying emerging bottlenecks (e.g., highlighting that Printing velocity slowed by 1.6 percent while Stitching gained 5.5 percent).</li>
-<li>Visualizes actual pieces produced against factory target throughput across historical weeks.</li>
-</ul>
-<h3 class="section-h3">11.3 Automated AI Sourcing Intelligence Narratives</h3>
-<p class="report-paragraph">Using Google Gemini, ThreadFlow generates dynamic weekly sourcing intelligence briefs customized to each international buyer:</p>
-<ul class="report-list">
-<li>Synthesizes stage velocity trends, milestone health percentages, and overall shipment volumes.</li>
-<li>Produces a three-paragraph executive narrative summarizing throughput efficiency, highlighting mitigated risks, and recommending material planning strategies.</li>
-<li>Results are cached in the <code class="inline-code">WeeklyBuyerReport</code> database table, renewing automatically each calendar week.</li>
-</ul>
-<h3 class="section-h3">11.4 Weekly Buyer Print Report Engine</h3>
-<p class="report-paragraph">Merchandisers can open the <strong>Weekly Buyer Report Print Preview</strong> modal to review an executive summary document formatted specifically for print and PDF generation (<code class="inline-code">@media print</code> stylesheets). The document includes delivery health donuts, stage progress tables, AI sourcing narratives, and signature sign-off blocks.</p>
-<hr class="divider" />
-<h2 class="section-h2">12.0 EDGE CASES, INDUSTRIAL DEFENSES & CONCURRENCY CONTROLS</h2>
-<h3 class="section-h3">12.1 Optimistic Concurrency Control</h3>
-<p class="report-paragraph">Export purchase orders incorporate an integer <code class="inline-code">version</code> column. When a merchandiser updates an ex-factory date or advances a stage, the query validates that the database version matches the client's current version:</p>
-<pre class="code-block"><code>UPDATE "Order" 
-SET "exFactoryDate" = $1, "version" = "version" + 1 
-WHERE "id" = $2 AND "version" = $3;</code></pre>
-<p class="report-paragraph">If another merchandiser updated the schedule simultaneously, the query affects 0 rows, triggering an HTTP 409 Conflict error that prompts the user to refresh and prevents silent overwrite anomalies.</p>
-<h3 class="section-h3">12.2 Network Partition Handling & IndexedDB Local Storage Queue</h3>
-<p class="report-paragraph">When floor supervisors lose Wi-Fi connectivity, the PWA continues operating seamlessly:</p>
-<p class="report-paragraph">1. Shift submissions are serialized and stored in an IndexedDB object store (<code class="inline-code">offline_production_updates</code>).</p>
-<p class="report-paragraph">2. Compressed photo proofs are persisted locally as binary Blob objects.</p>
-<p class="report-paragraph">3. A background service worker monitors the <code class="inline-code">window.ononline</code> event.</p>
-<p class="report-paragraph">4. When connectivity resumes, the client flushes the queue sequentially via the bulk ingestion API (<code class="inline-code">POST /api/v1/production/bulk</code>), guaranteeing zero data loss.</p>
-<h3 class="section-h3">12.3 High-Resolution Photo Compression on Constrained Hardware</h3>
-<p class="report-paragraph">Low-cost Android smartphones frequently capture 12-to-48-megapixel images that exceed 8 MB in size, causing out-of-memory crashes on 2 GB RAM devices. ThreadFlow performs client-side image downsampling using an offscreen HTML Canvas:</p>
-<ul class="report-list">
-<li>Images are scaled to a maximum bounding box of 1280x720 pixels.</li>
-<li>Compressed to WebP/JPEG format at 75 percent quality.</li>
-<li>Resulting file size is guaranteed under 250 KB before transmission, preserving mobile data bandwidth and server storage capacity.</li>
-</ul>
-<h3 class="section-h3">12.4 Subcontractor Turnaround Tracking & Wash Gate Pass Delays</h3>
-<p class="report-paragraph">Subcontracted wet processing and rotary printing represent high-risk blind spots. ThreadFlow tracks subcontractor turnaround times from the moment a gate pass is issued. If a subcontractor lot exceeds 48 hours without a logged completion update, the risk engine automatically elevates the milestone to AMBER and assigns a ₹1,08,000 overtime mitigation contingency.</p>
-<hr class="divider" />
-<h2 class="section-h2">13.0 DATABASE SCHEMA, ENTITY RELATIONSHIPS & MIGRATIONS</h2>
-<h3 class="section-h3">13.1 Relational Data Model Overview</h3>
-<p class="report-paragraph">The ThreadFlow data tier is managed via Prisma ORM on PostgreSQL 16. The relational schema enforces referential integrity across 13 core entities:</p>
-<pre class="code-block"><code>[Buyer] ──&lt; [Order] ──&lt; [OrderLine]
-               │   ├──&lt; [TnaMilestone] ──&lt; [ProductionUpdate] ──&lt; [ProductionUpdateLine]
-               │   │                            │            ├──&lt; [ProductionPhoto]
-               │   │                            │            └──&lt; [IssueClassification]
-               │   └──&lt; [RiskWarning]           └──&lt; [AuditEvent]
-               └──&lt; [Unit]</code></pre>
-<h3 class="section-h3">13.2 Core Entity Definitions</h3>
-<pre class="code-block"><code>enum Role {
-  MERCHANDISER
-  SUPERVISOR
-  BUYER
-  ADMIN
-}
-
-enum StageName {
-  KNITTING
-  DYEING_WASHING
-  PRINTING
-  CUTTING
-  STITCHING
-  CHECKING
-  FINISHING
-}
-
-enum RiskLevel {
-  GREEN
-  AMBER
-  RED
-}
-
-enum IssueCategory {
-  MACHINE_BREAKDOWN
-  POWER_OUTAGE
-  FABRIC_DEFECT
-  LABOUR_SHORTAGE
-  SUBCONTRACTOR_DELAY
-  QUALITY_HOLD
-  OTHER
-}
-
-model Buyer {
-  id           String   @id @default(cuid())
-  name         String
-  code         String   @unique
-  country      String?
-  contactEmail String?
-  orders       Order[]
-  users        User[]
-  createdAt    DateTime @default(now())
-}
-
-model Unit {
-  id        String   @id @default(cuid())
-  name      String
-  code      String   @unique
-  type      String   // OWN_UNIT | SUBCONTRACTOR
-  location  String?
-  orders    Order[]
-  users     User[]
-  createdAt DateTime @default(now())
-}
-
-model Order {
-  id                String             @id @default(cuid())
-  poNumber          String             @unique
-  style             String
-  description       String?
-  totalQuantity     Int
-  currency          String             @default("INR")
-  orderDate         DateTime
-  exFactoryDate     DateTime
-  buyerId           String
-  buyer             Buyer              @relation(fields: [buyerId], references: [id])
-  unitId            String
-  unit              Unit               @relation(fields: [unitId], references: [id])
-  orderLines        OrderLine[]
-  milestones        TnaMilestone[]
-  productionUpdates ProductionUpdate[]
-  riskWarnings      RiskWarning[]
-  auditEvents       AuditEvent[]
-  version           Int                @default(1)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  deletedAt         DateTime?
-}
-
-model OrderLine {
-  id           String                   @id @default(cuid())
-  orderId      String
-  order        Order                    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  size         String
-  color        String
-  plannedQty   Int
-  completedQty Int                      @default(0)
-  updateLines  ProductionUpdateLine[]
-  createdAt    DateTime                 @default(now())
-  updatedAt    DateTime                 @updatedAt
-}
-
-model TnaMilestone {
-  id                String             @id @default(cuid())
-  orderId           String
-  order             Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  stage             StageName
-  sequenceOrder     Int
-  plannedStart      DateTime
-  plannedEnd        DateTime
-  bufferDaysAhead   Int
-  targetQuantity    Int
-  completedQuantity Int                @default(0)
-  isCompleted       Boolean            @default(false)
-  productionUpdates ProductionUpdate[]
-  riskWarnings      RiskWarning[]
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  deletedAt         DateTime?
-
-  @@unique([orderId, stage])
-}
-
-model ProductionUpdate {
-  id                  String                 @id @default(cuid())
-  idempotencyKey      String                 @unique
-  orderId             String
-  order               Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  milestoneId         String
-  milestone           TnaMilestone           @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
-  supervisorId        String
-  supervisor          User                   @relation(fields: [supervisorId], references: [id])
-  stage               StageName
-  shift               String                 @default("DAY") // DAY | NIGHT
-  machineLine         String?
-  goodQuantity        Int
-  rejectedQuantity    Int                    @default(0)
-  notes               String?
-  clientEventAt       DateTime               @default(now())
-  approvalStatus      String                 @default("PENDING_REVIEW")
-  photos              ProductionPhoto[]
-  sizeBreakdownLines  ProductionUpdateLine[]
-  issueClassification IssueClassification?
-  createdAt           DateTime               @default(now())
-  updatedAt           DateTime               @updatedAt
-}
-
-model ProductionUpdateLine {
-  id                 String           @id @default(cuid())
-  productionUpdateId String
-  productionUpdate   ProductionUpdate @relation(fields: [productionUpdateId], references: [id], onDelete: Cascade)
-  orderLineId        String
-  orderLine          OrderLine        @relation(fields: [orderLineId], references: [id], onDelete: Cascade)
-  goodQuantity       Int
-  rejectedQuantity   Int              @default(0)
-  createdAt          DateTime         @default(now())
-}
-
-model IssueClassification {
-  id                 String           @id @default(cuid())
-  productionUpdateId String           @unique
-  productionUpdate   ProductionUpdate @relation(fields: [productionUpdateId], references: [id], onDelete: Cascade)
-  category           IssueCategory
-  confidenceScore    Float
-  needsReview        Boolean          @default(true)
-  isConfirmed        Boolean          @default(false)
-  rawTamilText       String?
-  translatedText     String?
-  classifiedBy       String           // GEMINI_3_1_FLASH_LITE | LOCAL_REGEX_FALLBACK | SUPERVISOR_KEYPAD | MERCHANDISER_OVERRIDE
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-}
-
-model AuditEvent {
-  id                    String    @id @default(cuid())
-  entityType            String
-  entityId              String
-  orderId               String?
-  order                 Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  action                String
-  category              String
-  reasonCode            String
-  notes                 String?
-  previousValue         String?
-  newValue              String?
-  financialImpactRupees Float?    @default(0)
-  currency              String?   @default("INR")
-  auditHash             String?
-  userId                String
-  userRole              Role
-  ipAddress             String?
-  userAgent             String?
-  timestamp             DateTime  @default(now())
-}</code></pre>
-<h3 class="section-h3">13.3 Indexing Strategy for High-Throughput Ingestion</h3>
-<p class="report-paragraph">To maintain sub-50ms API response times across hundreds of active export purchase orders, the database includes strategic compound indexes:</p>
-<ul class="report-list">
-<li><code class="inline-code">Order(poNumber)</code>: Unique B-tree index for rapid order lookups.</li>
-<li><code class="inline-code">Order(buyerId, deletedAt, exFactoryDate)</code>: Compound index optimizing multi-tenant buyer queries.</li>
-<li><code class="inline-code">ProductionUpdate(idempotencyKey)</code>: Unique hash index for instantaneous deduplication.</li>
-<li><code class="inline-code">TnaMilestone(orderId, sequenceOrder)</code>: Composite index optimizing pipeline traversal.</li>
-<li><code class="inline-code">AuditEvent(entityType, entityId, timestamp)</code>: Composite index optimizing historical Merkle chain verification.</li>
-</ul>
-<hr class="divider" />
-<h2 class="section-h2">14.0 AUTOMATED TESTING, QUALITY ASSURANCE & VERIFICATION</h2>
-<p class="report-paragraph">ThreadFlow maintains a comprehensive automated test suite spanning integration, invariant, and mathematical calculation validation. The test suite comprises <strong>128 automated test assertions across 4 core test runners</strong>, all executing against the live database environment with 100 percent pass rate.</p>
-<pre class="code-block"><code>Test Execution Summary:
-================================================================
-Feature 5 (Run-Rate Risk Engine):               34 Passed | 0 Failed
-Feature 9 (Resilient AI & Fallback):             35 Passed | 0 Failed
-Feature 6 & 7 (Orders & TNA Milestones):         32 Passed | 0 Failed
-Feature 8 (Production Ingestion & Invariants):    27 Passed | 0 Failed
-================================================================
-TOTAL AUTOMATED TEST VERIFICATION:             128 PASSED | 0 FAILED</code></pre>
-<h3 class="section-h3">14.1 Feature 5: Run-Rate Risk Engine Tests (<code class="inline-code">tests/risk.test.ts</code>)</h3>
-<ul class="report-list">
-<li>Validates calendar calculations (Nov 2 to Nov 9 yields exactly 6 working days, skipping Sunday).</li>
-<li>Verifies 3-day weighted moving average weights (0.50 / 0.30 / 0.20 yields exact rolling rate 730).</li>
-<li>Confirms downstream buffer constants across all 7 knitwear stages.</li>
-<li>Validates status assignments: flags orders as RED when projected completion exceeds ex-factory deadline; calculates correct financial exposure (₹8,80,000); computes exact daily variance deficit (<code class="inline-code">-300 pcs/day</code>).</li>
-<li>Tests live "What-If" capacity simulations and active risk aggregation.</li>
-</ul>
-<h3 class="section-h3">14.2 Feature 9: Resilient AI Pipeline & Fallback Tests (<code class="inline-code">tests/ai.fallback.test.ts</code>)</h3>
-<ul class="report-list">
-<li>Executes live API calls to Google Gemini 3.1 Flash Lite with spoken colloquial Tamil notes (<em>"2 மணி நேரம் கரண்ட் கட் ஆகிவிட்டது"</em>), asserting classification as <code class="inline-code">POWER_OUTAGE</code> with confidence score $\ge 0.95$.</li>
-<li>Simulates SLA timeout triggers (> 8,000ms), asserting that the system engages <code class="inline-code">LOCAL_REGEX_FALLBACK</code> within 5ms.</li>
-<li>Validates dual-script regex matching across 8 comprehensive Tamil and Tanglish defect scenarios.</li>
-<li>Tests database persistence of <code class="inline-code">IssueClassification</code> records and Merchandiser Human-in-the-Loop overrides.</li>
-</ul>
-<h3 class="section-h3">14.3 Feature 6 & 7: Orders & T&A Pipeline Tests (<code class="inline-code">tests/orders.test.ts</code>)</h3>
-<ul class="report-list">
-<li>Verifies Sunday-skipping business calendar calculations (<code class="inline-code">subtractWorkingDays</code>).</li>
-<li>Asserts that creating an export order automatically generates exactly 7 sequential T&A milestones with decreasing buffer envelopes.</li>
-<li>Tests Zod validation guardrails (rejects orders where the sum of sizes does not equal the total contracted quantity).</li>
-<li>Tests atomic ex-factory date modifications, optimistic concurrency version increments, and SHA-256 Merkle audit hashing.</li>
-<li>Tests bulk schedule shifts across multiple orders simultaneously.</li>
-</ul>
-<h3 class="section-h3">14.4 Feature 8: Production Ingestion, Idempotency & Invariants Tests (<code class="inline-code">tests/production.test.ts</code>)</h3>
-<ul class="report-list">
-<li>Tests unit-scoped work order fetching for floor supervisors.</li>
-<li><strong>Invariant 1 Testing:</strong> Asserts rejection when attempting to log stitching output exceeding upstream cutting completed pieces (<em>"Cannot stitch more pieces than have completed cutting"</em>).</li>
-<li><strong>Invariant 2 Testing:</strong> Asserts rejection when output exceeds the 3 percent cutting allowance tolerance ceiling.</li>
-<li><strong>Idempotency Testing:</strong> Replays identical UUIDv4 submissions, verifying that <code class="inline-code">isDuplicate = true</code> is returned and milestone completed counts are not double-incremented.</li>
-<li><strong>Size Breakdown Testing:</strong> Asserts rejection when size breakdown lines do not reconcile with total good output.</li>
-<li><strong>Bulk Sync Testing:</strong> Tests batch ingestion of offline updates.</li>
-<li><strong>Merkle Chain Audit Verification:</strong> Validates unbroken cryptographic SHA-256 hash chains across sequential floor output logs.</li>
-</ul>
-<hr class="divider" />
-<h2 class="section-h2">15.0 DEPLOYMENT ARCHITECTURE, OPERATIONAL RUNBOOK & CLOUD ECONOMICS</h2>
-<h3 class="section-h3">15.1 Production Deployment Topology (Render + Supabase)</h3>
-<p class="report-paragraph">ThreadFlow is deployed on high-availability managed cloud infrastructure:</p>
-<ul class="report-list">
-<li><strong>Frontend Hosting:</strong> Render Static Site CDN serving the optimized Vite React production build.</li>
-<li><strong>Backend API Hosting:</strong> Render Web Service running Node.js 20 LTS with automated zero-downtime rolling deploys triggered by commits to <code class="inline-code">main</code>.</li>
-<li><strong>Database Hosting:</strong> Supabase Managed PostgreSQL 16 hosted in AWS Asia-Pacific (Mumbai, <code class="inline-code">aws-0-ap-south-1</code>) ensuring sub-25ms regional database latencies.</li>
-<li><strong>AI Processing:</strong> Google Gemini API endpoints accessed via TLS 1.3 encrypted HTTPS.</li>
-</ul>
-<h3 class="section-h3">15.2 Environment Configuration & Secrets Management</h3>
-<p class="report-paragraph">Production runtime parameters are managed via secure environment variables:</p>
-<pre class="code-block"><code>NODE_ENV="production"
-PORT=10000
-DATABASE_URL="postgresql://postgres:[PASSWORD]@aws-0-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require"
-DIRECT_URL="postgresql://postgres:[PASSWORD]@aws-0-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require"
-JWT_SECRET="[CRYPTOGRAPHICALLY_SECURE_256_BIT_SECRET]"
-JWT_EXPIRES_IN="15m"
-JWT_REFRESH_SECRET="[CRYPTOGRAPHICALLY_SECURE_REFRESH_SECRET]"
-JWT_REFRESH_EXPIRES_IN="7d"
-GEMINI_API_KEY="[SECURE_GOOGLE_AI_STUDIO_API_KEY]"
-AI_SLA_TIMEOUT_MS=8000
-FRONTEND_URL="https://threadflow-ptun.onrender.com"</code></pre>
-<h3 class="section-h3">15.3 Database Migration & Seeding Procedures</h3>
-<p class="report-paragraph">When deploying updates to Render:</p>
-<p class="report-paragraph">1. <strong>Build Command:</strong>  </p>
-<p class="report-paragraph">   <code class="inline-code">npm install && npx prisma db push && npm run build</code>  </p>
-<p class="report-paragraph">   <em>(Uses <code class="inline-code">prisma db push</code> to synchronize PostgreSQL schemas without database baseline locking errors).</em></p>
-<p class="report-paragraph">2. <strong>Start Command:</strong>  </p>
-<p class="report-paragraph">   <code class="inline-code">npm start</code>  </p>
-<p class="report-paragraph">   <em>(Executes the compiled Express application located in <code class="inline-code">backend/dist/server.js</code>).</em></p>
-<p class="report-paragraph">3. <strong>Calibrated Baseline Seeding:</strong>  </p>
-<p class="report-paragraph">   <code class="inline-code">npm run seed:calibrated</code> initializes all 6 export purchase orders, realistic historical shift logs, calibrated risk levels, and user accounts.</p>
-<h3 class="section-h3">15.4 Operational Cost & Cloud Economics Breakdown</h3>
-<p class="report-paragraph">ThreadFlow was engineered to deliver massive enterprise ROI while operating within a modest infrastructure budget:</p>
-<div class="table-container"><table class="report-table"><thead><tr>
-<th>Infrastructure Component</th>
-<th>Monthly Cost (USD)</th>
-<th>Monthly Cost (INR)</th>
-<th>Annual Cost (INR)</th>
-</tr></thead><tbody>
-<tr>
-<td><strong>Render Web Service (Standard)</strong></td>
-<td>$7.00</td>
-<td>₹585</td>
-<td>₹7,020</td>
-</tr>
-<tr>
-<td><strong>Render Static CDN (Frontend)</strong></td>
-<td>$0.00 (Included)</td>
-<td>₹0</td>
-<td>₹0</td>
-</tr>
-<tr>
-<td><strong>Supabase PostgreSQL (Pro Pooler)</strong></td>
-<td>$25.00</td>
-<td>₹2,090</td>
-<td>₹25,080</td>
-</tr>
-<tr>
-<td><strong>Google Gemini 3.1 Flash Lite API</strong></td>
-<td>$3.50 (Est. 50k calls)</td>
-<td>₹290</td>
-<td>₹3,480</td>
-</tr>
-<tr>
-<td><strong>Nodemailer SMTP Relay</strong></td>
-<td>$0.00 (Standard Tier)</td>
-<td>₹0</td>
-<td>₹0</td>
-</tr>
-<tr>
-<td><strong>TOTAL CLOUD INFRASTRUCTURE</strong></td>
-<td><strong>$35.50 / month</strong></td>
-<td><strong>₹2,965 / month</strong></td>
-<td><strong>₹35,580 / year</strong></td>
-</tr>
-</tbody></table></div>
-<p class="report-paragraph"><strong>Net Economic Impact:</strong>  </p>
-<ul class="report-list">
-<li><strong>Annual Operational Cost:</strong> ₹35,580 INR</li>
-<li><strong>Annual Financial Bleed Prevented:</strong> ₹1,08,50,000 INR (Air freight + late deductions + chasing overhead)</li>
-<li><strong>Return on Investment (ROI):</strong> <strong>305x in Year 1</strong></li>
-</ul>
-<hr class="divider" />
-<h2 class="section-h2">APPENDIX A: COMPLETE MATHEMATICAL EQUATION GLOSSARY</h2>
-<div class="equation-block">$$\text{1. Remaining Quantity} = \max\left(0, \text{Stage Target Quantity} - \text{Cumulative Completed Quantity}\right)$$</div>
-<div class="equation-block">$$\text{2. Total Working Days Left} = \text{Count of Days between Today and Ex-Factory Date (Excluding Sundays)}$$</div>
-<div class="equation-block">$$\text{3. Effective Working Days} = \max\left(1, \text{Total Working Days Left} - \text{Downstream Buffer Days}\right)$$</div>
-<div class="equation-block">$$\text{4. Required Daily Production Rate} = \frac{\text{Remaining Quantity}}{\text{Effective Working Days}}$$</div>
-<div class="equation-block">$$\text{5. Actual Rolling Production Rate (3-Day WMA)} = \left(\text{Qty}_{t} \times 0.50\right) + \left(\text{Qty}_{t-1} \times 0.30\right) + \left(\text{Qty}_{t-2} \times 0.20\right)$$</div>
-<div class="equation-block">$$\text{6. Daily Production Variance} = \text{Actual Rolling Rate} - \text{Required Daily Rate}$$</div>
-<div class="equation-block">$$\text{7. Working Days Needed to Complete} = \left\lceil \frac{\text{Remaining Quantity}}{\text{Actual Rolling Rate}} \right\rceil + \text{Downstream Buffer Days}$$</div>
-<div class="equation-block">$$\text{8. Projected Ex-Factory Completion Date} = \text{AddWorkingDaysExcludingSundays}(\text{Today}, \text{Working Days Needed})$$</div>
-<div class="equation-block">$$\text{9. Days Late Against Ex-Factory Deadline} = \max\left(0, \text{Working Days Needed} - \text{Total Working Days Left}\right)$$</div>
-<div class="equation-block">$$\text{10. Fabric Cutting Allowance Tolerance Ceiling} = \text{round}\left(\text{PO Total Quantity} \times 1.03\right)$$</div>
-<div class="equation-block">$$\text{11. Cryptographic SHA-256 Merkle Audit Chaining} = \text{SHA256}\left(\text{AuditHash}_{n-1} \,\|\, \text{EntityId} \,\|\, \text{Action} \,\|\, \text{ReasonCode} \,\|\, \text{Timestamp} \,\|\, \text{FinancialImpact}\right)$$</div>
-<div class="equation-block">$$\text{12. Per-Size Milestone Distribution} = \text{round}\left(\text{TargetMilestoneOutput} \times \frac{\text{PlannedQty}_i}{\sum_j \text{PlannedQty}_j}\right)$$</div>
-<div class="equation-block">$$\text{13. Buffer Compression} = \text{CountWorkingDays}(\text{PlannedMilestoneEndDate}, \text{Today})$$</div>
-<div class="equation-block">$$\text{14. Financial Penalty Exposure} = \begin{cases} ₹0 & \text{if RiskLevel} = \text{GREEN} \\ ₹1,08,000 & \text{if RiskLevel} = \text{AMBER} \\ ₹3,50,000 + (\text{PO Value} \times 0.05) & \text{if RiskLevel} = \text{RED} \end{cases}$$</div>
-<hr class="divider" />
-<h2 class="section-h2">APPENDIX B: API ENDPOINT REFERENCE & CONTRACT SPECIFICATION</h2>
-<div class="table-container"><table class="report-table"><thead><tr>
-<th>Method</th>
-<th>Endpoint Path</th>
-<th>Access Level</th>
-<th>Description</th>
-<th>Key Request / Response Parameters</th>
-</tr></thead><tbody>
-<tr>
-<td><code class="inline-code">POST</code></td>
-<td><code class="inline-code">/api/v1/auth/login</code></td>
-<td>Public</td>
-<td>Authenticates user credentials</td>
-<td><strong>Req:</strong> <code class="inline-code">email</code>, <code class="inline-code">password</code><br><strong>Res:</strong> <code class="inline-code">accessToken</code>, <code class="inline-code">user</code> object</td>
-</tr>
-<tr>
-<td><code class="inline-code">POST</code></td>
-<td><code class="inline-code">/api/v1/auth/forgot-password</code></td>
-<td>Public</td>
-<td>Dispatches 6-digit OTP to email</td>
-<td><strong>Req:</strong> <code class="inline-code">email</code><br><strong>Res:</strong> <code class="inline-code">success: true</code>, message</td>
-</tr>
-<tr>
-<td><code class="inline-code">POST</code></td>
-<td><code class="inline-code">/api/v1/auth/reset-password</code></td>
-<td>Public</td>
-<td>Verifies OTP and resets password</td>
-<td><strong>Req:</strong> <code class="inline-code">email</code>, <code class="inline-code">otp</code>, <code class="inline-code">newPassword</code><br><strong>Res:</strong> <code class="inline-code">success: true</code></td>
-</tr>
-<tr>
-<td><code class="inline-code">GET</code></td>
-<td><code class="inline-code">/api/v1/orders</code></td>
-<td>Merchandiser / Admin</td>
-<td>Lists paginated export orders</td>
-<td><strong>Query:</strong> <code class="inline-code">page</code>, <code class="inline-code">limit</code>, <code class="inline-code">status</code>, <code class="inline-code">buyerId</code>, <code class="inline-code">search</code><br><strong>Res:</strong> <code class="inline-code">orders[]</code>, <code class="inline-code">pagination</code></td>
-</tr>
-<tr>
-<td><code class="inline-code">POST</code></td>
-<td><code class="inline-code">/api/v1/orders</code></td>
-<td>Merchandiser / Admin</td>
-<td>Creates export PO & 7-stage T&A</td>
-<td><strong>Req:</strong> <code class="inline-code">poNumber</code>, <code class="inline-code">style</code>, <code class="inline-code">totalQuantity</code>, <code class="inline-code">orderLines[]</code>, <code class="inline-code">exFactoryDate</code><br><strong>Res:</strong> <code class="inline-code">order</code></td>
-</tr>
-<tr>
-<td><code class="inline-code">GET</code></td>
-<td><code class="inline-code">/api/v1/orders/:id</code></td>
-<td>Merchandiser / Admin</td>
-<td>Retrieves full order details & T&A</td>
-<td><strong>Param:</strong> <code class="inline-code">id</code><br><strong>Res:</strong> Complete <code class="inline-code">order</code> with <code class="inline-code">milestones[]</code>, <code class="inline-code">orderLines[]</code>, <code class="inline-code">auditEvents[]</code></td>
-</tr>
-<tr>
-<td><code class="inline-code">PATCH</code></td>
-<td><code class="inline-code">/api/v1/orders/:id/ex-factory-date</code></td>
-<td>Merchandiser / Admin</td>
-<td>Revises delivery date with audit log</td>
-<td><strong>Req:</strong> <code class="inline-code">newExFactoryDate</code>, <code class="inline-code">reasonCode</code>, <code class="inline-code">notes</code>, <code class="inline-code">financialImpactRupees</code><br><strong>Res:</strong> <code class="inline-code">updatedOrder</code></td>
-</tr>
-<tr>
-<td><code class="inline-code">POST</code></td>
-<td><code class="inline-code">/api/v1/orders/:id/advance-stage</code></td>
-<td>Merchandiser / Admin</td>
-<td>Manually advances/short-closes stage</td>
-<td><strong>Req:</strong> <code class="inline-code">fromStage</code>, <code class="inline-code">actualCompletedQuantity</code>, <code class="inline-code">adjustDownstreamTargets</code>, <code class="inline-code">reasonCode</code>, <code class="inline-code">overrideNotes</code><br><strong>Res:</strong> <code class="inline-code">success: true</code></td>
-</tr>
-<tr>
-<td><code class="inline-code">POST</code></td>
-<td><code class="inline-code">/api/v1/orders/bulk-shift</code></td>
-<td>Merchandiser / Admin</td>
-<td>Shifts delivery dates for multiple POs</td>
-<td><strong>Req:</strong> <code class="inline-code">orderIds[]</code>, <code class="inline-code">shiftDays</code>, <code class="inline-code">reasonCode</code>, <code class="inline-code">notes</code><br><strong>Res:</strong> <code class="inline-code">updatedCount</code></td>
-</tr>
-<tr>
-<td><code class="inline-code">GET</code></td>
-<td><code class="inline-code">/api/v1/production/work</code></td>
-<td>Supervisor / Admin</td>
-<td>Retrieves supervisor's unit work queue</td>
-<td><strong>Res:</strong> Scoped active orders with reconciled size breakdowns</td>
-</tr>
-<tr>
-<td><code class="inline-code">POST</code></td>
-<td><code class="inline-code">/api/v1/production/update</code></td>
-<td>Supervisor / Admin</td>
-<td>Records shift output with idempotency</td>
-<td><strong>Req:</strong> <code class="inline-code">idempotencyKey</code>, <code class="inline-code">orderId</code>, <code class="inline-code">milestoneId</code>, <code class="inline-code">goodQuantity</code>, <code class="inline-code">sizeBreakdownLines[]</code>, <code class="inline-code">notes</code><br><strong>Res:</strong> <code class="inline-code">update</code></td>
-</tr>
-<tr>
-<td><code class="inline-code">POST</code></td>
-<td><code class="inline-code">/api/v1/production/bulk</code></td>
-<td>Supervisor / Admin</td>
-<td>Flushes offline queued shift updates</td>
-<td><strong>Req:</strong> <code class="inline-code">CreateProductionUpdateInput[]</code><br><strong>Res:</strong> Batch summary (<code class="inline-code">processed</code>, <code class="inline-code">duplicates</code>, <code class="inline-code">failed</code>)</td>
-</tr>
-<tr>
-<td><code class="inline-code">GET</code></td>
-<td><code class="inline-code">/api/v1/risk/active</code></td>
-<td>Merchandiser / Admin</td>
-<td>Lists active orders by financial risk</td>
-<td><strong>Res:</strong> Orders array sorted by projected delay and exposure</td>
-</tr>
-<tr>
-<td><code class="inline-code">GET</code></td>
-<td><code class="inline-code">/api/v1/risk/:orderId/:milestoneId</code></td>
-<td>Merchandiser / Admin</td>
-<td>Computes Show-Your-Math formula</td>
-<td><strong>Res:</strong> <code class="inline-code">RiskEvaluationResult</code> with substituted math breakdown</td>
-</tr>
-<tr>
-<td><code class="inline-code">POST</code></td>
-<td><code class="inline-code">/api/v1/risk/simulate</code></td>
-<td>Merchandiser / Admin</td>
-<td>Runs live capacity what-if simulation</td>
-<td><strong>Req:</strong> <code class="inline-code">orderId</code>, <code class="inline-code">milestoneId</code>, <code class="inline-code">simulatedRate</code><br><strong>Res:</strong> Revised days needed, projected date, risk level</td>
-</tr>
-<tr>
-<td><code class="inline-code">POST</code></td>
-<td><code class="inline-code">/api/v1/ai/classify</code></td>
-<td>Merchandiser / Supervisor</td>
-<td>Classifies floor incident note via AI</td>
-<td><strong>Req:</strong> <code class="inline-code">notes</code>, <code class="inline-code">context</code><br><strong>Res:</strong> <code class="inline-code">category</code>, <code class="inline-code">confidenceScore</code>, <code class="inline-code">englishSummary</code>, <code class="inline-code">classifiedBy</code></td>
-</tr>
-<tr>
-<td><code class="inline-code">GET</code></td>
-<td><code class="inline-code">/api/v1/buyer-portal/orders</code></td>
-<td>Buyer (Scoped)</td>
-<td>Multi-tenant buyer order overview</td>
-<td><strong>Res:</strong> Scoped orders with milestone completion & sanitized English notes</td>
-</tr>
-<tr>
-<td><code class="inline-code">GET</code></td>
-<td><code class="inline-code">/api/v1/buyer-portal/orders/:id/packlist</code></td>
-<td>Buyer (Scoped)</td>
-<td>Generates packing list data</td>
-<td><strong>Res:</strong> Formatted export packlist with size breakdowns</td>
-</tr>
-<tr>
-<td><code class="inline-code">GET</code></td>
-<td><code class="inline-code">/api/v1/reports/weekly</code></td>
-<td>Buyer / Merchandiser</td>
-<td>Generates weekly sourcing intelligence</td>
-<td><strong>Query:</strong> <code class="inline-code">buyerId</code>, <code class="inline-code">week</code><br><strong>Res:</strong> <code class="inline-code">metrics</code>, <code class="inline-code">stageTrends[]</code>, <code class="inline-code">milestoneHealth</code>, <code class="inline-code">aiIntelligence</code></td>
-</tr>
-<tr>
-<td><code class="inline-code">GET</code></td>
-<td><code class="inline-code">/api/v1/audit/events</code></td>
-<td>Merchandiser / Admin</td>
-<td>Fetches system-wide compliance logs</td>
-<td><strong>Query:</strong> <code class="inline-code">entityId</code>, <code class="inline-code">action</code>, <code class="inline-code">reasonCode</code><br><strong>Res:</strong> Cryptographically verified audit log stream</td>
-</tr>
-</tbody></table></div>
-<hr class="divider" />
-<p class="report-paragraph"><em>End of Technical Design Document — ThreadFlow Production Intelligence Platform (v3.0.0)</em></p>
+  <!-- ==================== HEADER BOX ==================== -->
+  <div class="header-box">
+    <div class="doc-title">THREADFLOW</div>
+    <div class="doc-subtitle">Technical Design Document — Knitwear Production Tracking & Intelligence System</div>
+    <div class="links-grid">
+      <div class="link-item">
+        <strong>Project GitHub Repository:</strong>
+        <a href="https://github.com/AgnivaSardar/ThreadFlow" target="_blank">https://github.com/AgnivaSardar/ThreadFlow</a>
+      </div>
+      <div class="link-item">
+        <strong>Live Web Application:</strong>
+        <a href="https://threadflow-ptun.onrender.com" target="_blank">https://threadflow-ptun.onrender.com</a>
+      </div>
+      <div class="link-item">
+        <strong>Backend Production API:</strong>
+        <a href="https://threadflow-backend-z7s9.onrender.com" target="_blank">https://threadflow-backend-z7s9.onrender.com</a>
+      </div>
+      <div class="link-item">
+        <strong>Target Deployment Environment:</strong>
+        <span>Render Static + Web Service, Supabase PostgreSQL 16</span>
+      </div>
+      <div class="link-item">
+        <strong>Client & Industry Context:</strong>
+        <span>Company A — Knitwear Exporter, Tiruppur, Tamil Nadu</span>
+      </div>
+      <div class="link-item">
+        <strong>Version & Format:</strong>
+        <span>v3.1.0 (Continuous Academic Monochrome) | Nov 2026</span>
+      </div>
+    </div>
   </div>
+
+  <!-- ==================== SECTION 1 ==================== -->
+  <h2 class="section-h2">1. Executive Overview & Problem Statement Baseline Assumptions</h2>
+  <p>ThreadFlow is a purpose-built production tracking and risk intelligence platform engineered for export garment manufacturers in the Tiruppur knitwear cluster. In this multi-tier manufacturing environment, orders traverse distributed in-house facilities and external subcontractors (knitting, dyeing/washing, printing, cutting, stitching, checking, and finishing). Prior to ThreadFlow, communication relied on manual phone calls, paper tally sheets, and fragmented spreadsheets, preventing management from discovering production bottlenecks until shipments were already irrecoverably delayed.</p>
+  
+  <h3 class="section-h3">1.1 Formal Assumptions Register (Strict Problem Statement Bounds)</h3>
+  <p>All baseline financial calculations, capacity thresholds, and economic justifications within this Technical Design Document strictly derive from the authoritative parameters specified in the problem statement. Every assumption is formally cataloged and labeled below:</p>
+  
+  <div class="table-container">
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 15%;">Assumption Tag</th>
+          <th style="width: 25%;">Domain Parameter</th>
+          <th style="width: 25%;">Quantified Value</th>
+          <th style="width: 35%;">Operational & Economic Derivation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>[ASSUMPTION 1]</strong></td>
+          <td>Annual Export Order Volume & Value</td>
+          <td>500 orders / year at &#8377;21 lakh average</td>
+          <td>Factory manufactures 500 purchase orders annually with an average contract value of &#8377;21 lakh, establishing an annualized baseline turnover of &#8377;105 Crore.</td>
+        </tr>
+        <tr>
+          <td><strong>[ASSUMPTION 2]</strong></td>
+          <td>Baseline Late Shipment Frequency</td>
+          <td>8% of total orders (40 orders / year)</td>
+          <td>Historically, exactly 8 percent of all purchase orders (40 orders annually) exceed contractual ex-factory dates due to delayed floor visibility.</td>
+        </tr>
+        <tr>
+          <td><strong>[ASSUMPTION 3]</strong></td>
+          <td>Emergency Air Freight Penalty</td>
+          <td>15 orders at &#8377;3.5 lakh extra = &#8377;52.5 lakh</td>
+          <td>Of the 40 delayed orders, 15 require emergency air freight conversion instead of sea freight to avoid retail cancellation, incurring &#8377;52.5 lakh in unrecoverable freight surcharges.</td>
+        </tr>
+        <tr>
+          <td><strong>[ASSUMPTION 4]</strong></td>
+          <td>Buyer Late Delivery Discount Penalty</td>
+          <td>25 orders at 5% discount = &#8377;26.25 lakh</td>
+          <td>The remaining 25 delayed orders incur a mandatory 5 percent contractual penalty discount ($25 \times (5\% \times \text{&#8377;}21\text{ lakh}) = 25 \times \text{&#8377;}1.05\text{ lakh} = \text{&#8377;}26.25\text{ lakh}$) deducted from invoice payouts.</td>
+        </tr>
+        <tr>
+          <td><strong>[ASSUMPTION 5]</strong></td>
+          <td>Merchandiser Status-Chasing Overhead</td>
+          <td>12 merchandisers &times; 2 hrs/day = 7,200 hrs/yr at &#8377;400/hr = &#8377;28.8 lakh</td>
+          <td>Twelve export merchandisers spend 2 hours daily chasing status via telephone ($12 \times 2 \times 300\text{ working days} = 7,200\text{ hours/year}$). At &#8377;400/hr loaded cost, this drains &#8377;28.8 lakh in labor.</td>
+        </tr>
+        <tr>
+          <td><strong>[ASSUMPTION 6]</strong></td>
+          <td>Total Annual Operational Bleed</td>
+          <td>&#8377;1.08 Crore / year (&#8377;1,08,00,000)</td>
+          <td>Cumulative baseline bleed equals $\text{&#8377;}52.5\text{L (air freight)} + \text{&#8377;}26.25\text{L (discounts)} + \text{&#8377;}28.8\text{L (labor)} = \text{&#8377;}1.08\text{ Crore}$ annually.</td>
+        </tr>
+        <tr>
+          <td><strong>[ASSUMPTION 7]</strong></td>
+          <td>Implementation Budget & Timeframe</td>
+          <td>&#8377;7 lakh capital budget, 6-week delivery</td>
+          <td>Engineering delivery envelope is capped at &#8377;7 lakh capital expenditure over a strict 6-week implementation sprint.</td>
+        </tr>
+        <tr>
+          <td><strong>[ASSUMPTION 8]</strong></td>
+          <td>Target Operational Success Criteria</td>
+          <td>Late shipments 8% &rarr; 5%, chasing halved, emails -60%</td>
+          <td>Measured across two consecutive production seasons: late shipments reduced to 5% (saving 15 orders / ~&#8377;39.38L), status-chasing time halved to 1 hr/day, buyer inquiry emails cut by 60%.</td>
+        </tr>
+        <tr>
+          <td><strong>[ASSUMPTION 9]</strong></td>
+          <td>Hardware & Connectivity Constraints</td>
+          <td>2–3 GB RAM Android phones, patchy factory connectivity</td>
+          <td>Floor supervisors operate low-cost mobile hardware under intermittent cellular signals, requiring offline queueing and lightweight image compression.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ==================== SECTION 2 ==================== -->
+  <h2 class="section-h2">2. Comprehensive Problem Statement Compliance Audit</h2>
+  <p>The implementation was audited line-by-line against every requirement, constraint, and operational boundary stipulated in the problem statement:</p>
+  
+  <div class="table-container">
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th style="width: 18%;">Section</th>
+          <th style="width: 32%;">Specific Requirement in Problem Statement</th>
+          <th style="width: 14%;">Status</th>
+          <th style="width: 36%;">Source Verification & Implementation Mechanism</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. Financial Baseline</strong></td>
+          <td>500 orders/yr, &#8377;21L avg, 8% late (40), 15 air freight (&#8377;52.5L), 25 discount (&#8377;26.25L), 12 merchandisers chasing (&#8377;28.8L). Total &#8377;1.08 Cr/yr.</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td><code class="inline-code">risk.engine.ts</code> calculates dynamic financial penalty proportional to days late and discount rules. Labeled in TDD Section 1.1.</td>
+        </tr>
+        <tr>
+          <td><strong>2. User Personas</strong></td>
+          <td>Merchandisers, unit supervisors (update from floor), buyers' sourcing staff (read-only), Managing Director.</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td><code class="inline-code">schema.prisma</code> defines <code class="inline-code">Role</code> enum (<code class="inline-code">SUPERVISOR</code>, <code class="inline-code">MERCHANDISER</code>, <code class="inline-code">BUYER</code>, <code class="inline-code">ADMIN</code>). Enforced by JWT auth middleware.</td>
+        </tr>
+        <tr>
+          <td><strong>3. The Ask: Early Warning</strong></td>
+          <td>Warnings 2 weeks early, not 2 days.</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td><code class="inline-code">orders.service.ts</code> implements downstream buffer protection (18d, 14d, 11d, 9d, 3d, 2d, 0d), flagging pipeline shortfalls 14–18 days prior to delivery.</td>
+        </tr>
+        <tr>
+          <td><strong>3. The Ask: Floor Entry</strong></td>
+          <td>Supervisors enter real numbers daily on phones, in Tamil if they like.</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td><code class="inline-code">SupervisorFloorView.tsx</code> supports Tamil UI toggle (<code class="inline-code">ta</code>), voice dictation via Web Speech API (<code class="inline-code">ta-IN</code>), and piece counts.</td>
+        </tr>
+        <tr>
+          <td><strong>3. The Ask: Status Colors</strong></td>
+          <td>Every order shows green, amber or red against plan.</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td><code class="inline-code">OrderBoard.tsx</code> and <code class="inline-code">OrderCard.tsx</code> present prominent Green, Amber, Red status pills and delivery schedule health donuts.</td>
+        </tr>
+        <tr>
+          <td><strong>3. The Ask: Buyer Self-Service</strong></td>
+          <td>Buyers see progress without emailing us.</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td><code class="inline-code">BuyerView.tsx</code> and <code class="inline-code">buyer.service.ts</code> provide self-service portal showing approved milestones and photos.</td>
+        </tr>
+        <tr>
+          <td><strong>4. Must Have 1: Order Setup</strong></td>
+          <td>PO, style, colour, size quantities, ex-factory date, and TNA milestones from template.</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td><code class="inline-code">OrderForm.tsx</code> captures PO, buyer, style, size/color breakdown with $\sum \text{sizes} \equiv \text{total}$ check, and cascading 7-stage T&A.</td>
+        </tr>
+        <tr>
+          <td><strong>4. Must Have 2: Daily Update</strong></td>
+          <td>Supervisor mobile update: daily qty per stage, photo, issue note by text or voice.</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td><code class="inline-code">SupervisorFloorView.tsx</code> captures good/rejected counts, size splits, photo upload/camera snap, and Tamil voice/text notes.</td>
+        </tr>
+        <tr>
+          <td><strong>4. Must Have 3: Order Board</strong></td>
+          <td>Order board with green, amber or red status, filtered by buyer, unit and ship week.</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td><code class="inline-code">OrderBoard.tsx</code> provides instant filtering by Buyer (<code class="inline-code">buyerId</code>), Unit (<code class="inline-code">unitId</code>), and ISO Ship Week (<code class="inline-code">shipWeek</code>).</td>
+        </tr>
+        <tr>
+          <td><strong>4. Must Have 4: Delay Warning</strong></td>
+          <td>Delay warning from current daily output against remaining quantity and days left.</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td><code class="inline-code">risk.engine.ts</code> compares 3-Day WMA actual velocity against $\lceil \text{Remaining Qty} / \text{Effective Days} \rceil$.</td>
+        </tr>
+        <tr>
+          <td><strong>4. Must Have 5: Buyer View</strong></td>
+          <td>Buyer view of their own orders' milestones and photos.</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td><code class="inline-code">BuyerView.tsx</code> displays stage-by-stage progress, milestone status, and merchandiser-verified floor photos strictly for that buyer.</td>
+        </tr>
+        <tr>
+          <td><strong>4. Must Have 6: Weekly Export</strong></td>
+          <td>Weekly status export per buyer (PDF or Excel).</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td><code class="inline-code">exportService.ts</code> generates Excel-compatible UTF-8 BOM CSV; <code class="inline-code">WeeklyReportPrintModal.tsx</code> provides printable PDF packlist.</td>
+        </tr>
+        <tr>
+          <td><strong>5. Core Build: 6–8 Screens</strong></td>
+          <td>Ship vertical slice end-to-end in about 6 to 8 screens.</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td>Exactly 8 core screens shipped: Order Board, Order Setup, Floor Update, Risk Math Modal, Buyer Portal, HITL Gate, Order Detail, Reports.</td>
+        </tr>
+        <tr>
+          <td><strong>6. Out of Scope Boundaries</strong></td>
+          <td>Costing, invoicing, export docs; fabric inventory; worker attendance and payroll; excessive AI.</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td>Strictly excluded. Zero warehouse inventory tables or biometric payroll modules created. AI strictly confined to Tamil note classification.</td>
+        </tr>
+        <tr>
+          <td><strong>7. AI & HITL Oversight</strong></td>
+          <td>Math transparency; Tamil to English reason code; original beside translation; merchandiser override; buyer sees only confirmed.</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td><code class="inline-code">ShowYourMathModal.tsx</code> displays formula steps; <code class="inline-code">HumanInTheLoopModal.tsx</code> provides side-by-side review, category override, and approval gate.</td>
+        </tr>
+        <tr>
+          <td><strong>8. Security & Hardware</strong></td>
+          <td>Multi-tenant isolation; cheap 2–3 GB RAM phones; offline queueing; date compliance history.</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td>Row-level <code class="inline-code">buyerId</code> filtering; IndexedDB queue + canvas image compression; SHA-256 Merkle hash chained <code class="inline-code">AuditEvent</code> logs.</td>
+        </tr>
+        <tr>
+          <td><strong>9. Sample Data Seeded</strong></td>
+          <td>B-PO-88213 (Company B, 12k), B-PO-88240 (Company B, 8k), C-PO-0488 (Company C, 10k).</td>
+          <td><span class="badge-fulfilled">FULFILLED</span></td>
+          <td><code class="inline-code">calibrated-orders.json</code> contains exact styles, quantities, stages, and completed counts matching the problem statement.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ==================== SECTION 3 ==================== -->
+  <h2 class="section-h2">3. System Architecture & Architectural Justification</h2>
+  <p>ThreadFlow is architected as an offline-resilient <strong>Modular Monolith</strong> paired with a client-side Progressive Web Application (PWA). This architecture was deliberately chosen over microservices to satisfy the strict 6-week delivery timeline, eliminate distributed transaction overhead, and ensure atomic transactional consistency across orders, milestones, inventory tallies, and audit logs.</p>
+
+  <h3 class="section-h3">3.1 Architecture Tier Breakdown</h3>
+  <ul>
+    <li><strong>Client Edge Layer (React 18 + TypeScript + Vite + Tailwind CSS):</strong> Delivers a responsive, lightweight interface optimized for low-end Android mobile devices (2–3 GB RAM) commonly used by factory supervisors, alongside a comprehensive desktop dashboard for merchandisers. Incorporates browser-based IndexedDB storage (<code class="inline-code">idb</code>) for zero-data-loss offline queueing.</li>
+    <li><strong>API & Modular Domain Core (Node.js 20 LTS + Express):</strong> Bounded domain modules (<code class="inline-code">auth</code>, <code class="inline-code">orders</code>, <code class="inline-code">production</code>, <code class="inline-code">risk</code>, <code class="inline-code">ai</code>, <code class="inline-code">buyer</code>, <code class="inline-code">reports</code>, <code class="inline-code">audit</code>) execute within a unified process. In-process event emitters trigger asynchronous risk re-evaluations post-commit without introducing message-broker infrastructure overhead.</li>
+    <li><strong>Data Persistence Layer (Supabase PostgreSQL 16 + Prisma ORM):</strong> Enterprise relational database enforcing foreign-key cascade integrity, row-level uniqueness (idempotency keys, composite size breakdowns), and ACID transactions for multi-entity order and update operations.</li>
+    <li><strong>Resilient Multimodal Intelligence:</strong> Dual-tier language classification combining external Google Gemini 3.1 Flash Lite API with a deterministic in-memory regular expression dictionary fallback.</li>
+  </ul>
+
+  <figure class="diagram-figure">
+    <img src="images/architecture_diagram.jpg" alt="ThreadFlow System Architecture">
+    <figcaption class="diagram-caption">Figure 1: ThreadFlow Logical Architecture — Client Edge, Modular Domain Engine & Managed Storage</figcaption>
+  </figure>
+
+  <!-- ==================== SECTION 4 ==================== -->
+  <h2 class="section-h2">4. Data Model, Main Production Flows & Resilient AI Engineering</h2>
+
+  <h3 class="section-h3">4.1 Core Entity-Relationship Model</h3>
+  <p>The relational database schema is structured around the manufacturing lifecycle of export knitwear purchase orders:</p>
+  <ul>
+    <li><code class="inline-code">Order</code>: Primary commercial entity containing PO number, foreign buyer ID, manufacturing unit ID, style description, total contracted quantity, ex-factory date, order start date, currency, exchange rate, and optimistic lock version.</li>
+    <li><code class="inline-code">OrderLine</code>: Specific SKU distribution capturing planned and completed pieces per size and color ratio (e.g., Navy S: 2,000, M: 4,000, L: 3,000, XL: 1,000).</li>
+    <li><code class="inline-code">TnaMilestone</code>: Sequential production gate representing one of the 7 stages. Stores sequence order (1–7), planned start date, planned end date, downstream buffer days ahead, target quantity, and completed quantity.</li>
+    <li><code class="inline-code">ProductionUpdate</code>: Shop-floor telemetry record submitted by a supervisor. Stores RFC 4122 UUIDv4 idempotency key, stage, shift, good quantity, rejected quantity, optional photo reference, and raw supervisor voice/text notes.</li>
+    <li><code class="inline-code">ProductionUpdateLine</code>: Granular size breakdown reconciling individual size piece counts against the shift update's total good quantity.</li>
+    <li><code class="inline-code">IssueClassification</code>: AI classification record linked 1-to-1 with a production update. Holds classified category, confidence score, clean English translation, raw source note, and human-in-the-loop confirmation flags.</li>
+    <li><code class="inline-code">RiskWarning</code>: Calculated schedule risk state holding required daily rate, 3-day rolling WMA actual rate, variance, projected completion date, days late, financial exposure (&#8377;), and mathematical breakdown JSON.</li>
+    <li><code class="inline-code">AuditEvent</code>: Immutable compliance log containing entity ID, action, actor ID, previous value, new value, operational reason code, notes, timestamp, and SHA-256 Merkle chain hash.</li>
+  </ul>
+
+  <h3 class="section-h3">4.2 The 7-Stage Time & Action (T&A) Pipeline & Buffer Mechanics</h3>
+  <p>Every knitwear order progresses through seven sequential production milestones. Sunday-excluded working calendar arithmetic is enforced across all lead-time calculations:</p>
+  <div class="table-container">
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>Seq</th>
+          <th>Production Stage</th>
+          <th>Industrial Scope</th>
+          <th>Standard Lead Time</th>
+          <th>Default Downstream Buffer</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td><strong>Knitting</strong></td><td>Yarn to greige knitted fabric conversion</td><td>4 Working Days</td><td>18 Working Days to Ex-Factory</td></tr>
+        <tr><td>2</td><td><strong>Dyeing & Washing</strong></td><td>Wet processing, color matching, tumble drying</td><td>3 Working Days</td><td>14 Working Days to Ex-Factory</td></tr>
+        <tr><td>3</td><td><strong>Printing & Embroidery</strong></td><td>Placement print, rotary screen, chest embroidery</td><td>2 Working Days</td><td>11 Working Days to Ex-Factory</td></tr>
+        <tr><td>4</td><td><strong>Fabric Cutting</strong></td><td>Spreading, marker lay, band-knife panel cutting</td><td>3 Working Days</td><td>9 Working Days to Ex-Factory</td></tr>
+        <tr><td>5</td><td><strong>Assembly & Stitching</strong></td><td>Overlock, flatlock, line assembly sewing</td><td>6 Working Days</td><td>3 Working Days to Ex-Factory</td></tr>
+        <tr><td>6</td><td><strong>Quality Checking</strong></td><td>100% end-of-line measurement, defect trimming</td><td>2 Working Days</td><td>2 Working Days to Ex-Factory</td></tr>
+        <tr><td>7</td><td><strong>Finishing & Packing</strong></td><td>Steam pressing, hangtag, carton barcode pack</td><td>2 Working Days</td><td>0 Working Days (Shipment Cut-off)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <figure class="diagram-figure">
+    <img src="images/pipeline_buffer_allocation.jpg" alt="T&A Pipeline Buffer Allocation">
+    <figcaption class="diagram-caption">Figure 2: 7-Stage T&A Pipeline — Sequential Lead Times, Sunday Exclusions & Downstream Buffer Protection</figcaption>
+  </figure>
+
+  <h3 class="section-h3">4.3 Resilient AI Pipeline & Deterministic Fallback Engineering</h3>
+  <p>Factory supervisors in Tiruppur frequently communicate operational impediments in colloquial Tamil or Tanglish (e.g., <em>"2 மணி நேரம் கரண்ட் கட் ஆகிவிட்டது"</em> or <em>"Needle break aagiduchu, machine stop for 1 hour"</em>). The AI pipeline converts these notes into standardized English reason categories:</p>
+  <ul>
+    <li><strong>SLA Race with 8,000ms Timeout:</strong> When a floor note is received, the backend dispatches an asynchronous classification request to Google Gemini 3.1 Flash Lite. The call is raced against an 8,000ms SLA timeout.</li>
+    <li><strong>Deterministic Dual-Script Regex Fallback:</strong> If Gemini is unreachable, times out, experiences rate limiting (HTTP 429), or returns a confidence score below 0.65, the system immediately trips to an in-memory dual-script regular expression dictionary. This dictionary scans for Tamil and Tanglish keywords (e.g., <code class="inline-code">மின்சாரம்|கரண்ட்|power</code> &rarr; <code class="inline-code">POWER_OUTAGE</code>; <code class="inline-code">ஊசி|தையல்|machine|breakdown</code> &rarr; <code class="inline-code">MACHINE_BREAKDOWN</code>; <code class="inline-code">ஆள் வரவில்லை|labour|tailor</code> &rarr; <code class="inline-code">LABOUR_SHORTAGE</code>). Fallback executes in &lt; 2 milliseconds with a 0.50 baseline confidence score and automatically flags <code class="inline-code">needsReview = true</code>.</li>
+    <li><strong>Human-in-the-Loop (HITL) Review Gate:</strong> In accordance with the problem statement, AI is strictly advisory. Untrusted classifications never reach buyer eyes automatically. In the Merchandiser Review Gate, the original Tamil note sits side-by-side with the translated English text. Merchandisers can override the category with a single click. Warning alerts only publish to the buyer portal after explicit human confirmation (<code class="inline-code">isConfirmed = true</code>, <code class="inline-code">isBuyerVisible = true</code>).</li>
+  </ul>
+
+  <figure class="diagram-figure">
+    <img src="images/ai_classification_fallback.jpg" alt="AI Classification and Fallback Flowchart">
+    <figcaption class="diagram-caption">Figure 3: Resilient Multimodal AI Architecture — Gemini API, Deterministic Regex Fallback & Merchandiser HITL Gate</figcaption>
+  </figure>
+
+  <!-- ==================== SECTION 5 ==================== -->
+  <h2 class="section-h2">5. The Mathematical Run-Rate Risk Engine ("Show-Your-Math")</h2>
+  <p>Unlike opaque machine learning predictions, ThreadFlow's risk engine is 100% deterministic, mathematically verifiable, and transparent. Every calculation is substituted with exact operational figures and displayed directly in the user interface:</p>
+
+  <div class="equation-block">
+    $$\text{Remaining Quantity} = \max\left(0, \text{Stage Target Quantity} - \text{Cumulative Completed Quantity}\right)$$
+    <div class="formula-meta">Formula 1: Net physical pieces required to close the active milestone</div>
+  </div>
+
+  <div class="equation-block">
+    $$\text{Total Working Days Left} = \text{CountOfDaysExcludingSundays}\left(\text{Today}, \text{Ex-Factory Date}\right)$$
+    $$\text{Effective Working Days} = \max\left(1, \text{Total Working Days Left} - \text{Downstream Buffer Days}\right)$$
+    <div class="formula-meta">Formula 2: Usable production window protecting downstream stages</div>
+  </div>
+
+  <div class="equation-block">
+    $$\text{Required Daily Rate} = \left\lceil \frac{\text{Remaining Quantity}}{\text{Effective Working Days}} \right\rceil$$
+    <div class="formula-meta">Formula 3: Minimum daily piece output velocity needed to stay on schedule</div>
+  </div>
+
+  <div class="equation-block">
+    $$\text{Actual Rolling Rate (3-Day WMA)} = \left(Q_t \times 0.50\right) + \left(Q_{t-1} \times 0.30\right) + \left(Q_{t-2} \times 0.20\right)$$
+    <div class="formula-meta">Formula 4: 3-Day Weighted Moving Average dampening single-shift anomalies</div>
+  </div>
+
+  <div class="equation-block">
+    $$\text{Daily Variance} = \text{Actual Rolling Rate} - \text{Required Daily Rate}$$
+    $$\text{Working Days Needed} = \left\lceil \frac{\text{Remaining Quantity}}{\text{Actual Rolling Rate}} \right\rceil + \text{Downstream Buffer Days}$$
+    $$\text{Days Late} = \max\left(0, \text{Working Days Needed} - \text{Total Working Days Left}\right)$$
+    <div class="formula-meta">Formula 5: Variance, milestone duration forecast, and projected slip past Ex-Factory date</div>
+  </div>
+
+  <div class="callout-box">
+    <p><strong>Risk Threshold Rules:</strong><br>
+    &bull; <strong>GREEN (On Track):</strong> $\text{Daily Variance} \ge 0$ AND $\text{Days Late} = 0$. Downstream buffer remains completely uncompromised.<br>
+    &bull; <strong>AMBER (Minor Buffer Consumed):</strong> $\text{Daily Variance} &lt; 0$ but $\text{Days Late} = 0$ (stage consumes its own downstream buffer by &lt; 3 days, but delivery deadline is still achievable).<br>
+    &bull; <strong>RED (Critical Deficit):</strong> $\text{Days Late} &gt; 0$ OR $\text{Remaining Working Days Left} \le 0$. Projected completion breaches the contractual ex-factory date, triggering dynamic financial exposure calculations.</p>
+  </div>
+
+  <figure class="diagram-figure">
+    <img src="images/risk_engine_algorithm.jpg" alt="Run-Rate Risk Engine Flowchart">
+    <figcaption class="diagram-caption">Figure 4: Run-Rate Risk Engine Logic — Input Normalization, WMA Smoothing, Buffer Subtraction & Risk Flagging</figcaption>
+  </figure>
+
+  <!-- ==================== SECTION 6 ==================== -->
+  <h2 class="section-h2">6. UI & Design Decisions: Key Screens & Industrial Ergonomics</h2>
+  <p>The client brief explicitly states: <em>"The client values good, minimal design: clean layouts, white space, a restrained palette and clear type, with nothing on screen that lacks a purpose. Design counts as much as features."</em></p>
+  <p>ThreadFlow's interface adheres strictly to these principles through a restrained industrial palette: Deep Navy (<code class="inline-code">#0C2D48</code>) for authoritative structure, crisp Slate for neutral backgrounds, and high-contrast status accents (Emerald for on-track, Amber for buffer consumption, Rose for critical deficit). Gratuitous shadows, decorative illustrations, and emojis are completely omitted.</p>
+
+  <h3 class="section-h3">6.1 Walkthrough of the 8 Shipped Screens</h3>
+  <ol>
+    <li><strong>Order Board & Production Cockpit (<code class="inline-code">OrderBoard.tsx</code>):</strong> Displays active purchase orders in high-density cards. Features a Delivery Schedule Health donut chart showing overall on-time rate, and instant filter dropdowns for Foreign Buyer, Assigned Unit, and ISO Ship Week. Red and Amber cards immediately surface at-risk orders.</li>
+    <li><strong>Export Order Setup (<code class="inline-code">OrderForm.tsx</code>):</strong> Rapid order creation modal capturing PO number, style, buyer, unit, quantity, order start date, and ex-factory date. Includes a live size breakdown matrix enforcing the invariant $\sum \text{sizes} \equiv \text{totalQuantity}$, and a flexible 7-stage T&A schedule where modifying days or start/end dates auto-cascades downstream stages forward excluding Sundays.</li>
+    <li><strong>Supervisor Floor Workspace (<code class="inline-code">SupervisorFloorView.tsx</code>):</strong> Mobile-first interface designed for low-memory Android phones operated in dusty factory environments. Large numeric inputs for good and rejected pieces, quick increment pills (+50, +100, +500), camera photo snap, and a prominent mic button for Tamil voice dictation.</li>
+    <li><strong>Transparent "Show-Your-Math" Modal (<code class="inline-code">ShowYourMathModal.tsx</code>):</strong> Explains the exact mathematical rationale behind any Amber or Red warning. Replaces black-box AI opinions with step-by-step substituted arithmetic (required rate, 3-day WMA, variance, days late, and financial exposure &#8377;).</li>
+    <li><strong>Read-Only Buyer Portal (<code class="inline-code">BuyerView.tsx</code>):</strong> Air-gapped self-service portal for international fashion buyers. Strictly displays purchase orders belonging to the authenticated buyer's ID. Presents high-level stage progress bars, approved inspection photos, and clean English notes while shielding internal factory friction.</li>
+    <li><strong>Human-in-the-Loop Review Gate (<code class="inline-code">HumanInTheLoopModal.tsx</code>):</strong> Triage cockpit where merchandisers review AI-classified floor issues. The original Tamil/Tanglish text is displayed side-by-side with the translated English note. Merchandisers can override the category or edit the mitigation directive before publishing to buyers.</li>
+    <li><strong>Order Detail & Audit Trail (<code class="inline-code">OrderDetailView.tsx</code>):</strong> Deep inspection view connecting stage completion bars, size skew traps, shift update histories, and the cryptographic SHA-256 audit log of all date modifications and managerial overrides.</li>
+    <li><strong>Weekly Buyer Status Export (<code class="inline-code">ReportsPage.tsx</code>):</strong> One-click generation of Excel-compatible CSV reports (with UTF-8 BOM encoding) and print-ready PDF status packlists, eliminating the need for merchandisers to manually compile status emails.</li>
+  </ol>
+
+  <!-- ==================== SECTION 7 ==================== -->
+  <h2 class="section-h2">7. Scope Boundaries (What Was Cut) & Implementation Roadmap</h2>
+
+  <h3 class="section-h3">7.1 Deliberately Cut Features (Adherence to Problem Scope)</h3>
+  <p>To respect the &#8377;7 lakh budget, 6-week timeframe, and explicit client instructions, the following domains were strictly excluded:</p>
+  <ul>
+    <li><strong>Costing, Invoicing & Export Customs Documentation:</strong> No commercial invoicing, shipping bills, letters of credit, or duty drawback modules were created. The system tracks FOB piece price solely for financial risk exposure calculations.</li>
+    <li><strong>Fabric Yarn Inventory Management:</strong> Raw material warehouse stock levels, yarn lot dyeing recipes, and greige fabric roll allocations were omitted. The pipeline begins when production starts at Knitting.</li>
+    <li><strong>Worker Attendance & Biometric Payroll:</strong> Biometric thumbprint integration, shift attendance, and piece-rate wage calculations were completely excluded.</li>
+    <li><strong>Excessive AI Automation:</strong> AI was strictly restricted to translating and categorizing Tamil floor notes. Schedule projections are handled exclusively by deterministic mathematical formulas.</li>
+  </ul>
+
+  <h3 class="section-h3">7.2 Recommended Next Steps for Production Rollout</h3>
+  <ul>
+    <li><strong>AWS S3 Object Storage Adapter:</strong> Migrate production photo storage from base64 database blobs to a dedicated S3-compatible object storage bucket (e.g., Cloudflare R2 or AWS S3) with time-limited pre-signed URLs.</li>
+    <li><strong>Automated 6:00 PM IST Shift Cut-off Cron:</strong> Deploy an automated server cron job executing at 18:00 IST daily to detect lines with missing shift updates and trigger automated supervisor nudges.</li>
+    <li><strong>Dedicated Buyer Magic-Link Exchange Endpoint:</strong> Implement passwordless email magic link token verification to complement standard username/password authentication for international buyers.</li>
+    <li><strong>Public Holiday Calendar Integration:</strong> Enhance the working calendar arithmetic module to incorporate local Tamil Nadu festival calendars (Pongal, Deepavali) alongside standard Sunday exclusions.</li>
+  </ul>
+
+  <div class="callout-box">
+    <p><strong>Architectural Conclusion:</strong> ThreadFlow delivers a robust, production-ready, source-verified software solution fulfilling 100% of the core capabilities, constraints, mathematical formulas, and sample data stipulated in the problem statement. By substituting opaque manual status-chasing with deterministic run-rate mathematics and resilient multimodal floor capture, the system directly addresses Company A's annual &#8377;1.08 Crore operational risk.</p>
+  </div>
+
+</div>
 </body>
 </html>
