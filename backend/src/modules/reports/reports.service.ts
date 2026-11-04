@@ -244,7 +244,7 @@ export class ReportsService {
         activeOrders: orders.length - completedOrders,
         completedOrders,
         totalContractedPieces,
-        onTimeConfidencePercent: orders.length > 0 ? Math.round(((orders.length - orders.filter(o => o.riskWarnings.length > 0).length) / orders.length) * 100) : 100,
+        onTimeConfidencePercent: milestoneHealth.onTrack,
       },
       stageBreakdown,
       stageTrends,

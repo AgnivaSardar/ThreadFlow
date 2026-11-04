@@ -654,10 +654,10 @@ export const ReportsPage: React.FC = () => {
                     </path>
                   </svg>
 
-                  {/* Centered Hub - Sole 67% On-Time indicator */}
+                  {/* Centered Hub - On-Time indicator matching green onTrack slice */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
                     <span className="text-2xl font-black font-mono tracking-tight text-[#0C2D48]">
-                      {data?.metrics.onTimeConfidencePercent || 67}%
+                      {data?.milestoneHealth.onTrack ?? data?.metrics.onTimeConfidencePercent ?? 84}%
                     </span>
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                       On-Time

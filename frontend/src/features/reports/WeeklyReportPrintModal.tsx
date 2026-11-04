@@ -99,7 +99,7 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
     metrics?.completedOrders ?? orders.filter((o) => o.progressPercent >= 100).length;
   const activeOrders = metrics?.activeOrders ?? orders.length - completedOrders;
   const confidenceScore =
-    aiIntelligence?.confidenceScore ?? metrics?.onTimeConfidencePercent ?? 67;
+    milestoneHealth?.onTrack ?? aiIntelligence?.confidenceScore ?? metrics?.onTimeConfidencePercent ?? 84;
 
   const onTrackPct = milestoneHealth?.onTrack ?? 84;
   const minorBufferPct = milestoneHealth?.minorBuffer ?? 12;
