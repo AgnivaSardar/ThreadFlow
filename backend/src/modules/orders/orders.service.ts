@@ -4,6 +4,7 @@ import { AppError } from '../../common/errors/AppError';
 import { calculateAuditHash } from '../../common/utils/crypto';
 import { AuthenticatedUser } from '../../common/types/express';
 import { CreateOrderInput, OrderQueryFilters, AdvanceStageInput } from './orders.schema';
+import { calculateWorkingDaysExcludingSundays } from '../risk/risk.engine';
 
 export interface StageLeadTimeConfig {
   stage: Stage;
@@ -130,7 +131,26 @@ export class OrdersService {
     const exchangeRate = input.exchangeRate || 1.0;
     const totalOrderValue = input.totalQuantity * fobPrice * exchangeRate;
 
-    const plannedMilestones = computeMilestoneDates(exFactoryDate, orderDate);
+    let plannedMilestones;
+    if (input.customStages && input.customStages.length > 0) {
+      plannedMilestones = input.customStages.map((cs, idx) => {
+        const pStart = new Date(cs.plannedStart);
+        const pEnd = new Date(cs.plannedEnd);
+        const buffer = cs.bufferDaysAhead !== undefined
+          ? cs.bufferDaysAhead
+          : calculateWorkingDaysExcludingSundays(pEnd, exFactoryDate);
+
+        return {
+          stage: cs.stage,
+          sequenceOrder: cs.sequenceOrder || (idx + 1),
+          bufferDaysAhead: Math.max(0, buffer),
+          plannedStart: pStart,
+          plannedEnd: pEnd,
+        };
+      });
+    } else {
+      plannedMilestones = computeMilestoneDates(exFactoryDate, orderDate);
+    }
 
     // 3. Atomic Transaction
     const result = await prisma.$transaction(async (tx) => {

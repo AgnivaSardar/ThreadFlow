@@ -174,6 +174,48 @@ async function runOrdersTestSuite() {
       await prisma.order.delete({ where: { id: createdOrder.id } });
       console.log('\n  🧹 Cleaned up test order fixtures.');
 
+      // 5b. Test Flexible Custom Stage Lead Times & Dates
+      console.log('\n[Test Group 5b] Flexible Custom Stage Lead Times & Dates');
+      const customPoNumber = `C-PO-${Date.now().toString().slice(-6)}`;
+      const customOrder = await OrdersService.createOrder(
+        {
+          poNumber: customPoNumber,
+          buyerId: buyer.id,
+          unitId: unit.id,
+          style: 'Custom Flexible Stage Order',
+          totalQuantity: 2000,
+          orderDate: '2026-11-02T00:00:00Z',
+          exFactoryDate: '2026-12-15T00:00:00Z',
+          currency: 'INR',
+          sizeBreakdowns: [{ size: 'M', color: 'Navy', plannedQty: 2000 }],
+          customStages: [
+            { stage: Stage.KNITTING, sequenceOrder: 1, durationDays: 5, plannedStart: '2026-11-02T00:00:00Z', plannedEnd: '2026-11-07T00:00:00Z' },
+            { stage: Stage.DYEING_WASHING, sequenceOrder: 2, durationDays: 4, plannedStart: '2026-11-07T00:00:00Z', plannedEnd: '2026-11-12T00:00:00Z' },
+            { stage: Stage.PRINTING, sequenceOrder: 3, durationDays: 2, plannedStart: '2026-11-12T00:00:00Z', plannedEnd: '2026-11-14T00:00:00Z' },
+            { stage: Stage.CUTTING, sequenceOrder: 4, durationDays: 3, plannedStart: '2026-11-14T00:00:00Z', plannedEnd: '2026-11-18T00:00:00Z' },
+            { stage: Stage.STITCHING, sequenceOrder: 5, durationDays: 7, plannedStart: '2026-11-18T00:00:00Z', plannedEnd: '2026-11-26T00:00:00Z' },
+            { stage: Stage.CHECKING, sequenceOrder: 6, durationDays: 2, plannedStart: '2026-11-26T00:00:00Z', plannedEnd: '2026-11-28T00:00:00Z' },
+            { stage: Stage.FINISHING, sequenceOrder: 7, durationDays: 3, plannedStart: '2026-11-28T00:00:00Z', plannedEnd: '2026-12-02T00:00:00Z' },
+          ],
+        },
+        authUser
+      );
+
+      assert(customOrder.milestones.length === 7, 'Created 7 milestones from custom stage inputs');
+      const customKnitting = customOrder.milestones.find((m) => m.stage === Stage.KNITTING);
+      assert(
+        new Date(customKnitting!.plannedEnd).toISOString().startsWith('2026-11-07'),
+        'Custom Knitting plannedEnd respected (2026-11-07)'
+      );
+      assert(customKnitting!.bufferDaysAhead > 0, 'Custom buffer days ahead computed automatically');
+
+      // Clean up custom order
+      await prisma.auditEvent.deleteMany({ where: { orderId: customOrder.id } });
+      await prisma.tnaMilestone.deleteMany({ where: { orderId: customOrder.id } });
+      await prisma.orderLine.deleteMany({ where: { orderId: customOrder.id } });
+      await prisma.order.delete({ where: { id: customOrder.id } });
+      console.log('  🧹 Cleaned up custom flexible order fixtures.');
+
       // 6. Test Order List Filtering and Pagination
       console.log('\n[Test Group 6] Order Listing & Pagination Architecture');
       const listResult = await OrdersService.listOrders({ page: '1', limit: '3' }, authUser);

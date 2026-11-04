@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Stage } from '@prisma/client';
 
 export const REASON_CODES = [
   'BUYER_REQUEST',
@@ -10,6 +11,20 @@ export const REASON_CODES = [
   'SUBCONTRACTOR_DELAY',
   'OTHER',
 ] as const;
+
+export const customStageItemSchema = z.object({
+  stage: z.nativeEnum(Stage),
+  sequenceOrder: z.number().int().positive().optional(),
+  displayName: z.string().optional(),
+  durationDays: z.number().int().positive().optional(),
+  plannedStart: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: 'plannedStart must be a valid ISO date',
+  }),
+  plannedEnd: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: 'plannedEnd must be a valid ISO date',
+  }),
+  bufferDaysAhead: z.number().int().nonnegative().optional(),
+});
 
 export const createOrderSchema = z.object({
   body: z.object({
@@ -48,6 +63,7 @@ export const createOrderSchema = z.object({
     currency: z.string().trim().default('INR'),
     exchangeRate: z.number().positive().default(1.0),
     fobPricePerPiece: z.number().nonnegative().optional().default(0),
+    customStages: z.array(customStageItemSchema).optional(),
     sizeBreakdowns: z
       .array(
         z.object({

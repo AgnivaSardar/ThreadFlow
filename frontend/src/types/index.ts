@@ -307,6 +307,16 @@ export interface OrderDetail extends Omit<OrderListItem, 'sizeProgress'> {
   } | null;
 }
 
+export interface CustomStageInput {
+  stage: Stage;
+  sequenceOrder?: number;
+  displayName?: string;
+  durationDays?: number;
+  plannedStart: string;
+  plannedEnd: string;
+  bufferDaysAhead?: number;
+}
+
 export interface CreateOrderPayload {
   poNumber: string;
   buyerId: string;
@@ -324,6 +334,7 @@ export interface CreateOrderPayload {
     color: string;
     plannedQty: number;
   }[];
+  customStages?: CustomStageInput[];
 }
 
 export interface UpdateExFactoryDatePayload {
