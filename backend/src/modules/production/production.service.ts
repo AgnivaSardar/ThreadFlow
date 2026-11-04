@@ -399,8 +399,30 @@ export class ProductionService {
       ? `${input.notes ? `${input.notes} ` : ''}[VELOCITY_NOTICE: +${input.goodQuantity} pcs logged in shift]`
       : input.notes;
 
+    // Pre-classify issue note outside transaction boundary so external network calls do not hold DB locks or cause transaction timeout
+    let aiResult: any = null;
+    if (input.notes) {
+      try {
+        aiResult = await AIService.classifyIssueNote(input.notes, {
+          timeoutMs: 8000,
+          orderId: order.id,
+          context: {
+            orderId: order.id,
+            style: order.style,
+            buyer: (order as any).buyer?.name,
+            stage: input.stage,
+            sizes: (order as any).orderLines?.map((l: any) => l.size) || [],
+            colors: (order as any).orderLines?.map((l: any) => l.color) || [],
+          },
+        });
+      } catch (classifyErr) {
+        logger.warn('AI issue classification error outside transaction boundary:', classifyErr);
+      }
+    }
+
     // 7. Execute Atomic ACID transaction with concurrency race protection
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(
+      async (tx) => {
       // Re-query current completed count inside transaction boundary for concurrency lock
       const freshMilestone = await tx.tnaMilestone.findUnique({
         where: { id: targetMilestone.id },
@@ -505,22 +527,6 @@ export class ProductionService {
 
       // Record classification if issue notes or category present
       if (input.notes || input.issueCategory) {
-        // Run resilient AI classifier with deterministic fallback
-        const aiResult = input.notes
-          ? await AIService.classifyIssueNote(input.notes, {
-              timeoutMs: 8000,
-              orderId: order.id,
-              context: {
-                orderId: order.id,
-                style: order.style,
-                buyer: (order as any).buyer?.name,
-                stage: input.stage,
-                sizes: (order as any).orderLines?.map((l: any) => l.size) || [],
-                colors: (order as any).orderLines?.map((l: any) => l.color) || [],
-              },
-            })
-          : null;
-
         await tx.issueClassification.create({
           data: {
             productionUpdateId: update.id,
@@ -595,7 +601,7 @@ export class ProductionService {
       }
 
       return { update, updatedMilestone };
-    });
+    }, { timeout: 25000, maxWait: 15000 });
 
     // Upgrade 6: Real-Time Event Broadcast
     productionEventEmitter.emit('floor:update:committed', {

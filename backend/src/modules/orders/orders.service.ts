@@ -3,7 +3,7 @@ import { prisma } from '../../config/db';
 import { AppError } from '../../common/errors/AppError';
 import { calculateAuditHash } from '../../common/utils/crypto';
 import { AuthenticatedUser } from '../../common/types/express';
-import { CreateOrderInput, OrderQueryFilters } from './orders.schema';
+import { CreateOrderInput, OrderQueryFilters, AdvanceStageInput } from './orders.schema';
 
 export interface StageLeadTimeConfig {
   stage: Stage;
@@ -946,5 +946,136 @@ export class OrdersService {
     ]);
 
     return { buyers, units };
+  }
+
+  /**
+   * Manually advances an order to the next milestone stage.
+   * If actual output differs from target, optionally adjusts all downstream stage targets
+   * so total becomes the amount completed (e.g., short-shipment waiver / partial advance).
+   */
+  static async advanceStage(
+    orderId: string,
+    input: AdvanceStageInput,
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string
+  ) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new AppError('User not found', 404);
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        milestones: { orderBy: { sequenceOrder: 'asc' } },
+        buyer: true,
+      },
+    });
+
+    if (!order) throw new AppError('Order not found', 404);
+
+    const currentMilestoneIndex = order.milestones.findIndex(
+      (m) => m.stage === (input.fromStage as Stage)
+    );
+
+    if (currentMilestoneIndex === -1) {
+      throw new AppError(`Stage ${input.fromStage} not found in order milestones`, 400);
+    }
+
+    const currentMilestone = order.milestones[currentMilestoneIndex];
+    const nextMilestone = order.milestones[currentMilestoneIndex + 1];
+
+    if (!nextMilestone) {
+      throw new AppError(`Stage ${input.fromStage} is the final milestone in this pipeline.`, 400);
+    }
+
+    const actualCompleted = input.completedQuantity !== undefined
+      ? input.completedQuantity
+      : currentMilestone.completedQuantity;
+
+    const previousLastAudit = await prisma.auditEvent.findFirst({
+      where: { orderId: order.id },
+      orderBy: { timestamp: 'desc' },
+    });
+    const previousHash = previousLastAudit?.auditHash || 'GENESIS_HASH_STAGE_ADVANCE';
+
+    return await prisma.$transaction(async (tx) => {
+      // 1. Mark current milestone completed at actualCompleted
+      await tx.tnaMilestone.update({
+        where: { id: currentMilestone.id },
+        data: {
+          completedQuantity: actualCompleted,
+          targetQuantity: input.adjustDownstreamTargets ? actualCompleted : currentMilestone.targetQuantity,
+        },
+      });
+
+      // 2. If adjustDownstreamTargets is true, cascade actualCompleted to all downstream milestones
+      if (input.adjustDownstreamTargets && actualCompleted > 0) {
+        for (let i = currentMilestoneIndex + 1; i < order.milestones.length; i++) {
+          const downstream = order.milestones[i];
+          await tx.tnaMilestone.update({
+            where: { id: downstream.id },
+            data: {
+              targetQuantity: actualCompleted,
+              completedQuantity: Math.min(downstream.completedQuantity, actualCompleted),
+            },
+          });
+        }
+        // Update order total quantity to match new downstream capacity
+        await tx.order.update({
+          where: { id: order.id },
+          data: {
+            totalQuantity: actualCompleted,
+          },
+        });
+      }
+
+      // 3. Record Audit Event
+      const auditHash = calculateAuditHash(
+        previousHash,
+        order.id,
+        'MANUAL_STAGE_ADVANCE_OVERRIDE',
+        input.reasonCode,
+        new Date().toISOString(),
+        0
+      );
+
+      await tx.auditEvent.create({
+        data: {
+          entityType: 'Order',
+          entityId: order.id,
+          orderId: order.id,
+          action: 'MANUAL_STAGE_ADVANCE_OVERRIDE',
+          category: 'STAGE_OUTPUT',
+          reasonCode: input.reasonCode.trim(),
+          notes: input.overrideNotes?.trim() || `Manually advanced milestone from ${input.fromStage} to ${nextMilestone.stage} with ${actualCompleted} pcs completed. Downstream targets adjusted: ${input.adjustDownstreamTargets}.`,
+          previousValue: JSON.stringify({
+            stage: input.fromStage,
+            completedQuantity: currentMilestone.completedQuantity,
+            targetQuantity: currentMilestone.targetQuantity,
+          }),
+          newValue: JSON.stringify({
+            stage: nextMilestone.stage,
+            completedQuantity: actualCompleted,
+            targetQuantity: input.adjustDownstreamTargets ? actualCompleted : currentMilestone.targetQuantity,
+            downstreamTargetsAdjusted: input.adjustDownstreamTargets,
+          }),
+          financialImpactRupees: 0,
+          currency: order.currency || 'INR',
+          auditHash,
+          userId,
+          userRole: user.role,
+          ipAddress: ipAddress || null,
+          userAgent: userAgent || null,
+        },
+      });
+
+      return {
+        success: true,
+        fromStage: input.fromStage,
+        nextStage: nextMilestone.stage,
+        actualCompleted,
+        adjustDownstreamTargets: input.adjustDownstreamTargets,
+      };
+    });
   }
 }

@@ -39,7 +39,7 @@ async function runAiFallbackTestSuite() {
     console.log(`  Calling Gemini 3.1 Flash Lite with Tamil note: "${liveTamilNote}"...`);
     
     const liveResult = await AIService.classifyIssueNote(liveTamilNote, {
-      timeoutMs: 8000,
+      timeoutMs: 15000,
     });
     console.log('  Live Result Debug:', {
       classifiedBy: liveResult.classifiedBy,

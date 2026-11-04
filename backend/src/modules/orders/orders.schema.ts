@@ -126,7 +126,18 @@ export const orderQuerySchema = z.object({
   }),
 });
 
+export const advanceStageSchema = z.object({
+  body: z.object({
+    fromStage: z.string({ required_error: 'Current stage is required' }),
+    completedQuantity: z.number().int().nonnegative().optional(),
+    adjustDownstreamTargets: z.boolean().default(true),
+    reasonCode: z.string().min(1, 'Reason code is required'),
+    overrideNotes: z.string().optional(),
+  }),
+});
+
 export type CreateOrderInput = z.infer<typeof createOrderSchema>['body'];
 export type UpdateExFactoryDateInput = z.infer<typeof updateExFactoryDateSchema>['body'];
 export type BulkShiftExFactoryDateInput = z.infer<typeof bulkShiftExFactoryDateSchema>['body'];
 export type OrderQueryFilters = z.infer<typeof orderQuerySchema>['query'];
+export type AdvanceStageInput = z.infer<typeof advanceStageSchema>['body'];

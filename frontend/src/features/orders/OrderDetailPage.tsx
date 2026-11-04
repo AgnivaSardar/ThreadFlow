@@ -23,6 +23,7 @@ import {
   Maximize2,
   ChevronLeft,
   ChevronRight,
+  FastForward,
 } from 'lucide-react';
 import { OrderDetail, UpdateExFactoryDatePayload, RiskEvaluationResult, RiskAlertItem } from '../../types';
 import { apiRequest } from '../../services/api';
@@ -51,6 +52,17 @@ export const OrderDetailPage: React.FC = () => {
   const [modalError, setModalError] = useState<string | null>(null);
   const [directiveSent, setDirectiveSent] = useState(false);
   const [currentAlertIndex, setCurrentAlertIndex] = useState(0);
+
+  // Manual Stage Advance Modal state
+  const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
+  const [advanceFromStage, setAdvanceFromStage] = useState<string>('');
+  const [advanceCompletedQty, setAdvanceCompletedQty] = useState<number>(0);
+  const [advanceAdjustDownstream, setAdvanceAdjustDownstream] = useState<boolean>(true);
+  const [advanceReasonCode, setAdvanceReasonCode] = useState<string>('BUYER_SHORT_SHIP_APPROVAL');
+  const [advanceOverrideNotes, setAdvanceOverrideNotes] = useState<string>('');
+  const [advancingStage, setAdvancingStage] = useState(false);
+  const [advanceModalError, setAdvanceModalError] = useState<string | null>(null);
+  const [advanceSuccessMessage, setAdvanceSuccessMessage] = useState<string | null>(null);
 
   // Lightbox Image Modal state
   const [selectedImageModal, setSelectedImageModal] = useState<{
@@ -232,11 +244,76 @@ export const OrderDetailPage: React.FC = () => {
       if (e.key === 'Escape') {
         if (selectedImageModal) setSelectedImageModal(null);
         if (isDateModalOpen) setIsDateModalOpen(false);
+        if (isAdvanceModalOpen) setIsAdvanceModalOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedImageModal, isDateModalOpen]);
+  }, [selectedImageModal, isDateModalOpen, isAdvanceModalOpen]);
+
+  const openAdvanceModal = () => {
+    if (!order) return;
+    setAdvanceModalError(null);
+    setAdvanceSuccessMessage(null);
+    const activeMilestone =
+      order.milestones?.find((m) => m.stage === order.activeStage) ||
+      order.milestones?.find((m) => m.completedQuantity < m.targetQuantity) ||
+      order.milestones?.[0];
+
+    const currentStage = activeMilestone?.stage || 'KNITTING';
+    setAdvanceFromStage(currentStage);
+    setAdvanceCompletedQty(activeMilestone ? activeMilestone.completedQuantity : 0);
+    setAdvanceAdjustDownstream(true);
+    setAdvanceReasonCode('BUYER_SHORT_SHIP_APPROVAL');
+    setAdvanceOverrideNotes('');
+    setIsAdvanceModalOpen(true);
+  };
+
+  const handleStageSelectChange = (stageName: string) => {
+    setAdvanceFromStage(stageName);
+    const m = order?.milestones?.find((item) => item.stage === stageName);
+    if (m) {
+      setAdvanceCompletedQty(m.completedQuantity);
+    }
+  };
+
+  const handleAdvanceStageSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !advanceFromStage) return;
+    setAdvanceModalError(null);
+    setAdvanceSuccessMessage(null);
+
+    if (!advanceOverrideNotes.trim()) {
+      setAdvanceModalError('Audit override notes are mandatory when manually advancing or short-closing a stage.');
+      return;
+    }
+
+    try {
+      setAdvancingStage(true);
+      const res = await apiRequest<{ success: boolean; message: string }>(`/orders/${id}/advance-stage`, {
+        method: 'POST',
+        body: JSON.stringify({
+          fromStage: advanceFromStage,
+          actualCompletedQuantity: Number(advanceCompletedQty) || 0,
+          adjustDownstreamTargets: advanceAdjustDownstream,
+          reasonCode: advanceReasonCode,
+          overrideNotes: advanceOverrideNotes.trim(),
+        }),
+      });
+
+      setAdvanceSuccessMessage(res.message || 'Stage advanced successfully.');
+      setTimeout(async () => {
+        setIsAdvanceModalOpen(false);
+        setAdvanceSuccessMessage(null);
+        setAdvanceOverrideNotes('');
+        await fetchOrderDetail();
+      }, 1200);
+    } catch (err: any) {
+      setAdvanceModalError(err.message || 'Failed to advance stage');
+    } finally {
+      setAdvancingStage(false);
+    }
+  };
 
   const handleDateChangeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -343,6 +420,15 @@ export const OrderDetailPage: React.FC = () => {
           >
             <Calendar className="w-4 h-4" />
             <span>Shift Ex-Factory Date</span>
+          </button>
+
+          <button
+            onClick={openAdvanceModal}
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#0C2D48] hover:bg-[#143D60] text-white font-bold rounded-xl text-xs shadow-xs transition cursor-pointer"
+            title="Manually advance stage or short-close production"
+          >
+            <FastForward className="w-4 h-4 text-sky-400" />
+            <span>Advance Stage Manually</span>
           </button>
         </div>
       </div>
@@ -1244,6 +1330,165 @@ export const OrderDetailPage: React.FC = () => {
                 >
                   {updatingDate && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   Confirm Date Shift
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Manual Stage Advance & Target Adjustment Modal */}
+      {isAdvanceModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 my-auto flex flex-col max-h-[92vh]">
+            <div className="p-4 sm:p-5 bg-[#0C2D48] text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-300">
+                  <FastForward className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm tracking-tight">Manual Stage Advance & Recalibration</h3>
+                  <p className="text-[11px] text-sky-200">Short-close milestone or override stage completion</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsAdvanceModalOpen(false)}
+                className="text-sky-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAdvanceStageSubmit} className="p-4 sm:p-6 space-y-4 bg-white text-slate-900 overflow-y-auto flex-1">
+              {advanceModalError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{advanceModalError}</span>
+                </div>
+              )}
+
+              {advanceSuccessMessage && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 shrink-0" />
+                  <span>{advanceSuccessMessage}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-800 mb-1">
+                  Stage to Complete / Advance <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={advanceFromStage}
+                  onChange={(e) => handleStageSelectChange(e.target.value)}
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 font-semibold bg-white text-slate-900 shadow-xs"
+                  required
+                >
+                  {(order.milestones || []).map((m) => (
+                    <option key={m.id} value={m.stage}>
+                      Stage #{m.sequenceOrder} - {m.stage.replace(/_/g, ' ')} ({m.completedQuantity.toLocaleString()} / {m.targetQuantity.toLocaleString()} pcs) {m.completedQuantity >= m.targetQuantity ? '✓ Completed' : '• In Progress'}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Marks this milestone as finished and advances the order pipeline to the subsequent stage.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-800 mb-1">
+                  Actual Completed Output Quantity (Pieces) <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  value={advanceCompletedQty}
+                  onChange={(e) => setAdvanceCompletedQty(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                  placeholder="e.g. 4080"
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 font-mono font-bold bg-white text-slate-900 shadow-xs"
+                  required
+                />
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Recorded as the final verified output of this stage.
+                </p>
+              </div>
+
+              <div className="p-3 bg-sky-50 border border-sky-200 rounded-xl space-y-2">
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={advanceAdjustDownstream}
+                    onChange={(e) => setAdvanceAdjustDownstream(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-sky-600 rounded border-slate-300 focus:ring-sky-500"
+                  />
+                  <div>
+                    <span className="text-xs font-bold text-sky-950 block">
+                      Recalibrate Downstream Milestone Targets
+                    </span>
+                    <span className="text-[11px] text-sky-800 leading-relaxed block mt-0.5">
+                      Ensures downstream targets never exceed upstream completed output. If checked, all subsequent stages and the total order quantity will adjust to <strong>{advanceCompletedQty.toLocaleString()} pcs</strong>.
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-800 mb-1">
+                  Reason for Manual Advance / Short-Close <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={advanceReasonCode}
+                  onChange={(e) => setAdvanceReasonCode(e.target.value)}
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 font-semibold bg-white text-slate-900 shadow-xs"
+                  required
+                >
+                  <option value="BUYER_SHORT_SHIP_APPROVAL">Buyer Approved Short Shipment</option>
+                  <option value="FABRIC_DEFECT_SHORTAGE">Fabric / Raw Material Shortage</option>
+                  <option value="LINE_BREAKDOWN">Mechanical Breakdown / Unscheduled Maintenance</option>
+                  <option value="QUALITY_REJECTION">High Quality Rejection / Rework Cutoff</option>
+                  <option value="UNFORESEEN_CIRCUMSTANCE">Unforeseen Operational Circumstance</option>
+                  <option value="MANAGEMENT_OVERRIDE">Executive / Merchandiser Override</option>
+                  <option value="OTHER">Other Operational Justification</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-800 mb-1">
+                  Audit Override Notes & Justification <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  value={advanceOverrideNotes}
+                  onChange={(e) => setAdvanceOverrideNotes(e.target.value)}
+                  rows={3}
+                  required
+                  placeholder="Mandatory explanation for compliance audit and buyer log..."
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 bg-white text-slate-900 placeholder:text-slate-400 shadow-xs"
+                ></textarea>
+              </div>
+
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-600 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>
+                  This override generates an immutable <strong>STAGE_OUTPUT</strong> record cryptographically chained via SHA-256 in the audit trail.
+                </span>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAdvanceModalOpen(false)}
+                  disabled={advancingStage}
+                  className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={advancingStage || !advanceOverrideNotes.trim()}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-[#0C2D48] hover:bg-[#143D60] rounded-xl shadow-xs transition"
+                >
+                  {advancingStage && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  Advance Stage Now
                 </button>
               </div>
             </form>

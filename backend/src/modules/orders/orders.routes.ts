@@ -7,6 +7,7 @@ import {
   createOrderSchema,
   updateExFactoryDateSchema,
   bulkShiftExFactoryDateSchema,
+  advanceStageSchema,
   orderQuerySchema,
 } from './orders.schema';
 
@@ -47,6 +48,14 @@ router.patch(
   requireRole(Role.MERCHANDISER, Role.ADMIN),
   validateRequest(updateExFactoryDateSchema),
   OrdersController.updateExFactoryDate
+);
+
+// Manually advance stage to next process (with optional downstream target adjustment & audit trail)
+router.post(
+  '/:id/advance-stage',
+  requireRole(Role.MERCHANDISER, Role.ADMIN),
+  validateRequest(advanceStageSchema),
+  OrdersController.advanceStage
 );
 
 export const ordersRoutes = router;

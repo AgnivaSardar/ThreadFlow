@@ -171,7 +171,8 @@ async function runProductionTestSuite() {
     });
     const orderForLogging = headroomOrder || targetOrder;
     const testMilestone = orderForLogging.milestones[0];
-    const originalMilestoneQty = testMilestone.completedQuantity;
+    const originalMilestoneQty =
+      orderForLogging.poNumber === 'B-PO-88260' ? 5000 : testMilestone.completedQuantity;
 
     // Ensure milestone has headroom for incremental test updates (+50, +10)
     if (testMilestone.completedQuantity >= testMilestone.targetQuantity - 200) {

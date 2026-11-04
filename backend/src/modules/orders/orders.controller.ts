@@ -6,6 +6,7 @@ import {
   UpdateExFactoryDateInput,
   BulkShiftExFactoryDateInput,
   OrderQueryFilters,
+  AdvanceStageInput,
 } from './orders.schema';
 import { AppError } from '../../common/errors/AppError';
 
@@ -104,6 +105,26 @@ export class OrdersController {
     res.status(200).json({
       success: true,
       data,
+    });
+  });
+
+  static advanceStage = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError('Authentication required', 401);
+    }
+    const { id } = req.params;
+    const result = await OrdersService.advanceStage(
+      id,
+      req.body as AdvanceStageInput,
+      req.user.id,
+      req.ip,
+      req.headers['user-agent'] as string | undefined
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `Stage successfully advanced from ${result.fromStage} to ${result.nextStage}`,
+      data: result,
     });
   });
 }
