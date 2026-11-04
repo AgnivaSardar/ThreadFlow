@@ -331,14 +331,69 @@
 <h3 class="section-h3">1.1 Regional Context: The Tiruppur Knitwear Cluster</h3>
 <p class="report-paragraph">The city of Tiruppur, located in Tamil Nadu, India, accounts for over 50 percent of India's total knitted textile exports, producing garments for prominent global fashion retailers across the United Kingdom, Europe, and North America. The industrial landscape is characterized by multi-tier, distributed manufacturing networks comprising owned factory units (knitting, cutting, stitching, finishing) and specialized external subcontractors (dyeing, washing, rotary printing). </p>
 <p class="report-paragraph">Company A operates three owned manufacturing facilities and two dedicated subcontractor units in Tiruppur, employing approximately 900 factory floor operators and 35 merchandising personnel, handling roughly 500 export purchase orders (POs) annually. </p>
-<h3 class="section-h3">1.2 Core Financial Bleed Points & Business Rationale</h3>
-<p class="report-paragraph">Prior to ThreadFlow, Company A experienced systemic communication delays, manual phone-chasing of floor updates, and lack of forward-looking capacity visibility. Operational audits revealed an annual revenue leakage of <strong>INR 1,08,50,000 (INR 1.085 Crore)</strong> across three primary cost drivers:</p>
-<p class="report-paragraph">1. <strong>Emergency Air Freight Escalations (INR 52,50,000 / year):</strong>  </p>
-<p class="report-paragraph">   Fifteen late export shipments per year were forced from sea freight onto expedited international air freight cargo to avoid contractual cancellation, at an average penalty of INR 3,50,000 per shipment.</p>
-<p class="report-paragraph">2. <strong>Late Delivery Invoice Deductions (INR 27,20,000 / year):</strong>  </p>
-<p class="report-paragraph">   Twenty-six purchase orders arrived past the contractual ex-factory deadline, triggering contractual retail discount deductions ranging between 3 percent and 5 percent of total invoice value (averaging INR 1,04,600 per late order).</p>
-<p class="report-paragraph">3. <strong>Merchandiser Status-Chasing Overhead (INR 28,80,000 / year):</strong>  </p>
-<p class="report-paragraph">   Twelve senior export merchandisers spent an average of 2.2 hours every shift placing phone calls to floor supervisors, translating handwritten tally sheets, and compiling ad-hoc Excel reports, representing substantial unproductive administrative overhead.</p>
+<h3 class="section-h3">1.2 Problem Statement Baseline Assumptions (Strict Problem Statement Bounds)</h3>
+<p class="report-paragraph">All baseline financial calculations, capacity models, and economic justifications within this Technical Design Document strictly derive from the authoritative parameters specified in the problem statement. Every assumption has been formally cataloged and labeled below:</p>
+<div class="table-container"><table class="report-table"><thead><tr>
+<th>Assumption Tag</th>
+<th>Domain Parameter</th>
+<th>Quantified Value</th>
+<th>Operational &amp; Economic Derivation</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>[ASSUMPTION 1]</strong></td>
+<td>Annual Export Order Volume &amp; Average Value</td>
+<td>500 orders / year at &#8377;21,00,000 average</td>
+<td>Factory manufactures 500 purchase orders annually with an average contract value of &#8377;21 lakh, establishing an annualized baseline turnover of &#8377;105 Crore.</td>
+</tr>
+<tr>
+<td><strong>[ASSUMPTION 2]</strong></td>
+<td>Baseline Late Shipment Rate</td>
+<td>8% of total orders (40 orders / year)</td>
+<td>Historically, 8 percent of all purchase orders (exactly 40 orders annually) exceed contractual ex-factory dates due to delayed floor visibility.</td>
+</tr>
+<tr>
+<td><strong>[ASSUMPTION 3]</strong></td>
+<td>Emergency Air Freight Surcharge</td>
+<td>15 orders at &#8377;3,50,000 extra = &#8377;52,50,000</td>
+<td>Of the 40 late orders, 15 require emergency air freight conversion instead of sea freight to prevent retail cancellation, incurring &#8377;52.5 lakh in unrecoverable freight surcharges.</td>
+</tr>
+<tr>
+<td><strong>[ASSUMPTION 4]</strong></td>
+<td>Buyer Late Delivery Discount</td>
+<td>25 orders at 5% discount = &#8377;26,25,000</td>
+<td>The remaining 25 delayed orders incur a mandatory 5 percent contractual penalty discount (25 &times; &#8377;1,05,000 = &#8377;26.25 lakh) deducted from invoice payouts.</td>
+</tr>
+<tr>
+<td><strong>[ASSUMPTION 5]</strong></td>
+<td>Merchandiser Status-Chasing Overhead</td>
+<td>12 merchandisers &times; 2 hrs/day = 7,200 hrs/yr at &#8377;400 = &#8377;28,80,000</td>
+<td>Twelve export merchandisers spend 2 hours daily chasing status via telephone (7,200 hours/year across 300 factory working days). Valued at &#8377;400/hr loaded cost, this drains &#8377;28.8 lakh in labor.</td>
+</tr>
+<tr>
+<td><strong>[ASSUMPTION 6]</strong></td>
+<td>Total Annual Operational Loss</td>
+<td>&#8377;1,08,00,000 / year (&#8377;1.08 Crore)</td>
+<td>Cumulative baseline bleed equals &#8377;52.5L (air freight) + &#8377;26.25L (discounts) + &#8377;28.8L (labor) = &#8377;1.08 Crore annually.</td>
+</tr>
+<tr>
+<td><strong>[ASSUMPTION 7]</strong></td>
+<td>Implementation Budget &amp; Timeframe</td>
+<td>&#8377;7,00,000 capital budget, 6-week delivery</td>
+<td>Engineering delivery envelope is capped at &#8377;7 lakh capital expenditure over a 6-week implementation sprint.</td>
+</tr>
+<tr>
+<td><strong>[ASSUMPTION 8]</strong></td>
+<td>Target Operational Success Criteria</td>
+<td>Late shipments 8% &rarr; 5%, chasing halved, emails -60%</td>
+<td>Measured across two consecutive production seasons: late shipments reduced to 5% (saving 15 orders / ~&#8377;39.38L), status-chasing time halved to 1 hr/day, buyer inquiry emails cut by 60%.</td>
+</tr>
+<tr>
+<td><strong>[ASSUMPTION 9]</strong></td>
+<td>Hardware &amp; Connectivity Profile</td>
+<td>2–3 GB RAM Android phones, patchy factory connectivity</td>
+<td>Floor supervisors operate low-cost mobile hardware under intermittent cellular signals, requiring offline queueing and lightweight image compression.</td>
+</tr>
+</tbody></table></div>
 <h3 class="section-h3">1.3 System Objectives & Value Proposition</h3>
 <p class="report-paragraph">ThreadFlow replaces fragmented spreadsheets and phone calls with an integrated, intelligent, and auditable production intelligence ecosystem. The system delivers:</p>
 <ul class="report-list">
