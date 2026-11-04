@@ -15,6 +15,8 @@ interface AuthState {
   refreshSession: () => Promise<boolean>;
   clearError: () => void;
   forgotPassword: (email: string) => Promise<{ success: boolean; message: string }>;
+  verifyOtp: (email: string, otp: string) => Promise<{ success: boolean; message: string }>;
+  resetPassword: (email: string, otp: string, newPassword: string) => Promise<{ success: boolean; message: string }>;
   hasRole: (...roles: Role[]) => boolean;
   updateUser: (updatedUser: User) => void;
 }
@@ -113,12 +115,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
       return response;
     } catch (err: any) {
-      // Return graceful message even if offline/fallback
       return {
         success: true,
-        message: err.message || `If an account exists for ${email}, recovery instructions have been dispatched.`,
+        message: err.message || `A verification code has been dispatched to ${email}.`,
       };
     }
+  },
+
+  verifyOtp: async (email: string, otp: string) => {
+    return await apiRequest<{ success: boolean; message: string }>('/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp }),
+    });
+  },
+
+  resetPassword: async (email: string, otp: string, newPassword: string) => {
+    return await apiRequest<{ success: boolean; message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp, newPassword }),
+    });
   },
 
   hasRole: (...roles: Role[]) => {

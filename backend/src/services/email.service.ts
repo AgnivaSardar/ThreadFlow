@@ -46,30 +46,38 @@ export class EmailService {
   }
 
   /**
-   * Sends password recovery instructions.
+   * Sends 6-digit OTP email for password reset.
    */
-  public async sendPasswordResetEmail(email: string, resetToken: string): Promise<boolean> {
-    const resetUrl = `${config.appOrigin}/login?resetToken=${resetToken}`;
-    const subject = 'ThreadFlow — Password Reset Instructions';
-    const text = `You requested a password reset for your ThreadFlow workspace account.\n\nUse this link to reset your credentials:\n${resetUrl}\n\nThis link expires in 1 hour. If you did not make this request, please contact your administrator.`;
+  public async sendPasswordResetOtp(email: string, otpCode: string): Promise<boolean> {
+    const subject = `ThreadFlow Verification Code: ${otpCode}`;
+    const text = `Your ThreadFlow password reset verification code is: ${otpCode}\n\nThis OTP is valid for 10 minutes.\n\nNOTE: If you don't see this email in your inbox, please check your Spam/Junk folder.\n\nIf you did not request this, please contact your administrator immediately.`;
     const html = `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">
-        <div style="margin-bottom: 20px;">
-          <h2 style="color: #0C2D48; margin: 0; font-size: 22px;">ThreadFlow <span style="color: #f59e0b;">Intelligence</span></h2>
-          <p style="color: #64748b; font-size: 12px; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 1px;">Production Intelligence & Critical Path OS</p>
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 16px; background: #ffffff;">
+        <div style="margin-bottom: 24px;">
+          <h2 style="color: #0C2D48; margin: 0; font-size: 22px; font-weight: 800;">ThreadFlow <span style="color: #f59e0b;">Intelligence</span></h2>
+          <p style="color: #64748b; font-size: 11px; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Production Intelligence & Critical Path OS</p>
         </div>
         <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 16px 0;" />
-        <h3 style="color: #0f172a; font-size: 16px;">Password Reset Request</h3>
-        <p style="color: #334155; font-size: 14px; line-height: 1.6;">
-          You requested a password reset for your registered work email: <strong>${email}</strong>.
+        <h3 style="color: #0f172a; font-size: 16px; font-weight: 700; margin-bottom: 8px;">Password Reset Verification Code</h3>
+        <p style="color: #334155; font-size: 14px; line-height: 1.6; margin-top: 0;">
+          You requested to reset your password for: <strong>${email}</strong>. Use the 6-digit One-Time Password (OTP) below:
         </p>
-        <div style="margin: 24px 0;">
-          <a href="${resetUrl}" style="background-color: #f59e0b; color: #0f172a; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">
-            Reset Workspace Password →
-          </a>
+        
+        <div style="margin: 28px 0; text-align: center;">
+          <div style="display: inline-block; background-color: #0C2D48; color: #ffffff; letter-spacing: 8px; font-size: 32px; font-weight: 900; font-family: monospace; padding: 14px 28px; border-radius: 12px; border: 2px solid #f59e0b; box-shadow: 0 4px 12px rgba(12, 45, 72, 0.15);">
+            ${otpCode}
+          </div>
+          <div style="color: #64748b; font-size: 12px; margin-top: 8px; font-weight: 500;">Valid for 10 minutes</div>
         </div>
+
+        <div style="background-color: #fef3c7; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 16px; margin: 20px 0;">
+          <p style="color: #92400e; font-size: 12px; margin: 0; font-weight: 600;">
+            ⚠️ Notice: If you do not see this email in your main inbox, please be sure to check your <u>Spam or Junk folder</u>.
+          </p>
+        </div>
+
         <p style="color: #64748b; font-size: 12px; line-height: 1.5;">
-          This link will expire in 60 minutes for security purposes. If you did not request this, you can safely disregard this email.
+          If you did not request this password reset, your account credentials may be compromised. Please contact your administrator immediately.
         </p>
         <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 24px 0 16px 0;" />
         <p style="color: #94a3b8; font-size: 11px; margin: 0;">© 2026 ThreadFlow Intelligence • Tiruppur Knitwear Operations</p>

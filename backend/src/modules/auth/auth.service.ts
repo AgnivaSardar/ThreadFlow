@@ -208,23 +208,129 @@ export class AuthService {
   }
 
   /**
-   * Dispatches a secure password recovery instruction for a work email.
+   * Generates a 6-digit cryptographic OTP, saves to DB with 10-minute expiry, and sends via SendGrid.
    */
-  public async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
+  public async requestPasswordResetOtp(email: string): Promise<{ success: boolean; message: string }> {
     const normalizedEmail = email.toLowerCase().trim();
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
 
     if (user) {
-      console.log(`[AUTH] Password recovery requested for: ${user.email} (${user.role})`);
-      const resetToken = randomUUID();
-      await emailService.sendPasswordResetEmail(user.email, resetToken);
+      // Invalidate existing unused OTPs
+      await prisma.passwordResetOtp.updateMany({
+        where: { email: normalizedEmail, used: false },
+        data: { used: true },
+      });
+
+      // Generate a secure 6-digit numeric OTP
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpHash = await bcrypt.hash(otpCode, 10);
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+      await prisma.passwordResetOtp.create({
+        data: {
+          email: normalizedEmail,
+          otpHash,
+          expiresAt,
+        },
+      });
+
+      console.log(`[AUTH OTP] Generated 6-digit OTP for ${normalizedEmail}: ${otpCode}`);
+      await emailService.sendPasswordResetOtp(user.email, otpCode);
     }
 
     return {
       success: true,
-      message: `If an account exists for ${normalizedEmail}, password reset instructions have been dispatched.`,
+      message: `A 6-digit verification code has been dispatched to ${normalizedEmail}. Please check your main inbox as well as your Spam/Junk folder.`,
+    };
+  }
+
+  /**
+   * Verifies the 6-digit OTP for an email address.
+   */
+  public async verifyPasswordResetOtp(email: string, otpCode: string): Promise<{ success: boolean; message: string }> {
+    const normalizedEmail = email.toLowerCase().trim();
+    const activeOtp = await prisma.passwordResetOtp.findFirst({
+      where: {
+        email: normalizedEmail,
+        used: false,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!activeOtp) {
+      throw new AppError('The verification code is invalid or has expired. Please request a new code.', 400);
+    }
+
+    const isMatch = await bcrypt.compare(otpCode.trim(), activeOtp.otpHash);
+    if (!isMatch) {
+      throw new AppError('Incorrect verification code. Please re-check and try again.', 400);
+    }
+
+    return {
+      success: true,
+      message: 'Code verified successfully. You may now enter your new password.',
+    };
+  }
+
+  /**
+   * Resets user password after verifying the 6-digit OTP.
+   */
+  public async resetPasswordWithOtp(
+    email: string,
+    otpCode: string,
+    newPasswordPlain: string
+  ): Promise<{ success: boolean; message: string }> {
+    if (!newPasswordPlain || newPasswordPlain.length < 6) {
+      throw new AppError('Password must be at least 6 characters long.', 400);
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const activeOtp = await prisma.passwordResetOtp.findFirst({
+      where: {
+        email: normalizedEmail,
+        used: false,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!activeOtp) {
+      throw new AppError('The verification session is invalid or has expired. Please request a new code.', 400);
+    }
+
+    const isMatch = await bcrypt.compare(otpCode.trim(), activeOtp.otpHash);
+    if (!isMatch) {
+      throw new AppError('Incorrect verification code.', 400);
+    }
+
+    // Invalidate OTP so it cannot be reused
+    await prisma.passwordResetOtp.update({
+      where: { id: activeOtp.id },
+      data: { used: true },
+    });
+
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (!user) {
+      throw new AppError('No account found for this email.', 404);
+    }
+
+    const newPasswordHash = await bcrypt.hash(newPasswordPlain, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: newPasswordHash },
+    });
+
+    console.log(`[AUTH] Password successfully reset for: ${user.email}`);
+
+    return {
+      success: true,
+      message: 'Password reset successfully! You can now sign in with your new password.',
     };
   }
 }

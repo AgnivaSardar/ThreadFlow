@@ -116,7 +116,7 @@ export class AuthController {
 
   /**
    * POST /api/v1/auth/forgot-password
-   * Request password reset instructions
+   * Request password reset 6-digit OTP
    */
   public async forgotPassword(req: Request, res: Response): Promise<void> {
     const { email } = req.body;
@@ -124,7 +124,35 @@ export class AuthController {
       throw new AppError('Valid work email address is required', 400);
     }
 
-    const result = await authService.requestPasswordReset(email);
+    const result = await authService.requestPasswordResetOtp(email);
+    res.status(200).json(result);
+  }
+
+  /**
+   * POST /api/v1/auth/verify-otp
+   * Validates 6-digit OTP
+   */
+  public async verifyOtp(req: Request, res: Response): Promise<void> {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      throw new AppError('Email and 6-digit verification code are required', 400);
+    }
+
+    const result = await authService.verifyPasswordResetOtp(email, otp);
+    res.status(200).json(result);
+  }
+
+  /**
+   * POST /api/v1/auth/reset-password
+   * Sets new password using verified OTP
+   */
+  public async resetPassword(req: Request, res: Response): Promise<void> {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+      throw new AppError('Email, verification code, and new password are required', 400);
+    }
+
+    const result = await authService.resetPasswordWithOtp(email, otp, newPassword);
     res.status(200).json(result);
   }
 }

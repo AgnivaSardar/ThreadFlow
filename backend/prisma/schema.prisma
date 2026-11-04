@@ -454,3 +454,15 @@ model WeeklyBuyerReport {
   @@index([year, weekNumber])
   @@map("weekly_buyer_reports")
 }
+
+model PasswordResetOtp {
+  id        String   @id @default(cuid())
+  email     String
+  otpHash   String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, used])
+  @@map("password_reset_otps")
+}
