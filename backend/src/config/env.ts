@@ -24,4 +24,8 @@ export const config = {
     timeoutMs: parseInt(process.env.AI_TIMEOUT_MS || '3000', 10),
     confidenceThreshold: parseFloat(process.env.AI_CONFIDENCE_THRESHOLD || '0.65'),
   },
+  sendgrid: {
+    apiKey: process.env.SENDGRID_API_KEY || '',
+    fromEmail: process.env.SENDGRID_FROM_EMAIL || 'notifications@threadflow.app',
+  },
 };

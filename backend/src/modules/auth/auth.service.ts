@@ -5,6 +5,8 @@ import { prisma } from '../../config/db';
 import { config } from '../../config/env';
 import { AppError } from '../../common/errors/AppError';
 import { TokenPayload } from '../../common/middleware/auth';
+import { emailService } from '../../services/email.service';
+import { randomUUID } from 'crypto';
 
 export interface AuthTokens {
   accessToken: string;
@@ -216,6 +218,8 @@ export class AuthService {
 
     if (user) {
       console.log(`[AUTH] Password recovery requested for: ${user.email} (${user.role})`);
+      const resetToken = randomUUID();
+      await emailService.sendPasswordResetEmail(user.email, resetToken);
     }
 
     return {
