@@ -3,8 +3,8 @@
 
 ---
 
-**Repository URL:** `https://github.com/your-org/threadflow`  
-**Live Application URL:** `https://threadflow-demo.yourdomain.com`  
+**Repository URL:** `https://github.com/AgnivaSardar/ThreadFlow`  
+**Live Application URL:** `https://github.com/AgnivaSardar/ThreadFlow` (Self-Hosted on Supabase + Docker)  
 **Author / Engineering Lead:** Principal Solutions Architect & Lead Engineer  
 **Document Version:** 2.0.0 (Production Blueprint & Submission Release)  
 **Target Delivery Window:** 6 Weeks | **Budget Cap:** ₹7,00,000 INR  

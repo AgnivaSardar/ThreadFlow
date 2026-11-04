@@ -14,9 +14,18 @@ app.use(
       // Allow requests with no origin (mobile curl/native fetch/same-origin proxies)
       if (!origin) return callback(null, true);
 
-      // Allow localhost or local LAN IP addresses (for mobile phone access on same Wi-Fi)
+      // Allow configured app origin, onrender.com preview/production URLs, or local LAN IP addresses
+      let isRenderOrigin = false;
+      try {
+        const parsed = new URL(origin);
+        isRenderOrigin = parsed.hostname.endsWith('.onrender.com');
+      } catch {
+        // Ignore URL parsing errors for non-standard origins
+      }
+
       if (
         origin === config.appOrigin ||
+        isRenderOrigin ||
         /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(
           origin
         )

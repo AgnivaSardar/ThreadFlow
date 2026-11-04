@@ -8,7 +8,7 @@ import { AppError } from '../../common/errors/AppError';
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: config.isProduction,
-  sameSite: 'lax' as const,
+  sameSite: config.isProduction ? ('none' as const) : ('lax' as const),
   maxAge: config.jwt.refreshExpiryDays * 24 * 60 * 60 * 1000,
   path: '/',
 };
@@ -69,7 +69,7 @@ export class AuthController {
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: config.isProduction,
-      sameSite: 'lax',
+      sameSite: config.isProduction ? 'none' : 'lax',
       path: '/',
     });
 
