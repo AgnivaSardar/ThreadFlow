@@ -4,6 +4,17 @@ This guide provides instructions for deploying, running, and reviewing the **Thr
 
 ---
 
+## 0. Production Live Application & Repository Links
+
+* **Live Frontend Web Application:** https://threadflow-ptun.onrender.com
+* **Live Backend API Service:** https://threadflow-backend-z7s9.onrender.com
+* **GitHub Repository:** https://github.com/AgnivaSardar/ThreadFlow
+* **Managed Database:** Supabase PostgreSQL 16 (AWS Asia-Pacific `aws-0-ap-south-1` Pooler)
+* **Technical Design Document (PDF):** [`submission/Technical_Design_Document.pdf`](Technical_Design_Document.pdf)
+* **Technical Design Document (HTML):** [`submission/Technical_Design_Document.html`](Technical_Design_Document.html)
+
+---
+
 ## 1. Quick Start: Local Step-by-Step Setup
 
 ### Prerequisites
