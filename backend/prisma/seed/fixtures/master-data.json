@@ -71,6 +71,13 @@
   ],
   "users": [
     {
+      "email": "agniva.sardar@gmail.com",
+      "name": "Agniva Sardar",
+      "role": "ADMIN",
+      "languagePreference": "en",
+      "phone": "+91 98422 99990"
+    },
+    {
       "email": "admin@threadflow.com",
       "name": "System Administrator",
       "role": "ADMIN",
