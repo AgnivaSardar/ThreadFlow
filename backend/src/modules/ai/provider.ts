@@ -520,7 +520,7 @@ Return pure, valid JSON with no markdown wrapping or markdown code blocks:
  */
 export async function classifyWithGemini(
   rawText: string,
-  timeoutMs: number = config.ai.timeoutMs || 3000,
+  timeoutMs: number = config.ai.timeoutMs || 8000,
   context?: GarmentContext
 ): Promise<ClassificationResult> {
   const startTime = Date.now();

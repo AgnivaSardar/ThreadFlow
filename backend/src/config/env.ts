@@ -21,7 +21,7 @@ export const config = {
     provider: process.env.AI_PROVIDER || 'gemini',
     model: process.env.AI_MODEL || 'gemini-3.1-flash-lite',
     apiKey: process.env.AI_API_KEY || '',
-    timeoutMs: parseInt(process.env.AI_TIMEOUT_MS || '3000', 10),
+    timeoutMs: parseInt(process.env.AI_TIMEOUT_MS || '8000', 10),
     confidenceThreshold: parseFloat(process.env.AI_CONFIDENCE_THRESHOLD || '0.65'),
   },
   sendgrid: {

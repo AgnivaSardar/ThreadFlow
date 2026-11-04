@@ -437,7 +437,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           method: 'POST',
           body: JSON.stringify({
             rawText: trimmed,
-            timeoutMs: 3000,
+            timeoutMs: 8000,
             orderId: order.orderId,
             context: {
               orderId: order.orderId,

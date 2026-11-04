@@ -508,7 +508,7 @@ export class ProductionService {
         // Run resilient AI classifier with deterministic fallback
         const aiResult = input.notes
           ? await AIService.classifyIssueNote(input.notes, {
-              timeoutMs: 2500,
+              timeoutMs: 8000,
               orderId: order.id,
               context: {
                 orderId: order.id,
