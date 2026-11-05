@@ -165,7 +165,8 @@ export class OrdersSeedRunner {
       // 3. Upsert Milestones
       const milestonesByStage = new Map<Stage, any>();
       for (const ms of fixture.milestones) {
-        const msUnit = master.unitsByCode.get(ms.unitCode) || unit;
+        // One product is handled by one unit — all milestones belong to the order's unit
+        const msUnit = unit;
         const plannedStart = new Date(anchorDate);
         plannedStart.setDate(plannedStart.getDate() + ms.plannedStartOffsetDays);
 
@@ -207,7 +208,7 @@ export class OrdersSeedRunner {
       const createdUpdates: any[] = [];
       for (let logIdx = 0; logIdx < fixture.dailyLogs.length; logIdx++) {
         const log = fixture.dailyLogs[logIdx];
-        const logUnit = master.unitsByCode.get(log.unitCode) || unit;
+        const logUnit = unit;
         const logUser = master.usersByEmail.get(log.userEmail) || master.usersByEmail.get('merchandiser@company-a.com')!;
         const logMilestone = milestonesByStage.get(log.stage) || milestonesByStage.values().next().value;
         const logDate = new Date(anchorDate);

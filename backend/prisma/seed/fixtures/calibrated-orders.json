@@ -62,7 +62,7 @@
         "bufferDaysAhead": 11,
         "targetQuantity": 8000,
         "completedQuantity": 8000,
-        "unitCode": "PRINTTEX"
+        "unitCode": "UNIT_1"
       },
       {
         "stage": "CUTTING",
@@ -117,7 +117,7 @@
         "shift": "DAY",
         "machineLine": "Unit 1 Steam Line A",
         "operatorNotes": "Steam iron line 1 operated with reduced pressure during morning hours.",
-        "rawTamilText": "நீராவி அயர்ன் லைன் 1 அழுத்தம் குறைவாக இயங்கியது.",
+        "rawTamilText": "\u0ba8\u0bc0\u0bb0\u0bbe\u0bb5\u0bbf \u0b85\u0baf\u0bb0\u0bcd\u0ba9\u0bcd \u0bb2\u0bc8\u0ba9\u0bcd 1 \u0b85\u0bb4\u0bc1\u0ba4\u0bcd\u0ba4\u0bae\u0bcd \u0b95\u0bc1\u0bb1\u0bc8\u0bb5\u0bbe\u0b95 \u0b87\u0baf\u0b99\u0bcd\u0b95\u0bbf\u0baf\u0ba4\u0bc1.",
         "translatedText": "Steam iron line 1 operated with reduced pressure during morning hours.",
         "issueCategory": "MACHINE_BREAKDOWN",
         "audioFileUrl": "https://assets.threadflow.app/audio/tamil-voice-shift-log-line1.mp3",
@@ -134,7 +134,7 @@
         "shift": "DAY",
         "machineLine": "Unit 1 Steam Line B",
         "operatorNotes": "Collar folding station bottleneck; extra ironer requested to boost throughput.",
-        "rawTamilText": "காலர் மடிப்பு பகுதியில் தேக்கம் ஏற்பட்டது; கூடுதல் ஆட்கள் தேவை.",
+        "rawTamilText": "\u0b95\u0bbe\u0bb2\u0bb0\u0bcd \u0bae\u0b9f\u0bbf\u0baa\u0bcd\u0baa\u0bc1 \u0baa\u0b95\u0bc1\u0ba4\u0bbf\u0baf\u0bbf\u0bb2\u0bcd \u0ba4\u0bc7\u0b95\u0bcd\u0b95\u0bae\u0bcd \u0b8f\u0bb1\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0ba4\u0bc1; \u0b95\u0bc2\u0b9f\u0bc1\u0ba4\u0bb2\u0bcd \u0b86\u0b9f\u0bcd\u0b95\u0bb3\u0bcd \u0ba4\u0bc7\u0bb5\u0bc8.",
         "translatedText": "Collar folding station bottleneck; extra ironer requested to boost throughput.",
         "issueCategory": "LABOUR_SHORTAGE",
         "voiceDurationSeconds": 19
@@ -150,7 +150,7 @@
         "shift": "NIGHT",
         "machineLine": "Unit 1 Finishing Line 2",
         "operatorNotes": "Power tripped at 02:15 AM. Genset transitioned after 20 minutes interruption.",
-        "rawTamilText": "இரவு 2:15 மணிக்கு மின்வெட்டு; 20 நிமிடங்களில் ஜெனரேட்டர் இயக்கப்பட்டது.",
+        "rawTamilText": "\u0b87\u0bb0\u0bb5\u0bc1 2:15 \u0bae\u0ba3\u0bbf\u0b95\u0bcd\u0b95\u0bc1 \u0bae\u0bbf\u0ba9\u0bcd\u0bb5\u0bc6\u0b9f\u0bcd\u0b9f\u0bc1; 20 \u0ba8\u0bbf\u0bae\u0bbf\u0b9f\u0b99\u0bcd\u0b95\u0bb3\u0bbf\u0bb2\u0bcd \u0b9c\u0bc6\u0ba9\u0bb0\u0bc7\u0b9f\u0bcd\u0b9f\u0bb0\u0bcd \u0b87\u0baf\u0b95\u0bcd\u0b95\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0ba4\u0bc1.",
         "translatedText": "Power tripped at 02:15 AM. Genset transitioned after 20 minutes interruption.",
         "issueCategory": "POWER_OUTAGE",
         "voiceDurationSeconds": 31
@@ -166,7 +166,7 @@
         "shift": "DAY",
         "machineLine": "Unit 1 Packing Hub",
         "operatorNotes": "3-day rolling average running at 200 pcs/day vs 311 pcs/day required.",
-        "rawTamilText": "3 நாள் உற்பத்தி சராசரி 200 பீஸ்கள் மட்டுமே; தேவை 311 பீஸ்கள்.",
+        "rawTamilText": "3 \u0ba8\u0bbe\u0bb3\u0bcd \u0b89\u0bb1\u0bcd\u0baa\u0ba4\u0bcd\u0ba4\u0bbf \u0b9a\u0bb0\u0bbe\u0b9a\u0bb0\u0bbf 200 \u0baa\u0bc0\u0bb8\u0bcd\u0b95\u0bb3\u0bcd \u0bae\u0b9f\u0bcd\u0b9f\u0bc1\u0bae\u0bc7; \u0ba4\u0bc7\u0bb5\u0bc8 311 \u0baa\u0bc0\u0bb8\u0bcd\u0b95\u0bb3\u0bcd.",
         "translatedText": "3-day rolling average running at 200 pcs/day vs 311 pcs/day required.",
         "issueCategory": "OTHER",
         "voiceDurationSeconds": 15
@@ -182,7 +182,7 @@
         "shift": "DAY",
         "machineLine": "Unit 1 Packing Hub",
         "operatorNotes": "XL size collars showing slight rib tension wave; adjusted folding jig.",
-        "rawTamilText": "XL சைஸ் காலர் ரிப் பகுதியில் லேசான அலைவு; ஜிக் சரி செய்யப்பட்டது.",
+        "rawTamilText": "XL \u0b9a\u0bc8\u0bb8\u0bcd \u0b95\u0bbe\u0bb2\u0bb0\u0bcd \u0bb0\u0bbf\u0baa\u0bcd \u0baa\u0b95\u0bc1\u0ba4\u0bbf\u0baf\u0bbf\u0bb2\u0bcd \u0bb2\u0bc7\u0b9a\u0bbe\u0ba9 \u0b85\u0bb2\u0bc8\u0bb5\u0bc1; \u0b9c\u0bbf\u0b95\u0bcd \u0b9a\u0bb0\u0bbf \u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0ba4\u0bc1.",
         "translatedText": "XL size collars showing slight rib tension wave; adjusted folding jig.",
         "issueCategory": "QUALITY_HOLD",
         "voiceDurationSeconds": 22
@@ -296,7 +296,7 @@
         "action": "AUTHORIZE_OVERTIME",
         "category": "OVERTIME_AUTHORIZATION",
         "reasonCode": "LABOUR_SHORTAGE",
-        "notes": "Authorized overtime for 14 operators; financial impact estimated at ₹35,000.",
+        "notes": "Authorized overtime for 14 operators; financial impact estimated at \u20b935,000.",
         "financialImpactRupees": 35000,
         "userEmail": "merchandiser@company-a.com",
         "role": "MERCHANDISER",
@@ -371,7 +371,7 @@
         "bufferDaysAhead": 18,
         "targetQuantity": 10000,
         "completedQuantity": 10000,
-        "unitCode": "UNIT_1"
+        "unitCode": "PRINTTEX"
       },
       {
         "stage": "DYEING_WASHING",
@@ -381,7 +381,7 @@
         "bufferDaysAhead": 14,
         "targetQuantity": 10000,
         "completedQuantity": 10000,
-        "unitCode": "UNIT_1"
+        "unitCode": "PRINTTEX"
       },
       {
         "stage": "PRINTING",
@@ -401,7 +401,7 @@
         "bufferDaysAhead": 8,
         "targetQuantity": 10000,
         "completedQuantity": 0,
-        "unitCode": "UNIT_1"
+        "unitCode": "PRINTTEX"
       },
       {
         "stage": "STITCHING",
@@ -411,7 +411,7 @@
         "bufferDaysAhead": 5,
         "targetQuantity": 10000,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "PRINTTEX"
       },
       {
         "stage": "CHECKING",
@@ -421,7 +421,7 @@
         "bufferDaysAhead": 2,
         "targetQuantity": 10000,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "PRINTTEX"
       },
       {
         "stage": "FINISHING",
@@ -431,7 +431,7 @@
         "bufferDaysAhead": 0,
         "targetQuantity": 10000,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "PRINTTEX"
       }
     ],
     "dailyLogs": [
@@ -446,7 +446,7 @@
         "shift": "DAY",
         "machineLine": "PrintTex Screen Bed 4",
         "operatorNotes": "Chest motif screen alignment offset by 3mm; recalibrating mesh clamp.",
-        "rawTamilText": "ஸ்கிரீன் அச்சு 3 மிமீ விலகி விழுந்தது; மெஷ் சரிசெய்யப்படுகிறது.",
+        "rawTamilText": "\u0bb8\u0bcd\u0b95\u0bbf\u0bb0\u0bc0\u0ba9\u0bcd \u0b85\u0b9a\u0bcd\u0b9a\u0bc1 3 \u0bae\u0bbf\u0bae\u0bc0 \u0bb5\u0bbf\u0bb2\u0b95\u0bbf \u0bb5\u0bbf\u0bb4\u0bc1\u0ba8\u0bcd\u0ba4\u0ba4\u0bc1; \u0bae\u0bc6\u0bb7\u0bcd \u0b9a\u0bb0\u0bbf\u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0baa\u0bcd\u0baa\u0b9f\u0bc1\u0b95\u0bbf\u0bb1\u0ba4\u0bc1.",
         "translatedText": "Chest motif screen alignment offset by 3mm; recalibrating mesh clamp.",
         "issueCategory": "SUBCONTRACTOR_DELAY",
         "voiceDurationSeconds": 28
@@ -462,7 +462,7 @@
         "shift": "DAY",
         "machineLine": "PrintTex Screen Bed 4",
         "operatorNotes": "First pass 1,200 pcs cleared strike-off inspection by merchandiser.",
-        "rawTamilText": "முதல் 1,200 பீஸ்கள் மார்ச்சண்டைஸர் ஒப்புதல் பெற்றுள்ளது.",
+        "rawTamilText": "\u0bae\u0bc1\u0ba4\u0bb2\u0bcd 1,200 \u0baa\u0bc0\u0bb8\u0bcd\u0b95\u0bb3\u0bcd \u0bae\u0bbe\u0bb0\u0bcd\u0b9a\u0bcd\u0b9a\u0ba3\u0bcd\u0b9f\u0bc8\u0bb8\u0bb0\u0bcd \u0b92\u0baa\u0bcd\u0baa\u0bc1\u0ba4\u0bb2\u0bcd \u0baa\u0bc6\u0bb1\u0bcd\u0bb1\u0bc1\u0bb3\u0bcd\u0bb3\u0ba4\u0bc1.",
         "translatedText": "First pass 1,200 pcs cleared strike-off inspection by merchandiser.",
         "issueCategory": "OTHER",
         "voiceDurationSeconds": 16
@@ -478,7 +478,7 @@
         "shift": "DAY",
         "machineLine": "PrintTex Screen Bed 2",
         "operatorNotes": "Pigment curing tunnel heating element replaced; delay resolved.",
-        "rawTamilText": "ஹீட்டிங் கியூரிங் மெஷின் சரி செய்யப்பட்டு உற்பத்தி தொடர்கிறது.",
+        "rawTamilText": "\u0bb9\u0bc0\u0b9f\u0bcd\u0b9f\u0bbf\u0b99\u0bcd \u0b95\u0bbf\u0baf\u0bc2\u0bb0\u0bbf\u0b99\u0bcd \u0bae\u0bc6\u0bb7\u0bbf\u0ba9\u0bcd \u0b9a\u0bb0\u0bbf \u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0bc1 \u0b89\u0bb1\u0bcd\u0baa\u0ba4\u0bcd\u0ba4\u0bbf \u0ba4\u0bca\u0b9f\u0bb0\u0bcd\u0b95\u0bbf\u0bb1\u0ba4\u0bc1.",
         "translatedText": "Pigment curing tunnel heating element replaced; delay resolved.",
         "issueCategory": "MACHINE_BREAKDOWN",
         "voiceDurationSeconds": 20
@@ -566,7 +566,7 @@
         "action": "CONFIRM_RISK_WARNING",
         "category": "RISK_STATUS_CHANGE",
         "reasonCode": "SUBCONTRACTOR_DELAY",
-        "notes": "PrintTex delay flagged RED. Projected financial exposure ₹2,80,000.",
+        "notes": "PrintTex delay flagged RED. Projected financial exposure \u20b92,80,000.",
         "financialImpactRupees": 280000,
         "userEmail": "merchandiser@company-a.com",
         "role": "MERCHANDISER",
@@ -660,7 +660,7 @@
         "bufferDaysAhead": 4,
         "targetQuantity": 6500,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "UNIT_1"
       },
       {
         "stage": "CHECKING",
@@ -670,7 +670,7 @@
         "bufferDaysAhead": 2,
         "targetQuantity": 6500,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "UNIT_1"
       },
       {
         "stage": "FINISHING",
@@ -680,7 +680,7 @@
         "bufferDaysAhead": 0,
         "targetQuantity": 6500,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "UNIT_1"
       }
     ],
     "dailyLogs": [
@@ -695,7 +695,7 @@
         "shift": "DAY",
         "machineLine": "Unit 1 Auto Cutter 1",
         "operatorNotes": "Navy shade delta E measured 1.1; within acceptable buyer tolerance.",
-        "rawTamilText": "நேவி நிற வேறுபாடு சோதனை செய்யப்பட்டது; அனுமதிக்கப்பட்ட வரம்பிற்குள் உள்ளது.",
+        "rawTamilText": "\u0ba8\u0bc7\u0bb5\u0bbf \u0ba8\u0bbf\u0bb1 \u0bb5\u0bc7\u0bb1\u0bc1\u0baa\u0bbe\u0b9f\u0bc1 \u0b9a\u0bcb\u0ba4\u0ba9\u0bc8 \u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0ba4\u0bc1; \u0b85\u0ba9\u0bc1\u0bae\u0ba4\u0bbf\u0b95\u0bcd\u0b95\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f \u0bb5\u0bb0\u0bae\u0bcd\u0baa\u0bbf\u0bb1\u0bcd\u0b95\u0bc1\u0bb3\u0bcd \u0b89\u0bb3\u0bcd\u0bb3\u0ba4\u0bc1.",
         "translatedText": "Navy shade delta E measured 1.1; within acceptable buyer tolerance.",
         "issueCategory": "FABRIC_DEFECT",
         "voiceDurationSeconds": 18
@@ -711,7 +711,7 @@
         "shift": "DAY",
         "machineLine": "Unit 1 Auto Cutter 1",
         "operatorNotes": "Rib collar matching lot 2 cut; balance 3,700 pcs waiting fabric lot 3.",
-        "rawTamilText": "ரிப் மற்றும் காலர் வெட்டும் பணி முடிந்தது.",
+        "rawTamilText": "\u0bb0\u0bbf\u0baa\u0bcd \u0bae\u0bb1\u0bcd\u0bb1\u0bc1\u0bae\u0bcd \u0b95\u0bbe\u0bb2\u0bb0\u0bcd \u0bb5\u0bc6\u0b9f\u0bcd\u0b9f\u0bc1\u0bae\u0bcd \u0baa\u0ba3\u0bbf \u0bae\u0bc1\u0b9f\u0bbf\u0ba8\u0bcd\u0ba4\u0ba4\u0bc1.",
         "translatedText": "Rib collar matching lot 2 cut; balance 3,700 pcs waiting fabric lot 3.",
         "issueCategory": "OTHER",
         "voiceDurationSeconds": 14
@@ -826,7 +826,7 @@
         "bufferDaysAhead": 15,
         "targetQuantity": 6000,
         "completedQuantity": 6000,
-        "unitCode": "UNIT_1"
+        "unitCode": "WASHTEX"
       },
       {
         "stage": "DYEING_WASHING",
@@ -846,7 +846,7 @@
         "bufferDaysAhead": 6,
         "targetQuantity": 6000,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "WASHTEX"
       },
       {
         "stage": "STITCHING",
@@ -856,7 +856,7 @@
         "bufferDaysAhead": 4,
         "targetQuantity": 6000,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "WASHTEX"
       },
       {
         "stage": "CHECKING",
@@ -866,7 +866,7 @@
         "bufferDaysAhead": 2,
         "targetQuantity": 6000,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "WASHTEX"
       },
       {
         "stage": "FINISHING",
@@ -876,7 +876,7 @@
         "bufferDaysAhead": 0,
         "targetQuantity": 6000,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "WASHTEX"
       }
     ],
     "dailyLogs": [
@@ -891,7 +891,7 @@
         "shift": "DAY",
         "machineLine": "WashTex Bio Pit 2",
         "operatorNotes": "Enzyme bio-wash pass 1 completed; hand-feel approved by QA.",
-        "rawTamilText": "பயோ வாஷ் முதல் பகுதி நிறைவடைந்தது; கைத்தன்மை ஒப்புதல் பெறப்பட்டது.",
+        "rawTamilText": "\u0baa\u0baf\u0bcb \u0bb5\u0bbe\u0bb7\u0bcd \u0bae\u0bc1\u0ba4\u0bb2\u0bcd \u0baa\u0b95\u0bc1\u0ba4\u0bbf \u0ba8\u0bbf\u0bb1\u0bc8\u0bb5\u0b9f\u0bc8\u0ba8\u0bcd\u0ba4\u0ba4\u0bc1; \u0b95\u0bc8\u0ba4\u0bcd\u0ba4\u0ba9\u0bcd\u0bae\u0bc8 \u0b92\u0baa\u0bcd\u0baa\u0bc1\u0ba4\u0bb2\u0bcd \u0baa\u0bc6\u0bb1\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0ba4\u0bc1.",
         "translatedText": "Enzyme bio-wash pass 1 completed; hand-feel approved by QA.",
         "issueCategory": "OTHER",
         "voiceDurationSeconds": 21
@@ -907,7 +907,7 @@
         "shift": "DAY",
         "machineLine": "WashTex Bio Pit 2",
         "operatorNotes": "Hydro-extractor tumble drying lot 2; remaining 2,800 pcs in wash cycle.",
-        "rawTamilText": "ஹைட்ரோ மற்றும் டம்பிள் ட்ரையிங் தொடர்ந்து நடைபெறுகிறது.",
+        "rawTamilText": "\u0bb9\u0bc8\u0b9f\u0bcd\u0bb0\u0bcb \u0bae\u0bb1\u0bcd\u0bb1\u0bc1\u0bae\u0bcd \u0b9f\u0bae\u0bcd\u0baa\u0bbf\u0bb3\u0bcd \u0b9f\u0bcd\u0bb0\u0bc8\u0baf\u0bbf\u0b99\u0bcd \u0ba4\u0bca\u0b9f\u0bb0\u0bcd\u0ba8\u0bcd\u0ba4\u0bc1 \u0ba8\u0b9f\u0bc8\u0baa\u0bc6\u0bb1\u0bc1\u0b95\u0bbf\u0bb1\u0ba4\u0bc1.",
         "translatedText": "Hydro-extractor tumble drying lot 2; remaining 2,800 pcs in wash cycle.",
         "issueCategory": "SUBCONTRACTOR_DELAY",
         "voiceDurationSeconds": 19
@@ -1057,7 +1057,7 @@
         "bufferDaysAhead": 4,
         "targetQuantity": 12000,
         "completedQuantity": 8400,
-        "unitCode": "UNIT_2"
+        "unitCode": "UNIT_1"
       },
       {
         "stage": "CHECKING",
@@ -1067,7 +1067,7 @@
         "bufferDaysAhead": 2,
         "targetQuantity": 12000,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "UNIT_1"
       },
       {
         "stage": "FINISHING",
@@ -1077,7 +1077,7 @@
         "bufferDaysAhead": 0,
         "targetQuantity": 12000,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "UNIT_1"
       }
     ],
     "dailyLogs": [
@@ -1087,12 +1087,12 @@
         "reworkQty": 15,
         "rejectedQty": 4,
         "stage": "STITCHING",
-        "unitCode": "UNIT_2",
+        "unitCode": "UNIT_1",
         "userEmail": "supervisor.selvam@company-a.com",
         "shift": "DAY",
         "machineLine": "Unit 2 Line 1 & Line 2",
         "operatorNotes": "Stitching throughput optimal; pacing ahead of planned schedule.",
-        "rawTamilText": "தையல் உற்பத்தி சீராக நடைபெறுகிறது; திட்டமிட்டதை விட அதிகம்.",
+        "rawTamilText": "\u0ba4\u0bc8\u0baf\u0bb2\u0bcd \u0b89\u0bb1\u0bcd\u0baa\u0ba4\u0bcd\u0ba4\u0bbf \u0b9a\u0bc0\u0bb0\u0bbe\u0b95 \u0ba8\u0b9f\u0bc8\u0baa\u0bc6\u0bb1\u0bc1\u0b95\u0bbf\u0bb1\u0ba4\u0bc1; \u0ba4\u0bbf\u0b9f\u0bcd\u0b9f\u0bae\u0bbf\u0b9f\u0bcd\u0b9f\u0ba4\u0bc8 \u0bb5\u0bbf\u0b9f \u0b85\u0ba4\u0bbf\u0b95\u0bae\u0bcd.",
         "translatedText": "Stitching throughput optimal; pacing ahead of planned schedule.",
         "issueCategory": "OTHER",
         "voiceDurationSeconds": 15
@@ -1103,12 +1103,12 @@
         "reworkQty": 12,
         "rejectedQty": 3,
         "stage": "STITCHING",
-        "unitCode": "UNIT_2",
+        "unitCode": "UNIT_1",
         "userEmail": "supervisor.selvam@company-a.com",
         "shift": "DAY",
         "machineLine": "Unit 2 Line 1 & Line 2",
         "operatorNotes": "Collar rib overlock assembly passed in-line QA check with 0 defects.",
-        "rawTamilText": "காலர் ஓவர்லாக் அசெம்பிளி தர சோதனையில் வெற்றி பெற்றுள்ளது.",
+        "rawTamilText": "\u0b95\u0bbe\u0bb2\u0bb0\u0bcd \u0b93\u0bb5\u0bb0\u0bcd\u0bb2\u0bbe\u0b95\u0bcd \u0b85\u0b9a\u0bc6\u0bae\u0bcd\u0baa\u0bbf\u0bb3\u0bbf \u0ba4\u0bb0 \u0b9a\u0bcb\u0ba4\u0ba9\u0bc8\u0baf\u0bbf\u0bb2\u0bcd \u0bb5\u0bc6\u0bb1\u0bcd\u0bb1\u0bbf \u0baa\u0bc6\u0bb1\u0bcd\u0bb1\u0bc1\u0bb3\u0bcd\u0bb3\u0ba4\u0bc1.",
         "translatedText": "Collar rib overlock assembly passed in-line QA check with 0 defects.",
         "issueCategory": "OTHER",
         "voiceDurationSeconds": 17
@@ -1201,7 +1201,7 @@
         "bufferDaysAhead": 18,
         "targetQuantity": 7500,
         "completedQuantity": 7500,
-        "unitCode": "UNIT_1"
+        "unitCode": "UNIT_2"
       },
       {
         "stage": "DYEING_WASHING",
@@ -1211,7 +1211,7 @@
         "bufferDaysAhead": 14,
         "targetQuantity": 7500,
         "completedQuantity": 7500,
-        "unitCode": "UNIT_1"
+        "unitCode": "UNIT_2"
       },
       {
         "stage": "CUTTING",
@@ -1266,7 +1266,7 @@
         "shift": "DAY",
         "machineLine": "Unit 2 Checking Table 3",
         "operatorNotes": "Final pre-pack quality checking pass; stripe matching verified on side seams.",
-        "rawTamilText": "கோடுகள் பொருத்தம் மற்றும் இறுதி தரம் சரிபார்க்கப்பட்டது.",
+        "rawTamilText": "\u0b95\u0bcb\u0b9f\u0bc1\u0b95\u0bb3\u0bcd \u0baa\u0bca\u0bb0\u0bc1\u0ba4\u0bcd\u0ba4\u0bae\u0bcd \u0bae\u0bb1\u0bcd\u0bb1\u0bc1\u0bae\u0bcd \u0b87\u0bb1\u0bc1\u0ba4\u0bbf \u0ba4\u0bb0\u0bae\u0bcd \u0b9a\u0bb0\u0bbf\u0baa\u0bbe\u0bb0\u0bcd\u0b95\u0bcd\u0b95\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0ba4\u0bc1.",
         "translatedText": "Final pre-pack quality checking pass; stripe matching verified on side seams.",
         "issueCategory": "OTHER",
         "voiceDurationSeconds": 16
@@ -1282,7 +1282,7 @@
         "shift": "DAY",
         "machineLine": "Unit 2 Checking Table 3",
         "operatorNotes": "Metal detector calibration completed; zero needle fragments detected.",
-        "rawTamilText": "மெட்டல் டிடெக்டர் சோதனை முடிந்தது; எந்த ஊசி துண்டும் இல்லை.",
+        "rawTamilText": "\u0bae\u0bc6\u0b9f\u0bcd\u0b9f\u0bb2\u0bcd \u0b9f\u0bbf\u0b9f\u0bc6\u0b95\u0bcd\u0b9f\u0bb0\u0bcd \u0b9a\u0bcb\u0ba4\u0ba9\u0bc8 \u0bae\u0bc1\u0b9f\u0bbf\u0ba8\u0bcd\u0ba4\u0ba4\u0bc1; \u0b8e\u0ba8\u0bcd\u0ba4 \u0b8a\u0b9a\u0bbf \u0ba4\u0bc1\u0ba3\u0bcd\u0b9f\u0bc1\u0bae\u0bcd \u0b87\u0bb2\u0bcd\u0bb2\u0bc8.",
         "translatedText": "Metal detector calibration completed; zero needle fragments detected.",
         "issueCategory": "OTHER",
         "voiceDurationSeconds": 14
@@ -1380,7 +1380,7 @@
         "bufferDaysAhead": 20,
         "targetQuantity": 15000,
         "completedQuantity": 15000,
-        "unitCode": "UNIT_1"
+        "unitCode": "UNIT_2"
       },
       {
         "stage": "DYEING_WASHING",
@@ -1390,7 +1390,7 @@
         "bufferDaysAhead": 15,
         "targetQuantity": 15000,
         "completedQuantity": 15000,
-        "unitCode": "UNIT_1"
+        "unitCode": "UNIT_2"
       },
       {
         "stage": "CUTTING",
@@ -1445,7 +1445,7 @@
         "shift": "DAY",
         "machineLine": "Unit 2 Line 4 & Line 5",
         "operatorNotes": "V-neck mitred corner jig achieving sharp symmetrical points.",
-        "rawTamilText": "வி-நெக் கார்னர் சரியான கோணத்தில் தைக்கப்படுகிறது.",
+        "rawTamilText": "\u0bb5\u0bbf-\u0ba8\u0bc6\u0b95\u0bcd \u0b95\u0bbe\u0bb0\u0bcd\u0ba9\u0bb0\u0bcd \u0b9a\u0bb0\u0bbf\u0baf\u0bbe\u0ba9 \u0b95\u0bcb\u0ba3\u0ba4\u0bcd\u0ba4\u0bbf\u0bb2\u0bcd \u0ba4\u0bc8\u0b95\u0bcd\u0b95\u0baa\u0bcd\u0baa\u0b9f\u0bc1\u0b95\u0bbf\u0bb1\u0ba4\u0bc1.",
         "translatedText": "V-neck mitred corner jig achieving sharp symmetrical points.",
         "issueCategory": "OTHER",
         "voiceDurationSeconds": 15
@@ -1549,7 +1549,7 @@
         "bufferDaysAhead": 10,
         "targetQuantity": 8500,
         "completedQuantity": 4200,
-        "unitCode": "WASHTEX"
+        "unitCode": "UNIT_1"
       },
       {
         "stage": "CUTTING",
@@ -1569,7 +1569,7 @@
         "bufferDaysAhead": 4,
         "targetQuantity": 8500,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "UNIT_1"
       },
       {
         "stage": "CHECKING",
@@ -1579,7 +1579,7 @@
         "bufferDaysAhead": 2,
         "targetQuantity": 8500,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "UNIT_1"
       },
       {
         "stage": "FINISHING",
@@ -1589,7 +1589,7 @@
         "bufferDaysAhead": 0,
         "targetQuantity": 8500,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "UNIT_1"
       }
     ],
     "dailyLogs": [
@@ -1599,12 +1599,12 @@
         "reworkQty": 25,
         "rejectedQty": 8,
         "stage": "DYEING_WASHING",
-        "unitCode": "WASHTEX",
+        "unitCode": "UNIT_1",
         "userEmail": "supervisor.selvam@company-a.com",
         "shift": "DAY",
         "machineLine": "WashTex Acid Wash Drum 1",
         "operatorNotes": "Potassium permanganate spray neutralization verified; pH 6.5 neutral.",
-        "rawTamilText": "ஆசிட் வாஷ் நடுநிலையாக்கல் முடிந்தது; பி.ஹெச் 6.5 சரியானது.",
+        "rawTamilText": "\u0b86\u0b9a\u0bbf\u0b9f\u0bcd \u0bb5\u0bbe\u0bb7\u0bcd \u0ba8\u0b9f\u0bc1\u0ba8\u0bbf\u0bb2\u0bc8\u0baf\u0bbe\u0b95\u0bcd\u0b95\u0bb2\u0bcd \u0bae\u0bc1\u0b9f\u0bbf\u0ba8\u0bcd\u0ba4\u0ba4\u0bc1; \u0baa\u0bbf.\u0bb9\u0bc6\u0b9a\u0bcd 6.5 \u0b9a\u0bb0\u0bbf\u0baf\u0bbe\u0ba9\u0ba4\u0bc1.",
         "translatedText": "Potassium permanganate spray neutralization verified; pH 6.5 neutral.",
         "issueCategory": "OTHER",
         "voiceDurationSeconds": 23
@@ -1739,7 +1739,7 @@
         "bufferDaysAhead": 5,
         "targetQuantity": 9000,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "UNIT_1"
       },
       {
         "stage": "CHECKING",
@@ -1749,7 +1749,7 @@
         "bufferDaysAhead": 2,
         "targetQuantity": 9000,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "UNIT_1"
       },
       {
         "stage": "FINISHING",
@@ -1759,7 +1759,7 @@
         "bufferDaysAhead": 0,
         "targetQuantity": 9000,
         "completedQuantity": 0,
-        "unitCode": "UNIT_2"
+        "unitCode": "UNIT_1"
       }
     ],
     "dailyLogs": [
@@ -1774,7 +1774,7 @@
         "shift": "DAY",
         "machineLine": "Unit 1 Circular Knit Bank 2",
         "operatorNotes": "Thermal waffle structure running smooth on Mayer & Cie machines.",
-        "rawTamilText": "தெர்மல் வாஃபிள் பின்னல் இயந்திரத்தில் சீராக இயங்குகிறது.",
+        "rawTamilText": "\u0ba4\u0bc6\u0bb0\u0bcd\u0bae\u0bb2\u0bcd \u0bb5\u0bbe\u0b83\u0baa\u0bbf\u0bb3\u0bcd \u0baa\u0bbf\u0ba9\u0bcd\u0ba9\u0bb2\u0bcd \u0b87\u0baf\u0ba8\u0bcd\u0ba4\u0bbf\u0bb0\u0ba4\u0bcd\u0ba4\u0bbf\u0bb2\u0bcd \u0b9a\u0bc0\u0bb0\u0bbe\u0b95 \u0b87\u0baf\u0b99\u0bcd\u0b95\u0bc1\u0b95\u0bbf\u0bb1\u0ba4\u0bc1.",
         "translatedText": "Thermal waffle structure running smooth on Mayer & Cie machines.",
         "issueCategory": "OTHER",
         "voiceDurationSeconds": 14
@@ -1865,7 +1865,7 @@
         "bufferDaysAhead": 18,
         "targetQuantity": 5000,
         "completedQuantity": 5000,
-        "unitCode": "UNIT_1"
+        "unitCode": "UNIT_2"
       },
       {
         "stage": "DYEING_WASHING",
@@ -1875,7 +1875,7 @@
         "bufferDaysAhead": 14,
         "targetQuantity": 5000,
         "completedQuantity": 5000,
-        "unitCode": "UNIT_1"
+        "unitCode": "UNIT_2"
       },
       {
         "stage": "CUTTING",
@@ -1930,7 +1930,7 @@
         "shift": "DAY",
         "machineLine": "Unit 2 Packing Line 1",
         "operatorNotes": "Final hang-tagging and barcode polybagging for UK distribution.",
-        "rawTamilText": "பார்கோடு மற்றும் ஹேங்டேக் பொருத்தும் பணி நடைபெறுகிறது.",
+        "rawTamilText": "\u0baa\u0bbe\u0bb0\u0bcd\u0b95\u0bcb\u0b9f\u0bc1 \u0bae\u0bb1\u0bcd\u0bb1\u0bc1\u0bae\u0bcd \u0bb9\u0bc7\u0b99\u0bcd\u0b9f\u0bc7\u0b95\u0bcd \u0baa\u0bca\u0bb0\u0bc1\u0ba4\u0bcd\u0ba4\u0bc1\u0bae\u0bcd \u0baa\u0ba3\u0bbf \u0ba8\u0b9f\u0bc8\u0baa\u0bc6\u0bb1\u0bc1\u0b95\u0bbf\u0bb1\u0ba4\u0bc1.",
         "translatedText": "Final hang-tagging and barcode polybagging for UK distribution.",
         "issueCategory": "OTHER",
         "voiceDurationSeconds": 12
@@ -2021,7 +2021,7 @@
         "bufferDaysAhead": 22,
         "targetQuantity": 11000,
         "completedQuantity": 11000,
-        "unitCode": "UNIT_1"
+        "unitCode": "UNIT_2"
       },
       {
         "stage": "DYEING_WASHING",
@@ -2031,7 +2031,7 @@
         "bufferDaysAhead": 16,
         "targetQuantity": 11000,
         "completedQuantity": 11000,
-        "unitCode": "UNIT_1"
+        "unitCode": "UNIT_2"
       },
       {
         "stage": "CUTTING",
@@ -2086,7 +2086,7 @@
         "shift": "DAY",
         "machineLine": "Unit 2 Gerber Auto Spreader",
         "operatorNotes": "CAD cutting accuracy verified on 24-ply lay. Oeko-Tex cert checked.",
-        "rawTamilText": "சிஏடி தானியங்கி வெட்டும் இயந்திரத்தில் துல்லியம் சரிபார்க்கப்பட்டது.",
+        "rawTamilText": "\u0b9a\u0bbf\u0b8f\u0b9f\u0bbf \u0ba4\u0bbe\u0ba9\u0bbf\u0baf\u0b99\u0bcd\u0b95\u0bbf \u0bb5\u0bc6\u0b9f\u0bcd\u0b9f\u0bc1\u0bae\u0bcd \u0b87\u0baf\u0ba8\u0bcd\u0ba4\u0bbf\u0bb0\u0ba4\u0bcd\u0ba4\u0bbf\u0bb2\u0bcd \u0ba4\u0bc1\u0bb2\u0bcd\u0bb2\u0bbf\u0baf\u0bae\u0bcd \u0b9a\u0bb0\u0bbf\u0baa\u0bbe\u0bb0\u0bcd\u0b95\u0bcd\u0b95\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0ba4\u0bc1.",
         "translatedText": "CAD cutting accuracy verified on 24-ply lay. Oeko-Tex cert checked.",
         "issueCategory": "OTHER",
         "voiceDurationSeconds": 15
@@ -2187,7 +2187,7 @@
         "bufferDaysAhead": 14,
         "targetQuantity": 4500,
         "completedQuantity": 0,
-        "unitCode": "DYECRAFT"
+        "unitCode": "UNIT_3"
       },
       {
         "stage": "CUTTING",
@@ -2242,7 +2242,7 @@
         "shift": "DAY",
         "machineLine": "Unit 3 Fine Gauge Interlock 1",
         "operatorNotes": "Imported 60/2 Giza yarn partial lot loaded; balance in customs clearance.",
-        "rawTamilText": "இறக்குமதி செய்யப்பட்ட 60/2 எகிப்திய நூல் சுங்கத்துறை அனுமதியில் தாமதம்.",
+        "rawTamilText": "\u0b87\u0bb1\u0b95\u0bcd\u0b95\u0bc1\u0bae\u0ba4\u0bbf \u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f 60/2 \u0b8e\u0b95\u0bbf\u0baa\u0bcd\u0ba4\u0bbf\u0baf \u0ba8\u0bc2\u0bb2\u0bcd \u0b9a\u0bc1\u0b99\u0bcd\u0b95\u0ba4\u0bcd\u0ba4\u0bc1\u0bb1\u0bc8 \u0b85\u0ba9\u0bc1\u0bae\u0ba4\u0bbf\u0baf\u0bbf\u0bb2\u0bcd \u0ba4\u0bbe\u0bae\u0ba4\u0bae\u0bcd.",
         "translatedText": "Imported 60/2 Giza yarn partial lot loaded; balance in customs clearance.",
         "issueCategory": "SUBCONTRACTOR_DELAY",
         "voiceDurationSeconds": 22
@@ -2370,7 +2370,7 @@
         "bufferDaysAhead": 5,
         "targetQuantity": 10000,
         "completedQuantity": 10000,
-        "unitCode": "UNIT_2"
+        "unitCode": "UNIT_1"
       },
       {
         "stage": "CHECKING",
@@ -2380,7 +2380,7 @@
         "bufferDaysAhead": 2,
         "targetQuantity": 10000,
         "completedQuantity": 10000,
-        "unitCode": "UNIT_2"
+        "unitCode": "UNIT_1"
       },
       {
         "stage": "FINISHING",
@@ -2390,7 +2390,7 @@
         "bufferDaysAhead": 0,
         "targetQuantity": 10000,
         "completedQuantity": 10000,
-        "unitCode": "UNIT_2"
+        "unitCode": "UNIT_1"
       }
     ],
     "dailyLogs": [
@@ -2400,12 +2400,12 @@
         "reworkQty": 10,
         "rejectedQty": 2,
         "stage": "FINISHING",
-        "unitCode": "UNIT_2",
+        "unitCode": "UNIT_1",
         "userEmail": "supervisor.selvam@company-a.com",
         "shift": "DAY",
         "machineLine": "Unit 2 Packing Line 1",
         "operatorNotes": "Final carton packing completed; all 10,000 pcs loaded into export container.",
-        "rawTamilText": "அனைத்து 10,000 பீஸ்களும் ஏற்றுமதி கன்டெய்னரில் ஏற்றப்பட்டது.",
+        "rawTamilText": "\u0b85\u0ba9\u0bc8\u0ba4\u0bcd\u0ba4\u0bc1 10,000 \u0baa\u0bc0\u0bb8\u0bcd\u0b95\u0bb3\u0bc1\u0bae\u0bcd \u0b8f\u0bb1\u0bcd\u0bb1\u0bc1\u0bae\u0ba4\u0bbf \u0b95\u0ba9\u0bcd\u0b9f\u0bc6\u0baf\u0bcd\u0ba9\u0bb0\u0bbf\u0bb2\u0bcd \u0b8f\u0bb1\u0bcd\u0bb1\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0ba4\u0bc1.",
         "translatedText": "Final carton packing completed; all 10,000 pcs loaded into export container.",
         "issueCategory": "OTHER",
         "voiceDurationSeconds": 15
@@ -2482,7 +2482,7 @@
         "bufferDaysAhead": 18,
         "targetQuantity": 8000,
         "completedQuantity": 8000,
-        "unitCode": "UNIT_1"
+        "unitCode": "UNIT_2"
       },
       {
         "stage": "DYEING_WASHING",
@@ -2492,7 +2492,7 @@
         "bufferDaysAhead": 14,
         "targetQuantity": 8000,
         "completedQuantity": 8000,
-        "unitCode": "WASHTEX"
+        "unitCode": "UNIT_2"
       },
       {
         "stage": "PRINTING",
@@ -2502,7 +2502,7 @@
         "bufferDaysAhead": 10,
         "targetQuantity": 8000,
         "completedQuantity": 8000,
-        "unitCode": "PRINTTEX"
+        "unitCode": "UNIT_2"
       },
       {
         "stage": "CUTTING",
@@ -2557,7 +2557,7 @@
         "shift": "DAY",
         "machineLine": "Unit 2 Packing Line 2",
         "operatorNotes": "Final carton loading and dispatch pass completed to Tuticorin port.",
-        "rawTamilText": "தூத்துக்குடி துறைமுகத்திற்கு கன்டெய்னர் அனுப்பப்பட்டது.",
+        "rawTamilText": "\u0ba4\u0bc2\u0ba4\u0bcd\u0ba4\u0bc1\u0b95\u0bcd\u0b95\u0bc1\u0b9f\u0bbf \u0ba4\u0bc1\u0bb1\u0bc8\u0bae\u0bc1\u0b95\u0ba4\u0bcd\u0ba4\u0bbf\u0bb1\u0bcd\u0b95\u0bc1 \u0b95\u0ba9\u0bcd\u0b9f\u0bc6\u0baf\u0bcd\u0ba9\u0bb0\u0bcd \u0b85\u0ba9\u0bc1\u0baa\u0bcd\u0baa\u0baa\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0ba4\u0bc1.",
         "translatedText": "Final carton loading and dispatch pass completed to Tuticorin port.",
         "issueCategory": "OTHER",
         "voiceDurationSeconds": 15

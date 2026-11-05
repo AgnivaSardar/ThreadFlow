@@ -66,9 +66,8 @@ export class ProductionService {
   static async getSupervisorWork(user: AuthenticatedUser, requestedUnitId?: string) {
     let unitId: string | null = null;
 
-    if (requestedUnitId && requestedUnitId !== 'ALL') {
-      unitId = requestedUnitId;
-    } else if (user.role === Role.SUPERVISOR) {
+    if (user.role === Role.SUPERVISOR) {
+      // Supervisors are strictly bound to their assigned manufacturing unit
       unitId = user.assignedUnitId || null;
       if (!unitId) {
         const dbUser = await prisma.user.findUnique({
@@ -83,29 +82,43 @@ export class ProductionService {
         });
         unitId = defaultUnit?.id || null;
       }
+    } else if (requestedUnitId && requestedUnitId !== 'ALL') {
+      unitId = requestedUnitId;
     }
 
     const unit = unitId
-      ? await prisma.unit.findUnique({ where: { id: unitId } })
+      ? await prisma.unit.findUnique({
+          where: { id: unitId },
+          include: {
+            users: {
+              where: { role: Role.SUPERVISOR },
+              select: { id: true, name: true, phone: true, email: true },
+            },
+          },
+        })
       : null;
 
     const allUnits = await prisma.unit.findMany({
       orderBy: { code: 'asc' },
-      select: { id: true, name: true, code: true, type: true },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        type: true,
+        users: {
+          where: { role: Role.SUPERVISOR },
+          select: { id: true, name: true, phone: true, email: true },
+        },
+      },
     });
 
+    // Rule: One product is handled by one unit.
+    // All supervisors under a unit share and manage all products assigned to that unit only.
     const orders = await prisma.order.findMany({
       where: {
         deletedAt: null,
         status: 'ACTIVE',
-        ...(unitId
-          ? {
-              OR: [
-                { unitId },
-                { milestones: { some: { unitId } } },
-              ],
-            }
-          : {}),
+        ...(unitId ? { unitId } : {}),
       },
       include: {
         buyer: { select: { id: true, name: true, code: true } },
@@ -316,7 +329,15 @@ export class ProductionService {
     });
 
     return {
-      unit: unit ? { id: unit.id, name: unit.name, code: unit.code, type: unit.type } : null,
+      unit: unit
+        ? {
+            id: unit.id,
+            name: unit.name,
+            code: unit.code,
+            type: unit.type,
+            supervisors: unit.users || [],
+          }
+        : null,
       allUnits,
       assignedOrdersCount: activeOrders.length,
       orders: activeOrders,
@@ -376,6 +397,17 @@ export class ProductionService {
 
     if (!order) {
       throw new AppError(`Order #${input.orderId} does not exist`, 404);
+    }
+
+    // Unit Scoping: One product is handled by one unit.
+    // Multiple supervisors under that unit can update its products, but supervisors cannot update products of other units.
+    if (user.role === Role.SUPERVISOR && user.assignedUnitId) {
+      if (order.unitId !== user.assignedUnitId) {
+        throw new AppError(
+          `Unauthorized: Order #${order.poNumber} is assigned to ${order.unit?.name || 'another unit'}. You may only log shift output for products handled by your unit.`,
+          403
+        );
+      }
     }
 
     // 3. Locate target milestone

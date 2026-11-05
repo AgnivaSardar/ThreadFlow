@@ -178,6 +178,30 @@
       "role": "BUYER",
       "languagePreference": "en",
       "buyerCode": "NEXT_UK"
+    },
+    {
+      "email": "supervisor.manickam@company-a.com",
+      "name": "Manickam Floor Supervisor",
+      "role": "SUPERVISOR",
+      "languagePreference": "ta",
+      "phone": "+91 98422 30004",
+      "assignedUnitCode": "UNIT_2"
+    },
+    {
+      "email": "supervisor.printtex@company-a.com",
+      "name": "Palanisamy PrintTex Supervisor",
+      "role": "SUPERVISOR",
+      "languagePreference": "ta",
+      "phone": "+91 98420 11224",
+      "assignedUnitCode": "PRINTTEX"
+    },
+    {
+      "email": "supervisor.washtex@company-a.com",
+      "name": "Kandasamy WashTex Supervisor",
+      "role": "SUPERVISOR",
+      "languagePreference": "ta",
+      "phone": "+91 98420 11223",
+      "assignedUnitCode": "WASHTEX"
     }
   ]
 }

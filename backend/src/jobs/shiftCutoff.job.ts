@@ -16,6 +16,7 @@ export interface UnitMissingUpdateGroup {
   unitLocation: string | null;
   supervisorId: string | null;
   supervisorName: string;
+  supervisors?: { id: string; name: string; phone: string | null; email: string }[];
   supervisorPhone: string;
   missingOrdersCount: number;
   orders: MissingOrderSummary[];
@@ -147,11 +148,14 @@ export async function detectMissingShiftUpdates(simulateCutoff: boolean = false)
     const unit = order.unit;
     if (!unit) continue;
 
-    // Find primary supervisor assigned to this unit
-    const supervisor = unit.users[0] || null;
-    const supervisorName = supervisor?.name || 'Floor Supervisor';
+    // Find all supervisors assigned to this unit
+    const supervisors = unit.users || [];
+    const supervisorNames = supervisors.length > 0
+      ? supervisors.map((s) => s.name).join(', ')
+      : 'Floor Supervisor';
+    const primarySupervisor = supervisors[0] || null;
     // Format telephone (standard 10-digit or E.164 with India country code 91)
-    let rawPhone = supervisor?.phone || '9842011223';
+    let rawPhone = primarySupervisor?.phone || '9842011223';
     let cleanPhone = rawPhone.replace(/\D/g, '');
     if (cleanPhone.length === 10) {
       cleanPhone = `91${cleanPhone}`;
@@ -176,8 +180,14 @@ export async function detectMissingShiftUpdates(simulateCutoff: boolean = false)
         unitName: unit.name,
         unitCode: unit.code,
         unitLocation: unit.location,
-        supervisorId: supervisor?.id || null,
-        supervisorName,
+        supervisorId: primarySupervisor?.id || null,
+        supervisorName: supervisorNames,
+        supervisors: supervisors.map((s) => ({
+          id: s.id,
+          name: s.name,
+          phone: s.phone,
+          email: s.email,
+        })),
         supervisorPhone: cleanPhone,
         missingOrdersCount: 0,
         orders: [],

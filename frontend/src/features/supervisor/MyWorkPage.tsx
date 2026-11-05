@@ -71,7 +71,9 @@ export const MyWorkPage: React.FC = () => {
 
   // Work Data state
   const [workData, setWorkData] = useState<SupervisorWorkResponse | null>(null);
-  const [selectedUnitFilter, setSelectedUnitFilter] = useState<string>('ALL');
+  const [selectedUnitFilter, setSelectedUnitFilter] = useState<string>(
+    user?.role === 'SUPERVISOR' && user?.assignedUnitId ? user.assignedUnitId : 'ALL'
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -110,9 +112,13 @@ export const MyWorkPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
 
-    const cacheKey = `work_${selectedUnitFilter || user?.assignedUnitId || 'default'}`;
+    const isSupervisor = user?.role === 'SUPERVISOR';
+    const effectiveUnit = isSupervisor && user?.assignedUnitId ? user.assignedUnitId : selectedUnitFilter;
+    const cacheKey = `work_${effectiveUnit || 'default'}`;
     const url =
-      selectedUnitFilter && selectedUnitFilter !== 'ALL'
+      isSupervisor && user?.assignedUnitId
+        ? `/production/work?unitId=${user.assignedUnitId}`
+        : selectedUnitFilter && selectedUnitFilter !== 'ALL'
         ? `/production/work?unitId=${selectedUnitFilter}`
         : '/production/work';
 
@@ -296,8 +302,13 @@ export const MyWorkPage: React.FC = () => {
       );
       if (isCompleted) return false;
 
-      // Unit filter
-      if (selectedUnitFilter !== 'ALL' && order.unit?.id !== selectedUnitFilter && (order as any).assignedUnitId !== selectedUnitFilter) {
+      // Unit filter: supervisors are strictly scoped to their assigned unit; merchandisers/admins can filter
+      if (
+        user?.role !== 'SUPERVISOR' &&
+        selectedUnitFilter !== 'ALL' &&
+        order.unit?.id !== selectedUnitFilter &&
+        (order as any).assignedUnitId !== selectedUnitFilter
+      ) {
         return false;
       }
 
@@ -342,6 +353,16 @@ export const MyWorkPage: React.FC = () => {
             {lang === 'ta'
               ? 'நடப்பு உற்பத்தி ஆர்டர்கள் மற்றும் மேற்பார்வையாளர் ஷிப்ட் பதிவுகள்'
               : 'Active floor work orders, shift logs and supervisor output tracking'}
+            {workData?.unit && (
+              <span className="block mt-0.5 text-slate-600 font-medium">
+                • {workData.unit.name}
+                {(workData.unit as any).supervisors && (workData.unit as any).supervisors.length > 0 && (
+                  <span className="text-slate-500 font-normal">
+                    {' '}({lang === 'ta' ? 'மேற்பார்வையாளர்கள்' : 'Supervisors'}: {(workData.unit as any).supervisors.map((s: any) => s.name).join(', ')})
+                  </span>
+                )}
+              </span>
+            )}
           </p>
         </div>
 
@@ -358,26 +379,38 @@ export const MyWorkPage: React.FC = () => {
             />
           </div>
 
-          <div className="w-full sm:w-56">
-            <CustomSelect
-              value={selectedUnitFilter}
-              options={[
-                { value: 'ALL', label: lang === 'ta' ? 'அனைத்து பிரிவுகள்' : 'All Manufacturing Units' },
-                ...(workData?.allUnits || [
-                  { id: 'unit-1', name: 'Unit 1 (Cotton Hub - Own)', code: 'UNIT_1', type: 'OWN' },
-                  { id: 'unit-2', name: 'Unit 2 (Stitching Hub - Own)', code: 'UNIT_2', type: 'OWN' },
-                  { id: 'sub-1', name: 'Subcontract - PrintTex', code: 'PRINTTEX', type: 'SUBCONTRACTOR' },
-                ]).map((u: any) => ({
-                  value: u.id,
-                  label: translateUnit(u.name, lang),
-                  badge: u.type === 'SUBCONTRACTOR' ? 'Subcontract' : 'In-House',
-                })),
-              ]}
-              onChange={(val) => setSelectedUnitFilter(val)}
-              placeholder="Select Unit"
-              buttonClassName="bg-white border-slate-200 py-1.5 text-xs font-semibold text-slate-800"
-            />
-          </div>
+          {user?.role === 'SUPERVISOR' ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-sky-50 border border-sky-200 rounded-xl text-xs font-semibold text-sky-900 shadow-2xs">
+              <Building2 className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+              <span className="truncate">
+                {workData?.unit ? translateUnit(workData.unit.name, lang) : 'Assigned Unit'}
+              </span>
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-sky-100 text-sky-800">
+                {workData?.unit?.code || 'UNIT'}
+              </span>
+            </div>
+          ) : (
+            <div className="w-full sm:w-56">
+              <CustomSelect
+                value={selectedUnitFilter}
+                options={[
+                  { value: 'ALL', label: lang === 'ta' ? 'அனைத்து பிரிவுகள்' : 'All Manufacturing Units' },
+                  ...(workData?.allUnits || [
+                    { id: 'unit-1', name: 'Unit 1 (Cotton Hub - Own)', code: 'UNIT_1', type: 'OWN' },
+                    { id: 'unit-2', name: 'Unit 2 (Stitching Hub - Own)', code: 'UNIT_2', type: 'OWN' },
+                    { id: 'sub-1', name: 'Subcontract - PrintTex', code: 'PRINTTEX', type: 'SUBCONTRACTOR' },
+                  ]).map((u: any) => ({
+                    value: u.id,
+                    label: translateUnit(u.name, lang),
+                    badge: u.type === 'SUBCONTRACTOR' ? 'Subcontract' : 'In-House',
+                  })),
+                ]}
+                onChange={(val) => setSelectedUnitFilter(val)}
+                placeholder="Select Unit"
+                buttonClassName="bg-white border-slate-200 py-1.5 text-xs font-semibold text-slate-800"
+              />
+            </div>
+          )}
 
           <button
             type="button"
