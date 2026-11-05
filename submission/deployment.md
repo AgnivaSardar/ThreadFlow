@@ -1,12 +1,8 @@
-# ThreadFlow — Deployment & Operations Guide (`deployment.md`)
+# ThreadFlow — Deployment & Operations Guide (`deployment.md` / `deploy.md`)
 
 **ThreadFlow** is an offline-resilient Knitwear Production Tracking & Intelligence Operating System engineered for export apparel manufacturers in Tiruppur, Tamil Nadu.
 
-This document serves as the authoritative operational manual for reviewers and engineers. It details:
-1. **Local Setup Guide (Step-by-Step)**
-2. **Production Cloud Deployment Architecture & Procedures**
-3. **Environment Variable Specification (Names Only — Zero Secrets)**
-4. **Demo Login Details & Guided 5-Minute Evaluator Tour**
+This document serves as the authoritative operational manual for reviewers and technical evaluators.
 
 ---
 
@@ -14,19 +10,110 @@ This document serves as the authoritative operational manual for reviewers and e
 
 | Resource | Link |
 | :--- | :--- |
-| **GitHub Repository** | [https://github.com/AgnivaSardar/ThreadFlow](https://github.com/AgnivaSardar/ThreadFlow) |
-| **Live Production Frontend (Web / Mobile PWA)** | [https://threadflow-ptun.onrender.com](https://threadflow-ptun.onrender.com) |
-| **Live Production Backend API Service** | [https://threadflow-backend-z7s9.onrender.com](https://threadflow-backend-z7s9.onrender.com) |
+| **Live Production Frontend (Web / Mobile PWA)** | **[https://threadflow-ptun.onrender.com](https://threadflow-ptun.onrender.com)** |
+| **Live Production Backend API Service** | **[https://threadflow-backend-z7s9.onrender.com](https://threadflow-backend-z7s9.onrender.com)** |
 | **Backend API Health Check Endpoint** | [https://threadflow-backend-z7s9.onrender.com/api/v1/health](https://threadflow-backend-z7s9.onrender.com/api/v1/health) |
+| **GitHub Repository** | [https://github.com/AgnivaSardar/ThreadFlow](https://github.com/AgnivaSardar/ThreadFlow) |
 | **Managed Cloud Database** | Supabase PostgreSQL 16 (AWS Asia-Pacific `ap-south-1` Connection Pooled) |
 | **Technical Design Document (PDF)** | [`submission/Technical_Design_Document.pdf`](Technical_Design_Document.pdf) |
 | **Technical Design Document (Word .docx)** | [`submission/Technical_Design_Document.docx`](Technical_Design_Document.docx) |
 
 ---
 
-## 1. How to Run It Locally (Step by Step)
+## 1. Reviewer Demo Login Credentials
 
-### 1.1 Prerequisites
+> **Quick Evaluation:** You can immediately test the live cloud application at **[https://threadflow-ptun.onrender.com](https://threadflow-ptun.onrender.com)** without needing any local installation.
+
+All accounts share the unified evaluation password: **`ThreadFlow@2026`**
+
+| Role / Persona | User Display Name | Login Email | Password | Assigned Unit / Scope | Key Workflows to Test |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Senior Merchandiser** | Ramesh Merchandiser | `merchandiser@company-a.com` | `ThreadFlow@2026` | Factory-Wide (All Units) | • Order Board (Green/Amber/Red status cards)<br>• Filter by Buyer/Unit/Ship-Week<br>• "Show-Your-Math" Run-Rate breakdown<br>• Tamil AI Review & Confirmation Gate<br>• "What-If" Recovery Simulator<br>• Weekly PDF Status Export |
+| **Floor Supervisor (Unit 1)** | Muthu Floor Supervisor | `supervisor.muthu@company-a.com` | `ThreadFlow@2026` | **Unit 1 (Cotton Hub)**<br>*(5 POs assigned)* | • Mobile floor view scoped strictly to Unit 1 products<br>• Shift output logging<br>• Tamil voice dictation (`ta-IN`) via Web Speech API<br>• Defect photo capture<br>• Offline IndexedDB queue |
+| **Floor Supervisor (Unit 1 - Co-Supervisor)** | Kumaravel Shift In-Charge | `supervisor.kumar@company-a.com` | `ThreadFlow@2026` | **Unit 1 (Cotton Hub)**<br>*(5 POs assigned)* | • Demonstrates **multiple supervisors under one unit** sharing all Unit 1 products identically |
+| **Floor Supervisor (Unit 2)** | Selvam Floor Supervisor | `supervisor.selvam@company-a.com` | `ThreadFlow@2026` | **Unit 2 (Stitching Hub)**<br>*(4 POs assigned)* | • Mobile floor view scoped strictly to Unit 2 products (`B-PO-88260`, `C-PO-0501`, `M-PO-91022`, `C-PO-0515`) |
+| **Floor Supervisor (Unit 2 - Co-Supervisor)** | Manickam Floor Supervisor | `supervisor.manickam@company-a.com` | `ThreadFlow@2026` | **Unit 2 (Stitching Hub)**<br>*(4 POs assigned)* | • Second supervisor for Unit 2 sharing Unit 2 products |
+| **Floor Supervisor (Unit 3)** | Murugan Floor Supervisor | `supervisor.murugan@company-a.com` | `ThreadFlow@2026` | **Unit 3 (Specialty & Export)**<br>*(1 PO assigned)* | • Mobile floor view scoped to Unit 3 (`B-PO-88272`) |
+| **Foreign Buyer (UK)** | Sarah Jenkins (UK Sourcing) | `buyer@company-b.co.uk` | `ThreadFlow@2026` | **Company B (UK)** only | • Scoped Buyer Portal viewing POs `B-PO-88213` and `B-PO-88240`<br>• Confirmed milestones & approved floor photos<br>• **Zero access to Company C styles or volumes** |
+| **Foreign Buyer (Germany)** | Klaus Mueller (EU Compliance) | `compliance@company-c.de` | `ThreadFlow@2026` | **Company C (Germany)** only | • Scoped Buyer Portal viewing PO `C-PO-0488`<br>• Multi-tenant brand isolation verification |
+| **Managing Director / Admin** | Agniva Sardar / Operations Admin | `agniva.sardar@gmail.com` | `ThreadFlow@2026` | Global Factory Administration | • Complete oversight, unit management, tamper-evident immutable audit log with cryptographic SHA-256 Merkle hash chain |
+| **System Administrator** | System Administrator | `admin@threadflow.com` | `ThreadFlow@2026` | Global System Administration | • Full administrative oversight, user provisioning, and role assignment |
+
+---
+
+## 2. Guided 5-Minute Evaluator Tour
+
+```
++-----------------------------------------------------------------------------------------+
+|                                5-MINUTE EVALUATION TOUR                                 |
++-----------------------------------------------------------------------------------------+
+| 1. Merchandiser Board   --> View Green/Amber/Red Cards & Run-Rate "Show Your Math"     |
+| 2. Mobile Floor Entry   --> Speak Tamil Voice Dictation & Capture Defect Photo           |
+| 3. Merchandiser Gate    --> Review & Approve Tamil AI Classification Before Buyer Eyes  |
+| 4. Scoped Buyer Portal  --> Verify Zero Data Leakage Between Company B and Company C    |
+| 5. Compliance Audit     --> Inspect SHA-256 Merkle Ledger of Every Date Modification    |
++-----------------------------------------------------------------------------------------+
+```
+
+### Tour Step 1: Merchandiser Order Board & "Show-Your-Math" Engine
+1. Navigate to: **[https://threadflow-ptun.onrender.com](https://threadflow-ptun.onrender.com)**
+2. Sign in as **Merchandiser**:
+   * **Email:** `merchandiser@company-a.com` | **Password:** `ThreadFlow@2026`
+3. Inspect the **Order Board**:
+   * View live status cards: **Green (On Track)**, **Amber (Minor Buffer Consumed)**, and **Red (Critical Deficit)**.
+   * Filter by **Buyer** (`Company B (UK)`), **Unit** (`Unit 1`), or **Ship Week**.
+4. Open Order **`B-PO-88240` (Men's Polo White — 8,000 pcs)**:
+   * Click **"Show Your Math"**: View the exact arithmetic run-rate breakdown.
+   * Notice: Remaining Quantity ($2,800\text{ pcs}$), Effective Working Days ($9\text{ days}$ after $14\text{ downstream buffer days}$), Required Daily Rate ($311\text{ pcs/day}$), vs Actual 3-Day Rolling Average ($200\text{ pcs/day}$).
+   * Projected Delay: **5 Days Late**, triggering a **₹3.5 Lakh Air Freight Risk** flag 14 days in advance!
+5. Test the **"What-If" Recovery Simulator**:
+   * Simulate adding **1 additional stitching line** (+250 pcs/day capacity).
+   * Notice the status flip from **Red to Green**, saving the shipment without expensive air freight.
+
+### Tour Step 2: Floor Supervisor Mobile Experience & Tamil Voice Dictation
+1. Open an Incognito window (or switch browser) to simulate a supervisor's phone.
+2. Sign in as **Unit 1 Supervisor**:
+   * **Email:** `supervisor.muthu@company-a.com` | **Password:** `ThreadFlow@2026`
+3. Notice that Muthu sees **all 5 products handled by Unit 1** (and *only* Unit 1 products).
+4. Tap **"Log Shift Output"** on an active milestone:
+   * Switch interface language to **தமிழ் (Tamil)** using the header toggle.
+   * Click the **Microphone icon** and speak (or type):
+     > *"400 பீஸ் முடிந்தது 10 ரிஜெக்ட் மெஷின் பிரேக் டவுன்"*
+     *(or in English: "400 pieces finished 10 reject machine breakdown")*
+   * Tap the **Camera icon** to attach an inspection photo.
+   * AI extracts: Good = 400, Rejects = 10, Reason = `MACHINE_BREAKDOWN`.
+5. Tap **"Submit Shift Output"**.
+
+### Tour Step 3: Merchandiser AI Review Gate
+1. Switch back to the **Merchandiser** session (`merchandiser@company-a.com`).
+2. Navigate to **"AI Issue Review"**:
+   * View the supervisor's submitted floor note.
+   * Notice the original Tamil transcript sits alongside the clean English summary.
+   * Merchandisers have full authority to override the category or approve it.
+   * **Crucial Constraint:** Unapproved warnings and floor photos never reach the buyer portal until confirmed by the merchandiser.
+3. Click **"Approve for Buyer Portal"**.
+
+### Tour Step 4: Multi-Tenant Scoped Buyer Portal
+1. Sign in as the **UK foreign buyer**:
+   * **Email:** `buyer@company-b.co.uk` | **Password:** `ThreadFlow@2026`
+2. Notice the clean, minimalist buyer interface:
+   * The buyer sees **only Company B purchase orders** (`B-PO-88213`, `B-PO-88240`).
+   * They see completed milestones, approved inspection photos, and live progress bars.
+   * **Strict Isolation:** Company C's styles, quantities, and internal factory delays are completely invisible.
+3. Click **"Download Weekly Status Export (PDF)"** to generate the branded weekly status sheet.
+
+### Tour Step 5: Compliance Audit Trail
+1. Sign in as **Admin / Managing Director**:
+   * **Email:** `admin@threadflow.com` (or `agniva.sardar@gmail.com`) | **Password:** `ThreadFlow@2026`
+2. Navigate to **Audit Logs**:
+   * Review the chronological ledger recording every milestone date shift, reason code, author identity, and timestamp.
+   * Each entry features a cryptographic SHA-256 hash chaining back to the previous transaction, ensuring complete compliance audit integrity.
+
+---
+
+## 3. How to Run It Locally (Step by Step)
+
+### 3.1 Prerequisites
 Before starting, ensure your local workstation has the following tools installed:
 * **Node.js**: `v20.17.0` LTS or newer (verified on Node 20.x and 22.x)
 * **npm**: `v10.x` or newer
@@ -35,7 +122,7 @@ Before starting, ensure your local workstation has the following tools installed
 
 ---
 
-### 1.2 Step 1: Clone the Repository
+### 3.2 Step 1: Clone the Repository
 Clone the codebase from GitHub and enter the root workspace:
 ```bash
 git clone https://github.com/AgnivaSardar/ThreadFlow.git
@@ -44,24 +131,24 @@ cd ThreadFlow
 
 ---
 
-### 1.3 Step 2: Configure Environment Variables
+### 3.3 Step 2: Configure Environment Variables
 Copy the provided `.env.example` templates into the root and backend directories:
 
 ```bash
-# On Linux / macOS / Git Bash
-cp .env.example .env
-cp .env.example backend/.env
-
 # On Windows PowerShell
 Copy-Item .env.example .env
 Copy-Item .env.example backend/.env
+
+# On Linux / macOS / Git Bash
+cp .env.example .env
+cp .env.example backend/.env
 ```
 
-Open `backend/.env` in your code editor and provide your PostgreSQL database connection strings for `DATABASE_URL` and `DIRECT_URL`. *(Refer to Section 3 for the complete variable dictionary).*
+Open `backend/.env` in your code editor and provide your PostgreSQL database connection strings for `DATABASE_URL` and `DIRECT_URL`. *(Refer to Section 5 for the complete variable dictionary).*
 
 ---
 
-### 1.4 Step 3: Backend Setup & Database Initialization
+### 3.4 Step 3: Backend Setup & Database Initialization
 Open a terminal in the `backend/` directory:
 
 ```bash
@@ -87,7 +174,7 @@ npm run dev
 
 ---
 
-### 1.5 Step 4: Frontend Setup & Launch
+### 3.5 Step 4: Frontend Setup & Launch
 Open a second terminal window in the `frontend/` directory:
 
 ```bash
@@ -104,7 +191,7 @@ npm run dev
 
 ---
 
-### 1.6 Step 5: Run Automated Verification Tests
+### 3.6 Step 5: Run Automated Verification Tests
 ThreadFlow includes an end-to-end automated test suite covering all four core domain engines:
 
 ```bash
@@ -127,13 +214,14 @@ npm --prefix backend test
    * Color/size matrix quantity validation against purchase order total.
    * Optimistic locking and SHA-256 tamper-evident compliance audit chaining.
 4. **Production Ingestion Invariants (`tests/production.test.ts` — 27 Tests):**
+   * Unit-scoped work order retrieval (5 orders for Unit 1, 4 for Unit 2, 1 for Unit 3).
    * Anti-finger-slip checks preventing completed stage output from exceeding previous stage actuals.
    * 3% fabric overage tolerance ceiling enforcement.
    * RFC 4122 UUIDv4 idempotency deduplication for offline edge retries.
 
 ---
 
-### 1.7 Step 6: Testing Mobile PWA & Offline Queuing Locally
+### 3.7 Step 6: Testing Mobile PWA & Offline Queuing Locally
 1. In Google Chrome, press `F12` to open Developer Tools and toggle the **Device Toolbar** (`Ctrl+Shift+M`) to simulate a mobile phone (e.g., Pixel 7 or Galaxy S20).
 2. Sign in as Floor Supervisor (`supervisor.muthu@company-a.com`).
 3. Switch Chrome's Network tab to **"Offline"**.
@@ -143,7 +231,7 @@ npm --prefix backend test
 
 ---
 
-## 2. How It Is Deployed
+## 4. How It Is Deployed
 
 ThreadFlow follows a decoupled cloud deployment topology designed for zero hosting friction, high reliability, and low operational overhead.
 
@@ -179,7 +267,7 @@ ThreadFlow follows a decoupled cloud deployment topology designed for zero hosti
 +-----------------------+ +--------------------+ +--------------------+
 ```
 
-### 2.1 Backend Deployment (Render Node Web Service)
+### 4.1 Backend Deployment (Render Node Web Service)
 * **Platform:** Render (`https://dashboard.render.com`)
 * **Service Type:** Web Service
 * **Environment:** `Node` (Runtime Node.js 20.x)
@@ -195,7 +283,7 @@ ThreadFlow follows a decoupled cloud deployment topology designed for zero hosti
 * **Health Check Path:** `/api/v1/health`
 * **Auto-Deploy:** Enabled on Git push to branch `main`.
 
-### 2.2 Frontend Deployment (Render Static Site)
+### 4.2 Frontend Deployment (Render Static Site)
 * **Platform:** Render Static Site
 * **Root Directory:** `frontend`
 * **Build Command:**
@@ -209,18 +297,18 @@ ThreadFlow follows a decoupled cloud deployment topology designed for zero hosti
   * **Action:** `Rewrite`
 * **Environment Variable:** `VITE_API_URL` pointing to the deployed backend URL.
 
-### 2.3 Cloud Database Deployment (Supabase PostgreSQL 16)
+### 4.3 Cloud Database Deployment (Supabase PostgreSQL 16)
 * **Engine:** PostgreSQL 16 hosted on Supabase (AWS `ap-south-1` Mumbai region for minimal latency to Tiruppur).
 * **Connection Pooling:** Connected through Supavisor connection pooler on port `6543` with `sslmode=require` to prevent database connection exhaustion during high-concurrency supervisor shifts.
 * **Direct Migration Connection:** Port `5432` for Prisma schema push operations.
 
 ---
 
-## 3. Environment Variable Specification (Names Only — Zero Secrets)
+## 5. Environment Variable Specification (Names Only — Zero Secrets)
 
 In accordance with strict application security standards and the client problem specification, **only variable names, types, and operational descriptions are listed below. Secret values, credentials, and cryptographic keys are omitted.**
 
-### 3.1 Backend Service Environment Variables (`backend/.env`)
+### 5.1 Backend Service Environment Variables (`backend/.env`)
 
 | Variable Name | Required | Type / Format | Purpose & Functional Scope |
 | :--- | :---: | :--- | :--- |
@@ -244,105 +332,11 @@ In accordance with strict application security standards and the client problem 
 | `SENDGRID_API_KEY` | Optional | SendGrid Key (`SG...`) | API key for dispatching transactional email OTPs for password recovery. |
 | `SENDGRID_FROM_EMAIL` | Optional | Verified Email Address | Verified sender email address displayed on outgoing password reset emails. |
 
-### 3.2 Frontend Client Environment Variables (`frontend/.env`)
+### 5.2 Frontend Client Environment Variables (`frontend/.env`)
 
 | Variable Name | Required | Type / Format | Purpose & Functional Scope |
 | :--- | :---: | :--- | :--- |
 | `VITE_API_URL` | **Required** | Full HTTP(S) URL | Base URL of the backend REST service used by the frontend Axios client (e.g. `https://threadflow-backend-z7s9.onrender.com/api/v1`). |
-
----
-
-## 4. Demo Login Details for the Reviewer
-
-The system is pre-seeded with dedicated demo accounts covering all operational roles in the apparel manufacturing hierarchy.
-
-All accounts share the unified evaluation password: **`ThreadFlow@2026`**
-
-| Role / Persona | User Display Name | Login Email | Password | Primary Reviewer Workflows to Test |
-| :--- | :--- | :--- | :--- | :--- |
-| **Senior Merchandiser** | Ramesh Merchandiser | `merchandiser@company-a.com` | `ThreadFlow@2026` | Factory Order Board (Green/Amber/Red status cards), Filter by Buyer/Unit/Ship-Week, Order Creation with 7-Stage TNA milestones, "Show-Your-Math" Run-Rate breakdown, Tamil Issue Review Gate, What-If Recovery Simulator, Weekly PDF Export. |
-| **Unit 1 Supervisor** | Muthu Floor Supervisor | `supervisor.muthu@company-a.com` | `ThreadFlow@2026` | Mobile-optimized floor interface, Stage output entry, Tamil voice dictation (`ta-IN`) via Web Speech API, defect camera capture, offline IndexedDB submission queue. |
-| **Unit 2 Supervisor** | Selvam Floor Supervisor | `supervisor.selvam@company-a.com` | `ThreadFlow@2026` | Unit 2 stitching and checking floor entry workspace. |
-| **Foreign Buyer (UK)** | Sarah Jenkins (UK Sourcing) | `buyer@company-b.co.uk` | `ThreadFlow@2026` | Scoped Buyer Portal viewing POs `B-PO-88213` and `B-PO-88240`, confirmed milestones, approved factory floor photos, weekly progress exports. *Strict zero access to Company C styles or volumes.* |
-| **Foreign Buyer (Germany)**| Klaus Mueller (EU Compliance)| `compliance@company-c.de` | `ThreadFlow@2026` | Scoped Buyer Portal viewing PO `C-PO-0488`. Tests multi-tenant brand isolation. |
-| **Managing Director / Admin** | Agniva Sardar / Operations Admin | `agniva.sardar@gmail.com` | `ThreadFlow@2026` | Complete administrative oversight, unit management, tamper-evident immutable audit log with cryptographic hash chain. |
-| **System Administrator** | System Administrator | `admin@threadflow.com` | `ThreadFlow@2026` | Full administrative control, user provisioning, and role assignment. |
-
----
-
-## 5. Guided 5-Minute Evaluator Tour
-
-To experience the core features of ThreadFlow in under 5 minutes, follow this recommended walkthrough:
-
-```
-+-----------------------------------------------------------------------------------------+
-|                                5-MINUTE EVALUATION TOUR                                 |
-+-----------------------------------------------------------------------------------------+
-| 1. Merchandiser Board   --> View Green/Amber/Red Cards & Run-Rate "Show Your Math"     |
-| 2. Mobile Floor Entry   --> Speak Tamil Voice Dictation & Capture Defect Photo           |
-| 3. Merchandiser Gate    --> Review & Approve Tamil AI Classification Before Buyer Eyes  |
-| 4. Scoped Buyer Portal  --> Verify Zero Data Leakage Between Company B and Company C    |
-| 5. Compliance Audit     --> Inspect SHA-256 Merkle Ledger of Every Date Modification    |
-+-----------------------------------------------------------------------------------------+
-```
-
-### Tour Step 1: Merchandiser Order Board & "Show-Your-Math" Engine
-1. Navigate to the live app: [https://threadflow-ptun.onrender.com](https://threadflow-ptun.onrender.com)
-2. Sign in with:
-   * **Email:** `merchandiser@company-a.com`
-   * **Password:** `ThreadFlow@2026`
-3. Inspect the **Order Board**:
-   * Observe orders categorized into **Green (On Track)**, **Amber (Minor Buffer Consumed)**, and **Red (Critical Deficit)**.
-   * Filter by **Buyer** (`Company B (UK)`), **Unit** (`Unit 1`), or **Ship Week**.
-4. Open Order **`B-PO-88240` (Men's Polo White — 8,000 pcs)**:
-   * Click **"Show Your Math"**: Examine the exact run-rate arithmetic breakdown.
-   * Notice: Remaining Quantity ($2,800\text{ pcs}$), Effective Working Days ($9\text{ days}$ after $14\text{ buffer days}$), Required Daily Rate ($311\text{ pcs/day}$), vs Actual 3-Day Rolling Average ($200\text{ pcs/day}$).
-   * Projected Delay: **5 Days Late**, triggering **₹3.5 Lakh Air Freight Risk** flag 14 days in advance!
-5. Test the **"What-If" Recovery Simulator**:
-   * Simulate adding **1 additional stitching line** (+250 pcs/day capacity).
-   * Observe the status flip from **Red to Green**, saving the shipment without costly air freight.
-
-### Tour Step 2: Floor Supervisor Mobile Experience & Tamil Voice Dictation
-1. Open an Incognito window (or switch browser) to simulate a supervisor's phone.
-2. Sign in with:
-   * **Email:** `supervisor.muthu@company-a.com`
-   * **Password:** `ThreadFlow@2026`
-3. Select an active milestone (e.g. *Stitching* on `B-PO-88213`).
-4. Tap **"Log Shift Output"**:
-   * Switch interface language to **தமிழ் (Tamil)** using the header toggle.
-   * Click the **Microphone icon** and speak (or type):
-     > *"400 பீஸ் முடிந்தது 10 ரிஜெக்ட் மெஷின் பிரேக் டவுன்"*
-     *(or in English: "400 pieces finished 10 reject machine breakdown")*
-   * Tap the **Camera icon** to attach an inspection photo.
-   * Observe the real-time AI classification extracting: Good = 400, Rejects = 10, Reason = `MACHINE_BREAKDOWN`.
-5. Tap **"Submit Shift Output"**.
-
-### Tour Step 3: Merchandiser AI Review Gate
-1. Switch back to the **Merchandiser** session (`merchandiser@company-a.com`).
-2. Navigate to **"AI Issue Review"**:
-   * Review the supervisor's submitted floor note.
-   * Notice the original Tamil transcript sits alongside the clean English summary.
-   * Merchandisers have full authority to override the category or approve it.
-   * **Crucial Constraint:** Unapproved warnings and floor photos never reach the buyer portal until confirmed by the merchandiser.
-3. Click **"Approve for Buyer Portal"**.
-
-### Tour Step 4: Multi-Tenant Scoped Buyer Portal
-1. Sign in as the UK foreign buyer:
-   * **Email:** `buyer@company-b.co.uk`
-   * **Password:** `ThreadFlow@2026`
-2. Notice the clean, minimalist buyer interface:
-   * The buyer sees **only Company B purchase orders** (`B-PO-88213`, `B-PO-88240`).
-   * They see completed milestones, approved inspection photos, and live progress bars.
-   * **Strict Isolation:** Company C's styles, quantities, and internal factory delays are completely invisible.
-3. Click **"Download Weekly Status Export (PDF)"** to generate the branded weekly status sheet.
-
-### Tour Step 5: Compliance Audit Trail
-1. Sign in as Admin / Managing Director:
-   * **Email:** `admin@threadflow.com` (or `agniva.sardar@gmail.com`)
-   * **Password:** `ThreadFlow@2026`
-2. Navigate to **Audit Logs**:
-   * Review the chronological ledger recording every milestone date shift, reason code, author identity, and timestamp.
-   * Each entry features a cryptographic SHA-256 hash chaining back to the previous transaction, ensuring complete compliance audit integrity.
 
 ---
 
