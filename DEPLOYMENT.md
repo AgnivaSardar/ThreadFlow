@@ -22,22 +22,45 @@ This document serves as the authoritative operational manual for reviewers and t
 
 ## 1. Reviewer Demo Login Credentials
 
-> **Quick Evaluation:** You can immediately test the live cloud application at **[https://threadflow-ptun.onrender.com](https://threadflow-ptun.onrender.com)** without needing any local installation.
+> **Quick Evaluation:** You can immediately test the live application at **[https://threadflow-ptun.onrender.com](https://threadflow-ptun.onrender.com)** without any local installation.
 
-All accounts share the unified evaluation password: **`ThreadFlow@2026`**
+**Default Password for ALL Accounts:** `ThreadFlow@2026`
 
-| Role / Persona | User Display Name | Login Email | Password | Assigned Unit / Scope | Key Workflows to Test |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Senior Merchandiser** | Ramesh Merchandiser | `merchandiser@company-a.com` | `ThreadFlow@2026` | Factory-Wide (All Units) | • Order Board (Green/Amber/Red status cards)<br>• Filter by Buyer/Unit/Ship-Week<br>• "Show-Your-Math" Run-Rate breakdown<br>• Tamil AI Review & Confirmation Gate<br>• "What-If" Recovery Simulator<br>• Weekly PDF Status Export |
-| **Floor Supervisor (Unit 1)** | Muthu Floor Supervisor | `supervisor.muthu@company-a.com` | `ThreadFlow@2026` | **Unit 1 (Cotton Hub)**<br>*(5 POs assigned)* | • Mobile floor view scoped strictly to Unit 1 products<br>• Shift output logging<br>• Tamil voice dictation (`ta-IN`) via Web Speech API<br>• Defect photo capture<br>• Offline IndexedDB queue |
-| **Floor Supervisor (Unit 1 - Co-Supervisor)** | Kumaravel Shift In-Charge | `supervisor.kumar@company-a.com` | `ThreadFlow@2026` | **Unit 1 (Cotton Hub)**<br>*(5 POs assigned)* | • Demonstrates **multiple supervisors under one unit** sharing all Unit 1 products identically |
-| **Floor Supervisor (Unit 2)** | Selvam Floor Supervisor | `supervisor.selvam@company-a.com` | `ThreadFlow@2026` | **Unit 2 (Stitching Hub)**<br>*(4 POs assigned)* | • Mobile floor view scoped strictly to Unit 2 products (`B-PO-88260`, `C-PO-0501`, `M-PO-91022`, `C-PO-0515`) |
-| **Floor Supervisor (Unit 2 - Co-Supervisor)** | Manickam Floor Supervisor | `supervisor.manickam@company-a.com` | `ThreadFlow@2026` | **Unit 2 (Stitching Hub)**<br>*(4 POs assigned)* | • Second supervisor for Unit 2 sharing Unit 2 products |
-| **Floor Supervisor (Unit 3)** | Murugan Floor Supervisor | `supervisor.murugan@company-a.com` | `ThreadFlow@2026` | **Unit 3 (Specialty & Export)**<br>*(1 PO assigned)* | • Mobile floor view scoped to Unit 3 (`B-PO-88272`) |
-| **Foreign Buyer (UK)** | Sarah Jenkins (UK Sourcing) | `buyer@company-b.co.uk` | `ThreadFlow@2026` | **Company B (UK)** only | • Scoped Buyer Portal viewing POs `B-PO-88213` and `B-PO-88240`<br>• Confirmed milestones & approved floor photos<br>• **Zero access to Company C styles or volumes** |
-| **Foreign Buyer (Germany)** | Klaus Mueller (EU Compliance) | `compliance@company-c.de` | `ThreadFlow@2026` | **Company C (Germany)** only | • Scoped Buyer Portal viewing PO `C-PO-0488`<br>• Multi-tenant brand isolation verification |
-| **Managing Director / Admin** | Agniva Sardar / Operations Admin | `agniva.sardar@gmail.com` | `ThreadFlow@2026` | Global Factory Administration | • Complete oversight, unit management, tamper-evident immutable audit log with cryptographic SHA-256 Merkle hash chain |
-| **System Administrator** | System Administrator | `admin@threadflow.com` | `ThreadFlow@2026` | Global System Administration | • Full administrative oversight, user provisioning, and role assignment |
+| Role | Name | Login Email | Password | Unit / Scope |
+| :--- | :--- | :--- | :--- | :--- |
+| **Merchandiser** | Ramesh Merchandiser | `merchandiser@company-a.com` | `ThreadFlow@2026` | Factory-Wide (All Units) |
+| **Supervisor (Unit 1)** | Muthu Floor Supervisor | `supervisor.muthu@company-a.com` | `ThreadFlow@2026` | Unit 1 (Cotton Hub - 5 POs) |
+| **Supervisor (Unit 1 Co-Lead)** | Kumaravel Shift In-Charge | `supervisor.kumar@company-a.com` | `ThreadFlow@2026` | Unit 1 (Cotton Hub - 5 POs) |
+| **Supervisor (Unit 2)** | Selvam Floor Supervisor | `supervisor.selvam@company-a.com` | `ThreadFlow@2026` | Unit 2 (Stitching Hub - 4 POs) |
+| **Supervisor (Unit 2 Co-Lead)** | Manickam Floor Supervisor | `supervisor.manickam@company-a.com` | `ThreadFlow@2026` | Unit 2 (Stitching Hub - 4 POs) |
+| **Supervisor (Unit 3)** | Murugan Floor Supervisor | `supervisor.murugan@company-a.com` | `ThreadFlow@2026` | Unit 3 (Specialty - 1 PO) |
+| **Buyer (UK)** | Sarah Jenkins | `buyer@company-b.co.uk` | `ThreadFlow@2026` | Company B Only |
+| **Buyer (Germany)** | Klaus Mueller | `compliance@company-c.de` | `ThreadFlow@2026` | Company C Only |
+| **Managing Director / Admin** | Agniva Sardar / Ops Admin | `agniva.sardar@gmail.com` | `ThreadFlow@2026` | Factory Administration |
+| **System Administrator** | System Administrator | `admin@threadflow.com` | `ThreadFlow@2026` | System Administration |
+
+### Key Workflows to Test by Role
+
+* **Senior Merchandiser (`merchandiser@company-a.com`)**:
+  * Factory Order Board with Green/Amber/Red status cards.
+  * Filters for Buyer, Manufacturing Unit, and ISO Ship Week.
+  * Transparent **"Show-Your-Math"** run-rate calculation ($311\text{ req vs }200\text{ actual} \implies 5\text{ days late} \implies \text{₹3.5 Lakh air freight risk}$).
+  * **AI Issue Review & Confirmation Gate** (approve/override Tamil classified issues before they reach buyer eyes).
+  * Interactive **"What-If" Capacity Simulator** (add stitching lines to flip orders from Red to Green).
+  * Weekly branded multi-bar TNA progress PDF report export.
+* **Floor Supervisor (`supervisor.muthu@company-a.com` or `supervisor.kumar@company-a.com`)**:
+  * Mobile floor view strictly scoped to Unit 1 products (5 POs: `B-PO-88240`, `B-PO-88213`, `IND-PO-77401`, `B-PO-88255`, `NEXT-PO-33104`).
+  * Demonstrates that **multiple supervisors under one unit** share all products of that unit identically.
+  * Shift quantity logging with per-size breakdowns.
+  * **Tamil voice dictation** (`ta-IN`) via Web Speech API with real-time root-cause category extraction.
+  * Inspection photo capture and offline **IndexedDB** submission queue.
+* **Foreign Buyers (`buyer@company-b.co.uk` / `compliance@company-c.de`)**:
+  * Scoped Buyer Portal showing only their own orders (`B-PO-88213`, `B-PO-88240` for Company B).
+  * Confirmed milestones and merchandiser-approved factory photos.
+  * **Zero data leakage:** Company C styles, quantities, and mill issues are completely invisible.
+* **Managing Director / Admin (`admin@threadflow.com` / `agniva.sardar@gmail.com`)**:
+  * Complete operational oversight across all 6 manufacturing units.
+  * Immutable compliance audit trail protected by cryptographic SHA-256 Merkle hash chain.
 
 ---
 
