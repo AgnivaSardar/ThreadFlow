@@ -1,5 +1,6 @@
 import React from 'react';
 import { BuyerProfile, BuyerExportOrder } from './exportService';
+import { useLanguage } from '../../hooks/useLanguage';
 import {
   Printer,
   X,
@@ -81,6 +82,7 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
   weeklyThroughput = [],
   milestoneHealth,
 }) => {
+  const { isTa } = useLanguage();
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -135,7 +137,7 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs transition cursor-pointer shadow-xs"
             >
               <Printer className="w-3.5 h-3.5" />
-              <span>Print / Save Full PDF</span>
+              <span>{isTa ? 'அச்சிடு / முழு PDF சேமி' : 'Print / Save Full PDF'}</span>
             </button>
             <button
               type="button"

@@ -9,12 +9,13 @@ import {
   ShieldCheck,
   FileText,
   ArrowRight,
-  TrendingUp,
 } from 'lucide-react';
 import { useAuthStore } from '../auth/authStore';
+import { useLanguage } from '../../hooks/useLanguage';
 
 export const OverviewPage: React.FC = () => {
-  const { user, hasRole } = useAuthStore();
+  const { hasRole } = useAuthStore();
+  const { t } = useLanguage();
 
   return (
     <div className="space-y-4 pb-12 animate-in fade-in duration-200">
@@ -22,10 +23,10 @@ export const OverviewPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            Factory Operational Overview
+            {t.overview.title}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Tiruppur Manufacturing Command Center & Shift Synchronization
+            {t.overview.subtitle}
           </p>
         </div>
       </div>
@@ -46,9 +47,9 @@ export const OverviewPage: React.FC = () => {
               </div>
               <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-sky-600 transition" />
             </div>
-            <h3 className="text-sm font-bold text-slate-900">Export Order Board</h3>
+            <h3 className="text-sm font-bold text-slate-900">{t.overview.orderBoardTitle}</h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Manage purchase orders, 7-stage TNA pipelines, and schedule revisions.
+              {t.overview.orderBoardDesc}
             </p>
           </Link>
         )}
@@ -63,9 +64,9 @@ export const OverviewPage: React.FC = () => {
             </div>
             <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-amber-600 transition" />
           </div>
-          <h3 className="text-sm font-bold text-slate-900">Risk & Delay Engine</h3>
+          <h3 className="text-sm font-bold text-slate-900">{t.overview.riskTitle}</h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Real-time rolling run-rate pace, bottleneck warnings & recovery simulator.
+            {t.overview.riskDesc}
           </p>
         </Link>
 
@@ -79,9 +80,9 @@ export const OverviewPage: React.FC = () => {
             </div>
             <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-600 transition" />
           </div>
-          <h3 className="text-sm font-bold text-slate-900">Buyer Portal</h3>
+          <h3 className="text-sm font-bold text-slate-900">{t.overview.buyerPortalTitle}</h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Direct production transparency, visual proof gallery & daily sign-offs.
+            {t.overview.buyerPortalDesc}
           </p>
         </Link>
 
@@ -95,9 +96,9 @@ export const OverviewPage: React.FC = () => {
             </div>
             <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-600 transition" />
           </div>
-          <h3 className="text-sm font-bold text-slate-900">Audit History</h3>
+          <h3 className="text-sm font-bold text-slate-900">{t.overview.auditTitle}</h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Immutable SHA-256 cryptographic compliance log & financial penalty trail.
+            {t.overview.auditDesc}
           </p>
         </Link>
 
@@ -111,9 +112,9 @@ export const OverviewPage: React.FC = () => {
             </div>
             <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-purple-600 transition" />
           </div>
-          <h3 className="text-sm font-bold text-slate-900">Weekly Buyer Reports</h3>
+          <h3 className="text-sm font-bold text-slate-900">{t.overview.reportsTitle}</h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            One-click executive status exports (RFC 4180 CSV & branded printable PDF).
+            {t.overview.reportsDesc}
           </p>
         </Link>
 
@@ -127,9 +128,9 @@ export const OverviewPage: React.FC = () => {
             </div>
             <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-rose-600 transition" />
           </div>
-          <h3 className="text-sm font-bold text-slate-900">Supervisor Work & Logs</h3>
+          <h3 className="text-sm font-bold text-slate-900">{t.overview.supervisorTitle}</h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Floor quantity entry, bilingual Tamil voice notes, and inspection photos.
+            {t.overview.supervisorDesc}
           </p>
         </Link>
       </div>

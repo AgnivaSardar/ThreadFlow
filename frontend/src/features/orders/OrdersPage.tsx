@@ -28,12 +28,19 @@ import { BulkShiftModal } from './BulkShiftModal';
 import { useAuthStore } from '../auth/authStore';
 import { ShiftCutoffBanner } from '../dashboard/ShiftCutoffBanner';
 import { useLanguage } from '../../hooks/useLanguage';
-import { STAGE_TRANSLATIONS } from '../supervisor/supervisorTranslations';
+import {
+  STAGE_TRANSLATIONS,
+  translateStyle,
+  translateBuyer,
+  translateUnit,
+  translateStage,
+  formatDateLocalized,
+} from '../supervisor/supervisorTranslations';
 
 export const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
   const { hasRole } = useAuthStore();
-  const { isTa, t } = useLanguage();
+  const { lang, isTa, t } = useLanguage();
   const [orders, setOrders] = useState<OrderListItem[]>([]);
   const [buyers, setBuyers] = useState<Buyer[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -544,14 +551,14 @@ export const OrdersPage: React.FC = () => {
                           <ExternalLink className="w-3 h-3 text-sky-500 group-hover/link:translate-x-0.5 transition-transform" />
                         </Link>
                         <span className="text-xs font-medium text-slate-800 line-clamp-1 block">
-                          {order.style}
+                          {translateStyle(order.style, lang)}
                         </span>
                       </td>
 
                       {/* Buyer */}
                       <td className="py-3 px-4">
                         <div className="font-semibold text-slate-800">
-                          {order.buyer.name.replace(/\s*\([^)]*\)$/, '')}
+                          {translateBuyer(order.buyer.name.replace(/\s*\([^)]*\)$/, ''), lang)}
                         </div>
                         <div className="text-[11px] text-slate-500 flex items-center gap-1">
                           <Building2 className="w-3 h-3 text-slate-400" />
@@ -561,17 +568,17 @@ export const OrdersPage: React.FC = () => {
 
                       {/* Unit */}
                       <td className="py-3 px-4">
-                        <div className="font-medium text-slate-800">{order.unit.name}</div>
+                        <div className="font-medium text-slate-800">{translateUnit(order.unit.name, lang)}</div>
                         <div className="text-[10px] text-slate-400">
-                          {order.unit.type === 'SUBCONTRACTOR' ? 'Subcontract Unit' : 'In-House Facility'}
+                          {order.unit.type === 'SUBCONTRACTOR' ? t.orders.subcontractUnit : t.orders.inHouseFacility}
                         </div>
                       </td>
 
                       {/* Order Qty */}
                       <td className="py-3 px-4 text-right font-mono">
-                        <div className="font-bold text-slate-900">{order.totalQuantity.toLocaleString()} pcs</div>
+                        <div className="font-bold text-slate-900">{order.totalQuantity.toLocaleString()} {t.common.pieces}</div>
                         <div className="text-[10px] text-slate-400">
-                          {order.orderLines.length} Size Ratios
+                          {order.orderLines.length} {isTa ? 'அளவு விகிதங்கள்' : 'Size Ratios'}
                         </div>
                       </td>
 
@@ -584,7 +591,7 @@ export const OrdersPage: React.FC = () => {
                                 order.activeStageProgressPct >= 100 ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
                               }`}
                             ></span>
-                            {isTa ? (STAGE_TRANSLATIONS[order.activeStage]?.ta || order.activeStage) : order.activeStage}
+                            {translateStage(order.activeStage, lang)}
                           </span>
                           <span className="font-mono font-bold text-slate-800">
                             {order.activeStageProgressPct}%
@@ -607,7 +614,7 @@ export const OrdersPage: React.FC = () => {
                         <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium">
                           <span>{isTa ? `நிலை ${order.activeStageSequence} / 7` : `Stage ${order.activeStageSequence} of 7`}</span>
                           <span className="font-mono">
-                            {(order.activeMilestoneCompleted || 0).toLocaleString()} / {(order.activeMilestoneTarget || order.totalQuantity).toLocaleString()} {isTa ? 'துண்டுகள்' : 'pcs'}
+                            {(order.activeMilestoneCompleted || 0).toLocaleString()} / {(order.activeMilestoneTarget || order.totalQuantity).toLocaleString()} {t.common.pieces}
                           </span>
                         </div>
                       </td>
@@ -616,10 +623,10 @@ export const OrdersPage: React.FC = () => {
                       <td className="py-3 px-4 whitespace-nowrap">
                         <div className="font-semibold text-slate-800 flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          {formatDate(order.exFactoryDate)}
+                          {formatDateLocalized(order.exFactoryDate, lang)}
                         </div>
                         <div className="text-[11px] text-amber-700 font-medium">
-                          {order.workingDaysLeft}{isTa ? ' நாள்கள் எஞ்சியுள்ளன' : 'd left'} (CW {order.shipWeek})
+                          {order.workingDaysLeft} {isTa ? 'நாட்கள் எஞ்சியுள்ளன' : 'd left'} ({t.common.cw} {order.shipWeek})
                         </div>
                         {order.hasCriticalBottleneck && (
                           <div className="mt-0.5">

@@ -163,6 +163,64 @@ export function translateRole(role: string, lang: Language): string {
   return ROLE_TRANSLATIONS[role] || role;
 }
 
+export function translateStage(stage: string, lang: Language): string {
+  if (lang !== 'ta') {
+    return STAGE_TRANSLATIONS[stage]?.en || stage.replace(/_/g, ' ');
+  }
+  return STAGE_TRANSLATIONS[stage]?.ta || stage.replace(/_/g, ' ');
+}
+
+export function translateReason(reasonCode: string | null | undefined, lang: Language): string {
+  if (!reasonCode) return lang === 'ta' ? 'அட்டவணை மாற்றம்' : 'Schedule Update';
+  const reasonMapTa: Record<string, string> = {
+    BUYER_REQUEST: 'வாங்குபவர் கோரிக்கை',
+    FABRIC_DELAY: 'துணி / நூல் தாமதம்',
+    LABOUR_SHORTAGE: 'ஆட்கள் பற்றாக்குறை',
+    MACHINE_BREAKDOWN: 'இயந்திர / ஊசி பழுது',
+    POWER_OUTAGE: 'மின்வெட்டு',
+    QUALITY_HOLD: 'தரக் கட்டுப்பாடு நிறுத்தம்',
+    SUBCONTRACTOR_DELAY: 'துணை ஒப்பந்த தாமதம்',
+    INITIAL_PO_CREATION: 'புதிய ஆர்டர் உருவாக்கம்',
+  };
+  const reasonMapEn: Record<string, string> = {
+    BUYER_REQUEST: 'Buyer Request',
+    FABRIC_DELAY: 'Fabric Delay',
+    LABOUR_SHORTAGE: 'Labour Shortage',
+    MACHINE_BREAKDOWN: 'Machine Breakdown',
+    POWER_OUTAGE: 'Power Interruption',
+    QUALITY_HOLD: 'Quality Hold',
+    SUBCONTRACTOR_DELAY: 'Subcontractor Delay',
+    INITIAL_PO_CREATION: 'New Order',
+  };
+  if (lang === 'ta') {
+    return reasonMapTa[reasonCode] || reasonCode.replace(/_/g, ' ');
+  }
+  return reasonMapEn[reasonCode] || reasonCode.replace(/_/g, ' ');
+}
+
+export function translateAction(action: string, lang: Language): string {
+  const actionMapTa: Record<string, string> = {
+    UPDATE_EX_FACTORY_DATE: 'தொழிற்சாலை புறப்பாடு திருத்தம்',
+    BULK_UPDATE_EX_FACTORY_DATE: 'ஒட்டுமொத்த அட்டவணை மாற்றம்',
+    BUYER_SCHEDULE_NOTIFICATION: 'வாங்குபவர் அறிவிப்பு',
+    BUYER_DAILY_RESPONSE: 'வாங்குபவர் தினசரி ஒப்புதல்',
+    CREATE_ORDER: 'ஆர்டர் உருவாக்கப்பட்டது',
+    ADVANCE_STAGE: 'நிலை முன்னேற்றம்',
+  };
+  const actionMapEn: Record<string, string> = {
+    UPDATE_EX_FACTORY_DATE: 'Ex-Factory Revised',
+    BULK_UPDATE_EX_FACTORY_DATE: 'Bulk Schedule Shift',
+    BUYER_SCHEDULE_NOTIFICATION: 'Buyer Notification',
+    BUYER_DAILY_RESPONSE: 'Buyer Daily Response',
+    CREATE_ORDER: 'Order Created',
+    ADVANCE_STAGE: 'Stage Advanced',
+  };
+  if (lang === 'ta') {
+    return actionMapTa[action] || action.replace(/_/g, ' ');
+  }
+  return actionMapEn[action] || action.replace(/_/g, ' ');
+}
+
 export function formatPieces(qty: number, lang: Language): string {
   const num = qty.toLocaleString();
   return lang === 'ta' ? `${num} துண்டுகள்` : `${num} pcs`;

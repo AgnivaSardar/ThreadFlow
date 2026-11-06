@@ -4,6 +4,7 @@ import { X, Plus, Trash2, CheckCircle, AlertCircle, Loader2, RotateCcw, Calendar
 import { Buyer, Unit, CreateOrderPayload, Stage } from '../../types';
 import { apiRequest } from '../../services/api';
 import { CustomSelect, Option } from '../../components/CustomSelect';
+import { useLanguage } from '../../hooks/useLanguage';
 
 interface OrderFormProps {
   isOpen: boolean;
@@ -94,6 +95,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
   buyers,
   units,
 }) => {
+  const { isTa, t } = useLanguage();
   const [poNumber, setPoNumber] = useState('');
   const [style, setStyle] = useState('');
   const [description, setDescription] = useState('');
@@ -390,9 +392,13 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         {/* Header - Fixed & Pinned */}
         <div className="bg-[#0C2D48] px-5 py-3.5 text-white flex items-center justify-between shrink-0 border-b border-[#143D60]">
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">New Export Purchase Order</h2>
+            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+              {isTa ? 'புதிய ஏற்றுமதி கொள்முதல் ஆர்டர்' : 'New Export Purchase Order'}
+            </h2>
             <p className="text-xs text-sky-200/90 font-medium">
-              Configure order specifications, 7-stage T&A timeline, and size distribution
+              {isTa
+                ? 'ஆர்டர் விவரங்கள், 7-நிலை T&A அட்டவணை மற்றும் அளவு ஒதுக்கீட்டை அமைக்கவும்'
+                : 'Configure order specifications, 7-stage T&A timeline, and size distribution'}
             </p>
           </div>
           <button
@@ -766,7 +772,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
               disabled={loading}
               className="px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition cursor-pointer"
             >
-              Cancel
+              {t.common.cancel}
             </button>
             <button
               type="submit"
@@ -774,7 +780,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
               className="inline-flex items-center gap-2 px-5 py-2 text-xs sm:text-sm font-semibold text-white bg-[#0C2D48] hover:bg-[#143D60] disabled:bg-slate-300 disabled:cursor-not-allowed rounded-xl shadow-md transition cursor-pointer"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              Create Export Order
+              {isTa ? 'ஏற்றுமதி ஆர்டரை உருவாக்கு' : 'Create Export Order'}
             </button>
           </div>
         </form>

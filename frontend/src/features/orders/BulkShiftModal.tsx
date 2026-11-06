@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Calendar, AlertTriangle, Loader2, CheckCircle2, Clock, Send } from 'lucide-react';
 import { OrderListItem, BulkShiftExFactoryDatePayload } from '../../types';
 import { apiRequest } from '../../services/api';
+import { useLanguage } from '../../hooks/useLanguage';
 
 interface BulkShiftModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export const BulkShiftModal: React.FC<BulkShiftModalProps> = ({
   onSuccess,
   selectedOrders,
 }) => {
+  const { isTa, t } = useLanguage();
   const [shiftMode, setShiftMode] = useState<'DAYS' | 'FIXED_DATE'>('DAYS');
   const [shiftDays, setShiftDays] = useState<number>(5);
   const [newDate, setNewDate] = useState<string>('');
@@ -99,10 +101,12 @@ export const BulkShiftModal: React.FC<BulkShiftModalProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 shrink-0" />
-              <h3 className="text-sm sm:text-base font-bold text-white">Bulk Ex-Factory Schedule Shift</h3>
+              <h3 className="text-sm sm:text-base font-bold text-white">
+                {isTa ? 'ஒட்டுமொத்த அட்டவணை மாற்றம்' : 'Bulk Ex-Factory Schedule Shift'}
+              </h3>
             </div>
             <p className="text-[11px] sm:text-xs text-sky-200/80 mt-0.5">
-              Batch delivery date rescheduling and milestone recalculation
+              {isTa ? 'அட்டவணை மாற்றம் மற்றும் மைல்கல் மறுசீரமைப்பு' : 'Batch delivery date rescheduling and milestone recalculation'}
             </p>
           </div>
           <button
@@ -126,9 +130,9 @@ export const BulkShiftModal: React.FC<BulkShiftModalProps> = ({
           {/* Selected Orders Summary Banner */}
           <div className="p-3 sm:p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-800 mb-2">
-              <span>Selected Export Orders ({selectedOrders.length})</span>
+              <span>{isTa ? 'தேர்ந்தெடுக்கப்பட்ட ஏற்றுமதி ஆர்டர்கள்' : 'Selected Export Orders'} ({selectedOrders.length})</span>
               <span className="text-sky-700 font-mono font-bold">
-                {selectedOrders.reduce((sum, o) => sum + o.totalQuantity, 0).toLocaleString()} pcs total
+                {selectedOrders.reduce((sum, o) => sum + o.totalQuantity, 0).toLocaleString()} {t.common.pieces} {isTa ? 'மொத்தம்' : 'total'}
               </span>
             </div>
             <div className="max-h-28 overflow-y-auto divide-y divide-slate-100 text-xs no-scrollbar">
@@ -141,7 +145,7 @@ export const BulkShiftModal: React.FC<BulkShiftModalProps> = ({
                     <span className="text-slate-400 text-[11px] shrink-0">({o.buyer.code})</span>
                   </div>
                   <div className="text-[11px] text-slate-500 shrink-0">
-                    Current: <span className="font-semibold text-slate-700">{formatDate(o.exFactoryDate)}</span>
+                    {isTa ? 'தற்போது:' : 'Current:'} <span className="font-semibold text-slate-700">{formatDate(o.exFactoryDate)}</span>
                   </div>
                 </div>
               ))}
@@ -271,7 +275,9 @@ export const BulkShiftModal: React.FC<BulkShiftModalProps> = ({
           <div className="p-3 bg-sky-50/70 border border-sky-200/80 rounded-xl text-[11px] text-sky-900 flex items-start gap-2.5">
             <Send className="w-4 h-4 text-sky-700 shrink-0 mt-0.5" />
             <div>
-              Recalibrates milestone schedules across {selectedOrders.length} orders and notifies buyer accounts.
+              {isTa
+                ? `${selectedOrders.length} ஆர்டர்களின் மைல்கல் அட்டவணைகளை மறுசீரமைத்து, வாங்குபவர்களுக்கு அறிவிக்கிறது.`
+                : `Recalibrates milestone schedules across ${selectedOrders.length} orders and notifies buyer accounts.`}
             </div>
           </div>
         </form>
@@ -284,7 +290,7 @@ export const BulkShiftModal: React.FC<BulkShiftModalProps> = ({
             disabled={isSubmitting}
             className="px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200/70 rounded-xl transition cursor-pointer"
           >
-            Cancel
+            {t.common.cancel}
           </button>
           <button
             type="submit"
@@ -293,7 +299,7 @@ export const BulkShiftModal: React.FC<BulkShiftModalProps> = ({
             className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-500 active:scale-95 rounded-xl shadow-xs transition cursor-pointer disabled:opacity-50"
           >
             {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            <span>Apply Shift ({selectedOrders.length} POs)</span>
+            <span>{isTa ? `மாற்றத்தைப் பயன்படுத்து (${selectedOrders.length} ஆர்டர்கள்)` : `Apply Shift (${selectedOrders.length} POs)`}</span>
           </button>
         </div>
       </div>

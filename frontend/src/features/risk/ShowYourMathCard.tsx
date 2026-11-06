@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { MathExplanationPayload, RiskLevel, RateSimulationResult } from '../../types';
+import { useLanguage } from '../../hooks/useLanguage';
 import {
   Sliders,
   TrendingUp,
@@ -52,6 +53,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
   styleName,
   stageName,
 }) => {
+  const { lang, isTa, t } = useLanguage();
   const isCompleted = Boolean(
     isCompletedProp ||
     mathBreakdown.remainingPieces === 0 ||
@@ -213,23 +215,23 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-emerald-950 uppercase tracking-wide">
-                  Stage Completed
+                  {isTa ? 'நிலை முடிந்தது' : 'Stage Completed'}
                 </span>
                 <span className="text-[10px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-300">
-                  0 pcs / day reqd
+                  0 {isTa ? 'துண்டுகள்/நாள் தேவை' : 'pcs / day reqd'}
                 </span>
               </div>
               <div className="text-[11px] text-emerald-800 font-medium">
-                Production target met • 0 pcs remaining for this milestone
+                {isTa ? 'உற்பத்தி இலக்கு எட்டப்பட்டது • இந்த மைல்கல்லுக்கு 0 துண்டுகள் மீதம்' : 'Production target met • 0 pcs remaining for this milestone'}
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-3 self-end sm:self-auto">
             <div className="text-right">
-              <div className="text-[10px] uppercase font-bold text-slate-400">Final Pace</div>
+              <div className="text-[10px] uppercase font-bold text-slate-400">{isTa ? 'இறுதி வேகம்' : 'Final Pace'}</div>
               <div className="text-xs font-mono font-bold text-slate-800">
-                {actualRollingRate} pcs/day
+                {actualRollingRate} {isTa ? 'துண்டுகள்/நாள்' : 'pcs/day'}
               </div>
             </div>
 
@@ -273,23 +275,23 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
             {copiedMemo ? (
               <>
                 <Check className="w-3 h-3 text-emerald-600" />
-                <span className="text-emerald-700 font-bold">Copied!</span>
+                <span className="text-emerald-700 font-bold">{isTa ? 'நகலெடுக்கப்பட்டது!' : 'Copied!'}</span>
               </>
             ) : (
               <>
                 <Copy className="w-3 h-3 text-slate-500" />
-                <span>Copy Summary</span>
+                <span>{isTa ? 'சுருக்கத்தை நகலெடு' : 'Copy Summary'}</span>
               </>
             )}
           </button>
 
           <div className="flex items-center gap-3">
             <span className="text-slate-500 text-[11px]">
-              Completed on Schedule • Buffers Preserved
+              {isTa ? 'அட்டவணைப்படி முடிந்தது • இடைவெளிகள் பாதுகாக்கப்பட்டன' : 'Completed on Schedule • Buffers Preserved'}
             </span>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
               <CheckCircle2 className="w-3 h-3 text-emerald-700" />
-              Completed
+              {isTa ? 'முடிந்தது' : 'Completed'}
             </span>
           </div>
         </div>
@@ -308,10 +310,10 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
         <div className="flex flex-col justify-between bg-slate-50/50 p-2.5 rounded-xl border border-slate-100">
           <div className="flex items-center justify-between mb-1 pb-1 border-b border-slate-200/60">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">
-              Formula 1: Required Run-Rate
+              {isTa ? 'சூத்திரம் 1: தேவையான உற்பத்தி விகிதம்' : 'Formula 1: Required Run-Rate'}
             </span>
             <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">
-              Target pace to ship
+              {isTa ? 'கப்பல் ஏற்றுமதிக்கான இலக்கு வேகம்' : 'Target pace to ship'}
             </span>
           </div>
 
@@ -319,7 +321,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
             <span className="text-slate-500 font-sans font-medium text-xs shrink-0">Req =</span>
             <div className="inline-flex flex-col items-center leading-tight shrink-0">
               <span className="border-b border-slate-500 px-1.5 pb-0.5 text-slate-900 text-xs font-bold">
-                {mathBreakdown.remainingPieces.toLocaleString()} pcs
+                {mathBreakdown.remainingPieces.toLocaleString()} {t.common.pieces}
               </span>
               <span className="pt-0.5 text-slate-600 text-[10px]">
                 {mathBreakdown.workingDaysTotal}d − {mathBreakdown.downstreamBufferDays}d
@@ -327,12 +329,12 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
             </div>
             <span className="text-xs text-slate-400 font-light shrink-0">=</span>
             <span className="text-sm sm:text-base font-black text-sky-900 tracking-tight shrink-0">
-              {requiredDailyRate.toLocaleString()} <span className="text-[10px] font-sans font-bold text-sky-700">pcs/day</span>
+              {requiredDailyRate.toLocaleString()} <span className="text-[10px] font-sans font-bold text-sky-700">{isTa ? 'துண்டுகள்/நாள்' : 'pcs/day'}</span>
             </span>
           </div>
 
           <div className="text-[10px] sm:text-[11px] text-slate-500 font-mono text-center tracking-wide">
-            Remaining: <strong className="text-slate-800">{mathBreakdown.remainingPieces.toLocaleString()} pcs</strong> in <strong className="text-slate-800">{mathBreakdown.workingDaysTotal - mathBreakdown.downstreamBufferDays}</strong> working days
+            {isTa ? 'மீதம்:' : 'Remaining:'} <strong className="text-slate-800">{mathBreakdown.remainingPieces.toLocaleString()} {t.common.pieces}</strong> ({mathBreakdown.workingDaysTotal - mathBreakdown.downstreamBufferDays} {isTa ? 'வேலை நாட்களில்' : 'working days'})
           </div>
         </div>
 
@@ -340,10 +342,10 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
         <div className="flex flex-col justify-between bg-slate-50/50 p-2.5 rounded-xl border border-slate-100">
           <div className="flex items-center justify-between mb-1 pb-1 border-b border-slate-200/60">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">
-              Formula 2: Actual Rate (3-Day WMA)
+              {isTa ? 'சூத்திரம் 2: உண்மையான விகிதம் (3-நாள் WMA)' : 'Formula 2: Actual Rate (3-Day WMA)'}
             </span>
             <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">
-              Floor pace
+              {isTa ? 'தள வேகம்' : 'Floor pace'}
             </span>
           </div>
 
@@ -435,7 +437,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
             }`}
           >
             <Sliders className={`w-3.5 h-3.5 ${showSimulator ? 'text-sky-300' : 'text-sky-600'}`} />
-            <span>{showSimulator ? 'Close Simulator' : 'Simulator'}</span>
+            <span>{showSimulator ? (isTa ? 'உருவகப்படுத்துதலை மூடு' : 'Close Simulator') : (isTa ? 'உருவகப்படுத்துதல்' : 'Simulator')}</span>
           </button>
 
           <button
@@ -447,12 +449,12 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
             {copiedMemo ? (
               <>
                 <Check className="w-3 h-3 text-emerald-600" />
-                <span className="text-emerald-700 font-bold">Copied Memo!</span>
+                <span className="text-emerald-700 font-bold">{isTa ? 'நகலெடுக்கப்பட்டது!' : 'Copied Memo!'}</span>
               </>
             ) : (
               <>
                 <Copy className="w-3 h-3 text-slate-500" />
-                <span>Copy Standup Memo</span>
+                <span>{isTa ? 'குறிப்பை நகலெடு' : 'Copy Standup Memo'}</span>
               </>
             )}
           </button>
@@ -461,7 +463,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
         {/* Status Metrics Inline */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
           <div className="text-slate-600 text-[11px]">
-            Projected Finish:{' '}
+            {isTa ? 'கணிக்கப்பட்ட முடிவு:' : 'Projected Finish:'}{' '}
             <strong className="text-slate-900 font-bold ml-0.5">
               {formatDate(activeResult.projectedCompletionDate)}
             </strong>
@@ -469,11 +471,11 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
 
           {activeResult.daysLate > 0 ? (
             <span className="text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded text-[11px] border border-rose-200">
-              {activeResult.daysLate}d Late
+              {activeResult.daysLate} {isTa ? 'நாள் தாமதம்' : 'd Late'}
             </span>
           ) : (
             <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded text-[11px] border border-emerald-200">
-              On Schedule
+              {isTa ? 'சரியான அட்டவணையில்' : 'On Schedule'}
             </span>
           )}
 
@@ -497,7 +499,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
           {activeResult.financialExposureRupees > 0 && (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300">
               <ShieldAlert className="w-3 h-3 text-amber-600" />
-              ₹{activeResult.financialExposureRupees.toLocaleString()} At Risk
+              ₹{activeResult.financialExposureRupees.toLocaleString()} {isTa ? 'ஆபத்தில்' : 'At Risk'}
             </span>
           )}
         </div>
@@ -509,7 +511,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
           <div className="flex items-center justify-between pb-1 border-b border-slate-200/60">
             <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
               <TrendingUp className="w-3.5 h-3.5 text-sky-600" />
-              Simulate Output Run-Rate Pace
+              {isTa ? 'உற்பத்தி வேகத்தை உருவகப்படுத்து' : 'Simulate Output Run-Rate Pace'}
             </span>
             <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-lg border border-slate-300 shadow-2xs">
               <input
@@ -521,7 +523,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
                 onChange={(e) => handleSliderChange(Math.max(1, Number(e.target.value) || 0))}
                 className="w-16 font-mono text-xs font-bold text-[#0C2D48] text-right focus:outline-none"
               />
-              <span className="text-[11px] font-bold text-slate-500">pcs/day</span>
+              <span className="text-[11px] font-bold text-slate-500">{isTa ? 'துண்டுகள்/நாள்' : 'pcs/day'}</span>
             </div>
           </div>
 

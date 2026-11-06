@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { TnaMilestone, Stage } from '../../types';
+import { useLanguage } from '../../hooks/useLanguage';
+import { translateStage } from '../supervisor/supervisorTranslations';
 import {
   CheckCircle2,
   Clock,
@@ -72,7 +74,24 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
   milestones,
   currentStage,
 }) => {
+  const { lang, isTa, t } = useLanguage();
   const sorted = [...milestones].sort((a, b) => a.sequenceOrder - b.sequenceOrder);
+
+  const getDepartment = (stage: Stage) => {
+    if (lang === 'ta') {
+      const deptsTa: Record<Stage, string> = {
+        KNITTING: 'நூல் முதல் துணி பின்னல்',
+        DYEING_WASHING: 'சலவை & மென்மையாக்குதல்',
+        PRINTING: 'மார்பு அச்சு & எம்பிராய்டரி',
+        CUTTING: 'பேட்டர்ன் & துணி வெட்டுதல்',
+        STITCHING: 'தையல் லைன்கள் & அசெம்பிளி',
+        CHECKING: 'இன்லைன் தர பரிசோதனை',
+        FINISHING: 'அயர்னிங் & கார்ட்டன் பேக்கிங்',
+      };
+      return deptsTa[stage] || stage;
+    }
+    return STAGE_METADATA[stage]?.department || stage;
+  };
 
   // Default selected stage to active stage or first milestone
   const activeIndex = sorted.findIndex((m) => m.stage === currentStage);
@@ -114,21 +133,21 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
         <div className="flex items-center gap-2.5 flex-wrap">
           <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            {totalStages}-Stage Time & Action Pipeline
+            {totalStages}-{t.tnaPipeline.title}
           </h3>
           <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
-            {hasPrintingStage ? '7 Stages (Includes Subcontracted Print)' : '6 Stages (Solid Dyed — Print Skipped)'}
+            {hasPrintingStage ? t.tnaPipeline.includesPrint : t.tnaPipeline.printSkipped}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 text-[11px] sm:text-xs font-semibold text-slate-500">
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Completed
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> {t.tnaPipeline.completed}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span> In Progress
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span> {t.tnaPipeline.inProgress}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-slate-200"></span> Pending
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-200"></span> {t.tnaPipeline.pending}
           </span>
         </div>
       </div>
@@ -232,25 +251,25 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
             {/* Inner Circular Hub Details (pointer-events-none so hover/clicks pass to SVG) */}
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 pointer-events-none">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Pipeline Health
+                {isTa ? 'பைப்லைன் நலம்' : 'Pipeline Health'}
               </span>
               <span className="text-3xl font-mono font-black text-slate-900 tracking-tight my-0.5">
                 {overallAvgPct}%
               </span>
               <span className="text-xs font-bold text-sky-700 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200">
-                Stage {selectedMilestone?.sequenceOrder || 1} of {totalStages}
+                {isTa ? `நிலை ${selectedMilestone?.sequenceOrder || 1} / ${totalStages}` : `Stage ${selectedMilestone?.sequenceOrder || 1} of ${totalStages}`}
               </span>
               <span className="text-[11px] font-semibold text-slate-600 mt-1 max-w-[140px] truncate">
-                {selectedMeta.label}
+                {translateStage(selectedMilestone.stage, lang)}
               </span>
             </div>
           </div>
 
           <span className="text-[11px] text-slate-400 mt-2 font-medium">
             {hoveredIndex !== null ? (
-              <span className="text-sky-700 font-semibold">Click to inspect this stage</span>
+              <span className="text-sky-700 font-semibold">{isTa ? 'இந்த நிலையைக் காண கிளிக் செய்க' : 'Click to inspect this stage'}</span>
             ) : (
-              'Click any segment to inspect stage lead time & progress'
+              isTa ? 'முன்னேற்றத்தைக் காண ஏதேனும் பகுதியைத் தேர்ந்தெடுக்கவும்' : 'Click any segment to inspect stage lead time & progress'
             )}
           </span>
         </div>
@@ -268,11 +287,11 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-xs font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded shrink-0">
-                    Stage {selectedMilestone.sequenceOrder}
+                    {isTa ? `நிலை ${selectedMilestone.sequenceOrder}` : `Stage ${selectedMilestone.sequenceOrder}`}
                   </span>
-                  <h4 className="text-base font-bold text-slate-900 truncate">{selectedMeta.label}</h4>
+                  <h4 className="text-base font-bold text-slate-900 truncate">{translateStage(selectedMilestone.stage, lang)}</h4>
                 </div>
-                <div className="text-xs text-slate-500 truncate">{selectedMeta.department}</div>
+                <div className="text-xs text-slate-500 truncate">{getDepartment(selectedMilestone.stage)}</div>
               </div>
             </div>
 
@@ -284,7 +303,7 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
                     : 'bg-slate-200 text-slate-700'
                 }`}
               >
-                {selectedMilestone.bufferDaysAhead}d Buffer Reserved
+                {selectedMilestone.bufferDaysAhead}{isTa ? ' நாள் இடைவெளி ஒதுக்கப்பட்டது' : 'd Buffer Reserved'}
               </span>
             </div>
           </div>
@@ -292,7 +311,7 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
           {/* Progress Bar & Piece Counter */}
           <div>
             <div className="flex items-center justify-between text-xs mb-1.5">
-              <span className="font-semibold text-slate-700">Stage Output Completion</span>
+              <span className="font-semibold text-slate-700">{isTa ? 'நிலை வெளியீடு நிறைவு' : 'Stage Output Completion'}</span>
               <span className="font-mono font-bold text-slate-900 text-sm">
                 {selectedMilestone.targetQuantity > 0
                   ? Math.min(100, Math.round((selectedMilestone.completedQuantity / selectedMilestone.targetQuantity) * 100))
@@ -314,10 +333,10 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
               ></div>
             </div>
             <div className="flex items-center justify-between text-xs text-slate-500 font-medium mt-1.5">
-              <span>Completed Pieces</span>
+              <span>{isTa ? 'முடிந்த துண்டுகள்' : 'Completed Pieces'}</span>
               <span className="font-mono font-bold text-slate-800">
                 {selectedMilestone.completedQuantity.toLocaleString()} /{' '}
-                {selectedMilestone.targetQuantity.toLocaleString()} pcs
+                {selectedMilestone.targetQuantity.toLocaleString()} {t.common.pieces}
               </span>
             </div>
           </div>
@@ -326,7 +345,7 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
           <div className="grid grid-cols-2 gap-3 pt-2">
             <div className="p-3 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
               <div className="text-[10px] uppercase font-bold text-slate-400 mb-1 flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" /> Planned Window
+                <Calendar className="w-3.5 h-3.5 text-slate-400" /> {isTa ? 'திட்டமிடப்பட்ட காலம்' : 'Planned Window'}
               </div>
               <div className="text-xs font-bold text-slate-800">
                 {formatDate(selectedMilestone.plannedStart)} – {formatDate(selectedMilestone.plannedEnd)}
@@ -335,10 +354,10 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
 
             <div className="p-3 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
               <div className="text-[10px] uppercase font-bold text-slate-400 mb-1 flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-slate-400" /> Downstream Protection
+                <Clock className="w-3.5 h-3.5 text-slate-400" /> {isTa ? 'அடுத்த கட்ட பாதுகாப்பு' : 'Downstream Protection'}
               </div>
               <div className="text-xs font-bold text-slate-800">
-                {selectedMilestone.bufferDaysAhead} Working Days Lead Time
+                {selectedMilestone.bufferDaysAhead} {isTa ? 'வேலை நாட்கள் முன்னணி நேரம்' : 'Working Days Lead Time'}
               </div>
             </div>
           </div>
@@ -348,7 +367,9 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
               <span>
-                Schedule Overrun: Buffer compressed by {selectedMilestone.bufferCompressionDays} working days.
+                {isTa
+                  ? `அட்டவணை தாமதம்: இடைவெளி ${selectedMilestone.bufferCompressionDays} வேலை நாட்கள் குறைக்கப்பட்டது.`
+                  : `Schedule Overrun: Buffer compressed by ${selectedMilestone.bufferCompressionDays} working days.`}
               </span>
             </div>
           )}
@@ -356,7 +377,7 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
           {/* Quick Segment Selector Buttons */}
           <div className="pt-2 border-t border-slate-200/80">
             <div className="text-[10px] uppercase font-bold text-slate-400 mb-2 tracking-wider">
-              Select Stage to Inspect
+              {isTa ? 'பார்வையிட வேண்டிய கட்டத்தைத் தேர்ந்தெடுக்கவும்' : 'Select Stage to Inspect'}
             </div>
             <div
               className="grid gap-1.5"

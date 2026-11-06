@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../../services/api';
+import { useLanguage } from '../../hooks/useLanguage';
+import { translateUnit } from '../supervisor/supervisorTranslations';
 import {
   Clock,
   AlertTriangle,
@@ -46,6 +48,7 @@ interface ShiftCutoffData {
 }
 
 export const ShiftCutoffBanner: React.FC = () => {
+  const { lang, isTa, t } = useLanguage();
   const [data, setData] = useState<ShiftCutoffData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSimulated, setIsSimulated] = useState(false);
@@ -120,10 +123,12 @@ export const ShiftCutoffBanner: React.FC = () => {
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="font-bold text-slate-900">
-              Shift Cut-Off Alert (6:00 PM IST):
+              {t.shiftCutoff.alertTitle}
             </span>
             <span className="font-semibold text-amber-900">
-              {data.missingUnitsCount} {data.missingUnitsCount === 1 ? 'Unit' : 'Units'} Missing Today's Daily Update ({data.missingOrdersCount} POs)
+              {isTa
+                ? `${data.missingUnitsCount} பிரிவுகளில் இன்றைய தினசரி புதுப்பிப்பு விடுபட்டுள்ளது (${data.missingOrdersCount} ஆர்டர்கள்)`
+                : `${data.missingUnitsCount} ${data.missingUnitsCount === 1 ? 'Unit' : 'Units'} Missing Today's Daily Update (${data.missingOrdersCount} POs)`}
             </span>
             <span className="text-slate-400 font-mono text-[11px] hidden sm:inline">
               • {data.currentTimeIst}
@@ -143,7 +148,7 @@ export const ShiftCutoffBanner: React.FC = () => {
             }`}
             title="Toggle 6:00 PM cut-off simulation for testing"
           >
-            {isSimulated ? 'Simulated 6PM Active' : 'Simulate 6PM'}
+            {isSimulated ? (isTa ? 'மாலை 6 மணி உருவகப்படுத்தப்பட்டது' : 'Simulated 6PM Active') : t.shiftCutoff.simulate6pm}
           </button>
 
           {/* Refresh button */}
@@ -163,7 +168,7 @@ export const ShiftCutoffBanner: React.FC = () => {
             onClick={() => setIsExpanded(!isExpanded)}
             className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#0C2D48] hover:bg-[#143D60] text-white rounded-lg text-[11px] font-bold transition shadow-2xs cursor-pointer"
           >
-            <span>{isExpanded ? 'Hide' : 'Review & Nudge'}</span>
+            <span>{isExpanded ? t.shiftCutoff.hide : (isTa ? 'பார்வையிடு & நினைவூட்டு' : 'Review & Nudge')}</span>
             {isExpanded ? (
               <ChevronUp className="w-3 h-3" />
             ) : (
@@ -187,16 +192,16 @@ export const ShiftCutoffBanner: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 font-bold text-slate-900 truncate">
                       <Building2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                      <span className="truncate">{group.unitName}</span>
+                      <span className="truncate">{translateUnit(group.unitName, lang)}</span>
                     </div>
                     <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-200 shrink-0">
-                      {group.missingOrdersCount} POs pending
+                      {group.missingOrdersCount} {t.shiftCutoff.posPending}
                     </span>
                   </div>
 
                   <div className="text-[11px] text-slate-600 flex items-center justify-between">
                     <span>
-                      Supervisor: <strong className="text-slate-800">{group.supervisorName}</strong>
+                      {t.shiftCutoff.supervisor} <strong className="text-slate-800">{group.supervisorName}</strong>
                     </span>
                     <span className="font-mono text-slate-400 text-[10px]">
                       +{group.supervisorPhone}
@@ -229,12 +234,12 @@ export const ShiftCutoffBanner: React.FC = () => {
                     {isSent ? (
                       <>
                         <Check className="w-3 h-3 text-emerald-600" />
-                        <span>Nudge Dispatched</span>
+                        <span>{isTa ? 'நினைவூட்டல் அனுப்பப்பட்டது' : 'Nudge Dispatched'}</span>
                       </>
                     ) : (
                       <>
                         <Send className="w-3 h-3" />
-                        <span>Send WhatsApp Nudge (Tamil + English)</span>
+                        <span>{t.shiftCutoff.sendWhatsappNudge}</span>
                       </>
                     )}
                   </button>

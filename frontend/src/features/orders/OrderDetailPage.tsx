@@ -33,8 +33,21 @@ import { SizeBreakdownVisualizer } from './SizeBreakdownVisualizer';
 import { ShowYourMathCard } from '../risk/ShowYourMathCard';
 import { RiskReviewCard } from '../risk/RiskReviewCard';
 import { getSafeImageUrl, handleImageError } from '../../utils/imageUtils';
+import { useLanguage } from '../../hooks/useLanguage';
+import {
+  translateStage,
+  translateUnit,
+  translateBuyer,
+  translateStyle,
+  translateReason,
+  translateAction,
+  translateRole,
+  formatDateLocalized,
+} from '../supervisor/supervisorTranslations';
 
 export const OrderDetailPage: React.FC = () => {
+  const { lang, isTa, t } = useLanguage();
+  const od = t.orderDetails;
   const { id } = useParams<{ id: string }>();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -398,8 +411,8 @@ export const OrderDetailPage: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <div className="text-[11px] font-semibold text-slate-400">Export Orders / Details</div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{order.style}</h1>
+            <div className="text-[11px] font-semibold text-slate-400">{od.breadcrumb}</div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{translateStyle(order.style, lang)}</h1>
           </div>
         </div>
 
@@ -419,7 +432,7 @@ export const OrderDetailPage: React.FC = () => {
             className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs shadow-xs transition cursor-pointer"
           >
             <Calendar className="w-4 h-4" />
-            <span>Shift Ex-Factory Date</span>
+            <span>{od.shiftExFactoryDate}</span>
           </button>
 
           <button
@@ -428,7 +441,7 @@ export const OrderDetailPage: React.FC = () => {
             title="Manually advance stage or short-close production"
           >
             <FastForward className="w-4 h-4 text-sky-400" />
-            <span>Advance Stage Manually</span>
+            <span>{od.advanceStageManually}</span>
           </button>
         </div>
       </div>
@@ -436,9 +449,9 @@ export const OrderDetailPage: React.FC = () => {
       {/* Primary KPI Header Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Buyer & Destination</div>
+          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{od.buyerAndDestination}</div>
           <div className="text-base font-bold text-slate-800 mt-1">
-            {order.buyer.name.replace(/\s*\([^)]*\)$/, '')}
+            {translateBuyer(order.buyer.name.replace(/\s*\([^)]*\)$/, ''), lang)}
           </div>
           <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
             <Building2 className="w-3.5 h-3.5 text-slate-400" />
@@ -447,34 +460,34 @@ export const OrderDetailPage: React.FC = () => {
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Manufacturing Unit</div>
-          <div className="text-base font-bold text-slate-800 mt-1">{order.unit.name}</div>
+          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{od.manufacturingUnit}</div>
+          <div className="text-base font-bold text-slate-800 mt-1">{translateUnit(order.unit.name, lang)}</div>
           <div className="text-xs text-slate-500 mt-0.5">
             <span
               className={`inline-block w-2 h-2 rounded-full mr-1.5 ${
                 order.unit.type === 'SUBCONTRACTOR' ? 'bg-purple-500' : 'bg-emerald-500'
               }`}
             ></span>
-            {order.unit.type === 'SUBCONTRACTOR' ? 'Subcontract Unit' : 'Primary Factory'}
+            {order.unit.type === 'SUBCONTRACTOR' ? od.subcontractUnit : od.primaryFactory}
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ex-Factory Deadline</div>
-          <div className="text-base font-bold text-slate-800 mt-1">{formatDate(order.exFactoryDate)}</div>
+          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{od.exFactoryDeadline}</div>
+          <div className="text-base font-bold text-slate-800 mt-1">{formatDateLocalized(order.exFactoryDate, lang)}</div>
           <div className="text-xs text-amber-600 font-semibold flex items-center gap-1 mt-0.5">
             <Clock className="w-3.5 h-3.5" />
-            {order.workingDaysLeft} working days left (CW {order.shipWeek})
+            {order.workingDaysLeft} {od.workingDaysLeft} ({t.common.cw} {order.shipWeek})
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Order Value (FOB)</div>
+          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{od.orderValueFob}</div>
           <div className="text-base font-bold text-slate-800 mt-1 font-mono">
             ₹{(order.totalOrderValue || 0).toLocaleString()}
           </div>
           <div className="text-xs text-slate-500 mt-0.5">
-            {order.currency} {order.fobPricePerPiece}/pc ({order.totalQuantity.toLocaleString()} pcs)
+            {order.currency} {order.fobPricePerPiece}/{isTa ? 'துண்டு' : 'pc'} ({order.totalQuantity.toLocaleString()} {od.pcs})
           </div>
         </div>
       </div>
@@ -495,7 +508,7 @@ export const OrderDetailPage: React.FC = () => {
             <div className="flex items-center gap-1.5">
               <Zap className="w-4 h-4 text-amber-600 shrink-0" />
               <span className="text-xs font-bold text-amber-950 uppercase tracking-wide">
-                Floor Rebalance Directive
+                {od.floorRebalanceDirective}
               </span>
             </div>
             <p className="text-xs text-amber-900 font-medium leading-relaxed">
@@ -517,12 +530,12 @@ export const OrderDetailPage: React.FC = () => {
             {directiveSent ? (
               <>
                 <CheckCircle className="w-4 h-4" />
-                Directive Dispatched
+                {od.directiveDispatched}
               </>
             ) : (
               <>
                 <Send className="w-3.5 h-3.5" />
-                Dispatch Directive to Floor
+                {od.dispatchDirectiveToFloor}
               </>
             )}
           </button>
@@ -535,7 +548,7 @@ export const OrderDetailPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
             <h4 className="text-sm font-bold text-rose-900">
-              Critical Path Alert: {order.criticalPathAlert.stageDisplayName} Overrun ({order.criticalPathAlert.bufferCompressionDays} Working Days Buffer Compressed)
+              {od.criticalPathAlert}: {translateStage(order.criticalPathAlert.stage, lang)} Overrun ({order.criticalPathAlert.bufferCompressionDays} {od.bufferCompressed})
             </h4>
           </div>
           <p className="text-xs text-rose-800 ml-7 leading-relaxed">
@@ -553,10 +566,10 @@ export const OrderDetailPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
-              Human-in-the-Loop Review Gate ({orderAlerts.length} Alert{orderAlerts.length > 1 ? 's' : ''})
+              {od.humanReviewGate} ({orderAlerts.length} {od.alert}{orderAlerts.length > 1 ? (isTa ? 'கள்' : 's') : ''})
               {orderAlerts.some((a) => a.approvalStatus === 'PENDING_REVIEW') && (
                 <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-900 text-[10px] font-black animate-pulse">
-                  Action Required
+                  {od.actionRequired}
                 </span>
               )}
             </h3>
@@ -564,7 +577,7 @@ export const OrderDetailPage: React.FC = () => {
             {/* Pagination Controls when multiple review cards exist */}
             <div className="flex items-center gap-2 self-start sm:self-auto">
               <span className="text-xs text-slate-500 font-semibold">
-                Alert {Math.min(currentAlertIndex + 1, orderAlerts.length)} of {orderAlerts.length}
+                {od.alert} {Math.min(currentAlertIndex + 1, orderAlerts.length)} {od.of} {orderAlerts.length}
               </span>
               {orderAlerts.length > 1 && (
                 <div className="flex items-center gap-1">
@@ -573,7 +586,7 @@ export const OrderDetailPage: React.FC = () => {
                     onClick={() => setCurrentAlertIndex((i) => Math.max(0, i - 1))}
                     disabled={currentAlertIndex === 0}
                     className="p-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 shadow-2xs transition cursor-pointer"
-                    title="Previous alert"
+                    title={od.previousAlert}
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
@@ -582,7 +595,7 @@ export const OrderDetailPage: React.FC = () => {
                     onClick={() => setCurrentAlertIndex((i) => Math.min(orderAlerts.length - 1, i + 1))}
                     disabled={currentAlertIndex >= orderAlerts.length - 1}
                     className="p-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 shadow-2xs transition cursor-pointer"
-                    title="Next alert"
+                    title={od.nextAlert}
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -597,6 +610,7 @@ export const OrderDetailPage: React.FC = () => {
                 key={orderAlerts[currentAlertIndex].id}
                 alert={orderAlerts[currentAlertIndex]}
                 onAlertUpdated={() => order && fetchOrderAlerts(order.id)}
+                lang={lang}
               />
             )}
           </div>
@@ -609,10 +623,10 @@ export const OrderDetailPage: React.FC = () => {
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
-              Active Stage Run-Rate Analysis ({order.activeStage.replace(/_/g, ' ')})
+              {od.activeStageRunRate} ({translateStage(order.activeStage, lang)})
             </h3>
             <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-mono">
-              CW {order.shipWeek}
+              {t.common.cw} {order.shipWeek}
             </span>
           </div>
           <ShowYourMathCard
@@ -631,7 +645,7 @@ export const OrderDetailPage: React.FC = () => {
             }
             poNumber={order.poNumber}
             styleName={order.style}
-            stageName={order.activeStage.replace(/_/g, ' ')}
+            stageName={translateStage(order.activeStage, lang)}
           />
         </div>
       )}
@@ -646,16 +660,16 @@ export const OrderDetailPage: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-900">
-                  Buyer Daily Sign-offs & Floor Instructions
+                  {od.buyerDailySignoffs}
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Direct responses received from {order.buyer.name} sourcing team
+                  {od.directResponsesFrom} {translateBuyer(order.buyer.name, lang)}
                 </p>
               </div>
             </div>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-white text-sky-800 border border-sky-200 shadow-2xs">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              {order.auditEvents.filter((ev) => ev.action === 'BUYER_DAILY_RESPONSE').length} Verified Response{order.auditEvents.filter((ev) => ev.action === 'BUYER_DAILY_RESPONSE').length > 1 ? 's' : ''}
+              {order.auditEvents.filter((ev) => ev.action === 'BUYER_DAILY_RESPONSE').length} {od.verifiedResponses}
             </span>
           </div>
 
@@ -705,24 +719,24 @@ export const OrderDetailPage: React.FC = () => {
             <Layers className="w-4 h-4 text-sky-600" />
             <div>
               <h3 className="text-base font-bold text-slate-800">
-                Floor Work Logs & Shift Production Updates
+                {od.floorWorkLogsTitle}
               </h3>
               <p className="text-xs text-slate-500">
-                Live chronological updates logged by floor supervisors, bilingual voice notes & defect photos
+                {od.floorWorkLogsSubtitle}
               </p>
             </div>
           </div>
           <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-sky-50 text-sky-800 border border-sky-200">
-            {order.productionUpdates?.length || 0} Shift Logs
+            {order.productionUpdates?.length || 0} {od.shiftLogs}
           </span>
         </div>
 
         {(!order.productionUpdates || order.productionUpdates.length === 0) ? (
           <div className="text-center py-8 px-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
             <Clock className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-            <p className="text-sm font-semibold text-slate-700">No shift updates recorded yet</p>
+            <p className="text-sm font-semibold text-slate-700">{od.noShiftUpdates}</p>
             <p className="text-xs text-slate-400 mt-0.5">
-              Floor supervisors can log completed quantities, defect notes, and Tamil voice remarks from the Supervisor PWA.
+              {od.noShiftUpdatesSubtext}
             </p>
           </div>
         ) : (
@@ -755,7 +769,7 @@ export const OrderDetailPage: React.FC = () => {
                   ? update.supervisor.name
                       .replace(' Floor Supervisor', '')
                       .replace(' Merchandiser', ' (M)')
-                  : 'Supervisor';
+                  : (isTa ? 'மேற்பார்வையாளர்' : 'Supervisor');
 
                 const cleanNote = (() => {
                   if (noteText.includes('[English:')) {
@@ -780,7 +794,7 @@ export const OrderDetailPage: React.FC = () => {
                         <span>{dateStr}, {timeStr}</span>
                       </div>
                       <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-[#0C2D48] text-white">
-                        {update.stage.replace(/_/g, ' ')}
+                        {translateStage(update.stage, lang)}
                       </span>
                     </div>
 
@@ -791,11 +805,11 @@ export const OrderDetailPage: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className="inline-flex items-center font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-xs">
-                          +{update.goodQuantity.toLocaleString()} pcs
+                          +{update.goodQuantity.toLocaleString()} {od.pcs}
                         </span>
                         {update.rejectedQuantity > 0 && (
                           <span className="inline-flex items-center font-mono font-semibold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200 text-[10px]">
-                            {update.rejectedQuantity} rej
+                            {update.rejectedQuantity} {isTa ? 'நிராகரிப்பு' : 'rej'}
                           </span>
                         )}
                       </div>
@@ -805,10 +819,10 @@ export const OrderDetailPage: React.FC = () => {
                     <div className="flex items-center justify-between gap-2 text-[11px]">
                       {classification ? (
                         <span className="px-2 py-0.5 rounded font-bold text-[10px] uppercase bg-amber-50 text-amber-800 border border-amber-200 truncate max-w-[170px]">
-                          {classification.category.replace(/_/g, ' ')}
+                          {translateReason(classification.category, lang)}
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-[10px]">Normal Shift Output</span>
+                        <span className="text-slate-400 text-[10px]">{od.normalShiftOutput}</span>
                       )}
 
                       <div className="flex items-center gap-2">
@@ -826,10 +840,10 @@ export const OrderDetailPage: React.FC = () => {
                             className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 text-[10px] font-bold"
                           >
                             <Camera className="w-3 h-3 text-sky-600" />
-                            <span>{update.photos.length} Photo{update.photos.length > 1 ? 's' : ''}</span>
+                            <span>{update.photos.length} {update.photos.length > 1 ? t.common.photos : t.common.photo}</span>
                           </button>
                         )}
-                        <span className="text-slate-500 font-medium text-[10px]">By {supervisorName}</span>
+                        <span className="text-slate-500 font-medium text-[10px]">{t.common.by} {supervisorName}</span>
                       </div>
                     </div>
 
@@ -859,14 +873,14 @@ export const OrderDetailPage: React.FC = () => {
                 </colgroup>
                 <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
                   <tr>
-                    <th className="py-3 px-3 text-slate-100">Date / Time</th>
-                    <th className="py-3 px-2 text-slate-100">Stage</th>
-                    <th className="py-3 px-2 text-slate-100">Shift · Line</th>
-                    <th className="py-3 px-2 text-right text-slate-100">Output</th>
-                    <th className="py-3 px-3 text-slate-100">Issue Reason</th>
-                    <th className="py-3 px-2 text-slate-100">Logged By</th>
-                    <th className="py-3 px-2 text-center text-slate-100">Proof</th>
-                    <th className="py-3 px-3 text-slate-100">Supervisor Note & AI Summary</th>
+                    <th className="py-3 px-3 text-slate-100">{od.dateTime}</th>
+                    <th className="py-3 px-2 text-slate-100">{od.stage}</th>
+                    <th className="py-3 px-2 text-slate-100">{od.shiftLine}</th>
+                    <th className="py-3 px-2 text-right text-slate-100">{od.output}</th>
+                    <th className="py-3 px-3 text-slate-100">{od.issueReason}</th>
+                    <th className="py-3 px-2 text-slate-100">{od.loggedBy}</th>
+                    <th className="py-3 px-2 text-center text-slate-100">{od.proof}</th>
+                    <th className="py-3 px-3 text-slate-100">{od.supervisorNoteSummary}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -896,7 +910,7 @@ export const OrderDetailPage: React.FC = () => {
                       ? update.supervisor.name
                           .replace(' Floor Supervisor', '')
                           .replace(' Merchandiser', ' (M)')
-                      : 'Supervisor';
+                      : (isTa ? 'மேற்பார்வையாளர்' : 'Supervisor');
 
                     const cleanNote = (() => {
                       if (noteText.includes('[English:')) {
@@ -927,7 +941,7 @@ export const OrderDetailPage: React.FC = () => {
                         {/* 2. Stage */}
                         <td className="py-3 px-2 whitespace-nowrap">
                           <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-900 text-white inline-block shadow-3xs" title={update.stage}>
-                            {update.stage.replace(/_/g, ' ')}
+                            {translateStage(update.stage, lang)}
                           </span>
                         </td>
 
@@ -949,7 +963,7 @@ export const OrderDetailPage: React.FC = () => {
                           </div>
                           {update.rejectedQuantity > 0 && (
                             <div className="text-[10px] text-rose-600 font-bold font-mono mt-0.5">
-                              {update.rejectedQuantity} rej
+                              {update.rejectedQuantity} {isTa ? 'நிராகரிப்பு' : 'rej'}
                             </div>
                           )}
                         </td>
@@ -959,9 +973,9 @@ export const OrderDetailPage: React.FC = () => {
                           {classification ? (
                             <span
                               className="inline-block max-w-full truncate px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-900 border border-amber-200/80"
-                              title={`${classification.category.replace(/_/g, ' ')} (${Math.round(classification.confidenceScore * 100)}%)`}
+                              title={`${translateReason(classification.category, lang)} (${Math.round(classification.confidenceScore * 100)}%)`}
                             >
-                              {classification.category.replace(/_/g, ' ')}
+                              {translateReason(classification.category, lang)}
                             </span>
                           ) : (
                             <span className="text-slate-300 font-mono text-[11px] pl-2">—</span>
@@ -989,7 +1003,7 @@ export const OrderDetailPage: React.FC = () => {
                                 })
                               }
                               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-[10px] font-bold transition cursor-pointer shadow-3xs"
-                              title="View photo proof"
+                              title={t.common.viewProof}
                             >
                               <Camera className="w-3 h-3 text-sky-600" />
                               <span>{update.photos.length}</span>
@@ -1006,7 +1020,7 @@ export const OrderDetailPage: React.FC = () => {
                               {cleanNote}
                             </span>
                           ) : (
-                            <span className="text-slate-400 italic text-[11px]">No notes</span>
+                            <span className="text-slate-400 italic text-[11px]">{od.noNotes}</span>
                           )}
                         </td>
                       </tr>
@@ -1022,9 +1036,9 @@ export const OrderDetailPage: React.FC = () => {
         {order.productionUpdates && order.productionUpdates.length > logLimit && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pt-3 border-t border-slate-100 text-xs">
             <span className="text-slate-500 font-medium">
-              Showing {(logPage - 1) * logLimit + 1} to{' '}
-              {Math.min(logPage * logLimit, order.productionUpdates.length)} of{' '}
-              {order.productionUpdates.length} shift logs
+              {od.showingLogs} {(logPage - 1) * logLimit + 1} -{' '}
+              {Math.min(logPage * logLimit, order.productionUpdates.length)} /{' '}
+              {order.productionUpdates.length}
             </span>
             <div className="flex items-center gap-1.5 flex-wrap">
               <button
@@ -1032,7 +1046,7 @@ export const OrderDetailPage: React.FC = () => {
                 onClick={() => setLogPage((p) => Math.max(1, p - 1))}
                 disabled={logPage <= 1}
                 className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white text-slate-700 shadow-2xs cursor-pointer transition flex items-center justify-center"
-                title="Previous page"
+                title={od.previousAlert}
               >
                 <ChevronLeft className="w-4 h-4 stroke-[2.5] text-slate-800" />
               </button>
@@ -1044,7 +1058,7 @@ export const OrderDetailPage: React.FC = () => {
                 onClick={() => setLogPage((p) => Math.min(totalLogPages, p + 1))}
                 disabled={logPage >= totalLogPages}
                 className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white text-slate-700 shadow-2xs cursor-pointer transition flex items-center justify-center"
-                title="Next page"
+                title={od.nextAlert}
               >
                 <ChevronRight className="w-4 h-4 stroke-[2.5] text-slate-800" />
               </button>
@@ -1059,14 +1073,14 @@ export const OrderDetailPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-sky-600" />
             <div>
-              <h3 className="text-base font-bold text-slate-900 leading-tight">Order Change History</h3>
+              <h3 className="text-base font-bold text-slate-900 leading-tight">{od.orderChangeHistoryTitle}</h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Immutable compliance log of schedule alterations, buyer dispatches, and milestone shifts
+                {od.orderChangeHistorySubtitle}
               </p>
             </div>
           </div>
           <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full border border-slate-200">
-            {order.auditEvents.length} Recorded Changes
+            {order.auditEvents.length} {od.recordedChanges}
           </span>
         </div>
 
@@ -1084,12 +1098,12 @@ export const OrderDetailPage: React.FC = () => {
               </colgroup>
               <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
                 <tr>
-                  <th className="py-3 px-3 text-slate-100">Date & Time</th>
-                  <th className="py-3 px-3 text-slate-100">Action</th>
-                  <th className="py-3 px-3 text-slate-100">Reason</th>
-                  <th className="py-3 px-3 text-slate-100">Change Summary</th>
-                  <th className="py-3 px-3 text-slate-100">User & Role</th>
-                  <th className="py-3 px-3 text-center text-slate-100">Status</th>
+                  <th className="py-3 px-3 text-slate-100">{od.dateTime}</th>
+                  <th className="py-3 px-3 text-slate-100">{od.action}</th>
+                  <th className="py-3 px-3 text-slate-100">{od.reason}</th>
+                  <th className="py-3 px-3 text-slate-100">{od.changeSummary}</th>
+                  <th className="py-3 px-3 text-slate-100">{od.userAndRole}</th>
+                  <th className="py-3 px-3 text-center text-slate-100">{od.status}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-normal">
@@ -1105,39 +1119,12 @@ export const OrderDetailPage: React.FC = () => {
 
                   const friendlyReason =
                     ev.action === 'BUYER_SCHEDULE_NOTIFICATION'
-                      ? 'Automated Dispatch'
+                      ? (isTa ? 'தானியங்கி அறிவிப்பு' : 'Automated Dispatch')
                       : ev.action === 'BUYER_DAILY_RESPONSE'
-                      ? 'Shift Floor Sign-off'
-                      : ev.reasonCode === 'BUYER_REQUEST'
-                      ? 'Buyer Request'
-                      : ev.reasonCode === 'FABRIC_DELAY'
-                      ? 'Fabric Delay'
-                      : ev.reasonCode === 'LABOUR_SHORTAGE'
-                      ? 'Labour Shortage'
-                      : ev.reasonCode === 'MACHINE_BREAKDOWN'
-                      ? 'Machine Breakdown'
-                      : ev.reasonCode === 'POWER_OUTAGE'
-                      ? 'Power Interruption'
-                      : ev.reasonCode === 'QUALITY_HOLD'
-                      ? 'Quality Hold'
-                      : ev.reasonCode === 'SUBCONTRACTOR_DELAY'
-                      ? 'Subcontractor Delay'
-                      : ev.reasonCode === 'INITIAL_PO_CREATION'
-                      ? 'New Order'
-                      : ev.reasonCode || 'Schedule Update';
+                      ? (isTa ? 'ஷிப்ட் தள ஒப்புதல்' : 'Shift Floor Sign-off')
+                      : translateReason(ev.reasonCode, lang);
 
-                  const friendlyAction =
-                    ev.action === 'UPDATE_EX_FACTORY_DATE'
-                      ? 'Ex-Factory Revised'
-                      : ev.action === 'BULK_UPDATE_EX_FACTORY_DATE'
-                      ? 'Bulk Schedule Shift'
-                      : ev.action === 'BUYER_SCHEDULE_NOTIFICATION'
-                      ? 'Buyer Notification'
-                      : ev.action === 'BUYER_DAILY_RESPONSE'
-                      ? 'Buyer Daily Response'
-                      : ev.action === 'CREATE_ORDER'
-                      ? 'Order Created'
-                      : ev.action;
+                  const friendlyAction = translateAction(ev.action, lang);
 
                   return (
                     <tr key={ev.id} className="even:bg-slate-50/70 odd:bg-white hover:bg-sky-50/50 transition-colors">
@@ -1164,16 +1151,16 @@ export const OrderDetailPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-3 font-medium text-slate-700 max-w-0 truncate" title={ev.action === 'BUYER_DAILY_RESPONSE' ? ev.notes || '' : (prev !== '-' ? `${prev} → ${next}` : next)}>
                         {ev.action === 'BUYER_DAILY_RESPONSE'
-                          ? ev.notes || 'Buyer daily sign-off'
+                          ? ev.notes || (isTa ? 'வாங்குபவர் தினசரி ஒப்புதல்' : 'Buyer daily sign-off')
                           : prev !== '-' ? `${prev} → ${next}` : next}
                       </td>
-                      <td className="py-3 px-3 whitespace-nowrap text-slate-600 text-[11px] truncate" title={`${ev.user?.name || 'System'} (${ev.userRole})`}>
-                        {ev.user?.name || 'System'} ({ev.userRole})
+                      <td className="py-3 px-3 whitespace-nowrap text-slate-600 text-[11px] truncate" title={`${ev.user?.name || (isTa ? 'கணினி' : 'System')} (${translateRole(ev.userRole, lang)})`}>
+                        {ev.user?.name || (isTa ? 'கணினி' : 'System')} ({translateRole(ev.userRole, lang)})
                       </td>
                       <td className="py-3 px-3 text-center whitespace-nowrap">
                         <span className="inline-flex items-center gap-1 font-semibold text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                          Logged
+                          {od.logged}
                         </span>
                       </td>
                     </tr>
@@ -1188,9 +1175,9 @@ export const OrderDetailPage: React.FC = () => {
         {order.auditEvents && order.auditEvents.length > auditLimit && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pt-3 border-t border-slate-100 text-xs">
             <span className="text-slate-500 font-medium">
-              Showing {(auditPage - 1) * auditLimit + 1} to{' '}
-              {Math.min(auditPage * auditLimit, order.auditEvents.length)} of{' '}
-              {order.auditEvents.length} recorded changes
+              {od.showingChanges} {(auditPage - 1) * auditLimit + 1} -{' '}
+              {Math.min(auditPage * auditLimit, order.auditEvents.length)} /{' '}
+              {order.auditEvents.length}
             </span>
             <div className="flex items-center gap-1.5 flex-wrap">
               <button
@@ -1198,7 +1185,7 @@ export const OrderDetailPage: React.FC = () => {
                 onClick={() => setAuditPage((p) => Math.max(1, p - 1))}
                 disabled={auditPage <= 1}
                 className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white text-slate-700 shadow-2xs cursor-pointer transition flex items-center justify-center"
-                title="Previous page"
+                title={od.previousAlert}
               >
                 <ChevronLeft className="w-4 h-4 stroke-[2.5] text-slate-800" />
               </button>
@@ -1210,7 +1197,7 @@ export const OrderDetailPage: React.FC = () => {
                 onClick={() => setAuditPage((p) => Math.min(totalAuditPages, p + 1))}
                 disabled={auditPage >= totalAuditPages}
                 className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white text-slate-700 shadow-2xs cursor-pointer transition flex items-center justify-center"
-                title="Next page"
+                title={od.nextAlert}
               >
                 <ChevronRight className="w-4 h-4 stroke-[2.5] text-slate-800" />
               </button>
@@ -1228,9 +1215,9 @@ export const OrderDetailPage: React.FC = () => {
           >
             <div className="bg-[#0C2D48] px-5 sm:px-6 py-3.5 sm:py-4 text-white flex items-center justify-between shrink-0">
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-white">Shift Ex-Factory Delivery Date</h3>
+                <h3 className="text-sm sm:text-base font-bold text-white">{od.shiftDateModalTitle}</h3>
                 <p className="text-[11px] sm:text-xs text-sky-200/80">
-                  Delivery schedule shift and compliance logging
+                  {od.shiftDateModalSubtitle}
                 </p>
               </div>
               <button
@@ -1251,7 +1238,7 @@ export const OrderDetailPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-800 mb-1">
-                  New Ex-Factory Date <span className="text-rose-500">*</span>
+                  {od.selectRevisedDate} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="date"
@@ -1264,7 +1251,7 @@ export const OrderDetailPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-800 mb-1">
-                  Reason for Date Change <span className="text-rose-500">*</span>
+                  {od.primaryRootCause} <span className="text-rose-500">*</span>
                 </label>
                 <select
                   value={reasonCode}
@@ -1272,46 +1259,48 @@ export const OrderDetailPage: React.FC = () => {
                   className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 font-semibold bg-white text-slate-900 shadow-xs"
                   required
                 >
-                  <option className="bg-white text-slate-900" value="BUYER_REQUEST">Buyer Requested Delivery Postponement</option>
-                  <option className="bg-white text-slate-900" value="FABRIC_DELAY">Fabric / Yarn Supply Delay</option>
-                  <option className="bg-white text-slate-900" value="LABOUR_SHORTAGE">Labour / Attendance Shortage</option>
-                  <option className="bg-white text-slate-900" value="MACHINE_BREAKDOWN">Machine Maintenance / Line Breakdown</option>
-                  <option className="bg-white text-slate-900" value="POWER_OUTAGE">Power Outage / Facility Interruption</option>
-                  <option className="bg-white text-slate-900" value="QUALITY_HOLD">Quality Inspection / Shade Approval Hold</option>
-                  <option className="bg-white text-slate-900" value="SUBCONTRACTOR_DELAY">Subcontractor Processing Delay</option>
-                  <option className="bg-white text-slate-900" value="OTHER">Other Reason</option>
+                  <option className="bg-white text-slate-900" value="BUYER_REQUEST">{translateReason('BUYER_REQUEST', lang)}</option>
+                  <option className="bg-white text-slate-900" value="FABRIC_DELAY">{translateReason('FABRIC_DELAY', lang)}</option>
+                  <option className="bg-white text-slate-900" value="LABOUR_SHORTAGE">{translateReason('LABOUR_SHORTAGE', lang)}</option>
+                  <option className="bg-white text-slate-900" value="MACHINE_BREAKDOWN">{translateReason('MACHINE_BREAKDOWN', lang)}</option>
+                  <option className="bg-white text-slate-900" value="POWER_OUTAGE">{translateReason('POWER_OUTAGE', lang)}</option>
+                  <option className="bg-white text-slate-900" value="QUALITY_HOLD">{translateReason('QUALITY_HOLD', lang)}</option>
+                  <option className="bg-white text-slate-900" value="SUBCONTRACTOR_DELAY">{translateReason('SUBCONTRACTOR_DELAY', lang)}</option>
+                  <option className="bg-white text-slate-900" value="OTHER">{isTa ? 'பிற செயல்பாட்டுக் காரணங்கள்' : 'Other Reason'}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-800 mb-1">
-                  Explanatory Notes & Rationale
+                  {od.mandatoryExplanation}
                 </label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
-                  placeholder="Provide context regarding the schedule shift for buyer and internal records..."
+                  placeholder={od.provideContextPlaceholder}
                   className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 bg-white text-slate-900 placeholder:text-slate-400 shadow-xs"
                 ></textarea>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-800 mb-1">
-                  Estimated Financial Impact (₹ INR)
+                  {isTa ? 'மதிப்பிடப்பட்ட நிதி தாக்கம் (₹ INR)' : 'Estimated Financial Impact (₹ INR)'}
                 </label>
                 <input
                   type="number"
                   min={0}
                   value={financialImpact}
                   onChange={(e) => setFinancialImpact(Number(e.target.value))}
-                  placeholder="e.g. 50000 for air-freight or overtime penalty"
+                  placeholder="e.g. 50000"
                   className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 font-mono bg-white text-slate-900 placeholder:text-slate-400 shadow-xs"
                 />
               </div>
 
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-600">
-                Recalibrates milestone schedules and records change in audit history.
+                {isTa
+                  ? 'மைல்கல் அட்டவணைகளை மறுசீரமைத்து, தணிக்கை வரலாற்றில் மாற்றத்தைப் பதிவு செய்கிறது.'
+                  : 'Recalibrates milestone schedules and records change in audit history.'}
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
@@ -1321,7 +1310,7 @@ export const OrderDetailPage: React.FC = () => {
                   disabled={updatingDate}
                   className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition"
                 >
-                  Cancel
+                  {t.common.cancel}
                 </button>
                 <button
                   type="submit"
@@ -1329,7 +1318,7 @@ export const OrderDetailPage: React.FC = () => {
                   className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-500 rounded-xl shadow-xs transition"
                 >
                   {updatingDate && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  Confirm Date Shift
+                  {updatingDate ? od.savingShift : od.confirmShiftButton}
                 </button>
               </div>
             </form>
@@ -1347,8 +1336,8 @@ export const OrderDetailPage: React.FC = () => {
                   <FastForward className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm tracking-tight">Manual Stage Advance & Recalibration</h3>
-                  <p className="text-[11px] text-sky-200">Short-close milestone or override stage completion</p>
+                  <h3 className="font-bold text-sm tracking-tight">{od.advanceStageTitle}</h3>
+                  <p className="text-[11px] text-sky-200">{od.advanceStageSubtitle}</p>
                 </div>
               </div>
               <button
@@ -1376,7 +1365,7 @@ export const OrderDetailPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-800 mb-1">
-                  Stage to Complete / Advance <span className="text-rose-500">*</span>
+                  {od.targetMilestoneStage} <span className="text-rose-500">*</span>
                 </label>
                 <select
                   value={advanceFromStage}
@@ -1386,18 +1375,20 @@ export const OrderDetailPage: React.FC = () => {
                 >
                   {(order.milestones || []).map((m) => (
                     <option key={m.id} value={m.stage}>
-                      Stage #{m.sequenceOrder} - {m.stage.replace(/_/g, ' ')} ({m.completedQuantity.toLocaleString()} / {m.targetQuantity.toLocaleString()} pcs) {m.completedQuantity >= m.targetQuantity ? '✓ Completed' : '• In Progress'}
+                      {isTa ? `நிலை #${m.sequenceOrder}` : `Stage #${m.sequenceOrder}`} - {translateStage(m.stage, lang)} ({m.completedQuantity.toLocaleString()} / {m.targetQuantity.toLocaleString()} {od.pcs}) {m.completedQuantity >= m.targetQuantity ? (isTa ? '✓ முடிந்தது' : '✓ Completed') : (isTa ? '• செயலில்' : '• In Progress')}
                     </option>
                   ))}
                 </select>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  Marks this milestone as finished and advances the order pipeline to the subsequent stage.
+                  {isTa
+                    ? 'இந்த மைல்கல்லை முடிந்ததாகக் குறிக்கிறது மற்றும் ஆர்டரை அடுத்த கட்டத்திற்கு முன்னேற்றுகிறது.'
+                    : 'Marks this milestone as finished and advances the order pipeline to the subsequent stage.'}
                 </p>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-800 mb-1">
-                  Actual Completed Output Quantity (Pieces) <span className="text-rose-500">*</span>
+                  {isTa ? 'உண்மையான முடிந்த வெளியீடு அளவு (துண்டுகள்)' : 'Actual Completed Output Quantity (Pieces)'} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="number"
@@ -1409,7 +1400,7 @@ export const OrderDetailPage: React.FC = () => {
                   required
                 />
                 <p className="text-[11px] text-slate-500 mt-1">
-                  Recorded as the final verified output of this stage.
+                  {isTa ? 'இந்த கட்டத்தின் இறுதி சரிபார்க்கப்பட்ட வெளியீடாகப் பதிவு செய்யப்படுகிறது.' : 'Recorded as the final verified output of this stage.'}
                 </p>
               </div>
 
@@ -1423,10 +1414,12 @@ export const OrderDetailPage: React.FC = () => {
                   />
                   <div>
                     <span className="text-xs font-bold text-sky-950 block">
-                      Recalibrate Downstream Milestone Targets
+                      {isTa ? 'அடுத்தடுத்த நிலைகளின் இலக்குகளை மறுசீரமைக்கவும்' : 'Recalibrate Downstream Milestone Targets'}
                     </span>
                     <span className="text-[11px] text-sky-800 leading-relaxed block mt-0.5">
-                      Ensures downstream targets never exceed upstream completed output. If checked, all subsequent stages and the total order quantity will adjust to <strong>{advanceCompletedQty.toLocaleString()} pcs</strong>.
+                      {isTa
+                        ? `அடுத்தடுத்த இலக்குகள் முந்தைய முடிந்த வெளியீட்டை விட அதிகமாகாமல் பார்த்துக் கொள்கிறது. தேர்ந்தெடுக்கப்பட்டால் அனைத்து அடுத்தடுத்த கட்டங்களும் ${advanceCompletedQty.toLocaleString()} துண்டுகளாக மாறும்.`
+                        : `Ensures downstream targets never exceed upstream completed output. If checked, all subsequent stages and the total order quantity will adjust to ${advanceCompletedQty.toLocaleString()} pcs.`}
                     </span>
                   </div>
                 </label>
@@ -1434,7 +1427,7 @@ export const OrderDetailPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-800 mb-1">
-                  Reason for Manual Advance / Short-Close <span className="text-rose-500">*</span>
+                  {isTa ? 'கைமுறை நிலை முன்னேற்றத்திற்கான காரணம்' : 'Reason for Manual Advance / Short-Close'} <span className="text-rose-500">*</span>
                 </label>
                 <select
                   value={advanceReasonCode}
@@ -1442,26 +1435,26 @@ export const OrderDetailPage: React.FC = () => {
                   className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 font-semibold bg-white text-slate-900 shadow-xs"
                   required
                 >
-                  <option value="BUYER_SHORT_SHIP_APPROVAL">Buyer Approved Short Shipment</option>
-                  <option value="FABRIC_DEFECT_SHORTAGE">Fabric / Raw Material Shortage</option>
-                  <option value="LINE_BREAKDOWN">Mechanical Breakdown / Unscheduled Maintenance</option>
-                  <option value="QUALITY_REJECTION">High Quality Rejection / Rework Cutoff</option>
-                  <option value="UNFORESEEN_CIRCUMSTANCE">Unforeseen Operational Circumstance</option>
-                  <option value="MANAGEMENT_OVERRIDE">Executive / Merchandiser Override</option>
-                  <option value="OTHER">Other Operational Justification</option>
+                  <option value="BUYER_SHORT_SHIP_APPROVAL">{isTa ? 'வாங்குபவர் அங்கீகரித்த குறைந்த ஏற்றுமதி' : 'Buyer Approved Short Shipment'}</option>
+                  <option value="FABRIC_DEFECT_SHORTAGE">{isTa ? 'துணி / மூலப்பொருள் பற்றாக்குறை' : 'Fabric / Raw Material Shortage'}</option>
+                  <option value="LINE_BREAKDOWN">{isTa ? 'இயந்திர பழுது / திட்டமிடப்படாத பராமரிப்பு' : 'Mechanical Breakdown / Unscheduled Maintenance'}</option>
+                  <option value="QUALITY_REJECTION">{isTa ? 'அதிக தர நிராகரிப்பு / மறுவேலை நிறுத்தம்' : 'High Quality Rejection / Rework Cutoff'}</option>
+                  <option value="UNFORESEEN_CIRCUMSTANCE">{isTa ? 'எதிர்பாராத செயல்பாட்டு சூழ்நிலை' : 'Unforeseen Operational Circumstance'}</option>
+                  <option value="MANAGEMENT_OVERRIDE">{isTa ? 'நிர்வாக / வணிகப் பொறுப்பாளர் அனுமதி' : 'Executive / Merchandiser Override'}</option>
+                  <option value="OTHER">{isTa ? 'பிற செயல்பாட்டுக் காரணம்' : 'Other Operational Justification'}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-800 mb-1">
-                  Audit Override Notes & Justification <span className="text-rose-500">*</span>
+                  {od.mandatoryExplanation} <span className="text-rose-500">*</span>
                 </label>
                 <textarea
                   value={advanceOverrideNotes}
                   onChange={(e) => setAdvanceOverrideNotes(e.target.value)}
                   rows={3}
                   required
-                  placeholder="Mandatory explanation for compliance audit and buyer log..."
+                  placeholder={od.mandatoryExplanationAdvance}
                   className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 bg-white text-slate-900 placeholder:text-slate-400 shadow-xs"
                 ></textarea>
               </div>
@@ -1469,7 +1462,9 @@ export const OrderDetailPage: React.FC = () => {
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-600 flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>
-                  This override generates an immutable <strong>STAGE_OUTPUT</strong> record cryptographically chained via SHA-256 in the audit trail.
+                  {isTa
+                    ? 'இந்த மாற்றம் தணிக்கைப் பதிவில் SHA-256 மூலம் பாதுகாக்கப்பட்ட மாற்ற முடியாத STAGE_OUTPUT பதிவை உருவாக்குகிறது.'
+                    : 'This override generates an immutable STAGE_OUTPUT record cryptographically chained via SHA-256 in the audit trail.'}
                 </span>
               </div>
 
@@ -1480,7 +1475,7 @@ export const OrderDetailPage: React.FC = () => {
                   disabled={advancingStage}
                   className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition"
                 >
-                  Cancel
+                  {t.common.cancel}
                 </button>
                 <button
                   type="submit"
@@ -1488,7 +1483,7 @@ export const OrderDetailPage: React.FC = () => {
                   className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-[#0C2D48] hover:bg-[#143D60] rounded-xl shadow-xs transition"
                 >
                   {advancingStage && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  Advance Stage Now
+                  {advancingStage ? od.progressingStage : od.confirmAdvanceButton}
                 </button>
               </div>
             </form>
@@ -1509,7 +1504,7 @@ export const OrderDetailPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Camera className="w-4 h-4 text-sky-400" />
                 <span className="text-sm font-bold">
-                  Floor Evidence Proof ({selectedImageModal.stage?.replace(/_/g, ' ')})
+                  {od.photoModalTitle} ({translateStage(selectedImageModal.stage || '', lang)})
                 </span>
               </div>
               <button
@@ -1529,8 +1524,8 @@ export const OrderDetailPage: React.FC = () => {
               />
             </div>
             <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
-              <span>Logged by: <strong>{selectedImageModal.supervisorName || 'Floor Supervisor'}</strong></span>
-              <span>Timestamp: <strong>{selectedImageModal.date}</strong></span>
+              <span>{od.capturedBy} <strong>{selectedImageModal.supervisorName || (isTa ? 'தள மேற்பார்வையாளர்' : 'Floor Supervisor')}</strong></span>
+              <span>{isTa ? 'நேரம்:' : 'Timestamp:'} <strong>{selectedImageModal.date}</strong></span>
             </div>
           </div>
         </div>
