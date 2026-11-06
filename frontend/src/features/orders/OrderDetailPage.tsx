@@ -442,7 +442,7 @@ export const OrderDetailPage: React.FC = () => {
           </div>
           <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
             <Building2 className="w-3.5 h-3.5 text-slate-400" />
-            {order.buyer.code} • {order.buyer.country || 'Europe'}
+            {order.buyer.country || 'Europe'}
           </div>
         </div>
 

@@ -555,7 +555,7 @@ export const OrdersPage: React.FC = () => {
                         </div>
                         <div className="text-[11px] text-slate-500 flex items-center gap-1">
                           <Building2 className="w-3 h-3 text-slate-400" />
-                          {order.buyer.code} • {order.buyer.country || 'Europe'}
+                          {order.buyer.country || 'Europe'}
                         </div>
                       </td>
 
