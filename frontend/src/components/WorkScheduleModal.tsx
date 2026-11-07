@@ -11,6 +11,8 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useAuthStore } from '../features/auth/authStore';
+import { getAuthoritativeServerDate } from '../services/api';
+import { useLanguage } from '../hooks/useLanguage';
 
 export interface WorkTask {
   id: string;
@@ -35,6 +37,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
   selectedDate,
 }) => {
   const { user } = useAuthStore();
+  const { lang } = useLanguage();
   const [currentDate, setCurrentDate] = useState<Date>(selectedDate);
 
   useEffect(() => {
@@ -60,7 +63,10 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
   // Role-specific task generator for given date
   const getTasksForRoleAndDate = (role: string, date: Date): WorkTask[] => {
     const day = date.getDate();
-    const isPast = date < new Date(2026, 10, 4);
+    const today = getAuthoritativeServerDate();
+    const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    const dateZero = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+    const isPast = dateZero < todayZero;
 
     if (role === 'SUPERVISOR') {
       return [
@@ -271,17 +277,18 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
 
   if (!isOpen) return null;
 
-  const formattedDateString = currentDate.toLocaleDateString('en-US', {
+  const formattedDateString = currentDate.toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-US', {
     weekday: 'long',
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   });
 
+  const today = getAuthoritativeServerDate();
   const isToday =
-    currentDate.getFullYear() === 2026 &&
-    currentDate.getMonth() === 10 &&
-    currentDate.getDate() === 4;
+    currentDate.getFullYear() === today.getFullYear() &&
+    currentDate.getMonth() === today.getMonth() &&
+    currentDate.getDate() === today.getDate();
 
   const completedCount = tasks.filter((t) => t.completed).length;
   const progressPercent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
@@ -336,8 +343,8 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
               <CalendarIcon className="w-3.5 h-3.5 text-sky-700" />
               <span>{formattedDateString}</span>
               {isToday && (
-                <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-800">
-                  TODAY
+                <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 uppercase">
+                  {lang === 'ta' ? 'இன்று' : 'TODAY'}
                 </span>
               )}
             </div>

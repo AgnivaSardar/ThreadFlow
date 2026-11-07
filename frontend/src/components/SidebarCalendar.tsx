@@ -1,15 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { WorkScheduleModal } from './WorkScheduleModal';
 import { useAuthStore } from '../features/auth/authStore';
+import { getAuthoritativeServerDate } from '../services/api';
+import { useLanguage } from '../hooks/useLanguage';
 
 export const SidebarCalendar: React.FC = () => {
   const { user } = useAuthStore();
+  const { lang } = useLanguage();
 
-  // Selected view month & year (Anchor: November 2026)
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date(2026, 10, 1));
+  // Dynamic today anchor linked to authoritative server time
+  const [today, setToday] = useState<Date>(() => getAuthoritativeServerDate());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setToday(getAuthoritativeServerDate());
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Selected view month & year initialized to today's month & year
+  const [currentMonth, setCurrentMonth] = useState<Date>(() => {
+    const t = getAuthoritativeServerDate();
+    return new Date(t.getFullYear(), t.getMonth(), 1);
+  });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date(2026, 10, 4));
+  const [selectedDate, setSelectedDate] = useState<Date>(() => getAuthoritativeServerDate());
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth(); // 0-indexed
@@ -23,12 +39,15 @@ export const SidebarCalendar: React.FC = () => {
     setCurrentMonth(new Date(year, month + 1, 1));
   };
 
-  // Month name
+  // Month title localized
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December',
   ];
-  const monthTitle = `${monthNames[month]} ${year}`;
+  const monthTitle = currentMonth.toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-US', {
+    month: 'long',
+    year: 'numeric',
+  });
 
   // Days calculations
   // Sunday = 0, Monday = 1 ... Saturday = 6
@@ -36,11 +55,14 @@ export const SidebarCalendar: React.FC = () => {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const daysInPrevMonth = new Date(year, month, 0).getDate();
 
-  // Days with scheduled work/events:
-  // For November 2026, days 2, 3, 4 (Today), 5, 6, 9, 12, 18, 20, 24 have scheduled PO events/line work
+  // Days with scheduled work/events
   const hasEvent = (d: number) => {
+    // Current day always has active work scheduled
+    if (year === today.getFullYear() && month === today.getMonth() && d === today.getDate()) {
+      return true;
+    }
     if (year === 2026 && month === 10) {
-      return [2, 3, 4, 5, 6, 9, 10, 12, 14, 18, 20, 24].includes(d);
+      return [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 18, 20, 24].includes(d);
     }
     // Periodic event pattern for other months
     return d % 3 === 0 || d % 5 === 0;
@@ -53,7 +75,9 @@ export const SidebarCalendar: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const weekDayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const weekDayHeaders = lang === 'ta'
+    ? ['ஞா', 'தி', 'செ', 'பு', 'வி', 'வெ', 'ச']
+    : ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
   // Grid builder
   const calendarCells = [];
@@ -69,7 +93,10 @@ export const SidebarCalendar: React.FC = () => {
 
   // 2. Current month days
   for (let d = 1; d <= daysInMonth; d++) {
-    const isToday = year === 2026 && month === 10 && d === 4;
+    const isToday =
+      today.getFullYear() === year &&
+      today.getMonth() === month &&
+      today.getDate() === d;
     calendarCells.push({
       day: d,
       isCurrentMonth: true,
@@ -163,7 +190,11 @@ export const SidebarCalendar: React.FC = () => {
                     ? 'bg-sky-500 text-white font-black shadow-sm ring-1 ring-sky-300'
                     : 'text-sky-100 hover:bg-white/15 hover:text-white'
                 }`}
-                title={`View planned work for ${monthNames[month]} ${cell.day}, ${year}`}
+                title={
+                  lang === 'ta'
+                    ? `${year} ${monthNames[month]} ${cell.day} அன்று திட்டமிடப்பட்ட பணிகள்`
+                    : `View planned work for ${monthNames[month]} ${cell.day}, ${year}`
+                }
               >
                 <span>{cell.day}</span>
                 {/* Single Event Related Dot Indicator */}
@@ -187,17 +218,21 @@ export const SidebarCalendar: React.FC = () => {
         <div className="mt-2.5 pt-2 border-t border-sky-400/20 flex items-center justify-between text-[10px] text-sky-200/80 px-1">
           <span className="flex items-center gap-1.5 font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-            <span>Event planned</span>
+            <span>{lang === 'ta' ? 'திட்டமிடப்பட்ட பணி' : 'Event planned'}</span>
           </span>
           <button
             type="button"
             onClick={() => {
-              setSelectedDate(new Date(2026, 10, 4));
+              const now = getAuthoritativeServerDate();
+              setCurrentMonth(new Date(now.getFullYear(), now.getMonth(), 1));
+              setSelectedDate(now);
               setIsModalOpen(true);
             }}
             className="text-amber-300 hover:text-amber-200 font-bold hover:underline cursor-pointer"
           >
-            Today (Nov 04)
+            {lang === 'ta'
+              ? `இன்று (${today.toLocaleDateString('ta-IN', { month: 'short' })} ${String(today.getDate()).padStart(2, '0')})`
+              : `Today (${today.toLocaleDateString('en-US', { month: 'short' })} ${String(today.getDate()).padStart(2, '0')})`}
           </button>
         </div>
       </div>
