@@ -77,51 +77,21 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
     ? calculateWorkingDaysLeft(exFactoryDate)
     : mathBreakdown.workingDaysTotal;
 
-  const effWorkingDays = Math.max(1, liveWorkingDaysTotal - mathBreakdown.downstreamBufferDays);
+  const rawNetDays = liveWorkingDaysTotal - mathBreakdown.downstreamBufferDays;
+  const effWorkingDays = Math.max(1, rawNetDays);
   const liveRequiredRate = mathBreakdown.remainingPieces > 0
     ? Math.ceil(mathBreakdown.remainingPieces / effWorkingDays)
     : 0;
 
   // Extract Q1, Q2, Q3 values from the recent daily logs sample
-  // Dynamically align to calendar days: days that passed (after 12:00 AM) without updates evaluate to 0 pcs
+  // The backend risk engine calculates rolling samples aligned to calendar days
   const sampleLogs = mathBreakdown.recentLogsSample || [];
-  const logsByDate: Record<string, number> = {};
-  sampleLogs.forEach((l) => {
-    const key = new Date(l.date).toISOString().split('T')[0];
-    logsByDate[key] = (logsByDate[key] || 0) + l.quantity;
-  });
-
-  const today = getAuthoritativeServerDate();
-  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const todayHasLogs = (logsByDate[todayKey] || 0) > 0;
-
-  // Scan backwards from today (if logged) or yesterday (if no update today yet)
-  const scanDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  if (!todayHasLogs) {
-    scanDay.setDate(scanDay.getDate() - 1);
-  }
-
-  const rollingDays: Date[] = [];
-  while (rollingDays.length < 3) {
-    if (scanDay.getDay() !== 0) {
-      // Exclude Sundays
-      rollingDays.push(new Date(scanDay));
-    }
-    scanDay.setDate(scanDay.getDate() - 1);
-  }
-
-  const d1Key = `${rollingDays[0].getFullYear()}-${String(rollingDays[0].getMonth() + 1).padStart(2, '0')}-${String(rollingDays[0].getDate()).padStart(2, '0')}`;
-  const d2Key = `${rollingDays[1].getFullYear()}-${String(rollingDays[1].getMonth() + 1).padStart(2, '0')}-${String(rollingDays[1].getDate()).padStart(2, '0')}`;
-  const d3Key = `${rollingDays[2].getFullYear()}-${String(rollingDays[2].getMonth() + 1).padStart(2, '0')}-${String(rollingDays[2].getDate()).padStart(2, '0')}`;
-
-  const q1 = logsByDate[d1Key] || 0;
-  const q2 = logsByDate[d2Key] || 0;
-  const q3 = logsByDate[d3Key] || 0;
+  const q1 = sampleLogs[0]?.quantity ?? 0;
+  const q2 = sampleLogs[1]?.quantity ?? 0;
+  const q3 = sampleLogs[2]?.quantity ?? 0;
 
   // Live 3-Day Weighted Moving Average rate
-  const liveActualRate = sampleLogs.length > 0 && sampleLogs[0]?.date
-    ? Math.round(q1 * 0.5 + q2 * 0.3 + q3 * 0.2)
-    : actualRollingRate;
+  const liveActualRate = actualRollingRate;
 
   // Maximum log value for mini sparkline scaling
   const maxLog = Math.max(1, q1, q2, q3);
@@ -373,7 +343,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
                 {mathBreakdown.remainingPieces.toLocaleString()} {t.common.pieces}
               </span>
               <span className="pt-0.5 text-slate-600 text-[10px]">
-                {liveWorkingDaysTotal}d − {mathBreakdown.downstreamBufferDays}d
+                {rawNetDays > 0 ? `${liveWorkingDaysTotal}d − ${mathBreakdown.downstreamBufferDays}d` : `${effWorkingDays}d (${rawNetDays}d buffer)`}
               </span>
             </div>
             <span className="text-xs text-slate-400 font-light shrink-0">=</span>
@@ -383,7 +353,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
           </div>
 
           <div className="text-[10px] sm:text-[11px] text-slate-500 font-mono text-center tracking-wide">
-            {isTa ? 'மீதம்:' : 'Remaining:'} <strong className="text-slate-800">{mathBreakdown.remainingPieces.toLocaleString()} {t.common.pieces}</strong> ({liveWorkingDaysTotal - mathBreakdown.downstreamBufferDays} {isTa ? 'வேலை நாட்களில்' : 'working days'})
+            {isTa ? 'மீதம்:' : 'Remaining:'} <strong className="text-slate-800">{mathBreakdown.remainingPieces.toLocaleString()} {t.common.pieces}</strong> ({rawNetDays > 0 ? `${rawNetDays} ${isTa ? 'வேலை நாட்களில்' : 'working days'}` : `${effWorkingDays} ${isTa ? 'வேலை நாளில் (தாங்கல் பற்றாக்குறை)' : 'working day (buffer deficit)'}`})
           </div>
         </div>
 
