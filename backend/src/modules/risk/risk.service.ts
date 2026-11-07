@@ -87,7 +87,7 @@ export class RiskService {
       plannedStageEnd: milestone.plannedEnd,
       dailyLogs,
       fobPricePerPiece: order.fobPricePerPiece || undefined,
-      exchangeRate: order.exchangeRate || 100,
+      exchangeRate: order.exchangeRate || (order.currency === 'INR' ? 1.0 : 85.0),
       currency: order.currency,
       simulatedToday: getSystemToday(),
     };
@@ -238,7 +238,7 @@ export class RiskService {
         dailyLogs: logsToUse,
         simulatedToday,
         fobPricePerPiece: order.fobPricePerPiece || undefined,
-        exchangeRate: order.exchangeRate || 100,
+        exchangeRate: order.exchangeRate || (order.currency === 'INR' ? 1.0 : 85.0),
         currency: order.currency,
       });
 
@@ -355,10 +355,11 @@ export class RiskService {
     let exposure = 0;
     if (daysLate > 0 || bufferRemaining < 0) {
       simulatedRisk = RiskLevel.RED;
-      exposure = 350000;
+      const penaltyPct = Math.min(0.40, 0.10 + Math.max(daysLate, Math.abs(bufferRemaining)) * 0.02);
+      exposure = Math.round(remainingPieces * 1000 * penaltyPct);
     } else if (bufferRemaining < 2 || variance < 0) {
       simulatedRisk = RiskLevel.AMBER;
-      exposure = 105000;
+      exposure = Math.round(remainingPieces * 1000 * 0.06);
     } else {
       simulatedRisk = RiskLevel.GREEN;
       exposure = 0;

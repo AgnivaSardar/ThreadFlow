@@ -100,12 +100,24 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
   const completedOrders =
     metrics?.completedOrders ?? orders.filter((o) => o.progressPercent >= 100).length;
   const activeOrders = metrics?.activeOrders ?? orders.length - completedOrders;
-  const confidenceScore =
-    milestoneHealth?.onTrack ?? aiIntelligence?.confidenceScore ?? metrics?.onTimeConfidencePercent ?? 84;
+  const totalMilestones =
+    (milestoneHealth?.onTrack || 0) +
+    (milestoneHealth?.minorBuffer || 0) +
+    (milestoneHealth?.criticalDeficit || 0);
 
-  const onTrackPct = milestoneHealth?.onTrack ?? 84;
-  const minorBufferPct = milestoneHealth?.minorBuffer ?? 12;
-  const criticalDeficitPct = milestoneHealth?.criticalDeficit ?? 4;
+  const onTrackPct =
+    totalMilestones > 0
+      ? Math.round(((milestoneHealth?.onTrack || 0) / totalMilestones) * 100)
+      : (metrics?.onTimeConfidencePercent ?? (orders.length > 0 ? Math.round((completedOrders / orders.length) * 100) : 0));
+
+  const minorBufferPct =
+    totalMilestones > 0 ? Math.round(((milestoneHealth?.minorBuffer || 0) / totalMilestones) * 100) : 0;
+
+  const criticalDeficitPct =
+    totalMilestones > 0 ? Math.round(((milestoneHealth?.criticalDeficit || 0) / totalMilestones) * 100) : 0;
+
+  const confidenceScore =
+    aiIntelligence?.confidenceScore ?? onTrackPct;
 
   const todayStr = new Date().toLocaleDateString('en-GB', {
     day: '2-digit',

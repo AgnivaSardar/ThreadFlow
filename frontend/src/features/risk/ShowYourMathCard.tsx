@@ -124,14 +124,14 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
     // Calculate dynamic late penalty that scales with simulated days late
     const dailyLatePenalty = daysLate > 0
       ? (financialExposureRupees / daysLate)
-      : (financialExposureRupees > 0 ? financialExposureRupees / 5 : 35000);
+      : (financialExposureRupees > 0 ? financialExposureRupees / Math.max(1, effDays) : 0);
 
     if (simLate > 0) {
       simRisk = 'RED';
       exp = Math.round(dailyLatePenalty * simLate);
     } else if (variance < 0 || effDays < 2) {
       simRisk = 'AMBER';
-      exp = Math.round((financialExposureRupees || 105000) * 0.25 * (Math.abs(variance) / Math.max(1, req)));
+      exp = Math.round(financialExposureRupees * 0.25 * (Math.abs(variance) / Math.max(1, req)));
     }
 
     const today = getAuthoritativeServerDate();
@@ -165,7 +165,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
       Math.ceil(mathBreakdown.remainingPieces / Math.max(1, liveActualRate || liveRequiredRate))
     ),
     projectedCompletionDate,
-    daysLate: liveActualRate === 0 && mathBreakdown.remainingPieces > 0 ? 45 : daysLate,
+    daysLate,
     simulatedRisk: activeVariance < 0 ? 'RED' : riskLevel,
     financialExposureRupees,
   };
@@ -182,7 +182,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
     const effDays = effWorkingDays;
     const memo = [
       `[THREADFLOW RUN-RATE AUDIT]`,
-      `PO: ${poNumber || 'B-PO'} | Style: ${styleName || 'Apparel'} | Stage: ${stageName || 'Active Stage'}`,
+      `PO: ${poNumber} | Style: ${styleName} | Stage: ${stageName}`,
       isCompleted
         ? `• Status: COMPLETED (Target met, 0 pcs remaining for this stage)`
         : `• Remaining: ${mathBreakdown.remainingPieces.toLocaleString()} pcs across ${effDays} working days`,

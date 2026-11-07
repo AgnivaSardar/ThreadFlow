@@ -121,13 +121,14 @@ export async function enqueueFloorUpdate(params: EnqueueFloorParams): Promise<Pe
   await enqueuePendingUpdate(record);
 
   // Apply optimistic local cache update for 0ms UI latency
-  const targetCacheKey = params.cacheKey || 'work_UNIT_1';
-  await applyOptimisticFloorUpdate(targetCacheKey, {
-    orderId: params.orderId,
-    goodQty: params.goodQty,
-    rejectedQty: params.rejectedQty,
-    sizeBreakdownLines: params.sizeBreakdownLines,
-  });
+  if (params.cacheKey) {
+    await applyOptimisticFloorUpdate(params.cacheKey, {
+      orderId: params.orderId,
+      goodQty: params.goodQty,
+      rejectedQty: params.rejectedQty,
+      sizeBreakdownLines: params.sizeBreakdownLines,
+    });
+  }
 
   // Notify header pills and UI badges
   window.dispatchEvent(

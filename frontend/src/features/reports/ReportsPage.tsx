@@ -585,13 +585,13 @@ export const ReportsPage: React.FC = () => {
 
           {/* SVG Donut / Pie Chart with Radial Separators & Centered Metric */}
           {(() => {
-            const onTrack = data?.milestoneHealth.onTrack || 84;
-            const minorBuffer = data?.milestoneHealth.minorBuffer || 12;
-            const criticalDeficit = data?.milestoneHealth.criticalDeficit || 4;
-            const total = onTrack + minorBuffer + criticalDeficit || 100;
+            const onTrack = data?.milestoneHealth?.onTrack ?? 0;
+            const minorBuffer = data?.milestoneHealth?.minorBuffer ?? 0;
+            const criticalDeficit = data?.milestoneHealth?.criticalDeficit ?? 0;
+            const total = onTrack + minorBuffer + criticalDeficit;
 
-            const a1 = (onTrack / total) * 360;
-            const a2 = a1 + (minorBuffer / total) * 360;
+            const a1 = total > 0 ? (onTrack / total) * 360 : 0;
+            const a2 = total > 0 ? a1 + (minorBuffer / total) * 360 : 0;
             const a3 = 360;
 
             const cx = 100;
@@ -657,7 +657,7 @@ export const ReportsPage: React.FC = () => {
                   {/* Centered Hub - On-Time indicator matching green onTrack slice */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
                     <span className="text-2xl font-black font-mono tracking-tight text-[#0C2D48]">
-                      {data?.milestoneHealth.onTrack ?? data?.metrics.onTimeConfidencePercent ?? 84}%
+                      {total > 0 ? Math.round((onTrack / total) * 100) : (data?.metrics?.onTimeConfidencePercent ?? 0)}%
                     </span>
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                       On-Time

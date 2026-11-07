@@ -546,7 +546,7 @@ export const MyWorkPage: React.FC = () => {
                           <div className="mt-2.5 flex items-center gap-1.5 text-xs">
                             <Building2 className="w-3.5 h-3.5 text-sky-600 shrink-0" />
                             <span className="font-semibold text-slate-700 truncate">
-                              {translateUnit(order.unit?.name || 'Unit 1 (Cotton Hub - Own)', lang)}
+                              {order.unit?.name ? translateUnit(order.unit.name, lang) : (order.unit?.code || '')}
                             </span>
                             {order.unit?.type === 'SUBCONTRACTOR' && (
                               <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300 shrink-0">

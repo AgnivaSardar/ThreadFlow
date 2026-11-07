@@ -325,7 +325,9 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
 
   const bufferRemaining = workingDaysToShip - downstreamBufferDays;
   const transitHours = input.subcontractorTransitHours || 0;
-  const priceInr = (input.fobPricePerPiece || 10) * (input.exchangeRate || 100);
+  const fobPrice = input.fobPricePerPiece && input.fobPricePerPiece > 0 ? input.fobPricePerPiece : (input.currency === 'INR' ? 800 : 10);
+  const exchange = input.exchangeRate && input.exchangeRate > 0 ? input.exchangeRate : (input.currency === 'INR' ? 1.0 : 85.0);
+  const priceInr = fobPrice * exchange;
   const remainingValueInr = Math.round(remainingPieces * priceInr);
 
   if (isCompleted) {
@@ -338,9 +340,6 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
     // Disruption penalty / air-freight contingency proportional to delayed pieces and delay duration
     const penaltyPct = Math.min(0.40, 0.10 + daysLate * 0.02);
     financialExposureRupees = Math.round(remainingValueInr * penaltyPct);
-    if (financialExposureRupees === 0 && daysLate > 0) {
-      financialExposureRupees = 150000;
-    }
     rulesTriggered.push(
       `Projected stage finish is ${daysLate} working day(s) late past planned window.`
     );
@@ -352,9 +351,6 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
   } else if (bufferRemaining < 2 || varianceQtyPerDay < 0 || transitHours > 48) {
     riskLevel = RiskLevel.AMBER;
     financialExposureRupees = Math.round(remainingValueInr * 0.06);
-    if (financialExposureRupees === 0 && varianceQtyPerDay < 0) {
-      financialExposureRupees = 65000;
-    }
     if (bufferRemaining < 2) {
       rulesTriggered.push(
         `Downstream buffer compressed: only ${bufferRemaining} working day(s) of safety cushion remaining.`

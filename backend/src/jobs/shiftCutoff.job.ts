@@ -155,7 +155,7 @@ export async function detectMissingShiftUpdates(simulateCutoff: boolean = false)
       : 'Floor Supervisor';
     const primarySupervisor = supervisors[0] || null;
     // Format telephone (standard 10-digit or E.164 with India country code 91)
-    let rawPhone = primarySupervisor?.phone || '9842011223';
+    let rawPhone = primarySupervisor?.phone || '';
     let cleanPhone = rawPhone.replace(/\D/g, '');
     if (cleanPhone.length === 10) {
       cleanPhone = `91${cleanPhone}`;
@@ -171,7 +171,7 @@ export async function detectMissingShiftUpdates(simulateCutoff: boolean = false)
       poNumber: order.poNumber,
       style: order.style,
       targetQuantity: order.totalQuantity,
-      activeStage: activeMilestone?.stage || 'STITCHING',
+      activeStage: activeMilestone?.stage || order.milestones[0]?.stage || 'KNITTING',
     };
 
     if (!unitMap.has(unit.id)) {

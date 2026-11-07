@@ -55,17 +55,12 @@ export const SidebarCalendar: React.FC = () => {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const daysInPrevMonth = new Date(year, month, 0).getDate();
 
-  // Days with scheduled work/events
+  // Days with scheduled factory work/events (excluding Sundays)
   const hasEvent = (d: number) => {
-    // Current day always has active work scheduled
-    if (year === today.getFullYear() && month === today.getMonth() && d === today.getDate()) {
-      return true;
-    }
-    if (year === 2026 && month === 10) {
-      return [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 18, 20, 24].includes(d);
-    }
-    // Periodic event pattern for other months
-    return d % 3 === 0 || d % 5 === 0;
+    const checkDate = new Date(year, month, d);
+    // Factory shop-floor operations run Monday through Saturday; Sundays are non-working rest days
+    if (checkDate.getDay() === 0) return false;
+    return true;
   };
 
   const handleDayClick = (dayNum: number, isCurrentMonthDay: boolean) => {
