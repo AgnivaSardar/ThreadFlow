@@ -129,7 +129,8 @@ export function addWorkingDaysExcludingSundays(
  * Gracefully handles fewer than 3 available daily logs.
  */
 export function calculate3DayWeightedRate(
-  dailyLogs: ProductionDailyLog[]
+  dailyLogs: ProductionDailyLog[],
+  asOfDate?: Date | string
 ): {
   rate: number;
   weights: { day1: number; day2: number; day3: number };
@@ -145,7 +146,61 @@ export function calculate3DayWeightedRate(
     };
   }
 
-  // Sort logs by date descending (latest first)
+  // When asOfDate is provided, calculate rolling working days relative to the live calendar date.
+  // Unlogged days past 12:00 AM midnight evaluate to 0 pcs.
+  if (asOfDate) {
+    const today = new Date(asOfDate);
+    const toDateKey = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
+    const qtyByDate: Record<string, number> = {};
+    for (const log of dailyLogs) {
+      const key = toDateKey(new Date(log.date));
+      qtyByDate[key] = (qtyByDate[key] || 0) + log.quantity;
+    }
+
+    const todayKey = toDateKey(today);
+    const todayHasLogs = (qtyByDate[todayKey] || 0) > 0;
+
+    // Scan backwards from today (if logged) or yesterday (if today has no update yet)
+    const scan = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if (!todayHasLogs) {
+      scan.setDate(scan.getDate() - 1);
+    }
+
+    const rollingDays: Date[] = [];
+    while (rollingDays.length < 3) {
+      if (scan.getDay() !== 0) {
+        // Exclude Sundays
+        rollingDays.push(new Date(scan));
+      }
+      scan.setDate(scan.getDate() - 1);
+    }
+
+    const q1 = qtyByDate[toDateKey(rollingDays[0])] || 0;
+    const q2 = qtyByDate[toDateKey(rollingDays[1])] || 0;
+    const q3 = qtyByDate[toDateKey(rollingDays[2])] || 0;
+
+    const rate = Math.round(q1 * 0.5 + q2 * 0.3 + q3 * 0.2);
+    const samples = [
+      { date: toDateKey(rollingDays[0]), quantity: q1 },
+      { date: toDateKey(rollingDays[1]), quantity: q2 },
+      { date: toDateKey(rollingDays[2]), quantity: q3 },
+    ];
+
+    return {
+      rate,
+      weights: { day1: 0.5, day2: 0.3, day3: 0.2 },
+      substitutedFormula: `(${q1} × 0.50) + (${q2} × 0.30) + (${q3} × 0.20) = ${rate} pcs/day`,
+      samples,
+    };
+  }
+
+  // Fallback for tests/direct calls without explicit calendar date anchor
   const sorted = [...dailyLogs].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
@@ -220,8 +275,8 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
   const requiredDailyRate =
     remainingPieces > 0 ? Math.ceil(remainingPieces / effectiveWorkingDays) : 0;
 
-  // 6. Actual Rolling Rate (3-Day WMA)
-  const wma = calculate3DayWeightedRate(input.dailyLogs);
+  // 6. Actual Rolling Rate (3-Day WMA) anchored to simulated/live date
+  const wma = calculate3DayWeightedRate(input.dailyLogs, simulatedToday);
   const actualRollingRate = wma.rate;
 
   // 7. Variance (Actual - Required)

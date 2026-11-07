@@ -72,19 +72,6 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
   const [simulationResult, setSimulationResult] = useState<RateSimulationResult | null>(null);
   const [copiedMemo, setCopiedMemo] = useState(false);
 
-  // Extract Q1, Q2, Q3 values from the recent daily logs sample
-  const sampleLogs = mathBreakdown.recentLogsSample || [];
-  const q1 = sampleLogs[0]?.quantity ?? 0;
-  const q2 = sampleLogs[1]?.quantity ?? 0;
-  const q3 = sampleLogs[2]?.quantity ?? 0;
-
-  // Maximum log value for mini sparkline scaling
-  const maxLog = Math.max(1, q1, q2, q3);
-
-  // Velocity Momentum calculation (Q1 vs Q2)
-  const momentumDiff = q1 - q2;
-  const hasMomentumData = q1 > 0 && q2 > 0;
-
   // Dynamically compute live working days to ex-factory deadline (excluding Sundays)
   const liveWorkingDaysTotal = exFactoryDate
     ? calculateWorkingDaysLeft(exFactoryDate)
@@ -94,6 +81,54 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
   const liveRequiredRate = mathBreakdown.remainingPieces > 0
     ? Math.ceil(mathBreakdown.remainingPieces / effWorkingDays)
     : 0;
+
+  // Extract Q1, Q2, Q3 values from the recent daily logs sample
+  // Dynamically align to calendar days: days that passed (after 12:00 AM) without updates evaluate to 0 pcs
+  const sampleLogs = mathBreakdown.recentLogsSample || [];
+  const logsByDate: Record<string, number> = {};
+  sampleLogs.forEach((l) => {
+    const key = new Date(l.date).toISOString().split('T')[0];
+    logsByDate[key] = (logsByDate[key] || 0) + l.quantity;
+  });
+
+  const today = getAuthoritativeServerDate();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const todayHasLogs = (logsByDate[todayKey] || 0) > 0;
+
+  // Scan backwards from today (if logged) or yesterday (if no update today yet)
+  const scanDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  if (!todayHasLogs) {
+    scanDay.setDate(scanDay.getDate() - 1);
+  }
+
+  const rollingDays: Date[] = [];
+  while (rollingDays.length < 3) {
+    if (scanDay.getDay() !== 0) {
+      // Exclude Sundays
+      rollingDays.push(new Date(scanDay));
+    }
+    scanDay.setDate(scanDay.getDate() - 1);
+  }
+
+  const d1Key = `${rollingDays[0].getFullYear()}-${String(rollingDays[0].getMonth() + 1).padStart(2, '0')}-${String(rollingDays[0].getDate()).padStart(2, '0')}`;
+  const d2Key = `${rollingDays[1].getFullYear()}-${String(rollingDays[1].getMonth() + 1).padStart(2, '0')}-${String(rollingDays[1].getDate()).padStart(2, '0')}`;
+  const d3Key = `${rollingDays[2].getFullYear()}-${String(rollingDays[2].getMonth() + 1).padStart(2, '0')}-${String(rollingDays[2].getDate()).padStart(2, '0')}`;
+
+  const q1 = logsByDate[d1Key] || 0;
+  const q2 = logsByDate[d2Key] || 0;
+  const q3 = logsByDate[d3Key] || 0;
+
+  // Live 3-Day Weighted Moving Average rate
+  const liveActualRate = sampleLogs.length > 0 && sampleLogs[0]?.date
+    ? Math.round(q1 * 0.5 + q2 * 0.3 + q3 * 0.2)
+    : actualRollingRate;
+
+  // Maximum log value for mini sparkline scaling
+  const maxLog = Math.max(1, q1, q2, q3);
+
+  // Velocity Momentum calculation (Q1 vs Q2)
+  const momentumDiff = q1 - q2;
+  const hasMomentumData = q1 > 0 || q2 > 0;
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
@@ -150,25 +185,26 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
   };
 
   // Active metrics: reactively changes when simulator slider is adjusted
+  const activeVariance = liveActualRate - liveRequiredRate;
   const activeResult = simulationResult || {
-    simulatedRate: actualRollingRate,
+    simulatedRate: liveActualRate,
     requiredDailyRate: liveRequiredRate,
-    variance: (actualRollingRate || 0) - liveRequiredRate,
+    variance: activeVariance,
     workingDaysNeeded: Math.min(
       60,
-      Math.ceil(mathBreakdown.remainingPieces / Math.max(1, actualRollingRate || liveRequiredRate))
+      Math.ceil(mathBreakdown.remainingPieces / Math.max(1, liveActualRate || liveRequiredRate))
     ),
     projectedCompletionDate,
-    daysLate,
-    simulatedRisk: riskLevel,
+    daysLate: liveActualRate === 0 && mathBreakdown.remainingPieces > 0 ? 45 : daysLate,
+    simulatedRisk: activeVariance < 0 ? 'RED' : riskLevel,
     financialExposureRupees,
   };
 
   const activeDifferencePill = isCompleted
-    ? 'Completed'
+    ? (isTa ? 'முடிந்தது' : 'Completed')
     : activeResult.variance >= 0
-    ? `+${activeResult.variance} pcs/day (On Track)`
-    : `${activeResult.variance} pcs/day (Deficit)`;
+    ? `+${activeResult.variance} ${isTa ? 'துண்டுகள்/நாள் (சரியான பாதை)' : 'pcs/day (On Track)'}`
+    : `${activeResult.variance} ${isTa ? 'துண்டுகள்/நாள் (பற்றாக்குறை)' : 'pcs/day (Deficit)'}`;
 
   // Copy standup memo to clipboard
   const handleCopyMemo = () => {
@@ -181,7 +217,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
         ? `• Status: COMPLETED (Target met, 0 pcs remaining for this stage)`
         : `• Remaining: ${mathBreakdown.remainingPieces.toLocaleString()} pcs across ${effDays} working days`,
       `• Required Pace: ${liveRequiredRate.toLocaleString()} pcs/day`,
-      `• Actual Floor Speed: ${actualRollingRate.toLocaleString()} pcs/day (Logs: Q₁=${q1}, Q₂=${q2}, Q₃=${q3})`,
+      `• Actual Floor Speed: ${liveActualRate.toLocaleString()} pcs/day (Logs: Q₁=${q1}, Q₂=${q2}, Q₃=${q3})`,
       `• Variance: ${activeDifferencePill}`,
       `• Projected Finish: ${formattedDate} (${isCompleted || activeResult.daysLate === 0 ? 'On Schedule' : `${activeResult.daysLate}d Late`})`,
       activeResult.financialExposureRupees > 0
@@ -370,14 +406,14 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
             <span className="text-xs text-slate-400 font-light shrink-0">=</span>
             <span
               className={`text-sm sm:text-base font-black tracking-tight shrink-0 ${
-                (activeResult.simulatedRate > 0 ? activeResult.simulatedRate : actualRollingRate) >=
-                requiredDailyRate
+                (showSimulator ? activeResult.simulatedRate : liveActualRate) >=
+                liveRequiredRate
                   ? 'text-emerald-700'
                   : 'text-rose-700'
               }`}
             >
-              {(showSimulator ? activeResult.simulatedRate : actualRollingRate).toLocaleString()}{' '}
-              <span className="text-[10px] font-sans font-bold text-slate-600">pcs/day</span>
+              {(showSimulator ? activeResult.simulatedRate : liveActualRate).toLocaleString()}{' '}
+              <span className="text-[10px] font-sans font-bold text-slate-600">{isTa ? 'துண்டுகள்/நாள்' : 'pcs/day'}</span>
             </span>
           </div>
 
@@ -403,7 +439,9 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
                 )}
               </div>
             ) : (
-              <span className="text-[10px] text-slate-400 font-mono">Floor logs</span>
+              <span className="text-[10px] text-rose-600 font-mono font-semibold">
+                {isTa ? 'உற்பத்தி பதிவு இல்லை (0 துண்டுகள்)' : 'No recent logs (0 pcs)'}
+              </span>
             )}
 
             {/* Visual 3-Bar Mini Sparkline */}
