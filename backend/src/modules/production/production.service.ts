@@ -425,17 +425,7 @@ export class ProductionService {
     const proposedCumulativeOutput =
       targetMilestone.completedQuantity + input.goodQuantity;
 
-    // 4. Invariant 2 (Cutting Tolerance Ceiling Check):
-    const ceilingAllowed = Math.round(order.totalQuantity * 1.03);
-    if (input.goodQuantity > 0 && proposedCumulativeOutput > ceilingAllowed) {
-      throw new AppError(
-        `Tolerance ceiling exceeded: Proposed stage output (${proposedCumulativeOutput.toLocaleString()} pcs) ` +
-          `exceeds maximum allowed ${ceilingAllowed.toLocaleString()} pcs (PO Qty: ${order.totalQuantity.toLocaleString()} + 3% tolerance ceiling). Check entry for extra zeroes.`,
-        400
-      );
-    }
-
-    // 5. Invariant 1 (Sequential Stage Constraint):
+    // 4. Invariant 1 (Sequential Stage Constraint):
     if (targetMilestone.sequenceOrder > 1 && input.goodQuantity > 0) {
       const upstreamMilestone = order.milestones.find(
         (m) => m.sequenceOrder === targetMilestone.sequenceOrder - 1
@@ -451,6 +441,16 @@ export class ProductionService {
           );
         }
       }
+    }
+
+    // 5. Invariant 2 (Cutting Tolerance Ceiling Check):
+    const ceilingAllowed = Math.round(order.totalQuantity * 1.03);
+    if (input.goodQuantity > 0 && proposedCumulativeOutput > ceilingAllowed) {
+      throw new AppError(
+        `Tolerance ceiling exceeded: Proposed stage output (${proposedCumulativeOutput.toLocaleString()} pcs) ` +
+          `exceeds maximum allowed ${ceilingAllowed.toLocaleString()} pcs (PO Qty: ${order.totalQuantity.toLocaleString()} + 3% tolerance ceiling). Check entry for extra zeroes.`,
+        400
+      );
     }
 
     // 6. Invariant 3 (Per-Size Breakdown Lines Reconciliation):

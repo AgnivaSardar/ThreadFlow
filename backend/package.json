@@ -8,6 +8,8 @@
     "build": "prisma generate && tsc",
     "start": "node dist/server.js",
     "test": "tsx tests/risk.test.ts && tsx tests/ai.fallback.test.ts && tsx tests/orders.test.ts && tsx tests/production.test.ts",
+    "simulate:daily": "tsx scripts/simulate-daily-production.ts",
+    "simulate:complete": "tsx scripts/simulate-daily-production.ts --all",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "seed": "tsx prisma/seed.ts",

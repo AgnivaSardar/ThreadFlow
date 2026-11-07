@@ -67,6 +67,7 @@ async function runProductionTestSuite() {
     console.log('\n[Test Group 2] Anti-Finger-Slip Stage Invariant Enforcement');
 
     const candidates = await prisma.order.findMany({
+      where: { unitId: unit1.id },
       include: { milestones: { orderBy: { sequenceOrder: 'asc' } } },
     });
 
@@ -313,7 +314,7 @@ async function runProductionTestSuite() {
     console.log('\n[Test Group 7] Per-Size Breakdown Reconciliation');
 
     const orderWithLines = await prisma.order.findFirst({
-      where: { orderLines: { some: {} } },
+      where: { unitId: unit1.id, orderLines: { some: {} } },
       include: { orderLines: true, milestones: { orderBy: { sequenceOrder: 'asc' } } },
     });
 
