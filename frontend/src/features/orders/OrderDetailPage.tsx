@@ -34,6 +34,7 @@ import { ShowYourMathCard } from '../risk/ShowYourMathCard';
 import { RiskReviewCard } from '../risk/RiskReviewCard';
 import { getSafeImageUrl, handleImageError } from '../../utils/imageUtils';
 import { useLanguage } from '../../hooks/useLanguage';
+import { calculateWorkingDaysLeft } from '../../utils/dateUtils';
 import {
   translateStage,
   translateUnit,
@@ -477,7 +478,7 @@ export const OrderDetailPage: React.FC = () => {
           <div className="text-base font-bold text-slate-800 mt-1">{formatDateLocalized(order.exFactoryDate, lang)}</div>
           <div className="text-xs text-amber-600 font-semibold flex items-center gap-1 mt-0.5">
             <Clock className="w-3.5 h-3.5" />
-            {order.workingDaysLeft} {od.workingDaysLeft} ({t.common.cw} {order.shipWeek})
+            {calculateWorkingDaysLeft(order.exFactoryDate)} {od.workingDaysLeft} ({t.common.cw} {order.shipWeek})
           </div>
         </div>
 
@@ -646,6 +647,7 @@ export const OrderDetailPage: React.FC = () => {
             poNumber={order.poNumber}
             styleName={order.style}
             stageName={translateStage(order.activeStage, lang)}
+            exFactoryDate={order.exFactoryDate}
           />
         </div>
       )}

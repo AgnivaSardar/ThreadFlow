@@ -17,6 +17,7 @@ import { ShowYourMathCard } from './ShowYourMathCard';
 import { RiskReviewCard } from './RiskReviewCard';
 import { CustomSelect, Option } from '../../components/CustomSelect';
 import { Language } from '../supervisor/supervisorTranslations';
+import { calculateWorkingDaysLeft } from '../../utils/dateUtils';
 import {
   AlertTriangle,
   RefreshCw,
@@ -721,7 +722,7 @@ export const RiskPage: React.FC = () => {
                               }
                             )}
                           </strong>{' '}
-                          <span className="text-amber-300 font-bold">({t.daysLeft(item.workingDaysLeft)})</span>
+                          <span className="text-amber-300 font-bold">({t.daysLeft(calculateWorkingDaysLeft(item.exFactoryDate))})</span>
                         </div>
 
                         <Link
@@ -750,6 +751,7 @@ export const RiskPage: React.FC = () => {
                         poNumber={item.poNumber}
                         styleName={item.style}
                         stageName={stageNameLocalized}
+                        exFactoryDate={item.exFactoryDate}
                       />
                     </div>
                   </div>

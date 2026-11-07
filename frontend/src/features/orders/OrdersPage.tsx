@@ -28,6 +28,7 @@ import { BulkShiftModal } from './BulkShiftModal';
 import { useAuthStore } from '../auth/authStore';
 import { ShiftCutoffBanner } from '../dashboard/ShiftCutoffBanner';
 import { useLanguage } from '../../hooks/useLanguage';
+import { calculateWorkingDaysLeft } from '../../utils/dateUtils';
 import {
   STAGE_TRANSLATIONS,
   translateStyle,
@@ -223,7 +224,7 @@ export const OrdersPage: React.FC = () => {
       `"${o.unit.name}"`,
       o.totalQuantity,
       o.shipWeek,
-      o.workingDaysLeft,
+      calculateWorkingDaysLeft(o.exFactoryDate),
       new Date(o.exFactoryDate).toISOString().split('T')[0],
       `"${o.activeStage}"`,
       o.activeStageProgressPct,
@@ -626,7 +627,7 @@ export const OrdersPage: React.FC = () => {
                           {formatDateLocalized(order.exFactoryDate, lang)}
                         </div>
                         <div className="text-[11px] text-amber-700 font-medium">
-                          {order.workingDaysLeft} {isTa ? 'நாட்கள் எஞ்சியுள்ளன' : 'd left'} ({t.common.cw} {order.shipWeek})
+                          {calculateWorkingDaysLeft(order.exFactoryDate)} {isTa ? 'நாட்கள் எஞ்சியுள்ளன' : 'd left'} ({t.common.cw} {order.shipWeek})
                         </div>
                         {order.hasCriticalBottleneck && (
                           <div className="mt-0.5">

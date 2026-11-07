@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { MathExplanationPayload, RiskLevel, RateSimulationResult } from '../../types';
 import { useLanguage } from '../../hooks/useLanguage';
 import { getAuthoritativeServerDate } from '../../services/api';
+import { calculateWorkingDaysLeft } from '../../utils/dateUtils';
 import {
   Sliders,
   TrendingUp,
@@ -36,6 +37,7 @@ interface ShowYourMathCardProps {
   poNumber?: string;
   styleName?: string;
   stageName?: string;
+  exFactoryDate?: string;
 }
 
 export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
@@ -53,6 +55,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
   poNumber,
   styleName,
   stageName,
+  exFactoryDate,
 }) => {
   const { lang, isTa, t } = useLanguage();
   const isCompleted = Boolean(
@@ -82,6 +85,16 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
   const momentumDiff = q1 - q2;
   const hasMomentumData = q1 > 0 && q2 > 0;
 
+  // Dynamically compute live working days to ex-factory deadline (excluding Sundays)
+  const liveWorkingDaysTotal = exFactoryDate
+    ? calculateWorkingDaysLeft(exFactoryDate)
+    : mathBreakdown.workingDaysTotal;
+
+  const effWorkingDays = Math.max(1, liveWorkingDaysTotal - mathBreakdown.downstreamBufferDays);
+  const liveRequiredRate = mathBreakdown.remainingPieces > 0
+    ? Math.ceil(mathBreakdown.remainingPieces / effWorkingDays)
+    : 0;
+
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
     return new Date(dateStr).toLocaleDateString('en-GB', {
@@ -95,8 +108,8 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
   const handleSliderChange = (newRate: number) => {
     setSimulatedRate(newRate);
 
-    const effDays = Math.max(1, mathBreakdown.workingDaysTotal - mathBreakdown.downstreamBufferDays);
-    const req = requiredDailyRate;
+    const effDays = effWorkingDays;
+    const req = liveRequiredRate;
     const daysNeeded = Math.min(60, Math.ceil(mathBreakdown.remainingPieces / Math.max(1, newRate)));
     const variance = newRate - req;
     const simLate = Math.max(0, daysNeeded - effDays);
@@ -139,11 +152,11 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
   // Active metrics: reactively changes when simulator slider is adjusted
   const activeResult = simulationResult || {
     simulatedRate: actualRollingRate,
-    requiredDailyRate,
-    variance: varianceQtyPerDay,
+    requiredDailyRate: liveRequiredRate,
+    variance: (actualRollingRate || 0) - liveRequiredRate,
     workingDaysNeeded: Math.min(
       60,
-      Math.ceil(mathBreakdown.remainingPieces / Math.max(1, actualRollingRate || requiredDailyRate))
+      Math.ceil(mathBreakdown.remainingPieces / Math.max(1, actualRollingRate || liveRequiredRate))
     ),
     projectedCompletionDate,
     daysLate,
@@ -160,14 +173,14 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
   // Copy standup memo to clipboard
   const handleCopyMemo = () => {
     const formattedDate = formatDate(activeResult.projectedCompletionDate);
-    const effDays = mathBreakdown.workingDaysTotal - mathBreakdown.downstreamBufferDays;
+    const effDays = effWorkingDays;
     const memo = [
       `[THREADFLOW RUN-RATE AUDIT]`,
       `PO: ${poNumber || 'B-PO'} | Style: ${styleName || 'Apparel'} | Stage: ${stageName || 'Active Stage'}`,
       isCompleted
         ? `• Status: COMPLETED (Target met, 0 pcs remaining for this stage)`
         : `• Remaining: ${mathBreakdown.remainingPieces.toLocaleString()} pcs across ${effDays} working days`,
-      `• Required Pace: ${requiredDailyRate.toLocaleString()} pcs/day`,
+      `• Required Pace: ${liveRequiredRate.toLocaleString()} pcs/day`,
       `• Actual Floor Speed: ${actualRollingRate.toLocaleString()} pcs/day (Logs: Q₁=${q1}, Q₂=${q2}, Q₃=${q3})`,
       `• Variance: ${activeDifferencePill}`,
       `• Projected Finish: ${formattedDate} (${isCompleted || activeResult.daysLate === 0 ? 'On Schedule' : `${activeResult.daysLate}d Late`})`,
@@ -186,7 +199,6 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
     setTimeout(() => setCopiedMemo(false), 2500);
   };
 
-  const effWorkingDays = Math.max(1, mathBreakdown.workingDaysTotal - mathBreakdown.downstreamBufferDays);
   const piecesInDeficit = Math.max(0, mathBreakdown.remainingPieces - (actualRollingRate * effWorkingDays));
   const estOvertimeCost = Math.round(Math.max(4500, piecesInDeficit * 10));
   const netRoi = Math.max(0, financialExposureRupees - estOvertimeCost);
@@ -325,17 +337,17 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
                 {mathBreakdown.remainingPieces.toLocaleString()} {t.common.pieces}
               </span>
               <span className="pt-0.5 text-slate-600 text-[10px]">
-                {mathBreakdown.workingDaysTotal}d − {mathBreakdown.downstreamBufferDays}d
+                {liveWorkingDaysTotal}d − {mathBreakdown.downstreamBufferDays}d
               </span>
             </div>
             <span className="text-xs text-slate-400 font-light shrink-0">=</span>
             <span className="text-sm sm:text-base font-black text-sky-900 tracking-tight shrink-0">
-              {requiredDailyRate.toLocaleString()} <span className="text-[10px] font-sans font-bold text-sky-700">{isTa ? 'துண்டுகள்/நாள்' : 'pcs/day'}</span>
+              {liveRequiredRate.toLocaleString()} <span className="text-[10px] font-sans font-bold text-sky-700">{isTa ? 'துண்டுகள்/நாள்' : 'pcs/day'}</span>
             </span>
           </div>
 
           <div className="text-[10px] sm:text-[11px] text-slate-500 font-mono text-center tracking-wide">
-            {isTa ? 'மீதம்:' : 'Remaining:'} <strong className="text-slate-800">{mathBreakdown.remainingPieces.toLocaleString()} {t.common.pieces}</strong> ({mathBreakdown.workingDaysTotal - mathBreakdown.downstreamBufferDays} {isTa ? 'வேலை நாட்களில்' : 'working days'})
+            {isTa ? 'மீதம்:' : 'Remaining:'} <strong className="text-slate-800">{mathBreakdown.remainingPieces.toLocaleString()} {t.common.pieces}</strong> ({liveWorkingDaysTotal - mathBreakdown.downstreamBufferDays} {isTa ? 'வேலை நாட்களில்' : 'working days'})
           </div>
         </div>
 
