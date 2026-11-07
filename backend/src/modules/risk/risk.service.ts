@@ -17,6 +17,7 @@ export interface RiskFilterQuery {
   unitId?: string;
   stage?: Stage | 'ALL';
   search?: string;
+  asOfDate?: string;
 }
 
 export class RiskService {
@@ -191,7 +192,19 @@ export class RiskService {
       orderBy: { exFactoryDate: 'asc' },
     });
 
-    const simulatedToday = getSystemToday();
+    let simulatedToday = filters.asOfDate ? new Date(filters.asOfDate) : getSystemToday();
+    if (isNaN(simulatedToday.getTime())) {
+      simulatedToday = getSystemToday();
+    }
+    // If no explicit asOfDate was requested, ensure an outdated SIMULATED_TODAY_DATE in cloud env
+    // does not lock out live manufacturing activity
+    if (!filters.asOfDate && process.env.SIMULATED_TODAY_DATE) {
+      const envAnchor = new Date(process.env.SIMULATED_TODAY_DATE);
+      const systemNow = new Date();
+      if (!isNaN(envAnchor.getTime()) && systemNow.getTime() > envAnchor.getTime()) {
+        simulatedToday = systemNow;
+      }
+    }
 
     // Run real-time deterministic risk evaluation for each order's active milestone
     const evaluatedRisks = orders.map((order) => {

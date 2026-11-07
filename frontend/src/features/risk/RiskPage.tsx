@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { apiRequest } from '../../services/api';
+import { apiRequest, getAuthoritativeServerDate } from '../../services/api';
 import {
   RiskListResponse,
   RiskItem,
@@ -241,6 +241,8 @@ export const RiskPage: React.FC = () => {
       setError(null);
 
       const params = new URLSearchParams();
+      const authoritativeDate = getAuthoritativeServerDate().toISOString().split('T')[0];
+      params.append('asOfDate', authoritativeDate);
       if (riskLevelFilter !== 'ALL') params.append('riskLevel', riskLevelFilter);
       if (buyerFilter !== 'ALL') params.append('buyerId', buyerFilter);
       if (unitFilter !== 'ALL') params.append('unitId', unitFilter);
