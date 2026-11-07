@@ -234,7 +234,7 @@ export const ShiftCutoffBanner: React.FC = () => {
                     {isSent ? (
                       <>
                         <Check className="w-3 h-3 text-emerald-600" />
-                        <span>{isTa ? 'நினைவூட்டல் அனுப்பப்பட்டது' : 'Nudge Dispatched'}</span>
+                        <span>{isTa ? 'எச்சரிக்கை அனுப்பப்பட்டது' : 'Alert Dispatched'}</span>
                       </>
                     ) : (
                       <>

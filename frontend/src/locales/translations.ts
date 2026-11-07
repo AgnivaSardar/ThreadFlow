@@ -238,7 +238,7 @@ export const UI_TRANSLATIONS = {
       show: 'காட்டு',
       posPending: 'ஆர்டர்கள் நிலுவை',
       supervisor: 'மேற்பார்வையாளர்:',
-      sendWhatsappNudge: 'வாட்ஸ்அப் நினைவூட்டல் அனுப்பு (தமிழ் + ஆங்கிலம்)',
+      sendWhatsappNudge: 'வாட்ஸ்அப் எச்சரிக்கை அனுப்பு',
     },
     tnaPipeline: {
       title: 'நேரம் & செயல் பைப்லைன்',
@@ -540,7 +540,7 @@ export const UI_TRANSLATIONS = {
       show: 'Show',
       posPending: 'POs pending',
       supervisor: 'Supervisor:',
-      sendWhatsappNudge: 'Send WhatsApp Nudge (Tamil + English)',
+      sendWhatsappNudge: 'Send WhatsApp Alert',
     },
     tnaPipeline: {
       title: 'Time & Action Pipeline',
