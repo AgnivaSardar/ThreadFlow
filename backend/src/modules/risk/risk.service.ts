@@ -57,10 +57,23 @@ export class RiskService {
     }
 
     // Map production updates to daily logs for WMA
-    const dailyLogs = order.productionUpdates.map((u) => ({
+    let dailyLogs = order.productionUpdates.map((u) => ({
       date: u.clientEventAt,
       quantity: u.goodQuantity,
     }));
+
+    if (dailyLogs.length === 0) {
+      // Fallback: use recent updates from the entire order so a freshly transitioned stage reflects shop floor pace
+      const allOrderUpdates = await prisma.productionUpdate.findMany({
+        where: { orderId: order.id },
+        orderBy: { clientEventAt: 'desc' },
+        take: 10,
+      });
+      dailyLogs = allOrderUpdates.map((u) => ({
+        date: u.clientEventAt,
+        quantity: u.goodQuantity,
+      }));
+    }
 
     const riskInput: RiskEngineInput = {
       orderId: order.id,
@@ -172,7 +185,7 @@ export class RiskService {
         },
         productionUpdates: {
           orderBy: { clientEventAt: 'desc' },
-          take: 5,
+          take: 50,
         },
       },
       orderBy: { exFactoryDate: 'asc' },

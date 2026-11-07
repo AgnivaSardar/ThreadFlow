@@ -114,36 +114,76 @@ function generateSaneShiftQuantities(remainingQty: number, targetQty: number) {
 }
 
 /**
- * Allocates good and rejected pieces proportionally across size breakdown lines
- * with zero rounding mismatch.
+ * Safely allocates good and rejected pieces across size breakdown lines,
+ * strictly guaranteeing that no individual size exceeds its 3% tolerance ceiling
+ * and that sum(goodQuantity) matches exactly.
  */
-function allocateSizeBreakdown(
-  orderLines: Array<{ id: string; plannedQty: number }>,
-  goodQuantity: number,
-  rejectedQuantity: number
+async function allocateSizeBreakdownSafely(
+  milestoneId: string,
+  orderLines: Array<{ id: string; size: string; plannedQty: number }>,
+  desiredGoodQty: number,
+  desiredRejQty: number
 ) {
-  const totalPlanned = orderLines.reduce((acc, l) => acc + l.plannedQty, 0);
+  // 1. Fetch pieces already logged per size for THIS milestone
+  const existingAgg = await prisma.productionUpdateLine.groupBy({
+    by: ['orderLineId'],
+    where: {
+      productionUpdate: { milestoneId },
+    },
+    _sum: { goodQuantity: true },
+  });
+
+  const completedMap = new Map<string, number>();
+  for (const item of existingAgg) {
+    completedMap.set(item.orderLineId, item._sum.goodQuantity || 0);
+  }
+
+  // 2. Compute headroom per size before hitting lineCeiling (plannedQty * 1.03)
+  const lineCapacities = orderLines.map((l) => {
+    const done = completedMap.get(l.id) || 0;
+    const ceiling = Math.round(l.plannedQty * 1.03);
+    const headroom = Math.max(0, ceiling - done);
+    return { ...l, headroom };
+  });
+
+  const totalHeadroom = lineCapacities.reduce((sum, l) => sum + l.headroom, 0);
+  const goodToDistribute = Math.min(desiredGoodQty, totalHeadroom);
+  const rejToDistribute = Math.min(desiredRejQty, Math.max(1, Math.round(goodToDistribute * 0.02)));
+
   let allocatedGood = 0;
   let allocatedRej = 0;
 
-  return orderLines.map((line, idx) => {
-    const isLast = idx === orderLines.length - 1;
-    const good = isLast
-      ? Math.max(0, goodQuantity - allocatedGood)
-      : Math.round((line.plannedQty / totalPlanned) * goodQuantity);
+  const lines = lineCapacities.map((l, idx) => {
+    const isLast = idx === lineCapacities.length - 1;
+    let good = isLast
+      ? Math.max(0, goodToDistribute - allocatedGood)
+      : totalHeadroom > 0
+      ? Math.round((l.headroom / totalHeadroom) * goodToDistribute)
+      : 0;
+
+    good = Math.min(good, l.headroom);
     allocatedGood += good;
 
     const rej = isLast
-      ? Math.max(0, rejectedQuantity - allocatedRej)
-      : Math.round((line.plannedQty / totalPlanned) * rejectedQuantity);
+      ? Math.max(0, rejToDistribute - allocatedRej)
+      : totalHeadroom > 0
+      ? Math.round((l.headroom / totalHeadroom) * rejToDistribute)
+      : 0;
     allocatedRej += rej;
 
     return {
-      orderLineId: line.id,
+      orderLineId: l.id,
       goodQuantity: good,
       rejectedQuantity: rej,
     };
   });
+
+  const finalGood = lines.reduce((acc, l) => acc + l.goodQuantity, 0);
+  return {
+    goodQuantity: finalGood,
+    rejectedQuantity: allocatedRej,
+    sizeBreakdownLines: lines,
+  };
 }
 
 async function simulateOneDay(currentSimDate: Date, targetPoNumber?: string) {
@@ -211,17 +251,23 @@ async function simulateOneDay(currentSimDate: Date, targetPoNumber?: string) {
     }
 
     // Determine quantities
-    const { goodQuantity, rejectedQuantity } = generateSaneShiftQuantities(
+    const { goodQuantity: rawGood, rejectedQuantity: rawRej } = generateSaneShiftQuantities(
       remainingQty,
       activeMilestone.targetQuantity
     );
 
-    // Distribute among sizes
-    const sizeBreakdownLines = allocateSizeBreakdown(
+    // Safely distribute among sizes without exceeding size ceilings
+    const { goodQuantity, rejectedQuantity, sizeBreakdownLines } = await allocateSizeBreakdownSafely(
+      activeMilestone.id,
       order.orderLines,
-      goodQuantity,
-      rejectedQuantity
+      rawGood,
+      rawRej
     );
+
+    if (goodQuantity <= 0) {
+      console.log(`   ℹ️ [${order.poNumber}] Stage ${activeMilestone.stage} has reached size ceiling allocation.`);
+      continue;
+    }
 
     // Pick authentic supervisor for unit
     const unitSupervisor = order.unit?.users?.[0];
@@ -382,7 +428,7 @@ async function main() {
   console.log(`\n🔄 Updating factory-wide risk assessments and 3-day run-rate metrics...`);
   const activeOrdersForRisk = await prisma.order.findMany({
     where: { deletedAt: null, status: 'ACTIVE' },
-    include: { milestones: true },
+    include: { milestones: { orderBy: { sequenceOrder: 'asc' } } },
   });
 
   const adminAuth: AuthenticatedUser = {
