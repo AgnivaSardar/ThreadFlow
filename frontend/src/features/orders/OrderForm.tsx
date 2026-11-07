@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Plus, Trash2, CheckCircle, AlertCircle, Loader2, RotateCcw, Calendar, Clock } from 'lucide-react';
 import { Buyer, Unit, CreateOrderPayload, Stage } from '../../types';
-import { apiRequest } from '../../services/api';
+import { apiRequest, getAuthoritativeServerDate } from '../../services/api';
 import { CustomSelect, Option } from '../../components/CustomSelect';
 import { useLanguage } from '../../hooks/useLanguage';
 
@@ -102,13 +102,19 @@ export const OrderForm: React.FC<OrderFormProps> = ({
   const [buyerId, setBuyerId] = useState('');
   const [unitId, setUnitId] = useState('');
   const [totalQuantity, setTotalQuantity] = useState<number>(10000);
-  const [orderStartDate, setOrderStartDate] = useState('2026-11-02');
-  const [exFactoryDate, setExFactoryDate] = useState('2026-12-15');
+  const todayDate = getAuthoritativeServerDate();
+  const todayStr = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`;
+  const defaultEx = new Date(todayDate);
+  defaultEx.setDate(defaultEx.getDate() + 40);
+  const defaultExStr = `${defaultEx.getFullYear()}-${String(defaultEx.getMonth() + 1).padStart(2, '0')}-${String(defaultEx.getDate()).padStart(2, '0')}`;
+
+  const [orderStartDate, setOrderStartDate] = useState(todayStr);
+  const [exFactoryDate, setExFactoryDate] = useState(defaultExStr);
   const [currency, setCurrency] = useState('INR');
   const [fobPricePerPiece, setFobPricePerPiece] = useState<number>(320);
 
   const [stageRows, setStageRows] = useState<StageScheduleRow[]>(() => {
-    let cur = '2026-11-02';
+    let cur = todayStr;
     return DEFAULT_STAGES.map((s) => {
       const start = cur;
       const end = addWorkingDays(start, s.defaultDays);
@@ -256,7 +262,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
   };
 
   const handleResetStages = () => {
-    let cur = orderStartDate || '2026-11-02';
+    let cur = orderStartDate || todayStr;
     setStageRows(
       DEFAULT_STAGES.map((s) => {
         const start = cur;

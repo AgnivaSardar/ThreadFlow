@@ -3,6 +3,7 @@ import { prisma } from '../../config/db';
 import { AppError } from '../../common/errors/AppError';
 import { calculateAuditHash } from '../../common/utils/crypto';
 import { AuthenticatedUser } from '../../common/types/express';
+import { getSystemToday } from '../../common/utils/dates';
 
 export class BuyerPortalService {
   /**
@@ -188,7 +189,7 @@ export class BuyerPortalService {
         order.milestones[order.milestones.length - 1];
 
       // Ex-factory countdown
-      const today = new Date('2026-11-02T10:00:00Z');
+      const today = getSystemToday();
       const exFactory = new Date(order.exFactoryDate);
       const diffMs = exFactory.getTime() - today.getTime();
       const daysToExFactory = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
@@ -377,7 +378,7 @@ export class BuyerPortalService {
       order.milestones.find((m) => m.completedQuantity < m.targetQuantity) ||
       order.milestones[order.milestones.length - 1];
 
-    const today = new Date('2026-11-02T10:00:00Z');
+    const today = getSystemToday();
     const exFactory = new Date(order.exFactoryDate);
     const diffMs = exFactory.getTime() - today.getTime();
     const daysToExFactory = Math.ceil(diffMs / (1000 * 60 * 60 * 24));

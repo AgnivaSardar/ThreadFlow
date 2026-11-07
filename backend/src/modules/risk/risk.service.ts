@@ -3,6 +3,7 @@ import { Role, RiskLevel, Stage, ApprovalStatus, AuditCategory } from '@prisma/c
 import { AppError } from '../../common/errors/AppError';
 import { AuthenticatedUser } from '../../common/types/express';
 import { calculateAuditHash } from '../../common/utils/crypto';
+import { getSystemToday } from '../../common/utils/dates';
 import {
   evaluateProductionRisk,
   calculateWorkingDaysExcludingSundays,
@@ -74,7 +75,7 @@ export class RiskService {
       fobPricePerPiece: order.fobPricePerPiece || undefined,
       exchangeRate: order.exchangeRate || 100,
       currency: order.currency,
-      simulatedToday: new Date('2026-11-02T10:00:00Z'),
+      simulatedToday: getSystemToday(),
     };
 
     const evaluation = evaluateProductionRisk(riskInput);
@@ -177,7 +178,7 @@ export class RiskService {
       orderBy: { exFactoryDate: 'asc' },
     });
 
-    const simulatedToday = new Date('2026-11-02T10:00:00Z');
+    const simulatedToday = getSystemToday();
 
     // Run real-time deterministic risk evaluation for each order's active milestone
     const evaluatedRisks = orders.map((order) => {
@@ -297,7 +298,7 @@ export class RiskService {
     workingDaysToShip: number,
     downstreamBufferDays: number,
     plannedStageEnd: Date | string,
-    simulatedToday: Date | string = '2026-11-02T10:00:00Z'
+    simulatedToday: Date | string = getSystemToday()
   ) {
     const today = new Date(simulatedToday);
     const stageEnd = new Date(plannedStageEnd);

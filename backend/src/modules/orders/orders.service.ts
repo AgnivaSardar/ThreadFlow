@@ -5,6 +5,7 @@ import { calculateAuditHash } from '../../common/utils/crypto';
 import { AuthenticatedUser } from '../../common/types/express';
 import { CreateOrderInput, OrderQueryFilters, AdvanceStageInput } from './orders.schema';
 import { calculateWorkingDaysExcludingSundays } from '../risk/risk.engine';
+import { getSystemToday } from '../../common/utils/dates';
 
 export interface StageLeadTimeConfig {
   stage: Stage;
@@ -604,8 +605,8 @@ export class OrdersService {
       orderBy: { exFactoryDate: 'asc' },
     });
 
-    // Simulated Anchor: 2026-11-02
-    const ANCHOR_DATE = new Date('2026-11-02T10:00:00Z');
+    // Dynamic current date anchor
+    const ANCHOR_DATE = getSystemToday();
 
     const mapped = orders.map((order) => {
       const totalPlanned = order.orderLines.reduce((acc, l) => acc + l.plannedQty, 0);
@@ -824,8 +825,8 @@ export class OrdersService {
       };
     });
 
-    // Simulated Anchor: 2026-11-02
-    const ANCHOR_DATE = new Date('2026-11-02T10:00:00Z');
+    // Dynamic current date anchor
+    const ANCHOR_DATE = getSystemToday();
     let workingDaysLeft = 0;
     const cur = new Date(ANCHOR_DATE);
     const exFac = new Date(order.exFactoryDate);

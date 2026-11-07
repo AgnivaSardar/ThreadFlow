@@ -1,4 +1,5 @@
 import { Stage, RiskLevel } from '@prisma/client';
+import { getSystemToday } from '../../common/utils/dates';
 
 export interface ProductionDailyLog {
   date: Date | string;
@@ -197,7 +198,7 @@ export function calculate3DayWeightedRate(
 export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationResult {
   const simulatedToday = input.simulatedToday
     ? new Date(input.simulatedToday)
-    : new Date('2026-11-02T10:00:00Z');
+    : getSystemToday();
 
   const exFactory = new Date(input.exFactoryDate);
   const plannedStageEnd = new Date(input.plannedStageEnd);

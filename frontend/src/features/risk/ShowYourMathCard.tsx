@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MathExplanationPayload, RiskLevel, RateSimulationResult } from '../../types';
 import { useLanguage } from '../../hooks/useLanguage';
+import { getAuthoritativeServerDate } from '../../services/api';
 import {
   Sliders,
   TrendingUp,
@@ -115,7 +116,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
       exp = Math.round((financialExposureRupees || 105000) * 0.25 * (Math.abs(variance) / Math.max(1, req)));
     }
 
-    const today = new Date('2026-11-02T10:00:00Z');
+    const today = getAuthoritativeServerDate();
     let count = 0;
     const proj = new Date(today);
     while (count < daysNeeded) {

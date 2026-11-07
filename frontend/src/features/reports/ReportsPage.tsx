@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiRequest } from '../../services/api';
+import { apiRequest, getAuthoritativeServerDate } from '../../services/api';
 import { CustomSelect, Option } from '../../components/CustomSelect';
 import { exportOrdersToCsv, BuyerExportOrder, BuyerProfile } from './exportService';
 import { WeeklyReportPrintModal } from './WeeklyReportPrintModal';
@@ -225,7 +225,7 @@ export const ReportsPage: React.FC = () => {
     totalQuantity: o.totalQuantity,
     currency: o.currency,
     exFactoryDate: o.exFactoryDate,
-    daysToExFactory: Math.ceil((new Date(o.exFactoryDate).getTime() - new Date('2026-11-02T10:00:00Z').getTime()) / (1000 * 60 * 60 * 24)),
+    daysToExFactory: Math.ceil((new Date(o.exFactoryDate).getTime() - getAuthoritativeServerDate().getTime()) / (1000 * 60 * 60 * 24)),
     activeStage: o.activeStage,
     progressPercent: 75,
     unit: { name: o.unitName, location: 'Tiruppur' },
