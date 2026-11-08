@@ -131,9 +131,9 @@ All accounts use default password: `ThreadFlow@2026`
 
 | Role | Username / Email | Password | Primary Reviewer Workflows to Test |
 | :--- | :--- | :--- | :--- |
-| **Senior Merchandiser** | `merchandiser@company-a.com` | `ThreadFlow@2026` | Factory Order Board (Green/Amber/Red cards), Order & TNA Setup, "Show-Your-Math" run-rate breakdown, AI Issue Review & Confirmation Gate, What-If Recovery Simulator, and Weekly PDF Report Export. |
-| **Floor Supervisor (Unit 1)** | `supervisor.muthu@company-a.com` | `ThreadFlow@2026` | Mobile-optimized shop floor view, stage output entry, Tamil/Hindi/English voice input via Web Speech API, photo proof capture, and offline IndexedDB sync. |
-| **Floor Supervisor (Unit 2)** | `supervisor.selvam@company-a.com` | `ThreadFlow@2026` | Mobile floor workspace for Unit 2 & 3 stitching lines. |
+| **Senior Merchandiser** | `merchandiser@threadflow.com` | `ThreadFlow@2026` | Factory Order Board (Green/Amber/Red cards), Order & TNA Setup, "Show-Your-Math" run-rate breakdown, AI Issue Review & Confirmation Gate, What-If Recovery Simulator, and Weekly PDF Report Export. |
+| **Floor Supervisor (Unit 1)** | `supervisor.muthu@threadflow.com` | `ThreadFlow@2026` | Mobile-optimized shop floor view, stage output entry, Tamil/Hindi/English voice input via Web Speech API, photo proof capture, and offline IndexedDB sync. |
+| **Floor Supervisor (Unit 2)** | `supervisor.selvam@threadflow.com` | `ThreadFlow@2026` | Mobile floor workspace for Unit 2 & 3 stitching lines. |
 | **UK Foreign Buyer** | `sourcing@company-b.co.uk` | `ThreadFlow@2026` | Scoped Buyer Portal viewing POs `B-PO-88213` and `B-PO-88240`, confirmed photos, milestones, and weekly reports with zero access to other brands' data. |
 | **German Foreign Buyer** | `compliance@company-c.de` | `ThreadFlow@2026` | Scoped Buyer Portal viewing PO `C-PO-0488` with verified multi-tenant isolation. |
 | **System Administrator** | `admin@threadflow.com` | `ThreadFlow@2026` | Global administrative oversight across all manufacturing units, orders, audit logs, and system settings. |
@@ -143,12 +143,12 @@ All accounts use default password: `ThreadFlow@2026`
 
 ## 5. Reviewer Recommended 5-Minute Tour
 
-1. **Sign in as Merchandiser (`merchandiser@company-a.com`)**:
+1. **Sign in as Merchandiser (`merchandiser@threadflow.com`)**:
    - Inspect the **Orders** board showing calibrated orders (`B-PO-88240` Red, `C-PO-0488` Amber, `B-PO-88213` Green).
    - Go to **Risk & Capacity** and click **"Show Your Math"** on `B-PO-88240` to see the live run-rate calculation ($311\text{ req vs }200\text{ actual pcs/day} \implies 5\text{ days late} \implies \text{₹3.5 Lakh air freight risk}$).
    - Test the interactive **"What-If" Recovery Simulator** to evaluate adding stitching lines or overtime.
    - Go to **Reports** and click **"Export Weekly PDF Report"** to view the formal branded sourcing report with 5-week TNA multi-bar trends.
-2. **Sign in as Floor Supervisor (`supervisor.muthu@company-a.com`)**:
+2. **Sign in as Floor Supervisor (`supervisor.muthu@threadflow.com`)**:
    - Experience the mobile floor layout. Click **"Log Shift Output"** on an active order.
    - Switch language to **தமிழ் (Tamil)** and click the **Microphone** to speak (e.g. *"200 பீஸ் முடிந்தது, 5 ரிஜெக்ட், மெஷின் பிரேக் டவுன்"*).
    - Observe real-time speech transcription and automatic extraction of good pieces (+200), rejects (5), and root-cause (`MACHINE_BREAKDOWN`).

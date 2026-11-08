@@ -113,7 +113,7 @@
         "rejectedQty": 4,
         "stage": "FINISHING",
         "unitCode": "UNIT_1",
-        "userEmail": "supervisor.muthu@company-a.com",
+        "userEmail": "supervisor.muthu@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 1 Steam Line A",
         "operatorNotes": "Steam iron line 1 operated with reduced pressure during morning hours.",
@@ -130,7 +130,7 @@
         "rejectedQty": 6,
         "stage": "FINISHING",
         "unitCode": "UNIT_1",
-        "userEmail": "supervisor.muthu@company-a.com",
+        "userEmail": "supervisor.muthu@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 1 Steam Line B",
         "operatorNotes": "Collar folding station bottleneck; extra ironer requested to boost throughput.",
@@ -146,7 +146,7 @@
         "rejectedQty": 5,
         "stage": "FINISHING",
         "unitCode": "UNIT_1",
-        "userEmail": "supervisor.kumar@company-a.com",
+        "userEmail": "supervisor.kumar@threadflow.com",
         "shift": "NIGHT",
         "machineLine": "Unit 1 Finishing Line 2",
         "operatorNotes": "Power tripped at 02:15 AM. Genset transitioned after 20 minutes interruption.",
@@ -162,7 +162,7 @@
         "rejectedQty": 3,
         "stage": "FINISHING",
         "unitCode": "UNIT_1",
-        "userEmail": "supervisor.muthu@company-a.com",
+        "userEmail": "supervisor.muthu@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 1 Packing Hub",
         "operatorNotes": "3-day rolling average running at 200 pcs/day vs 311 pcs/day required.",
@@ -178,7 +178,7 @@
         "rejectedQty": 2,
         "stage": "FINISHING",
         "unitCode": "UNIT_1",
-        "userEmail": "supervisor.muthu@company-a.com",
+        "userEmail": "supervisor.muthu@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 1 Packing Hub",
         "operatorNotes": "XL size collars showing slight rib tension wave; adjusted folding jig.",
@@ -246,7 +246,7 @@
         "description": "Authorized 2 hours overtime per shift for 14 finishing operators to bridge 111 pcs/day deficit.",
         "addedDailyCapacity": 140,
         "estimatedCostRupees": 35000,
-        "authorizedByEmail": "merchandiser@company-a.com",
+        "authorizedByEmail": "merchandiser@threadflow.com",
         "offsetDays": -1
       },
       {
@@ -254,7 +254,7 @@
         "description": "Reassigned 4 operators from Unit 3 sampling line to support placket pressing.",
         "addedDailyCapacity": 80,
         "estimatedCostRupees": 12000,
-        "authorizedByEmail": "merchandiser@company-a.com",
+        "authorizedByEmail": "merchandiser@threadflow.com",
         "offsetDays": 0
       }
     ],
@@ -279,7 +279,7 @@
         "category": "DATE_CHANGE",
         "reasonCode": "INITIAL_PO_CREATION",
         "notes": "Initial Purchase Order created in system for 8,000 pcs.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -45
       },
@@ -288,7 +288,7 @@
         "category": "RISK_STATUS_CHANGE",
         "reasonCode": "LABOUR_SHORTAGE",
         "notes": "Finishing deficit flagged as RED. Projected 5 days late.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -2
       },
@@ -298,7 +298,7 @@
         "reasonCode": "LABOUR_SHORTAGE",
         "notes": "Authorized overtime for 14 operators; financial impact estimated at \u20b935,000.",
         "financialImpactRupees": 35000,
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -1
       },
@@ -309,7 +309,7 @@
         "notes": "Buyer requested revised delivery schedule window.",
         "previousValue": "{\"exFactoryDate\":\"2026-11-17T00:00:00Z\"}",
         "newValue": "{\"exFactoryDate\":\"2026-11-12T00:00:00Z\"}",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -1
       },
@@ -318,7 +318,7 @@
         "category": "ACCESS_CONTROL",
         "reasonCode": "BUYER_REQUEST",
         "notes": "Automated notification dispatch delivered to buyer@company-b.co.uk.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -1
       },
@@ -442,7 +442,7 @@
         "rejectedQty": 18,
         "stage": "PRINTING",
         "unitCode": "PRINTTEX",
-        "userEmail": "supervisor.muthu@company-a.com",
+        "userEmail": "supervisor.muthu@threadflow.com",
         "shift": "DAY",
         "machineLine": "PrintTex Screen Bed 4",
         "operatorNotes": "Chest motif screen alignment offset by 3mm; recalibrating mesh clamp.",
@@ -458,7 +458,7 @@
         "rejectedQty": 12,
         "stage": "PRINTING",
         "unitCode": "PRINTTEX",
-        "userEmail": "supervisor.muthu@company-a.com",
+        "userEmail": "supervisor.muthu@threadflow.com",
         "shift": "DAY",
         "machineLine": "PrintTex Screen Bed 4",
         "operatorNotes": "First pass 1,200 pcs cleared strike-off inspection by merchandiser.",
@@ -474,7 +474,7 @@
         "rejectedQty": 10,
         "stage": "PRINTING",
         "unitCode": "PRINTTEX",
-        "userEmail": "supervisor.muthu@company-a.com",
+        "userEmail": "supervisor.muthu@threadflow.com",
         "shift": "DAY",
         "machineLine": "PrintTex Screen Bed 2",
         "operatorNotes": "Pigment curing tunnel heating element replaced; delay resolved.",
@@ -534,7 +534,7 @@
         "description": "Diverted 4,000 pcs unprinted cut panels to Unit 3 rotary print bed.",
         "addedDailyCapacity": 450,
         "estimatedCostRupees": 48000,
-        "authorizedByEmail": "merchandiser@company-a.com",
+        "authorizedByEmail": "merchandiser@threadflow.com",
         "offsetDays": -1
       }
     ],
@@ -558,7 +558,7 @@
         "category": "DATE_CHANGE",
         "reasonCode": "INITIAL_PO_CREATION",
         "notes": "PO C-PO-0488 created for 10,000 pcs kids printed apparel.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -30
       },
@@ -568,7 +568,7 @@
         "reasonCode": "SUBCONTRACTOR_DELAY",
         "notes": "PrintTex delay flagged RED. Projected financial exposure \u20b92,80,000.",
         "financialImpactRupees": 280000,
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -2
       },
@@ -577,7 +577,7 @@
         "category": "ACCESS_CONTROL",
         "reasonCode": "SUBCONTRACTOR_DELAY",
         "notes": "Official notice transmitted to compliance@company-c.de.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -1
       },
@@ -691,7 +691,7 @@
         "rejectedQty": 8,
         "stage": "CUTTING",
         "unitCode": "UNIT_1",
-        "userEmail": "supervisor.muthu@company-a.com",
+        "userEmail": "supervisor.muthu@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 1 Auto Cutter 1",
         "operatorNotes": "Navy shade delta E measured 1.1; within acceptable buyer tolerance.",
@@ -707,7 +707,7 @@
         "rejectedQty": 5,
         "stage": "CUTTING",
         "unitCode": "UNIT_1",
-        "userEmail": "supervisor.muthu@company-a.com",
+        "userEmail": "supervisor.muthu@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 1 Auto Cutter 1",
         "operatorNotes": "Rib collar matching lot 2 cut; balance 3,700 pcs waiting fabric lot 3.",
@@ -768,7 +768,7 @@
         "category": "DATE_CHANGE",
         "reasonCode": "INITIAL_PO_CREATION",
         "notes": "PO B-PO-88255 booked.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -25
       },
@@ -777,7 +777,7 @@
         "category": "RISK_STATUS_CHANGE",
         "reasonCode": "FABRIC_DELAY",
         "notes": "Fabric lot 3 delay flagged as AMBER.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -1
       }
@@ -887,7 +887,7 @@
         "rejectedQty": 10,
         "stage": "DYEING_WASHING",
         "unitCode": "WASHTEX",
-        "userEmail": "supervisor.selvam@company-a.com",
+        "userEmail": "supervisor.selvam@threadflow.com",
         "shift": "DAY",
         "machineLine": "WashTex Bio Pit 2",
         "operatorNotes": "Enzyme bio-wash pass 1 completed; hand-feel approved by QA.",
@@ -903,7 +903,7 @@
         "rejectedQty": 8,
         "stage": "DYEING_WASHING",
         "unitCode": "WASHTEX",
-        "userEmail": "supervisor.selvam@company-a.com",
+        "userEmail": "supervisor.selvam@threadflow.com",
         "shift": "DAY",
         "machineLine": "WashTex Bio Pit 2",
         "operatorNotes": "Hydro-extractor tumble drying lot 2; remaining 2,800 pcs in wash cycle.",
@@ -969,7 +969,7 @@
         "category": "DATE_CHANGE",
         "reasonCode": "INITIAL_PO_CREATION",
         "notes": "PO C-PO-0492 booked.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -25
       },
@@ -1088,7 +1088,7 @@
         "rejectedQty": 4,
         "stage": "STITCHING",
         "unitCode": "UNIT_1",
-        "userEmail": "supervisor.selvam@company-a.com",
+        "userEmail": "supervisor.selvam@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 2 Line 1 & Line 2",
         "operatorNotes": "Stitching throughput optimal; pacing ahead of planned schedule.",
@@ -1104,7 +1104,7 @@
         "rejectedQty": 3,
         "stage": "STITCHING",
         "unitCode": "UNIT_1",
-        "userEmail": "supervisor.selvam@company-a.com",
+        "userEmail": "supervisor.selvam@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 2 Line 1 & Line 2",
         "operatorNotes": "Collar rib overlock assembly passed in-line QA check with 0 defects.",
@@ -1157,7 +1157,7 @@
         "category": "DATE_CHANGE",
         "reasonCode": "INITIAL_PO_CREATION",
         "notes": "PO B-PO-88213 confirmed.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -35
       }
@@ -1262,7 +1262,7 @@
         "rejectedQty": 5,
         "stage": "CHECKING",
         "unitCode": "UNIT_2",
-        "userEmail": "supervisor.selvam@company-a.com",
+        "userEmail": "supervisor.selvam@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 2 Checking Table 3",
         "operatorNotes": "Final pre-pack quality checking pass; stripe matching verified on side seams.",
@@ -1278,7 +1278,7 @@
         "rejectedQty": 4,
         "stage": "CHECKING",
         "unitCode": "UNIT_2",
-        "userEmail": "supervisor.selvam@company-a.com",
+        "userEmail": "supervisor.selvam@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 2 Checking Table 3",
         "operatorNotes": "Metal detector calibration completed; zero needle fragments detected.",
@@ -1331,7 +1331,7 @@
         "category": "DATE_CHANGE",
         "reasonCode": "INITIAL_PO_CREATION",
         "notes": "PO C-PO-0501 created.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -35
       }
@@ -1441,7 +1441,7 @@
         "rejectedQty": 3,
         "stage": "STITCHING",
         "unitCode": "UNIT_2",
-        "userEmail": "supervisor.selvam@company-a.com",
+        "userEmail": "supervisor.selvam@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 2 Line 4 & Line 5",
         "operatorNotes": "V-neck mitred corner jig achieving sharp symmetrical points.",
@@ -1495,7 +1495,7 @@
         "category": "DATE_CHANGE",
         "reasonCode": "INITIAL_PO_CREATION",
         "notes": "PO M-PO-91022 booked for M&S Spring line.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -30
       }
@@ -1600,7 +1600,7 @@
         "rejectedQty": 8,
         "stage": "DYEING_WASHING",
         "unitCode": "UNIT_1",
-        "userEmail": "supervisor.selvam@company-a.com",
+        "userEmail": "supervisor.selvam@threadflow.com",
         "shift": "DAY",
         "machineLine": "WashTex Acid Wash Drum 1",
         "operatorNotes": "Potassium permanganate spray neutralization verified; pH 6.5 neutral.",
@@ -1665,7 +1665,7 @@
         "category": "DATE_CHANGE",
         "reasonCode": "INITIAL_PO_CREATION",
         "notes": "PO IND-PO-77401 booked for Zara AW line.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -25
       }
@@ -1770,7 +1770,7 @@
         "rejectedQty": 2,
         "stage": "KNITTING",
         "unitCode": "UNIT_1",
-        "userEmail": "supervisor.muthu@company-a.com",
+        "userEmail": "supervisor.muthu@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 1 Circular Knit Bank 2",
         "operatorNotes": "Thermal waffle structure running smooth on Mayer & Cie machines.",
@@ -1821,7 +1821,7 @@
         "category": "DATE_CHANGE",
         "reasonCode": "INITIAL_PO_CREATION",
         "notes": "PO NEXT-PO-33104 confirmed.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -15
       }
@@ -1926,7 +1926,7 @@
         "rejectedQty": 2,
         "stage": "FINISHING",
         "unitCode": "UNIT_2",
-        "userEmail": "supervisor.selvam@company-a.com",
+        "userEmail": "supervisor.selvam@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 2 Packing Line 1",
         "operatorNotes": "Final hang-tagging and barcode polybagging for UK distribution.",
@@ -1977,7 +1977,7 @@
         "category": "DATE_CHANGE",
         "reasonCode": "INITIAL_PO_CREATION",
         "notes": "PO B-PO-88260 created.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -30
       }
@@ -2082,7 +2082,7 @@
         "rejectedQty": 2,
         "stage": "CUTTING",
         "unitCode": "UNIT_2",
-        "userEmail": "supervisor.selvam@company-a.com",
+        "userEmail": "supervisor.selvam@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 2 Gerber Auto Spreader",
         "operatorNotes": "CAD cutting accuracy verified on 24-ply lay. Oeko-Tex cert checked.",
@@ -2133,7 +2133,7 @@
         "category": "DATE_CHANGE",
         "reasonCode": "INITIAL_PO_CREATION",
         "notes": "PO C-PO-0515 booked for baby sleepsuits.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -28
       }
@@ -2238,7 +2238,7 @@
         "rejectedQty": 1,
         "stage": "KNITTING",
         "unitCode": "UNIT_3",
-        "userEmail": "supervisor.murugan@company-a.com",
+        "userEmail": "supervisor.murugan@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 3 Fine Gauge Interlock 1",
         "operatorNotes": "Imported 60/2 Giza yarn partial lot loaded; balance in customs clearance.",
@@ -2291,7 +2291,7 @@
         "category": "DATE_CHANGE",
         "reasonCode": "INITIAL_PO_CREATION",
         "notes": "PO B-PO-88272 booked.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -15
       }
@@ -2401,7 +2401,7 @@
         "rejectedQty": 2,
         "stage": "FINISHING",
         "unitCode": "UNIT_1",
-        "userEmail": "supervisor.selvam@company-a.com",
+        "userEmail": "supervisor.selvam@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 2 Packing Line 1",
         "operatorNotes": "Final carton packing completed; all 10,000 pcs loaded into export container.",
@@ -2429,7 +2429,7 @@
         "category": "DATE_CHANGE",
         "reasonCode": "INITIAL_PO_CREATION",
         "notes": "PO B-PO-88190 created.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -50
       },
@@ -2438,7 +2438,7 @@
         "category": "DATE_CHANGE",
         "reasonCode": "BUYER_REQUEST",
         "notes": "Ex-factory achieved on-time.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -6
       }
@@ -2553,7 +2553,7 @@
         "rejectedQty": 3,
         "stage": "FINISHING",
         "unitCode": "UNIT_2",
-        "userEmail": "supervisor.selvam@company-a.com",
+        "userEmail": "supervisor.selvam@threadflow.com",
         "shift": "DAY",
         "machineLine": "Unit 2 Packing Line 2",
         "operatorNotes": "Final carton loading and dispatch pass completed to Tuticorin port.",
@@ -2581,7 +2581,7 @@
         "category": "DATE_CHANGE",
         "reasonCode": "INITIAL_PO_CREATION",
         "notes": "PO C-PO-0460 booked.",
-        "userEmail": "merchandiser@company-a.com",
+        "userEmail": "merchandiser@threadflow.com",
         "role": "MERCHANDISER",
         "offsetDays": -45
       }

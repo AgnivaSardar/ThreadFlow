@@ -209,7 +209,7 @@ export class OrdersSeedRunner {
       for (let logIdx = 0; logIdx < fixture.dailyLogs.length; logIdx++) {
         const log = fixture.dailyLogs[logIdx];
         const logUnit = unit;
-        const logUser = master.usersByEmail.get(log.userEmail) || master.usersByEmail.get('merchandiser@company-a.com')!;
+        const logUser = master.usersByEmail.get(log.userEmail) || master.usersByEmail.get('merchandiser@threadflow.com')!;
         const logMilestone = milestonesByStage.get(log.stage) || milestonesByStage.values().next().value;
         const logDate = new Date(anchorDate);
         logDate.setDate(logDate.getDate() + log.dateOffsetDays);
@@ -389,7 +389,7 @@ export class OrdersSeedRunner {
       // 7. Seed Risk Mitigation Actions if present
       if (fixture.mitigationActions && fixture.mitigationActions.length > 0 && createdRiskWarningId) {
         for (const ma of fixture.mitigationActions) {
-          const authUser = master.usersByEmail.get(ma.authorizedByEmail) || master.usersByEmail.get('merchandiser@company-a.com')!;
+          const authUser = master.usersByEmail.get(ma.authorizedByEmail) || master.usersByEmail.get('merchandiser@threadflow.com')!;
           const maDate = new Date(anchorDate);
           maDate.setDate(maDate.getDate() + (ma.offsetDays || 0));
 
@@ -457,7 +457,7 @@ export class OrdersSeedRunner {
       // 9. Seed Comprehensive Audit Trail for this Order
       if (fixture.orderAuditTrail && fixture.orderAuditTrail.length > 0) {
         for (const ev of fixture.orderAuditTrail) {
-          const evUser = master.usersByEmail.get(ev.userEmail) || master.usersByEmail.get('merchandiser@company-a.com')!;
+          const evUser = master.usersByEmail.get(ev.userEmail) || master.usersByEmail.get('merchandiser@threadflow.com')!;
           const evDate = new Date(anchorDate);
           evDate.setDate(evDate.getDate() + ev.offsetDays);
 

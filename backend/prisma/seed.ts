@@ -117,7 +117,7 @@ async function main() {
   }
 
   // 6. Record Audit Event for Seed Run
-  const systemMerchandiser = master.usersByEmail.get('merchandiser@company-a.com');
+  const systemMerchandiser = master.usersByEmail.get('merchandiser@threadflow.com');
   if (systemMerchandiser) {
     await prisma.auditEvent.create({
       data: {

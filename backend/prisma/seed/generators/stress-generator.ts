@@ -32,8 +32,8 @@ export class StressGenerator {
     ];
 
     const operators = [
-      'supervisor.muthu@company-a.com',
-      'supervisor.selvam@company-a.com',
+      'supervisor.muthu@threadflow.com',
+      'supervisor.selvam@threadflow.com',
     ];
 
     for (let i = 1; i <= count; i++) {

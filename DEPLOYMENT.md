@@ -28,12 +28,12 @@ This document serves as the authoritative operational manual for reviewers and t
 
 | Role | Name | Login Email | Password | Unit / Scope |
 | :--- | :--- | :--- | :--- | :--- |
-| **Merchandiser** | Ramesh Merchandiser | `merchandiser@company-a.com` | `ThreadFlow@2026` | Factory-Wide (All Units) |
-| **Supervisor (Unit 1)** | Muthu Floor Supervisor | `supervisor.muthu@company-a.com` | `ThreadFlow@2026` | Unit 1 (Cotton Hub - 5 POs) |
-| **Supervisor (Unit 1 Co-Lead)** | Kumaravel Shift In-Charge | `supervisor.kumar@company-a.com` | `ThreadFlow@2026` | Unit 1 (Cotton Hub - 5 POs) |
-| **Supervisor (Unit 2)** | Selvam Floor Supervisor | `supervisor.selvam@company-a.com` | `ThreadFlow@2026` | Unit 2 (Stitching Hub - 4 POs) |
-| **Supervisor (Unit 2 Co-Lead)** | Manickam Floor Supervisor | `supervisor.manickam@company-a.com` | `ThreadFlow@2026` | Unit 2 (Stitching Hub - 4 POs) |
-| **Supervisor (Unit 3)** | Murugan Floor Supervisor | `supervisor.murugan@company-a.com` | `ThreadFlow@2026` | Unit 3 (Specialty - 1 PO) |
+| **Merchandiser** | Ramesh Merchandiser | `merchandiser@threadflow.com` | `ThreadFlow@2026` | Factory-Wide (All Units) |
+| **Supervisor (Unit 1)** | Muthu Floor Supervisor | `supervisor.muthu@threadflow.com` | `ThreadFlow@2026` | Unit 1 (Cotton Hub - 5 POs) |
+| **Supervisor (Unit 1 Co-Lead)** | Kumaravel Shift In-Charge | `supervisor.kumar@threadflow.com` | `ThreadFlow@2026` | Unit 1 (Cotton Hub - 5 POs) |
+| **Supervisor (Unit 2)** | Selvam Floor Supervisor | `supervisor.selvam@threadflow.com` | `ThreadFlow@2026` | Unit 2 (Stitching Hub - 4 POs) |
+| **Supervisor (Unit 2 Co-Lead)** | Manickam Floor Supervisor | `supervisor.manickam@threadflow.com` | `ThreadFlow@2026` | Unit 2 (Stitching Hub - 4 POs) |
+| **Supervisor (Unit 3)** | Murugan Floor Supervisor | `supervisor.murugan@threadflow.com` | `ThreadFlow@2026` | Unit 3 (Specialty - 1 PO) |
 | **Buyer (UK)** | Sarah Jenkins | `buyer@company-b.co.uk` | `ThreadFlow@2026` | Company B Only |
 | **Buyer (Germany)** | Klaus Mueller | `compliance@company-c.de` | `ThreadFlow@2026` | Company C Only |
 | **Managing Director / Admin** | Agniva Sardar / Ops Admin | `agniva.sardar@gmail.com` | `ThreadFlow@2026` | Factory Administration |
@@ -41,14 +41,14 @@ This document serves as the authoritative operational manual for reviewers and t
 
 ### Key Workflows to Test by Role
 
-* **Senior Merchandiser (`merchandiser@company-a.com`)**:
+* **Senior Merchandiser (`merchandiser@threadflow.com`)**:
   * Factory Order Board with Green/Amber/Red status cards.
   * Filters for Buyer, Manufacturing Unit, and ISO Ship Week.
   * Transparent **"Show-Your-Math"** run-rate calculation ($311\text{ req vs }200\text{ actual} \implies 5\text{ days late} \implies \text{₹3.5 Lakh air freight risk}$).
   * **AI Issue Review & Confirmation Gate** (approve/override Tamil classified issues before they reach buyer eyes).
   * Interactive **"What-If" Capacity Simulator** (add stitching lines to flip orders from Red to Green).
   * Weekly branded multi-bar TNA progress PDF report export.
-* **Floor Supervisor (`supervisor.muthu@company-a.com` or `supervisor.kumar@company-a.com`)**:
+* **Floor Supervisor (`supervisor.muthu@threadflow.com` or `supervisor.kumar@threadflow.com`)**:
   * Mobile floor view strictly scoped to Unit 1 products (5 POs: `B-PO-88240`, `B-PO-88213`, `IND-PO-77401`, `B-PO-88255`, `NEXT-PO-33104`).
   * Demonstrates that **multiple supervisors under one unit** share all products of that unit identically.
   * Shift quantity logging with per-size breakdowns.
@@ -81,7 +81,7 @@ This document serves as the authoritative operational manual for reviewers and t
 ### Tour Step 1: Merchandiser Order Board & "Show-Your-Math" Engine
 1. Navigate to: **[https://threadflow-ptun.onrender.com](https://threadflow-ptun.onrender.com)**
 2. Sign in as **Merchandiser**:
-   * **Email:** `merchandiser@company-a.com` | **Password:** `ThreadFlow@2026`
+   * **Email:** `merchandiser@threadflow.com` | **Password:** `ThreadFlow@2026`
 3. Inspect the **Order Board**:
    * View live status cards: **Green (On Track)**, **Amber (Minor Buffer Consumed)**, and **Red (Critical Deficit)**.
    * Filter by **Buyer** (`Company B (UK)`), **Unit** (`Unit 1`), or **Ship Week**.
@@ -96,7 +96,7 @@ This document serves as the authoritative operational manual for reviewers and t
 ### Tour Step 2: Floor Supervisor Mobile Experience & Tamil Voice Dictation
 1. Open an Incognito window (or switch browser) to simulate a supervisor's phone.
 2. Sign in as **Unit 1 Supervisor**:
-   * **Email:** `supervisor.muthu@company-a.com` | **Password:** `ThreadFlow@2026`
+   * **Email:** `supervisor.muthu@threadflow.com` | **Password:** `ThreadFlow@2026`
 3. Notice that Muthu sees **all 5 products handled by Unit 1** (and *only* Unit 1 products).
 4. Tap **"Log Shift Output"** on an active milestone:
    * Switch interface language to **தமிழ் (Tamil)** using the header toggle.
@@ -108,7 +108,7 @@ This document serves as the authoritative operational manual for reviewers and t
 5. Tap **"Submit Shift Output"**.
 
 ### Tour Step 3: Merchandiser AI Review Gate
-1. Switch back to the **Merchandiser** session (`merchandiser@company-a.com`).
+1. Switch back to the **Merchandiser** session (`merchandiser@threadflow.com`).
 2. Navigate to **"AI Issue Review"**:
    * View the supervisor's submitted floor note.
    * Notice the original Tamil transcript sits alongside the clean English summary.
@@ -246,7 +246,7 @@ npm --prefix backend test
 
 ### 3.7 Step 6: Testing Mobile PWA & Offline Queuing Locally
 1. In Google Chrome, press `F12` to open Developer Tools and toggle the **Device Toolbar** (`Ctrl+Shift+M`) to simulate a mobile phone (e.g., Pixel 7 or Galaxy S20).
-2. Sign in as Floor Supervisor (`supervisor.muthu@company-a.com`).
+2. Sign in as Floor Supervisor (`supervisor.muthu@threadflow.com`).
 3. Switch Chrome's Network tab to **"Offline"**.
 4. Log a shift quantity with voice or text and tap **"Submit Shift Output"**.
 5. Notice that the update queues seamlessly in the browser's local **IndexedDB** queue with status indicator **"Queued Offline"**.

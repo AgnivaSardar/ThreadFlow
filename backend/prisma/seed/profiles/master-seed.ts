@@ -113,7 +113,7 @@ export class MasterSeedRunner {
     }
 
     // 5. Seed Historical Weekly Buyer Reports (Weeks 41 to 45 of 2026)
-    const adminUser = usersByEmail.get('admin@threadflow.com') || usersByEmail.get('merchandiser@company-a.com');
+    const adminUser = usersByEmail.get('admin@threadflow.com') || usersByEmail.get('merchandiser@threadflow.com');
     for (const [code, buyer] of buyersByCode.entries()) {
       const weeks = [41, 42, 43, 44, 45];
       for (const w of weeks) {

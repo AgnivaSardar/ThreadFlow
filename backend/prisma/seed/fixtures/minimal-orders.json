@@ -23,7 +23,7 @@
       { "stage": "FINISHING", "sequenceOrder": 7, "plannedStartOffsetDays": 13, "plannedEndOffsetDays": 14, "bufferDaysAhead": 0, "targetQuantity": 1000, "completedQuantity": 0, "unitCode": "UNIT_1" }
     ],
     "dailyLogs": [
-      { "dateOffsetDays": 0, "completedQty": 250, "reworkQty": 5, "rejectedQty": 1, "stage": "STITCHING", "unitCode": "UNIT_1", "userEmail": "supervisor.muthu@company-a.com", "shift": "Day Shift", "operatorNotes": "CI baseline update" }
+      { "dateOffsetDays": 0, "completedQty": 250, "reworkQty": 5, "rejectedQty": 1, "stage": "STITCHING", "unitCode": "UNIT_1", "userEmail": "supervisor.muthu@threadflow.com", "shift": "Day Shift", "operatorNotes": "CI baseline update" }
     ]
   }
 ]

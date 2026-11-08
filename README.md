@@ -86,9 +86,9 @@ All demo accounts use password: `ThreadFlow@2026`
 | Persona | Email | Role | Recommended Test Flow |
 | :--- | :--- | :--- | :--- |
 | **System Admin** | `admin@threadflow.com` | `ADMIN` | Global oversight, audit log review, and user administration. |
-| **Senior Merchandiser** | `merchandiser@company-a.com` | `MERCHANDISER` | Order Board, "Show-Your-Math" details, What-If simulator, and PDF report generator. |
-| **Floor Supervisor (Unit 1)** | `supervisor.muthu@company-a.com` | `SUPERVISOR` | Unit 1 floor view, Tamil voice logging, and photo proof capture. |
-| **Floor Supervisor (Unit 2)** | `supervisor.selvam@company-a.com` | `SUPERVISOR` | Unit 2 & 3 stitching lines. |
+| **Senior Merchandiser** | `merchandiser@threadflow.com` | `MERCHANDISER` | Order Board, "Show-Your-Math" details, What-If simulator, and PDF report generator. |
+| **Floor Supervisor (Unit 1)** | `supervisor.muthu@threadflow.com` | `SUPERVISOR` | Unit 1 floor view, Tamil voice logging, and photo proof capture. |
+| **Floor Supervisor (Unit 2)** | `supervisor.selvam@threadflow.com` | `SUPERVISOR` | Unit 2 & 3 stitching lines. |
 | **Foreign Buyer (UK)** | `sourcing@company-b.co.uk` | `BUYER` | Scoped Buyer Portal (`B-PO-88213`, `B-PO-88240`), confirmed photos only. |
 | **Foreign Buyer (Germany)** | `compliance@company-c.de` | `BUYER` | Scoped Buyer Portal (`C-PO-0488`). |
 

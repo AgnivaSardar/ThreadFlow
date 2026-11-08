@@ -85,35 +85,35 @@
       "phone": "+91 98422 99999"
     },
     {
-      "email": "admin@company-a.com",
+      "email": "admin.tiruppur@threadflow.com",
       "name": "Tiruppur Operations Admin",
       "role": "ADMIN",
       "languagePreference": "en",
       "phone": "+91 98422 99998"
     },
     {
-      "email": "merchandiser@company-a.com",
+      "email": "merchandiser@threadflow.com",
       "name": "Ramesh Merchandiser",
       "role": "MERCHANDISER",
       "languagePreference": "en",
       "phone": "+91 98422 10001"
     },
     {
-      "email": "priya.merchandiser@company-a.com",
+      "email": "priya.merchandiser@threadflow.com",
       "name": "Priya Sundaram",
       "role": "MERCHANDISER",
       "languagePreference": "en",
       "phone": "+91 98422 10002"
     },
     {
-      "email": "karthik.merchandiser@company-a.com",
+      "email": "karthik.merchandiser@threadflow.com",
       "name": "Karthik Rajan",
       "role": "MERCHANDISER",
       "languagePreference": "en",
       "phone": "+91 98422 10003"
     },
     {
-      "email": "supervisor.muthu@company-a.com",
+      "email": "supervisor.muthu@threadflow.com",
       "name": "Muthu Floor Supervisor",
       "role": "SUPERVISOR",
       "languagePreference": "ta",
@@ -121,7 +121,7 @@
       "assignedUnitCode": "UNIT_1"
     },
     {
-      "email": "supervisor.selvam@company-a.com",
+      "email": "supervisor.selvam@threadflow.com",
       "name": "Selvam Floor Supervisor",
       "role": "SUPERVISOR",
       "languagePreference": "ta",
@@ -129,7 +129,7 @@
       "assignedUnitCode": "UNIT_2"
     },
     {
-      "email": "supervisor.murugan@company-a.com",
+      "email": "supervisor.murugan@threadflow.com",
       "name": "Murugan Floor Supervisor",
       "role": "SUPERVISOR",
       "languagePreference": "ta",
@@ -137,7 +137,7 @@
       "assignedUnitCode": "UNIT_3"
     },
     {
-      "email": "supervisor.kumar@company-a.com",
+      "email": "supervisor.kumar@threadflow.com",
       "name": "Kumaravel Shift In-Charge",
       "role": "SUPERVISOR",
       "languagePreference": "ta",
@@ -180,7 +180,7 @@
       "buyerCode": "NEXT_UK"
     },
     {
-      "email": "supervisor.manickam@company-a.com",
+      "email": "supervisor.manickam@threadflow.com",
       "name": "Manickam Floor Supervisor",
       "role": "SUPERVISOR",
       "languagePreference": "ta",
@@ -188,7 +188,7 @@
       "assignedUnitCode": "UNIT_2"
     },
     {
-      "email": "supervisor.printtex@company-a.com",
+      "email": "supervisor.printtex@threadflow.com",
       "name": "Palanisamy PrintTex Supervisor",
       "role": "SUPERVISOR",
       "languagePreference": "ta",
@@ -196,7 +196,7 @@
       "assignedUnitCode": "PRINTTEX"
     },
     {
-      "email": "supervisor.washtex@company-a.com",
+      "email": "supervisor.washtex@threadflow.com",
       "name": "Kandasamy WashTex Supervisor",
       "role": "SUPERVISOR",
       "languagePreference": "ta",

@@ -20,7 +20,7 @@ const PLANT_CONTACTS = [
     name: 'Ramesh K.',
     dept: 'Buyer Coordination & TNA Milestones',
     phone: '+91 98422 55443',
-    email: 'merchandiser@company-a.com',
+    email: 'merchandiser@threadflow.com',
     location: 'Merchandising Wing, 2nd Floor',
   },
   {
@@ -28,7 +28,7 @@ const PLANT_CONTACTS = [
     name: 'Muthuvel S.',
     dept: 'Assembly Lines & Tamil Telemetry',
     phone: '+91 98422 10101',
-    email: 'supervisor.muthu@company-a.com',
+    email: 'supervisor.muthu@threadflow.com',
     location: 'Unit 2 Production Floor',
   },
   {

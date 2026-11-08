@@ -22,9 +22,9 @@ All demo accounts use password: `ThreadFlow@2026`
 | Role | Username / Email | Password | Primary Reviewer Workflows to Test |
 | :--- | :--- | :--- | :--- |
 | **System Admin** | `admin@threadflow.com` | `ThreadFlow@2026` | Global administrative access across all factory units, orders, audit logs, and system settings. |
-| **Senior Merchandiser** | `merchandiser@company-a.com` | `ThreadFlow@2026` | Factory Order Board (Green/Amber/Red), Order & TNA Setup, "Show-Your-Math" run-rate details, AI Issue Review & Confirmation Gate, What-If Recovery Simulator, Weekly Buyer PDF/Excel Export. |
-| **Floor Supervisor (Unit 1)** | `supervisor.muthu@company-a.com` | `ThreadFlow@2026` | Mobile-optimized shop floor view, stage output entry, Tamil/Hindi/English voice input with Web Speech API, photo capture, offline sync queue. |
-| **Floor Supervisor (Unit 2)** | `supervisor.selvam@company-a.com` | `ThreadFlow@2026` | Unit 2 & 3 stitching lines. |
+| **Senior Merchandiser** | `merchandiser@threadflow.com` | `ThreadFlow@2026` | Factory Order Board (Green/Amber/Red), Order & TNA Setup, "Show-Your-Math" run-rate details, AI Issue Review & Confirmation Gate, What-If Recovery Simulator, Weekly Buyer PDF/Excel Export. |
+| **Floor Supervisor (Unit 1)** | `supervisor.muthu@threadflow.com` | `ThreadFlow@2026` | Mobile-optimized shop floor view, stage output entry, Tamil/Hindi/English voice input with Web Speech API, photo capture, offline sync queue. |
+| **Floor Supervisor (Unit 2)** | `supervisor.selvam@threadflow.com` | `ThreadFlow@2026` | Unit 2 & 3 stitching lines. |
 | **Buyer (Company B - UK)** | `sourcing@company-b.co.uk` | `ThreadFlow@2026` | Scoped Buyer Portal (`B-PO-88213`, `B-PO-88240`), only merchandiser-confirmed warnings and photos, zero access to Company C orders (HTTP 404 isolation). |
 | **Buyer (Company C - DE)** | `compliance@company-c.de` | `ThreadFlow@2026` | Scoped Buyer Portal (`C-PO-0488`), verified tenant boundary checks. |
 
@@ -33,7 +33,7 @@ All demo accounts use password: `ThreadFlow@2026`
 ## 3. Step-by-Step Reviewer Evaluation Walkthrough
 
 ### Flow 1: Merchandiser Command Center & Risk Math
-1. Sign in as `merchandiser@company-a.com` / `ThreadFlow@2026`.
+1. Sign in as `merchandiser@threadflow.com` / `ThreadFlow@2026`.
 2. Navigate to **Orders**:
    - Inspect the factory order board with calibrated orders (`B-PO-88240` Red, `C-PO-0488` Amber, `B-PO-88213` Green).
    - Click order `B-PO-88240` to view the 7-stage TNA critical path, size breakdown (`S`, `M`, `L`, `XL`), and change history table with pagination.
@@ -47,7 +47,7 @@ All demo accounts use password: `ThreadFlow@2026`
    - Click **"Export Weekly PDF Report"** to view the generated branded sourcing report with letterhead, AI summary, and 5-week TNA multi-bar comparison.
 
 ### Flow 2: Floor Supervisor Mobile Experience & Tamil Voice
-1. Sign in as `supervisor.muthu@company-a.com` / `ThreadFlow@2026`.
+1. Sign in as `supervisor.muthu@threadflow.com` / `ThreadFlow@2026`.
 2. Notice the mobile-friendly layout and Unit 1 active work queue.
 3. Select an active order and click **"Log Shift Output"**:
    - Select Language: **தமிழ் (Tamil)**, **English**, or **हिंदी (Hindi)**.

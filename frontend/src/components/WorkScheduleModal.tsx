@@ -13,7 +13,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useAuthStore } from '../features/auth/authStore';
-import { getAuthoritativeServerDate } from '../services/api';
+import { apiRequest, getAuthoritativeServerDate } from '../services/api';
 import { useLanguage } from '../hooks/useLanguage';
 
 export interface WorkTask {
@@ -63,8 +63,40 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
   const currentRole = user?.role || 'MERCHANDISER';
   const storageKey = `threadflow_tasks_${currentRole}_${dateKey}`;
 
+  const [activeFloorOrders, setActiveFloorOrders] = useState<Array<{
+    poNumber: string;
+    style: string;
+    activeMilestone?: { stage: string };
+  }> | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || currentRole !== 'SUPERVISOR') return;
+    let isSubscribed = true;
+    const fetchActiveFloorOrders = async () => {
+      try {
+        const url = user?.assignedUnitId
+          ? `/production/work?unitId=${user.assignedUnitId}`
+          : '/production/work';
+        const res = await apiRequest<{ data: { orders: Array<{ poNumber: string; style: string; activeMilestone?: { stage: string } }> } }>(url);
+        if (isSubscribed && res.data?.orders) {
+          setActiveFloorOrders(res.data.orders);
+        }
+      } catch {
+        // Fallback gracefully to offline list
+      }
+    };
+    fetchActiveFloorOrders();
+    return () => {
+      isSubscribed = false;
+    };
+  }, [isOpen, currentRole, user?.assignedUnitId]);
+
   // Role-specific task generator for given date
-  const getTasksForRoleAndDate = (role: string, date: Date): WorkTask[] => {
+  const getTasksForRoleAndDate = (
+    role: string,
+    date: Date,
+    floorOrders?: Array<{ poNumber: string; style: string; activeMilestone?: { stage: string } }> | null
+  ): WorkTask[] => {
     const isTa = lang === 'ta';
     const today = getAuthoritativeServerDate();
     const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
@@ -94,6 +126,12 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
       } else if (assignedUnitCode === 'UNIT_3' || userEmail.includes('murugan') || assignedUnitName.includes('Unit 3')) {
         unitCode = 'UNIT_3';
         unitTitle = assignedUnitName || (isTa ? 'யூனிட் 3 (ஸ்பெஷாலிட்டி & ஏற்றுமதி)' : 'Unit 3 (Specialty & Export - Own)');
+      } else if (assignedUnitCode === 'PRINTTEX' || userEmail.includes('printtex')) {
+        unitCode = 'PRINTTEX';
+        unitTitle = isTa ? 'துணை ஒப்பந்தம் - PrintTex' : 'Subcontract - PrintTex';
+      } else if (assignedUnitCode === 'WASHTEX' || userEmail.includes('washtex')) {
+        unitCode = 'WASHTEX';
+        unitTitle = isTa ? 'துணை ஒப்பந்தம் - WashTex' : 'Subcontract - WashTex';
       }
 
       const tasksList: WorkTask[] = [];
@@ -141,156 +179,81 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
         });
       }
 
-      // B. Daily Shift Form Filling for all POs assigned to this supervisor's unit
-      if (unitCode === 'UNIT_1') {
-        // Unit 1 assigned POs: B-PO-88240, B-PO-88213, IND-PO-77401, B-PO-88255, NEXT-PO-331
-        tasksList.push(
-          {
-            id: `sup-form-88240-${dateKey}`,
-            time: '09:30 AM - 10:45 AM',
+      // B. Daily Shift Form Filling for all ACTIVE POs assigned to this supervisor's unit
+      const timeSlots = [
+        '09:30 AM - 11:00 AM',
+        '11:30 AM - 01:00 PM',
+        '02:00 PM - 03:30 PM',
+        '03:45 PM - 04:45 PM',
+        '05:00 PM - 06:00 PM',
+      ];
+
+      if (floorOrders && floorOrders.length > 0) {
+        // Dynamically synchronized with live Floor Production Work
+        floorOrders.forEach((ord, idx) => {
+          const timeSlot = timeSlots[idx % timeSlots.length];
+          const stageName = ord.activeMilestone?.stage?.replace(/_/g, ' ') || 'Assembly';
+          tasksList.push({
+            id: `sup-form-${ord.poNumber}-${dateKey}`,
+            time: timeSlot,
             title: isTa
-              ? 'தினசரி ஷிப்ட் உற்பத்தி படிவத்தை நிரப்புதல்: PO B-PO-88240'
-              : 'Fill Daily Shift Production Form: PO B-PO-88240',
+              ? `தினசரி ஷிப்ட் உற்பத்தி படிவத்தை நிரப்புதல்: PO ${ord.poNumber}`
+              : `Fill Daily Shift Production Form: PO ${ord.poNumber}`,
             description: isTa
-              ? "செயலில் உள்ள நிலைக்கு (பின்னல் - Men's Polo White) இன்றைய நல்ல துண்டுகள், நிராகரிப்புகள் மற்றும் ஆபரேட்டர் எண்ணிக்கையை பதிவு செய்யவும்."
-              : "Submit today's piece count (Good pcs, Rejections) for active stage (Knitting - Men's Polo White) and verify operator attendance.",
+              ? `${ord.style} தயாரிப்பிற்கான இன்றைய உற்பத்தி வெளியீட்டு எண்ணிக்கையை சமர்ப்பிக்கவும்.`
+              : `Submit today piece count for active stage (${stageName} - ${ord.style}) and verify operator tally.`,
             unit: unitTitle,
-            buyerOrPo: 'PO: B-PO-88240',
+            buyerOrPo: `PO: ${ord.poNumber}`,
             completed: isPast,
             role: ['SUPERVISOR'],
-          },
-          {
-            id: `sup-form-88213-${dateKey}`,
-            time: '11:00 AM - 12:30 PM',
-            title: isTa
-              ? 'தினசரி ஷிப்ட் உற்பத்தி படிவத்தை நிரப்புதல்: PO B-PO-88213'
-              : 'Fill Daily Shift Production Form: PO B-PO-88213',
-            description: isTa
-              ? 'தையல் நிலைக்கான இன்றைய உற்பத்தி எண்ணிக்கை, குறைபாடு புகைப்பட சான்று மற்றும் தமிழ் குரல் குறிப்பை சமர்ப்பிக்கவும்.'
-              : 'Submit today piece count for active stage (Stitching), log defect photo proof, and record Tamil voice notes.',
-            unit: unitTitle,
-            buyerOrPo: 'PO: B-PO-88213',
-            completed: isPast,
-            role: ['SUPERVISOR'],
-          },
-          {
-            id: `sup-form-77401-${dateKey}`,
-            time: '01:30 PM - 02:45 PM',
-            title: isTa
-              ? 'தினசரி ஷிப்ட் உற்பத்தி படிவத்தை நிரப்புதல்: PO IND-PO-77401'
-              : 'Fill Daily Shift Production Form: PO IND-PO-77401',
-            description: isTa
-              ? 'V-Neck Athletic Tee தயாரிப்பிற்கான தினசரி வெளியீட்டு எண்ணிக்கை மற்றும் துணி ஒதுக்கீட்டை சரிபார்த்து சமர்ப்பிக்கவும்.'
-              : 'Log daily output tally, check fabric lot allocation, and submit shift report before 6:00 PM cutoff.',
-            unit: unitTitle,
-            buyerOrPo: 'PO: IND-PO-77401',
-            completed: false,
-            role: ['SUPERVISOR'],
-          },
-          {
-            id: `sup-form-88255-${dateKey}`,
-            time: '03:00 PM - 04:15 PM',
-            title: isTa
-              ? 'தினசரி ஷிப்ட் உற்பத்தி படிவத்தை நிரப்புதல்: PO B-PO-88255'
-              : 'Fill Daily Shift Production Form: PO B-PO-88255',
-            description: isTa
-              ? 'Heavyweight Cotton Hoodie உற்பத்தி வெளியீட்டை சமர்ப்பித்து ஊசி எண்ணிக்கை இணக்கத்தை உறுதிப்படுத்தவும்.'
-              : 'Submit shift production output for assigned stage and verify needle count compliance.',
-            unit: unitTitle,
-            buyerOrPo: 'PO: B-PO-88255',
-            completed: false,
-            role: ['SUPERVISOR'],
-          },
-          {
-            id: `sup-form-331-${dateKey}`,
-            time: '04:30 PM - 05:45 PM',
-            title: isTa
-              ? 'மாலை 6 மணிக்குள் ஷிப்ட் படிவத்தை சமர்ப்பித்தல்: PO NEXT-PO-331'
-              : 'Fill Daily Shift Production Form: PO NEXT-PO-331',
-            description: isTa
-              ? 'ஷிப்ட் முடிவு நேரத்திற்கு முன் Striped Cotton Polo இறுதி துண்டுகள் எண்ணிக்கை மற்றும் பண்டில் டிக்கெட்டுகளை பதிவு செய்யவும்.'
-              : 'Submit final shift piece counts, bundle ticket numbers, and operator tally before 6:00 PM cutoff.',
-            unit: unitTitle,
-            buyerOrPo: 'PO: NEXT-PO-331',
-            completed: false,
-            role: ['SUPERVISOR'],
-          }
-        );
-      } else if (unitCode === 'UNIT_2') {
-        // Unit 2 assigned POs: B-PO-88260, C-PO-0501, M-PO-91022, C-PO-0515
-        tasksList.push(
-          {
-            id: `sup-form-88260-${dateKey}`,
-            time: '09:30 AM - 11:00 AM',
-            title: isTa
-              ? 'தினசரி ஷிப்ட் உற்பத்தி படிவத்தை நிரப்புதல்: PO B-PO-88260'
-              : 'Fill Daily Shift Production Form: PO B-PO-88260',
-            description: isTa
-              ? 'முடித்தல் மற்றும் பேக்கிங் நிலைக்கான துண்டுகள் எண்ணிக்கை, அயர்னிங் மற்றும் கார்ட்டன் பேக்கிங்கை சமர்ப்பிக்கவும்.'
-              : 'Submit today piece count for active stage (Finishing & Packing), iron press count, and packaging cartons.',
-            unit: unitTitle,
-            buyerOrPo: 'PO: B-PO-88260',
-            completed: isPast,
-            role: ['SUPERVISOR'],
-          },
-          {
-            id: `sup-form-0501-${dateKey}`,
-            time: '11:30 AM - 01:00 PM',
-            title: isTa
-              ? 'தினசரி ஷிப்ட் உற்பத்தி படிவத்தை நிரப்புதல்: PO C-PO-0501'
-              : 'Fill Daily Shift Production Form: PO C-PO-0501',
-            description: isTa
-              ? 'சரிபார்த்தல் மேசை துண்டுகள் எண்ணிக்கை மற்றும் தொழில்நுட்ப விவரக்குறிப்புடன் அளவீடுகளை ஆய்வு செய்து பதிவு செய்யவும்.'
-              : 'Record checking table piece count and verify measurements against tech pack specifications.',
-            unit: unitTitle,
-            buyerOrPo: 'PO: C-PO-0501',
-            completed: isPast,
-            role: ['SUPERVISOR'],
-          },
-          {
-            id: `sup-form-91022-${dateKey}`,
-            time: '02:00 PM - 03:30 PM',
-            title: isTa
-              ? 'தினசரி ஷிப்ட் உற்பத்தி படிவத்தை நிரப்புதல்: PO M-PO-91022'
-              : 'Fill Daily Shift Production Form: PO M-PO-91022',
-            description: isTa
-              ? 'Dry-Fit Sports Tee ஷிப்ட் உற்பத்தி எண்ணிக்கை மற்றும் இயந்திர லைன் ஆபரேட்டர் விவரங்களை சமர்ப்பிக்கவும்.'
-              : 'Submit daily shift piece counts and machine line operator tally for PO M-PO-91022.',
-            unit: unitTitle,
-            buyerOrPo: 'PO: M-PO-91022',
-            completed: false,
-            role: ['SUPERVISOR'],
-          },
-          {
-            id: `sup-form-0515-${dateKey}`,
-            time: '04:30 PM - 05:45 PM',
-            title: isTa
-              ? 'மாலை 6 மணிக்குள் ஷிப்ட் படிவத்தை சமர்ப்பித்தல்: PO C-PO-0515'
-              : 'Fill Daily Shift Production Form: PO C-PO-0515',
-            description: isTa
-              ? 'ஷிப்ட் முடிவு நேரத்திற்கு முன் Slim Fit Jersey இறுதி உற்பத்தி எண்ணிக்கை மற்றும் குறைபாடுகளை பதிவு செய்யவும்.'
-              : 'Complete final shift piece counts and defect tally for PO C-PO-0515 before 6:00 PM cutoff.',
-            unit: unitTitle,
-            buyerOrPo: 'PO: C-PO-0515',
-            completed: false,
-            role: ['SUPERVISOR'],
-          }
-        );
+          });
+        });
       } else {
-        // Unit 3 assigned PO: B-PO-88272
-        tasksList.push({
-          id: `sup-form-88272-${dateKey}`,
-          time: '10:00 AM - 12:30 PM',
-          title: isTa
-            ? 'தினசரி ஷிப்ட் உற்பத்தி படிவத்தை நிரப்புதல்: PO B-PO-88272'
-            : 'Fill Daily Shift Production Form: PO B-PO-88272',
-          description: isTa
-            ? 'Organic Ribbed Tank ஏற்றுமதி ஆர்டருக்கான தினசரி நிலை வெளியீட்டு எண்ணிக்கை மற்றும் புகைப்பட சான்றை சமர்ப்பிக்கவும்.'
-            : 'Submit daily stage output count and capture photo proof for export compliance on PO B-PO-88272.',
-          unit: unitTitle,
-          buyerOrPo: 'PO: B-PO-88272',
-          completed: false,
-          role: ['SUPERVISOR'],
+        // Accurate unit-specific active orders (completed orders excluded)
+        let activeUnitPOs: Array<{ po: string; style: string; stage: string }> = [];
+        if (unitCode === 'UNIT_1') {
+          activeUnitPOs = [
+            { po: 'B-PO-88240', style: "Men's Polo White", stage: 'Knitting' },
+            { po: 'B-PO-88255', style: 'French Terry Hoodie Navy', stage: 'Cutting' },
+            { po: 'B-PO-88213', style: 'Classic Crew Neck T-Shirt Olive', stage: 'Stitching' },
+            { po: 'IND-PO-77401', style: 'Oversized Acid Wash Tee Charcoal', stage: 'Dyeing & Washing' },
+            { po: 'NEXT-PO-33104', style: 'Waffle Knit Henley Heather Grey', stage: 'Knitting' },
+          ];
+        } else if (unitCode === 'UNIT_2') {
+          activeUnitPOs = [
+            { po: 'C-PO-0501', style: 'Striped Interlock Polo Navy/White', stage: 'Checking' },
+            { po: 'M-PO-91022', style: 'Pima Cotton V-Neck Black', stage: 'Stitching' },
+            { po: 'C-PO-0515', style: 'Baby Rib Sleepsuit 2-Pack Pastel', stage: 'Cutting' },
+          ];
+        } else if (unitCode === 'UNIT_3') {
+          activeUnitPOs = [
+            { po: 'B-PO-88272', style: 'Mercerized Cotton Dress Polo Black', stage: 'Finishing' },
+          ];
+        } else if (unitCode === 'PRINTTEX') {
+          activeUnitPOs = [
+            { po: 'C-PO-0488', style: 'Kids Printed Tee Yellow', stage: 'Printing' },
+          ];
+        } else if (unitCode === 'WASHTEX') {
+          activeUnitPOs = [
+            { po: 'C-PO-0492', style: 'Organic Rib Tank Top Sage', stage: 'Dyeing & Washing' },
+          ];
+        }
+
+        activeUnitPOs.forEach((ord, idx) => {
+          tasksList.push({
+            id: `sup-form-${ord.po}-${dateKey}`,
+            time: timeSlots[idx % timeSlots.length],
+            title: isTa
+              ? `தினசரி ஷிப்ட் உற்பத்தி படிவத்தை நிரப்புதல்: PO ${ord.po}`
+              : `Fill Daily Shift Production Form: PO ${ord.po}`,
+            description: isTa
+              ? `${ord.style} தயாரிப்பிற்கான இன்றைய உற்பத்தி வெளியீட்டு எண்ணிக்கையை சமர்ப்பிக்கவும்.`
+              : `Submit today piece count for active stage (${ord.stage} - ${ord.style}) and verify operator tally.`,
+            unit: unitTitle,
+            buyerOrPo: `PO: ${ord.po}`,
+            completed: isPast,
+            role: ['SUPERVISOR'],
+          });
         });
       }
 
@@ -428,7 +391,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
   };
 
   const [tasks, setTasks] = useState<WorkTask[]>(() => {
-    const freshTasks = getTasksForRoleAndDate(currentRole, currentDate);
+    const freshTasks = getTasksForRoleAndDate(currentRole, currentDate, activeFloorOrders);
     try {
       const savedChecks = localStorage.getItem(`checks_${storageKey}`);
       if (savedChecks) {
@@ -444,9 +407,9 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
     return freshTasks;
   });
 
-  // Reload when date or role changes
+  // Reload when date, role, or floor orders change
   useEffect(() => {
-    const freshTasks = getTasksForRoleAndDate(currentRole, currentDate);
+    const freshTasks = getTasksForRoleAndDate(currentRole, currentDate, activeFloorOrders);
     try {
       const savedChecks = localStorage.getItem(`checks_${storageKey}`);
       if (savedChecks) {
@@ -463,7 +426,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
       // ignore
     }
     setTasks(freshTasks);
-  }, [dateKey, currentRole, storageKey, lang]);
+  }, [dateKey, currentRole, storageKey, lang, activeFloorOrders]);
 
   // Persist task updates
   const handleToggleTask = (taskId: string) => {
