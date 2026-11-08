@@ -26,7 +26,7 @@ import {
   FastForward,
 } from 'lucide-react';
 import { OrderDetail, UpdateExFactoryDatePayload, RiskEvaluationResult, RiskAlertItem } from '../../types';
-import { apiRequest } from '../../services/api';
+import { apiRequest, getAuthoritativeServerDate } from '../../services/api';
 import { StatusBadge } from '../../components/StatusBadge';
 import { CircularTnaPipeline } from '../tna/CircularTnaPipeline';
 import { SizeBreakdownVisualizer } from './SizeBreakdownVisualizer';
@@ -192,8 +192,9 @@ export const OrderDetailPage: React.FC = () => {
 
   const fetchRiskEvaluation = async (orderId: string, milestoneId: string) => {
     try {
+      const authoritativeDate = getAuthoritativeServerDate().toISOString().split('T')[0];
       const res = await apiRequest<{ success: boolean; data: RiskEvaluationResult }>(
-        `/risk/${orderId}/${milestoneId}`
+        `/risk/${orderId}/${milestoneId}?asOfDate=${authoritativeDate}`
       );
       if (res.data) {
         setRiskEvaluation(res.data);
@@ -223,6 +224,9 @@ export const OrderDetailPage: React.FC = () => {
       setError(null);
       const res = await apiRequest<{ success: boolean; data: OrderDetail }>(`/orders/${id}`);
       setOrder(res.data);
+      if (res.data?.riskEvaluation) {
+        setRiskEvaluation(res.data.riskEvaluation);
+      }
       if (res.data?.exFactoryDate) {
         setNewDate(new Date(res.data.exFactoryDate).toISOString().split('T')[0]);
       }
@@ -618,37 +622,102 @@ export const OrderDetailPage: React.FC = () => {
         </div>
       )}
 
-      {/* Feature 5: Transparent Show-Your-Math Run-Rate Engine (Enclosed in Distinct Card Div) */}
+      {/* Feature 5: Transparent Show-Your-Math Run-Rate Engine (Synchronized with Risk & Delays) */}
       {riskEvaluation && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
-              {od.activeStageRunRate} ({translateStage(order.activeStage, lang)})
-            </h3>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-mono">
-              {t.common.cw} {order.shipWeek}
-            </span>
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+          {/* Header Bar Synchronized with Risk & Delays Run-Rate Pace */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between px-3.5 py-2.5 bg-slate-900 border-b border-slate-800 gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-xs font-bold text-sky-400">
+                {order.poNumber}
+              </span>
+              <span className="text-slate-500">•</span>
+              <span className="text-xs font-bold text-white">
+                {translateStyle(order.style, lang)}
+              </span>
+              <span className="text-slate-500">•</span>
+              <span className="text-xs text-slate-300">
+                {translateBuyer(order.buyer.name.replace(/\s*\([^)]*\)$/, ''), lang)} ({translateUnit(order.unit.name, lang)})
+              </span>
+              <span className="text-slate-500">•</span>
+              <span className="text-[11px] font-semibold text-slate-200 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                {isTa ? 'நிலை' : 'Stage'}: {translateStage(order.activeStage, lang)}
+              </span>
+
+              {/* Dynamic Risk Level Badge */}
+              {Boolean(
+                order.status === 'COMPLETED' ||
+                order.healthStatus === 'COMPLETED' ||
+                riskEvaluation.isCompleted ||
+                (order.activeStage === 'FINISHING' && order.activeStageProgressPct >= 100)
+              ) ? (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-950 bg-emerald-400 px-2 py-0.5 rounded-full border border-emerald-300 shadow-2xs">
+                  {isTa ? 'நிறைவடைந்தது' : 'Completed'}
+                </span>
+              ) : riskEvaluation.riskLevel === 'RED' ? (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-950 bg-rose-400 px-2 py-0.5 rounded-full border border-rose-300 shadow-2xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-900 animate-pulse" />
+                  {isTa ? 'கடுமையான பற்றாக்குறை' : 'Critical Deficit'} ({riskEvaluation.varianceQtyPerDay} pcs/d)
+                </span>
+              ) : riskEvaluation.riskLevel === 'AMBER' ? (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-950 bg-amber-400 px-2 py-0.5 rounded-full border border-amber-300 shadow-2xs">
+                  {isTa ? 'தாங்கல் எச்சரிக்கை' : 'Buffer Caution'}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-950 bg-emerald-300 px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
+                  {isTa ? 'சரியான பாதையில்' : 'On Track'} (+{riskEvaluation.varianceQtyPerDay} pcs/d)
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2.5 self-end sm:self-auto text-xs text-slate-300">
+              <div>
+                {isTa ? 'தொழிற்சாலை வெளியேறும் தேதி' : 'Ex-Factory'}:{' '}
+                <strong className="text-white font-semibold">
+                  {new Date(order.exFactoryDate).toLocaleDateString(
+                    lang === 'ta' ? 'ta-IN' : 'en-GB',
+                    {
+                      day: '2-digit',
+                      month: 'short',
+                    }
+                  )}
+                </strong>{' '}
+                <span className="text-amber-300 font-bold">({calculateWorkingDaysLeft(order.exFactoryDate)} {isTa ? 'நாட்கள் எஞ்சியுள்ளன' : 'd left'})</span>
+              </div>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-mono">
+                {t.common.cw} {order.shipWeek}
+              </span>
+            </div>
           </div>
-          <ShowYourMathCard
-            mathBreakdown={riskEvaluation.mathBreakdown}
-            riskLevel={riskEvaluation.riskLevel}
-            differencePill={riskEvaluation.differencePill}
-            requiredDailyRate={riskEvaluation.requiredDailyRate}
-            actualRollingRate={riskEvaluation.actualRollingRate}
-            varianceQtyPerDay={riskEvaluation.varianceQtyPerDay}
-            daysLate={riskEvaluation.daysLate}
-            projectedCompletionDate={new Date(riskEvaluation.projectedCompletionDate).toISOString()}
-            financialExposureRupees={riskEvaluation.financialExposureRupees}
-            rulesTriggered={riskEvaluation.rulesTriggered}
-            plannedStageEnd={
-              order.milestones.find((m) => m.stage === order.activeStage)?.plannedEnd
-            }
-            poNumber={order.poNumber}
-            styleName={order.style}
-            stageName={translateStage(order.activeStage, lang)}
-            exFactoryDate={order.exFactoryDate}
-          />
+
+          {/* Embedded Show-Your-Math Formula Card */}
+          <div className="p-3 bg-white">
+            <ShowYourMathCard
+              mathBreakdown={riskEvaluation.mathBreakdown}
+              riskLevel={riskEvaluation.riskLevel}
+              isCompleted={Boolean(
+                order.status === 'COMPLETED' ||
+                order.healthStatus === 'COMPLETED' ||
+                riskEvaluation.isCompleted ||
+                (order.activeStage === 'FINISHING' && order.activeStageProgressPct >= 100)
+              )}
+              differencePill={riskEvaluation.differencePill}
+              requiredDailyRate={riskEvaluation.requiredDailyRate}
+              actualRollingRate={riskEvaluation.actualRollingRate}
+              varianceQtyPerDay={riskEvaluation.varianceQtyPerDay}
+              daysLate={riskEvaluation.daysLate}
+              projectedCompletionDate={new Date(riskEvaluation.projectedCompletionDate).toISOString()}
+              financialExposureRupees={riskEvaluation.financialExposureRupees}
+              rulesTriggered={riskEvaluation.rulesTriggered}
+              plannedStageEnd={
+                order.milestones.find((m) => m.stage === order.activeStage)?.plannedEnd
+              }
+              poNumber={order.poNumber}
+              styleName={order.style}
+              stageName={translateStage(order.activeStage, lang)}
+              exFactoryDate={order.exFactoryDate}
+            />
+          </div>
         </div>
       )}
 

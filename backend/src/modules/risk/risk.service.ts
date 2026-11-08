@@ -27,7 +27,8 @@ export class RiskService {
   static async evaluateOrderMilestoneRisk(
     orderId: string,
     milestoneId: string,
-    user: AuthenticatedUser
+    user: AuthenticatedUser,
+    asOfDate?: string
   ): Promise<RiskEvaluationResult> {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -38,7 +39,7 @@ export class RiskService {
         productionUpdates: {
           where: { milestoneId },
           orderBy: { clientEventAt: 'desc' },
-          take: 10,
+          take: 50,
         },
       },
     });
@@ -68,12 +69,17 @@ export class RiskService {
       const allOrderUpdates = await prisma.productionUpdate.findMany({
         where: { orderId: order.id },
         orderBy: { clientEventAt: 'desc' },
-        take: 10,
+        take: 50,
       });
       dailyLogs = allOrderUpdates.map((u) => ({
         date: u.clientEventAt,
         quantity: u.goodQuantity,
       }));
+    }
+
+    let simulatedDate = asOfDate ? new Date(asOfDate) : getSystemToday();
+    if (isNaN(simulatedDate.getTime())) {
+      simulatedDate = getSystemToday();
     }
 
     const riskInput: RiskEngineInput = {
@@ -89,7 +95,7 @@ export class RiskService {
       fobPricePerPiece: order.fobPricePerPiece || undefined,
       exchangeRate: order.exchangeRate || (order.currency === 'INR' ? 1.0 : 85.0),
       currency: order.currency,
-      simulatedToday: getSystemToday(),
+      simulatedToday: simulatedDate,
     };
 
     const evaluation = evaluateProductionRisk(riskInput);

@@ -21,7 +21,7 @@ router.use('/reports', reportsRoutes);
 
 // Health check endpoint
 router.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.status(200).json({ status: 'ok', version: '1.2.0', timestamp: new Date().toISOString() });
 });
 
 // Authoritative Server Time endpoint (immune to client machine clock manipulation)

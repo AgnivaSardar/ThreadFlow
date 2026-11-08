@@ -20,7 +20,8 @@ export class RiskController {
       throw new AppError('Authentication required', 401);
     }
     const { orderId, milestoneId } = req.params;
-    const result = await RiskService.evaluateOrderMilestoneRisk(orderId, milestoneId, req.user);
+    const asOfDate = req.query.asOfDate as string | undefined;
+    const result = await RiskService.evaluateOrderMilestoneRisk(orderId, milestoneId, req.user, asOfDate);
     res.status(200).json({
       success: true,
       data: result,

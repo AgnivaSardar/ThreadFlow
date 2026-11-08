@@ -727,7 +727,7 @@ export class OrdersService {
         totalPlanned,
         totalCompleted,
         healthStatus,
-        hasCriticalBottleneck: bufferCompressionDays > 0,
+        hasCriticalBottleneck: evaluation.riskLevel === 'RED' && bufferCompressionDays > 0,
         bufferCompressionDays,
         riskWarning: latestWarning || null,
         orderLines: order.orderLines,
@@ -930,7 +930,7 @@ export class OrdersService {
         bufferCompressionDays = count;
       }
 
-      const isCritical = bufferCompressionDays > 0;
+      const isCritical = bufferCompressionDays > 0 && evaluation.riskLevel === 'RED';
       if (isCritical && !criticalPathAlert) {
         criticalPathAlert = {
           stage: ms.stage,
@@ -980,6 +980,7 @@ export class OrdersService {
       shipWeek,
       workingDaysLeft,
       healthStatus,
+      riskEvaluation: evaluation,
       activeStage: activeMilestone?.stage || 'FINISHING',
       activeStageSequence: activeMilestone?.sequenceOrder || 7,
       activeStageProgressPct,

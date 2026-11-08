@@ -290,6 +290,7 @@ export interface OrderDetail extends Omit<OrderListItem, 'sizeProgress'> {
   auditEvents: AuditEvent[];
   productionUpdates?: FloorProductionUpdate[];
   latestRiskWarning?: RiskWarning | null;
+  riskEvaluation?: RiskEvaluationResult;
   criticalPathAlert?: {
     stage: Stage;
     stageDisplayName: string;
