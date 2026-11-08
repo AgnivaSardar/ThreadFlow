@@ -944,7 +944,7 @@ export class OrdersService {
           stageDisplayName: ms.stage.replace(/_/g, ' & '),
           bufferCompressionDays,
           message: `${ms.stage.replace(/_/g, ' & ')} has overrun planned completion by ${bufferCompressionDays} working days.`,
-          downstreamRisk: `Consuming downstream Assembly & Finishing safety buffers. Immediate run-rate elevation needed to prevent ex-factory postponement.`,
+          downstreamRisk: `Consuming downstream Assembly & Finishing safety extra days. Immediate run-rate elevation needed to prevent ex-factory postponement.`,
         };
       }
 

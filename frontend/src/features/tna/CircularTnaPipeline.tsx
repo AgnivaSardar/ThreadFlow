@@ -305,7 +305,7 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
                     : 'bg-slate-200 text-slate-700'
                 }`}
               >
-                {selectedMilestone.bufferDaysAhead}{isTa ? ' நாள் இடைவெளி ஒதுக்கப்பட்டது' : 'd Buffer Reserved'}
+                {selectedMilestone.bufferDaysAhead}{isTa ? ' நாள் கூடுதல் ஒதுக்கப்பட்டது' : 'd Extra Reserved'}
               </span>
             </div>
           </div>
@@ -356,7 +356,7 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
 
             <div className="p-3 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
               <div className="text-[10px] uppercase font-bold text-slate-400 mb-1 flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-slate-400" /> {isTa ? 'அடுத்த கட்ட பாதுகாப்பு' : 'Downstream Protection'}
+                <Clock className="w-3.5 h-3.5 text-slate-400" /> {isTa ? 'அடுத்த கட்ட கூடுதல் பாதுகாப்பு' : 'Downstream Extra Protection'}
               </div>
               <div className="text-xs font-bold text-slate-800">
                 {selectedMilestone.bufferDaysAhead} {isTa ? 'வேலை நாட்கள் முன்னணி நேரம்' : 'Working Days Lead Time'}
@@ -370,8 +370,8 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
               <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
               <span>
                 {isTa
-                  ? `அட்டவணை தாமதம்: இடைவெளி ${selectedMilestone.bufferCompressionDays} வேலை நாட்கள் குறைக்கப்பட்டது.`
-                  : `Schedule Overrun: Buffer compressed by ${selectedMilestone.bufferCompressionDays} working days.`}
+                  ? `அட்டவணை தாமதம்: கூடுதல் ${selectedMilestone.bufferCompressionDays} வேலை நாட்கள் குறைக்கப்பட்டது.`
+                  : `Schedule Overrun: Extra compressed by ${selectedMilestone.bufferCompressionDays} working days.`}
               </span>
             </div>
           )}

@@ -40,13 +40,15 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, label, size = 
     norm === 'DELAYED' ||
     norm === 'LOW_STOCK' ||
     norm === 'BUFFER_CAUTION' ||
-    norm === 'BUFFER CAUTION'
+    norm === 'BUFFER CAUTION' ||
+    norm === 'EXTRA_CAUTION' ||
+    norm === 'EXTRA CAUTION'
   ) {
     bg = 'bg-amber-50';
     text = 'text-amber-800';
     border = 'border-amber-200';
     dot = 'bg-amber-500';
-    displayLabel = label || (norm === 'AMBER' ? 'Buffer Caution' : displayLabel);
+    displayLabel = label || (norm === 'AMBER' ? 'Extra Caution' : displayLabel);
   } else if (
     norm === 'RED' ||
     norm === 'OVERDUE' ||

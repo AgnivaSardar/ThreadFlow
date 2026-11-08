@@ -62,13 +62,13 @@ const RISK_PAGE_I18N = {
     // Run-rate KPIs
     kpiMonitoredOrders: 'Monitored Orders',
     kpiCriticalDeficit: 'Critical Deficit',
-    kpiBufferCaution: 'Buffer Caution',
+    kpiBufferCaution: 'Extra Caution',
     kpiOnTrack: 'On-Track',
     // Run-rate filters
     filterAll: 'All',
     filterAllRisks: 'All Risks',
     filterCriticalDeficit: 'Critical Deficit',
-    filterBufferCaution: 'Buffer Caution',
+    filterBufferCaution: 'Extra Caution',
     filterOnTrack: 'On Track',
     filterToggle: 'Filters',
     searchPlaceholder: 'Search PO number or garment style...',
@@ -108,13 +108,13 @@ const RISK_PAGE_I18N = {
     // Run-rate KPIs
     kpiMonitoredOrders: 'கண்காணிக்கப்படும் ஆர்டர்கள்',
     kpiCriticalDeficit: 'கடுமையான பற்றாக்குறை',
-    kpiBufferCaution: 'பாதுகாப்பு எச்சரிக்கை',
+    kpiBufferCaution: 'கூடுதல் எச்சரிக்கை',
     kpiOnTrack: 'சரியான பாதையில்',
     // Run-rate filters
     filterAll: 'அனைத்தும்',
     filterAllRisks: 'அனைத்து ஆபத்துகள்',
     filterCriticalDeficit: 'கடுமையான பற்றாக்குறை',
-    filterBufferCaution: 'பாதுகாப்பு எச்சரிக்கை',
+    filterBufferCaution: 'கூடுதல் எச்சரிக்கை',
     filterOnTrack: 'சரியான பாதை',
     filterToggle: 'வடிகட்டிகள்',
     searchPlaceholder: 'PO எண் அல்லது ஆடை ஸ்டைலைத் தேடவும்...',
@@ -699,11 +699,13 @@ export const RiskPage: React.FC = () => {
                         ) : item.riskLevel === 'RED' ? (
                           <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-950 bg-rose-400 px-2 py-0.5 rounded-full border border-rose-300 shadow-2xs">
                             <span className="w-1.5 h-1.5 rounded-full bg-rose-900 animate-pulse" />
-                            {t.kpiCriticalDeficit} ({item.varianceQtyPerDay} pcs/d)
+                            {item.varianceQtyPerDay < 0
+                              ? `${t.kpiCriticalDeficit} (${item.varianceQtyPerDay} pcs/d)`
+                              : `${lang === 'ta' ? 'கூடுதல் பற்றாக்குறை' : 'Extra Deficit'} (+${item.varianceQtyPerDay} pcs/d)`}
                           </span>
                         ) : item.riskLevel === 'AMBER' ? (
                           <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-950 bg-amber-400 px-2 py-0.5 rounded-full border border-amber-300 shadow-2xs">
-                            {t.kpiBufferCaution}
+                            {t.kpiBufferCaution} ({item.varianceQtyPerDay >= 0 ? `+${item.varianceQtyPerDay}` : item.varianceQtyPerDay} pcs/d)
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-950 bg-emerald-300 px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs">

@@ -335,7 +335,7 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
     financialExposureRupees = 0;
     daysLate = 0;
     rulesTriggered.push('Production completed: 0 pcs remaining for this stage.');
-  } else if (daysLate > 0 || bufferRemaining < 0) {
+  } else if (daysLate > 0) {
     riskLevel = RiskLevel.RED;
     // Disruption penalty / air-freight contingency proportional to delayed pieces and delay duration
     const penaltyPct = Math.min(0.40, 0.10 + daysLate * 0.02);
@@ -345,15 +345,19 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
     );
     if (bufferRemaining < 0) {
       rulesTriggered.push(
-        `Ex-factory delivery window breached: buffer deficit of ${Math.abs(bufferRemaining)} days.`
+        `Ex-factory delivery window breached: extra deficit of ${Math.abs(bufferRemaining)} days.`
       );
     }
   } else if (bufferRemaining < 2 || varianceQtyPerDay < 0 || transitHours > 48) {
     riskLevel = RiskLevel.AMBER;
     financialExposureRupees = Math.round(remainingValueInr * 0.06);
-    if (bufferRemaining < 2) {
+    if (bufferRemaining < 0) {
       rulesTriggered.push(
-        `Downstream buffer compressed: only ${bufferRemaining} working day(s) of safety cushion remaining.`
+        `Downstream extra days compressed: extra deficit of ${Math.abs(bufferRemaining)} days.`
+      );
+    } else if (bufferRemaining < 2) {
+      rulesTriggered.push(
+        `Downstream extra days compressed: only ${bufferRemaining} working day(s) of safety cushion remaining.`
       );
     }
     if (varianceQtyPerDay < 0) {
@@ -370,14 +374,14 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
     riskLevel = RiskLevel.GREEN;
     financialExposureRupees = 0;
     rulesTriggered.push(
-      `On track: rolling rate meets required throughput with ${bufferRemaining} days downstream buffer.`
+      `On track: rolling rate meets required throughput with ${bufferRemaining} days downstream extra.`
     );
   }
 
   // 10. Explainable "Show-Your-Math" Payload
   const mathBreakdown: MathExplanationPayload = {
     requiredRateMath: {
-      formula: 'Required Daily Rate = Remaining Pieces / (Working Days To Ship - Downstream Buffers)',
+      formula: 'Required Daily Rate = Remaining Pieces / (Working Days To Ship - Downstream Extra Days)',
       substituted: isCompleted
         ? '0 pcs remaining (Stage Completed)'
         : `${remainingPieces.toLocaleString()} pcs / (${workingDaysToShip}d - ${downstreamBufferDays}d) = ${requiredDailyRate} pcs/day`,

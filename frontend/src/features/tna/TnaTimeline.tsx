@@ -85,7 +85,7 @@ export const TnaTimeline: React.FC<TnaTimelineProps> = ({ milestones, currentSta
             7-Stage Time & Action (TNA) Milestone Pipeline
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Synchronized stage throughput, buffer lead times, and downstream buffer protection
+            Synchronized stage throughput, extra lead times, and downstream extra protection
           </p>
         </div>
         <div className="flex items-center gap-4 text-xs font-medium text-slate-500">
@@ -153,9 +153,9 @@ export const TnaTimeline: React.FC<TnaTimelineProps> = ({ milestones, currentSta
                     {ms.isCriticalPathBottleneck && (ms.bufferCompressionDays || 0) > 0 ? (
                       <span
                         className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200 flex items-center gap-1"
-                        title={`Buffer compressed by ${ms.bufferCompressionDays} working days`}
+                        title={`Extra compressed by ${ms.bufferCompressionDays} working days`}
                       >
-                        -{ms.bufferCompressionDays}d buffer
+                        -{ms.bufferCompressionDays}d extra
                       </span>
                     ) : (
                       <span
@@ -164,9 +164,9 @@ export const TnaTimeline: React.FC<TnaTimelineProps> = ({ milestones, currentSta
                             ? 'bg-sky-100 text-sky-800 border border-sky-200'
                             : 'bg-slate-200 text-slate-700'
                         }`}
-                        title={`${ms.bufferDaysAhead} downstream buffer days reserved for subsequent processes`}
+                        title={`${ms.bufferDaysAhead} downstream extra days reserved for subsequent processes`}
                       >
-                        {ms.bufferDaysAhead}d buffer
+                        {ms.bufferDaysAhead}d extra
                       </span>
                     )}
                   </div>

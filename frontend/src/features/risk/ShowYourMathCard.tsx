@@ -306,7 +306,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
 
           <div className="flex items-center gap-3">
             <span className="text-slate-500 text-[11px]">
-              {isTa ? 'அட்டவணைப்படி முடிந்தது • இடைவெளிகள் பாதுகாக்கப்பட்டன' : 'Completed on Schedule • Buffers Preserved'}
+              {isTa ? 'அட்டவணைப்படி முடிந்தது • கூடுதல் பாதுகாக்கப்பட்டது' : 'Completed on Schedule • Extra Preserved'}
             </span>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
               <CheckCircle2 className="w-3 h-3 text-emerald-700" />
@@ -343,7 +343,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
                 {mathBreakdown.remainingPieces.toLocaleString()} {t.common.pieces}
               </span>
               <span className="pt-0.5 text-slate-600 text-[10px]">
-                {rawNetDays > 0 ? `${liveWorkingDaysTotal}d − ${mathBreakdown.downstreamBufferDays}d` : `${effWorkingDays}d (${rawNetDays}d buffer)`}
+                {rawNetDays > 0 ? `${liveWorkingDaysTotal}d − ${mathBreakdown.downstreamBufferDays}d` : `${effWorkingDays}d (${rawNetDays}d extra)`}
               </span>
             </div>
             <span className="text-xs text-slate-400 font-light shrink-0">=</span>
@@ -353,7 +353,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
           </div>
 
           <div className="text-[10px] sm:text-[11px] text-slate-500 font-mono text-center tracking-wide">
-            {isTa ? 'மீதம்:' : 'Remaining:'} <strong className="text-slate-800">{mathBreakdown.remainingPieces.toLocaleString()} {t.common.pieces}</strong> ({rawNetDays > 0 ? `${rawNetDays} ${isTa ? 'வேலை நாட்களில்' : 'working days'}` : `${effWorkingDays} ${isTa ? 'வேலை நாளில் (தாங்கல் பற்றாக்குறை)' : 'working day (buffer deficit)'}`})
+            {isTa ? 'மீதம்:' : 'Remaining:'} <strong className="text-slate-800">{mathBreakdown.remainingPieces.toLocaleString()} {t.common.pieces}</strong> ({rawNetDays > 0 ? `${rawNetDays} ${isTa ? 'வேலை நாட்களில்' : 'working days'}` : `${effWorkingDays} ${isTa ? 'வேலை நாளில் (கூடுதல் பற்றாக்குறை)' : 'working day (extra deficit)'}`})
           </div>
         </div>
 
@@ -652,7 +652,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
                 At <strong className="text-slate-900">{activeResult.simulatedRate.toLocaleString()} pcs/day</strong>, completing the remaining{' '}
                 <strong className="text-slate-900">{mathBreakdown.remainingPieces.toLocaleString()} pcs</strong> will take{' '}
                 <strong className="text-emerald-700">{activeResult.workingDaysNeeded} working days</strong> — on time within the{' '}
-                {effWorkingDays}-day window with buffers intact.{' '}
+                {effWorkingDays}-day window with extra intact.{' '}
                 {activeAmountSaved > 0 && (
                   <span className="text-emerald-800 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 ml-1 inline-block">
                     Amount Saved: +₹{activeAmountSaved.toLocaleString()} protected against delay penalties & air freight

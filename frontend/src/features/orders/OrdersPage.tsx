@@ -333,7 +333,7 @@ export const OrdersPage: React.FC = () => {
                 [
                   { key: 'ALL', label: isTa ? 'அனைத்து ஆர்டர்கள்' : 'All Orders', shortLabel: isTa ? 'அனைத்தும்' : 'All', dot: '' },
                   { key: 'RED', label: isTa ? 'முக்கிய பற்றாக்குறை' : 'Critical Deficit', shortLabel: isTa ? 'முக்கியம்' : 'Critical', dot: 'bg-rose-500' },
-                  { key: 'AMBER', label: isTa ? 'எச்சரிக்கை' : 'Buffer Caution', shortLabel: isTa ? 'எச்சரிக்கை' : 'Caution', dot: 'bg-amber-500' },
+                  { key: 'AMBER', label: isTa ? 'கூடுதல் எச்சரிக்கை' : 'Extra Caution', shortLabel: isTa ? 'எச்சரிக்கை' : 'Caution', dot: 'bg-amber-500' },
                   { key: 'GREEN', label: isTa ? 'சரியான பாதை' : 'On Track', shortLabel: isTa ? 'பாதை' : 'On Track', dot: 'bg-emerald-500' },
                   { key: 'COMPLETED', label: isTa ? 'முடிந்தது' : 'Completed', shortLabel: isTa ? 'முடிந்தது' : 'Completed', dot: 'bg-emerald-600' },
                 ] as const
@@ -633,10 +633,10 @@ export const OrdersPage: React.FC = () => {
                           <div className="mt-0.5">
                             <span
                               className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200"
-                              title={`Current stage exceeded planned completion, compressing downstream buffers by ${order.bufferCompressionDays} days`}
+                              title={`Current stage exceeded planned completion, compressing downstream extra days by ${order.bufferCompressionDays} days`}
                             >
                               <AlertTriangle className="w-3 h-3 text-rose-600 shrink-0" />
-                              Buffer -{order.bufferCompressionDays}d
+                              Extra -{order.bufferCompressionDays}d
                             </span>
                           </div>
                         )}

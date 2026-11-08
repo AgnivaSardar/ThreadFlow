@@ -661,11 +661,13 @@ export const OrderDetailPage: React.FC = () => {
               ) : riskEvaluation.riskLevel === 'RED' ? (
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-950 bg-rose-400 px-2 py-0.5 rounded-full border border-rose-300 shadow-2xs">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-900 animate-pulse" />
-                  {isTa ? 'கடுமையான பற்றாக்குறை' : 'Critical Deficit'} ({riskEvaluation.varianceQtyPerDay} pcs/d)
+                  {riskEvaluation.varianceQtyPerDay < 0
+                    ? `${isTa ? 'கடுமையான பற்றாக்குறை' : 'Critical Deficit'} (${riskEvaluation.varianceQtyPerDay} pcs/d)`
+                    : `${isTa ? 'கூடுதல் பற்றாக்குறை' : 'Extra Deficit'} (+${riskEvaluation.varianceQtyPerDay} pcs/d)`}
                 </span>
               ) : riskEvaluation.riskLevel === 'AMBER' ? (
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-950 bg-amber-400 px-2 py-0.5 rounded-full border border-amber-300 shadow-2xs">
-                  {isTa ? 'தாங்கல் எச்சரிக்கை' : 'Buffer Caution'}
+                  {isTa ? 'கூடுதல் எச்சரிக்கை' : 'Extra Caution'} ({riskEvaluation.varianceQtyPerDay >= 0 ? `+${riskEvaluation.varianceQtyPerDay}` : riskEvaluation.varianceQtyPerDay} pcs/d)
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-950 bg-emerald-300 px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
