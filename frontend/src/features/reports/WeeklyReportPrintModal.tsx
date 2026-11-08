@@ -309,21 +309,13 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
               {/* 7 Columns: 1 for each Stage */}
               <div className="grid grid-cols-7 gap-2">
                 {stageTrends.map((stage) => {
-                  const barColors = [
-                    'bg-slate-400',
-                    'bg-sky-300',
-                    'bg-sky-400',
-                    'bg-sky-600',
-                    'bg-[#0C2D48]',
-                  ];
-
                   return (
                     <div
                       key={stage.stage}
                       className="bg-white p-2 rounded-lg border border-slate-200 flex flex-col justify-between"
                     >
                       <div className="text-center mb-1">
-                        <div className="text-[10px] font-bold text-slate-800 truncate" title={stage.displayName}>
+                        <div className="text-[10px] font-bold text-slate-800 break-words" title={stage.displayName}>
                           {stage.displayName}
                         </div>
                         <div className="text-[10px] font-black font-mono text-[#0C2D48]">
@@ -331,23 +323,45 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
                         </div>
                       </div>
 
-                      {/* Multi-Bar Group for 5 Weeks */}
-                      <div className="h-20 flex items-end justify-between gap-0.5 px-1 py-0.5 bg-slate-50 border border-slate-200 rounded">
-                        {stage.weeklyBars?.map((bar, barIdx) => (
-                          <div
-                            key={bar.week}
-                            className="flex-1 flex flex-col items-center justify-end h-full"
-                          >
-                            <div
-                              className={`w-full rounded-t-xs ${barColors[barIdx] || 'bg-sky-600'}`}
-                              style={{ height: `${Math.max(8, bar.rate)}%` }}
-                              title={`${bar.week}: ${bar.rate}%`}
-                            />
-                            <span className="text-[7px] font-mono text-slate-500 mt-0.5 scale-90">
+                      {/* Multi-Bar Group for 5 Weeks (SVG Vector Rectangles: Guaranteed Print Color in All Browsers) */}
+                      <div className="w-full bg-slate-50 border border-slate-200 rounded p-1 flex flex-col justify-end">
+                        <svg
+                          viewBox="0 0 100 52"
+                          className="w-full h-16 block overflow-visible"
+                          preserveAspectRatio="none"
+                          style={{ height: '56px', minHeight: '56px' }}
+                        >
+                          {stage.weeklyBars?.map((bar, barIdx) => {
+                            const hexColors = ['#94A3B8', '#7DD3FC', '#38BDF8', '#0284C7', '#0C2D48'];
+                            const barWidth = 14;
+                            const gap = 5;
+                            const x = barIdx * (barWidth + gap) + 4;
+                            const barHeight = Math.max(4, (bar.rate / 100) * 48);
+                            const y = 50 - barHeight;
+
+                            return (
+                              <g key={bar.week}>
+                                <rect
+                                  x={x}
+                                  y={y}
+                                  width={barWidth}
+                                  height={barHeight}
+                                  rx={2}
+                                  fill={hexColors[barIdx] || '#0284C7'}
+                                >
+                                  <title>{`${bar.week}: ${bar.rate}% (${bar.pieces.toLocaleString()} pcs)`}</title>
+                                </rect>
+                              </g>
+                            );
+                          })}
+                        </svg>
+                        <div className="flex justify-between text-[7px] font-mono text-slate-500 pt-0.5 px-0.5">
+                          {stage.weeklyBars?.map((bar) => (
+                            <span key={bar.week} className="truncate">
                               {bar.week.replace('CW ', 'W')}
                             </span>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
 
                       <div className="text-[9px] text-center font-bold font-mono mt-1 text-slate-600">
@@ -376,13 +390,18 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
                           {wt.actualPcs.toLocaleString()} / {wt.targetPcs.toLocaleString()} ({wt.efficiencyRate}%)
                         </span>
                       </div>
-                      <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${
-                            wt.efficiencyRate >= 90 ? 'bg-emerald-500' : wt.efficiencyRate >= 70 ? 'bg-sky-600' : 'bg-amber-500'
-                          }`}
-                          style={{ width: `${Math.min(100, wt.efficiencyRate)}%` }}
-                        />
+                      <div className="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden" style={{ height: '10px', minHeight: '10px' }}>
+                        <svg className="w-full h-full block" viewBox="0 0 100 10" preserveAspectRatio="none" style={{ height: '10px', minHeight: '10px' }}>
+                          <rect x="0" y="0" width="100" height="10" fill="#E2E8F0" rx="3" />
+                          <rect
+                            x="0"
+                            y="0"
+                            width={Math.min(100, Math.max(0, wt.efficiencyRate))}
+                            height="10"
+                            rx="3"
+                            fill={wt.efficiencyRate >= 90 ? '#10B981' : wt.efficiencyRate >= 70 ? '#0284C7' : '#F59E0B'}
+                          />
+                        </svg>
                       </div>
                     </div>
                   ))}
@@ -480,22 +499,23 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
                     <th className="py-2 px-2 border-r border-[#143D60]">Ex-Factory</th>
                     <th className="py-2 px-2 border-r border-[#143D60]">Active Stage</th>
                     <th className="py-2 px-2 text-center border-r border-[#143D60]">Progress</th>
-                    <th className="py-2 px-3">Confirmed Delivery Directives</th>
+                    <th className="py-2 px-2 border-r border-[#143D60]">Manufacturing Unit</th>
+                    <th className="py-2 px-3">Confirmed Delivery Directives & Floor Notes</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {orders.map((o) => (
-                    <tr key={o.id} className="even:bg-slate-50 odd:bg-white">
-                      <td className="py-1.5 px-2.5 font-mono font-bold text-slate-900 border-r border-slate-300">
+                    <tr key={o.id} className="even:bg-slate-50 odd:bg-white break-inside-avoid">
+                      <td className="py-2 px-2.5 font-mono font-bold text-slate-900 border-r border-slate-300 whitespace-nowrap">
                         {o.poNumber}
                       </td>
-                      <td className="py-1.5 px-2.5 font-medium text-slate-800 border-r border-slate-300">
+                      <td className="py-2 px-2.5 font-medium text-slate-800 border-r border-slate-300 break-words">
                         {o.style}
                       </td>
-                      <td className="py-1.5 px-2 text-right font-mono font-bold text-slate-900 border-r border-slate-300">
+                      <td className="py-2 px-2 text-right font-mono font-bold text-slate-900 border-r border-slate-300 whitespace-nowrap">
                         {o.totalQuantity.toLocaleString()}
                       </td>
-                      <td className="py-1.5 px-2 whitespace-nowrap text-slate-700 border-r border-slate-300">
+                      <td className="py-2 px-2 whitespace-nowrap text-slate-700 border-r border-slate-300">
                         {new Date(o.exFactoryDate).toLocaleDateString('en-GB', {
                           day: '2-digit',
                           month: 'short',
@@ -505,13 +525,16 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
                           ({o.daysToExFactory}d left)
                         </span>
                       </td>
-                      <td className="py-1.5 px-2 font-semibold text-slate-800 border-r border-slate-300 capitalize">
+                      <td className="py-2 px-2 font-semibold text-slate-800 border-r border-slate-300 capitalize whitespace-nowrap">
                         {o.activeStage.replace(/_/g, ' ')}
                       </td>
-                      <td className="py-1.5 px-2 text-center font-mono font-bold border-r border-slate-300">
+                      <td className="py-2 px-2 text-center font-mono font-bold border-r border-slate-300 whitespace-nowrap">
                         {o.progressPercent}%
                       </td>
-                      <td className="py-1.5 px-3 text-[10px] text-slate-700 leading-snug">
+                      <td className="py-2 px-2 text-slate-700 border-r border-slate-300 whitespace-nowrap text-[10px]">
+                        {o.unit?.name || 'Tiruppur Unit'}
+                      </td>
+                      <td className="py-2 px-3 text-[10px] text-slate-700 leading-relaxed break-words whitespace-normal">
                         {o.confirmedAlerts.map((a) => a.mitigationPlan).filter(Boolean).join(' • ') ||
                           o.latestDailyLog?.notes ||
                           'Floor schedule on-track for vessel cut-off.'}

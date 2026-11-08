@@ -198,13 +198,47 @@ table tbody tr:hover {
     print-color-adjust: exact !important;
   }
 
+  /* Remove background image textile watermark for pure clean white print pages */
+  body,
+  main,
+  #root,
+  .smooth-scroll {
+    background-image: none !important;
+    background-color: #FFFFFF !important;
+  }
+
   #root,
   .h-screen,
   main,
-  div {
+  #main-content,
+  .overflow-y-auto,
+  .overflow-x-auto {
     overflow: visible !important;
     height: auto !important;
     max-height: none !important;
+  }
+
+  /* Force print color fidelity and prevent browser graphics stripping */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Guarantee all SVGs render with full visibility and explicit height */
+  svg {
+    overflow: visible !important;
+  }
+
+  /* Prevent text clipping and truncation in print */
+  .truncate,
+  .max-w-xs,
+  .max-w-sm,
+  .max-w-md {
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
   }
 
   /* Hide app navigation chrome, header, sidebar, chatbots, floating widgets during print */

@@ -414,7 +414,7 @@ export const ReportsPage: React.FC = () => {
         </div>
 
         {/* Multi-Bar Columns for 7 Stages */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 pt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 pt-1 print:grid-cols-7 print:gap-1.5">
           {(data?.stageTrends || []).map((stage) => {
             const isUp = stage.trend === 'UP';
             const isDown = stage.trend === 'DOWN';
@@ -425,16 +425,16 @@ export const ReportsPage: React.FC = () => {
             return (
               <div
                 key={stage.stage}
-                className="bg-slate-50/70 border border-slate-200/90 rounded-xl p-3 flex flex-col justify-between space-y-3 hover:border-sky-300 transition-all hover:bg-white hover:shadow-xs"
+                className="bg-slate-50/70 border border-slate-200/90 rounded-xl p-3 print:p-1.5 flex flex-col justify-between space-y-2 hover:border-sky-300 transition-all hover:bg-white hover:shadow-xs print:bg-white print:border-slate-300"
               >
                 {/* Stage Header & Trend Delta */}
                 <div>
                   <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="font-bold text-slate-800 text-xs truncate" title={stageDisplayName}>
+                    <span className="font-bold text-slate-800 text-xs truncate print:text-[10px]" title={stageDisplayName}>
                       {stageDisplayName}
                     </span>
                     <span
-                      className={`inline-flex items-center gap-0.5 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md border ${
+                      className={`inline-flex items-center gap-0.5 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md border print:text-[8px] print:px-1 print:py-0 ${
                         isUp
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                           : isDown
@@ -443,47 +443,65 @@ export const ReportsPage: React.FC = () => {
                       }`}
                     >
                       {isUp ? (
-                        <ArrowUpRight className="w-3 h-3 text-emerald-600" />
+                        <ArrowUpRight className="w-3 h-3 text-emerald-600 print:w-2 print:h-2" />
                       ) : isDown ? (
-                        <ArrowDownRight className="w-3 h-3 text-rose-600" />
+                        <ArrowDownRight className="w-3 h-3 text-rose-600 print:w-2 print:h-2" />
                       ) : (
-                        <Minus className="w-2.5 h-2.5 text-slate-400" />
+                        <Minus className="w-2.5 h-2.5 text-slate-400 print:w-2 print:h-2" />
                       )}
                       <span>{isUp ? '+' : ''}{stage.trendDelta}%</span>
                     </span>
                   </div>
 
-                  <div className="text-[11px] text-slate-500 font-mono">
+                  <div className="text-[11px] text-slate-500 font-mono print:text-[9px]">
                     {t.reports.current} <strong className="text-slate-900 font-extrabold">{stage.currentRate}%</strong>
                   </div>
                 </div>
 
-                {/* Multi-Bar Visualization (5 grouped bars side-by-side) */}
-                <div className="h-28 flex items-end justify-between gap-1 px-1 py-1 bg-white border border-slate-200/60 rounded-lg">
-                  {stage.weeklyBars.map((bar, barIdx) => (
-                    <div
-                      key={bar.week}
-                      className="flex-1 flex flex-col items-center justify-end h-full group relative"
-                    >
-                      {/* Hover Tooltip */}
-                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition pointer-events-none bg-slate-900 text-white text-[9px] font-mono py-0.5 px-1.5 rounded whitespace-nowrap z-20 shadow-md">
-                        {bar.week}: {bar.rate}% ({bar.pieces.toLocaleString()} {t.common.pieces})
-                      </div>
+                {/* Multi-Bar Visualization (SVG Vector Rectangles: 100% Reliable Print Fidelity in All Browsers) */}
+                <div className="w-full bg-white border border-slate-200/80 rounded-lg p-1 print:border-slate-300 flex flex-col justify-end">
+                  <svg
+                    viewBox="0 0 100 52"
+                    className="w-full h-24 print:h-14 block overflow-visible"
+                    preserveAspectRatio="none"
+                    style={{ minHeight: '52px' }}
+                  >
+                    {stage.weeklyBars.map((bar, barIdx) => {
+                      const hexColors = ['#94A3B8', '#7DD3FC', '#38BDF8', '#0284C7', '#0C2D48'];
+                      const barWidth = 14;
+                      const gap = 5;
+                      const x = barIdx * (barWidth + gap) + 4;
+                      const barHeight = Math.max(3, (bar.rate / 100) * 48);
+                      const y = 50 - barHeight;
 
-                      <div
-                        className={`w-full rounded-t-sm transition-all duration-300 ${barColors[barIdx]}`}
-                        style={{ height: `${Math.max(8, bar.rate)}%` }}
-                      />
-                      <span className="text-[8px] font-mono text-slate-400 mt-1 scale-90">
+                      return (
+                        <g key={bar.week} className="cursor-pointer">
+                          <rect
+                            x={x}
+                            y={y}
+                            width={barWidth}
+                            height={barHeight}
+                            rx={2}
+                            fill={hexColors[barIdx] || '#0284C7'}
+                          >
+                            <title>{`${bar.week}: ${bar.rate}% (${bar.pieces.toLocaleString()} pcs)`}</title>
+                          </rect>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                  <div className="flex justify-between text-[8px] font-mono text-slate-400 pt-0.5 px-0.5 print:text-[7px]">
+                    {stage.weeklyBars.map((bar) => (
+                      <span key={bar.week} className="truncate">
                         {bar.week.replace('CW ', 'W')}
                       </span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
 
                 {/* Status Footnote */}
-                <div className="text-[10px] font-semibold text-slate-500 flex items-center justify-between border-t border-slate-200/50 pt-1.5">
-                  <span className="uppercase text-[9px] tracking-wider text-slate-400">{t.reports.pacing}</span>
+                <div className="text-[10px] font-semibold text-slate-500 flex items-center justify-between border-t border-slate-200/50 pt-1 print:text-[8px]">
+                  <span className="uppercase text-[9px] tracking-wider text-slate-400 print:text-[7px]">{t.reports.pacing}</span>
                   <span className={isUp ? 'text-emerald-700' : isDown ? 'text-rose-600' : 'text-slate-600'}>
                     {isUp ? t.reports.accelerating : isDown ? t.reports.decelerating : t.reports.steadyPace}
                   </span>
@@ -583,9 +601,9 @@ export const ReportsPage: React.FC = () => {
       )}
 
       {/* 5. Additional Graphical Analytics: Factory Weekly Throughput & Milestone Health */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 print:grid-cols-2 print:gap-2.5">
         {/* Weekly Factory Garment Throughput Velocity Chart */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-3">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-3 print:col-span-1 print:p-3 print:space-y-2">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <div>
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
@@ -593,33 +611,35 @@ export const ReportsPage: React.FC = () => {
               </h3>
               <p className="text-[11px] text-slate-400">{t.reports.totalVerifiedOutput}</p>
             </div>
-            <span className="text-xs font-mono font-bold text-sky-700 bg-sky-50 px-2.5 py-0.5 rounded-lg border border-sky-200">
+            <span className="text-xs font-mono font-bold text-sky-700 bg-sky-50 px-2.5 py-0.5 rounded-lg border border-sky-200 print:text-[10px]">
               {(data?.metrics.totalContractedPieces || 0).toLocaleString()} {t.common.pieces} {t.reports.totalPieces}
             </span>
           </div>
 
-          <div className="space-y-2.5 pt-1">
+          <div className="space-y-2.5 pt-1 print:space-y-1.5">
             {(data?.weeklyThroughput || []).map((wt) => (
               <div key={wt.week} className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center justify-between text-xs print:text-[10px]">
                   <span className="font-mono font-bold text-slate-700">{wt.week}</span>
-                  <div className="flex items-center gap-2 font-mono text-[11px]">
+                  <div className="flex items-center gap-2 font-mono text-[11px] print:text-[9.5px]">
                     <span className="text-slate-900 font-bold">{wt.actualPcs.toLocaleString()} {t.reports.produced}</span>
                     <span className="text-slate-400">/ {wt.targetPcs.toLocaleString()} {t.reports.target}</span>
                     <span className="font-extrabold text-sky-700">({wt.efficiencyRate}%)</span>
                   </div>
                 </div>
-                <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      wt.efficiencyRate >= 95
-                        ? 'bg-emerald-500'
-                        : wt.efficiencyRate >= 80
-                        ? 'bg-sky-600'
-                        : 'bg-amber-500'
-                    }`}
-                    style={{ width: `${Math.min(100, wt.efficiencyRate)}%` }}
-                  />
+                {/* SVG Progress Bar: Guarantees 100% Solid Color Print Fidelity */}
+                <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200" style={{ height: '10px', minHeight: '10px' }}>
+                  <svg className="w-full h-full block" viewBox="0 0 100 10" preserveAspectRatio="none" style={{ height: '10px', minHeight: '10px' }}>
+                    <rect x="0" y="0" width="100" height="10" fill="#E2E8F0" />
+                    <rect
+                      x="0"
+                      y="0"
+                      width={Math.min(100, Math.max(0, wt.efficiencyRate))}
+                      height="10"
+                      rx="3"
+                      fill={wt.efficiencyRate >= 90 ? '#10B981' : wt.efficiencyRate >= 70 ? '#0284C7' : '#F59E0B'}
+                    />
+                  </svg>
                 </div>
               </div>
             ))}
@@ -627,7 +647,7 @@ export const ReportsPage: React.FC = () => {
         </div>
 
         {/* Milestone Health & On-Time Confidence Pie Chart */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between space-y-4">
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between space-y-4 print:col-span-1 print:p-3 print:space-y-2">
           <div className="border-b border-slate-100 pb-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
               {t.reports.scheduleHealth}
@@ -675,8 +695,8 @@ export const ReportsPage: React.FC = () => {
             };
 
             return (
-              <div className="flex flex-col items-center justify-center my-auto space-y-4">
-                <div className="relative w-44 h-44 flex items-center justify-center">
+              <div className="flex flex-col items-center justify-center my-auto space-y-3 print:space-y-1">
+                <div className="relative w-44 h-44 print:w-32 print:h-32 flex items-center justify-center">
                   <svg viewBox="0 0 200 200" className="w-full h-full transform -rotate-90 drop-shadow-xs">
                     {/* Slices with clear white separators */}
                     <path
@@ -762,18 +782,18 @@ export const ReportsPage: React.FC = () => {
           </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[700px]">
+        <div className="overflow-x-auto print:overflow-visible">
+          <table className="w-full text-left text-xs min-w-[700px] print:min-w-full print:text-[10px]">
             <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[10px] tracking-wider border-b border-[#143D60]">
               <tr>
-                <th className="py-2.5 px-3 text-slate-100">{t.reports.poNumber}</th>
-                <th className="py-2.5 px-3 text-slate-100">{t.reports.style}</th>
-                <th className="py-2.5 px-3 text-right text-slate-100">{t.reports.quantity}</th>
-                <th className="py-2.5 px-3 text-slate-100">{t.common.exFactory}</th>
-                <th className="py-2.5 px-3 text-slate-100">{t.reports.activeStage}</th>
-                <th className="py-2.5 px-2 text-center text-slate-100">{isTa ? 'முன்னேற்றம்' : 'Progress'}</th>
-                <th className="py-2.5 px-3 text-slate-100">{t.reports.manufacturingUnit}</th>
-                <th className="py-2.5 px-3 text-slate-100">{t.reports.directivesNotes}</th>
+                <th className="py-2.5 px-3 text-slate-100 whitespace-nowrap">{t.reports.poNumber}</th>
+                <th className="py-2.5 px-3 text-slate-100 min-w-[140px]">{t.reports.style}</th>
+                <th className="py-2.5 px-3 text-right text-slate-100 whitespace-nowrap">{t.reports.quantity}</th>
+                <th className="py-2.5 px-3 text-slate-100 whitespace-nowrap">{t.common.exFactory}</th>
+                <th className="py-2.5 px-3 text-slate-100 whitespace-nowrap">{t.reports.activeStage}</th>
+                <th className="py-2.5 px-2 text-center text-slate-100 whitespace-nowrap">{isTa ? 'முன்னேற்றம்' : 'Progress'}</th>
+                <th className="py-2.5 px-3 text-slate-100 whitespace-nowrap">{t.reports.manufacturingUnit}</th>
+                <th className="py-2.5 px-3 text-slate-100 min-w-[220px]">{t.reports.directivesNotes}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -790,26 +810,29 @@ export const ReportsPage: React.FC = () => {
                     : o.activeStage.replace(/_/g, ' ');
 
                   return (
-                    <tr key={o.id} className="even:bg-slate-50/80 odd:bg-white hover:bg-sky-50/60 transition">
-                      <td className="py-2.5 px-3">
-                        <span className="font-mono text-xs font-extrabold text-sky-700 inline-flex items-center gap-1">
+                    <tr key={o.id} className="even:bg-slate-50/80 odd:bg-white hover:bg-sky-50/60 transition break-inside-avoid print:bg-white">
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        <span className="font-mono text-xs font-extrabold text-sky-700 inline-flex items-center gap-1 print:text-[10px]">
                           <span>{o.poNumber}</span>
-                          <ExternalLink className="w-3 h-3 text-sky-500" />
+                          <ExternalLink className="w-3 h-3 text-sky-500 print:hidden" />
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 font-semibold text-slate-800">{o.style}</td>
-                      <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">{o.totalQuantity.toLocaleString()} {t.common.pieces}</td>
-                      <td className="py-2.5 px-3 whitespace-nowrap text-slate-600">
+                      <td className="py-2.5 px-3 font-semibold text-slate-800 break-words">{o.style}</td>
+                      <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap print:text-[10px]">{o.totalQuantity.toLocaleString()} {t.common.pieces}</td>
+                      <td className="py-2.5 px-3 whitespace-nowrap text-slate-600 print:text-[9.5px]">
                         {new Date(o.exFactoryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
-                      <td className="py-2.5 px-3 font-semibold text-sky-900 capitalize">{stageDisplayName}</td>
-                      <td className="py-2.5 px-2 text-center">
-                        <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-sky-50 text-sky-800 border border-sky-200">
+                      <td className="py-2.5 px-3 font-semibold text-sky-900 capitalize whitespace-nowrap">{stageDisplayName}</td>
+                      <td className="py-2.5 px-2 text-center whitespace-nowrap">
+                        <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-sky-50 text-sky-800 border border-sky-200 print:text-[9px]">
                           {o.progressPercent}%
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-slate-700">{o.unitName}</td>
-                      <td className="py-2.5 px-3 text-slate-600 max-w-xs truncate" title={ensureEnglishNote(o.latestNote)}>
+                      <td className="py-2.5 px-3 text-slate-700 whitespace-nowrap">{o.unitName}</td>
+                      <td
+                        className="py-2.5 px-3 text-slate-700 text-xs leading-relaxed break-words whitespace-normal print:text-[9.5px] print:leading-normal"
+                        style={{ whiteSpace: 'normal', wordBreak: 'break-word', overflow: 'visible' }}
+                      >
                         {ensureEnglishNote(o.confirmedMitigations[0] || o.latestNote)}
                       </td>
                     </tr>
