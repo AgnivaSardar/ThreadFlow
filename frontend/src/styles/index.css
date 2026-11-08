@@ -178,3 +178,71 @@ table tbody tr:hover {
   border-bottom: 1px solid #143D60 !important;
 }
 
+/* ==========================================================================
+   Full Page Print Styles for Weekly Reports & Executive Sign-Off
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 8mm 8mm 8mm;
+  }
+
+  /* Reset body and html overflow so multi-page documents print completely without clipping */
+  html,
+  body {
+    overflow: visible !important;
+    height: auto !important;
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #root,
+  .h-screen,
+  main,
+  div {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Hide app navigation chrome, header, sidebar, chatbots, floating widgets during print */
+  header,
+  aside,
+  nav,
+  .print\:hidden,
+  .no-print,
+  #threadflow-chatbot-pill,
+  #threadflow-voice-mic,
+  button {
+    display: none !important;
+  }
+
+  /* Preserve all colors on bar charts, badges, and donut slices */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Avoid awkward page breaks inside cards, table rows, and charts */
+  .break-inside-avoid,
+  .card-print,
+  table thead,
+  tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Table styling in print */
+  table {
+    border-collapse: collapse !important;
+  }
+
+  table th,
+  table td {
+    border-color: #cbd5e1 !important;
+  }
+}
+
+

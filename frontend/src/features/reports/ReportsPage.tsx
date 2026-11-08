@@ -88,6 +88,16 @@ interface WeeklySummaryData {
     exFactoryDate: string;
     unitName: string;
     activeStage: string;
+    activeStageSequence?: number;
+    progressPercent: number;
+    overallProgressPercent?: number;
+    milestones: Array<{
+      stage: string;
+      sequenceOrder: number;
+      targetQuantity: number;
+      completedQuantity: number;
+      isCompleted: boolean;
+    }>;
     confirmedMitigations: string[];
     latestNote: string;
   }>;
@@ -227,9 +237,9 @@ export const ReportsPage: React.FC = () => {
     exFactoryDate: o.exFactoryDate,
     daysToExFactory: Math.ceil((new Date(o.exFactoryDate).getTime() - getAuthoritativeServerDate().getTime()) / (1000 * 60 * 60 * 24)),
     activeStage: o.activeStage,
-    progressPercent: 75,
+    progressPercent: o.progressPercent ?? 0,
     unit: { name: o.unitName, location: 'Tiruppur' },
-    milestones: [],
+    milestones: o.milestones || [],
     confirmedAlerts: o.confirmedMitigations.map((m) => ({
       stage: o.activeStage,
       riskLevel: 'GREEN',
@@ -254,8 +264,40 @@ export const ReportsPage: React.FC = () => {
 
   return (
     <div className="space-y-4 pb-12 animate-in fade-in duration-200">
+      {/* Printable Formal Header Letterhead (Visible strictly during print) */}
+      <div className="hidden print:block pb-4 mb-4 border-b-2 border-slate-900 break-inside-avoid">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-xl font-black uppercase tracking-tight text-slate-950">
+              ThreadFlow Manufacturing Units
+            </h1>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Cotton Knitwear Export Hub • Tiruppur 641602, Tamil Nadu, India
+            </p>
+            <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-1">
+              <span>ISO 9001:2015 Certified</span>
+              <span>•</span>
+              <span>Sedex SMETA Audited Facility</span>
+              <span>•</span>
+              <span>OEKO-TEX Standard 100</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="inline-block px-2.5 py-0.5 rounded bg-[#0C2D48] font-mono font-bold text-xs text-white">
+              WEEKLY PRODUCTION & SOURCING REPORT
+            </span>
+            <div className="text-xs font-bold text-slate-900 mt-1">
+              Export Partner: {data?.buyer.name} ({data?.buyer.country || 'International'})
+            </div>
+            <div className="text-[10px] text-slate-600 font-mono">
+              Cycle: {data?.selectedWeek || selectedWeek} • Date: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* 1. Header & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
             {t.reports.title}
@@ -280,16 +322,28 @@ export const ReportsPage: React.FC = () => {
             <span>{t.common.exportCsv}</span>
           </button>
 
-          {/* Print / PDF Report */}
+          {/* Print Whole Page PDF */}
+          <button
+            type="button"
+            onClick={() => window.print()}
+            disabled={!data || data.orders.length === 0}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-xs transition cursor-pointer disabled:opacity-50"
+            title="Print or Save Full Page PDF with all graphs, charts, tables and executive sign-off"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span>{isTa ? 'முழு பக்க PDF அச்சிடு' : 'Print Full Page PDF'}</span>
+          </button>
+
+          {/* Document Preview Modal */}
           <button
             type="button"
             onClick={() => setIsPrintModalOpen(true)}
             disabled={!data || data.orders.length === 0}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-xs transition cursor-pointer disabled:opacity-50"
-            title="Generate official branded printable report with executive sign-off block"
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-xl text-xs shadow-2xs transition cursor-pointer disabled:opacity-50"
+            title="Open Document Sign-Off Preview"
           >
-            <Printer className="w-3.5 h-3.5" />
-            <span>{t.reports.printablePdf}</span>
+            <FileText className="w-3.5 h-3.5 text-sky-700" />
+            <span>{isTa ? 'அறிக்கை மாதிரி' : 'Preview Modal'}</span>
           </button>
 
           <button
@@ -305,7 +359,7 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       {/* 2. Partner & Calendar Week Selection Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 print:hidden">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:flex items-center gap-2.5 w-full md:w-auto">
           <div className="w-full sm:w-56">
             <CustomSelect
@@ -717,6 +771,7 @@ export const ReportsPage: React.FC = () => {
                 <th className="py-2.5 px-3 text-right text-slate-100">{t.reports.quantity}</th>
                 <th className="py-2.5 px-3 text-slate-100">{t.common.exFactory}</th>
                 <th className="py-2.5 px-3 text-slate-100">{t.reports.activeStage}</th>
+                <th className="py-2.5 px-2 text-center text-slate-100">{isTa ? 'முன்னேற்றம்' : 'Progress'}</th>
                 <th className="py-2.5 px-3 text-slate-100">{t.reports.manufacturingUnit}</th>
                 <th className="py-2.5 px-3 text-slate-100">{t.reports.directivesNotes}</th>
               </tr>
@@ -724,7 +779,7 @@ export const ReportsPage: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {(!data || data.orders.length === 0) ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-400">
+                  <td colSpan={8} className="py-8 text-center text-slate-400">
                     {t.reports.noOrdersWeek}
                   </td>
                 </tr>
@@ -748,6 +803,11 @@ export const ReportsPage: React.FC = () => {
                         {new Date(o.exFactoryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
                       <td className="py-2.5 px-3 font-semibold text-sky-900 capitalize">{stageDisplayName}</td>
+                      <td className="py-2.5 px-2 text-center">
+                        <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-sky-50 text-sky-800 border border-sky-200">
+                          {o.progressPercent}%
+                        </span>
+                      </td>
                       <td className="py-2.5 px-3 text-slate-700">{o.unitName}</td>
                       <td className="py-2.5 px-3 text-slate-600 max-w-xs truncate" title={ensureEnglishNote(o.latestNote)}>
                         {ensureEnglishNote(o.confirmedMitigations[0] || o.latestNote)}
@@ -758,6 +818,42 @@ export const ReportsPage: React.FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Executive Review & Sign-Off Block for Print (Rendered at bottom of printable page) */}
+      <div className="hidden print:block pt-6 mt-6 border-t-2 border-slate-900 break-inside-avoid">
+        <div className="text-xs font-bold uppercase tracking-wider text-slate-900 mb-4">
+          Executive Review & Quality Verification Sign-Off
+        </div>
+        <div className="grid grid-cols-3 gap-8 text-xs">
+          <div className="space-y-8">
+            <div className="border-b border-slate-400 pb-1 text-slate-400 italic text-[10px]">
+              Sign & Date
+            </div>
+            <div>
+              <div className="font-bold text-slate-900">Factory General Manager</div>
+              <div className="text-[10px] text-slate-500">Manufacturing Operations</div>
+            </div>
+          </div>
+          <div className="space-y-8">
+            <div className="border-b border-slate-400 pb-1 text-slate-400 italic text-[10px]">
+              Sign & Date
+            </div>
+            <div>
+              <div className="font-bold text-slate-900">Lead Merchandiser</div>
+              <div className="text-[10px] text-slate-500">TNA Planning & Buyer Dispatch</div>
+            </div>
+          </div>
+          <div className="space-y-8">
+            <div className="border-b border-slate-400 pb-1 text-slate-400 italic text-[10px]">
+              Sign & Date
+            </div>
+            <div>
+              <div className="font-bold text-slate-900">Quality Assurance Head</div>
+              <div className="text-[10px] text-slate-500">Sedex SMETA Compliance</div>
+            </div>
+          </div>
         </div>
       </div>
 

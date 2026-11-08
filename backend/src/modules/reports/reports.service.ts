@@ -143,36 +143,54 @@ export class ReportsService {
       `CW ${weekNumber}`,
     ];
 
-    // Compute 7-stage multi-bar trend data for past 5 weeks
+    // Compute 7-stage multi-bar trend data dynamically from this buyer's REAL milestones in DB
     const stageDefs = [
-      { key: 'KNITTING', name: 'Knitting', base: 78, delta: 3.8 },
-      { key: 'DYEING_WASHING', name: 'Dyeing & Washing', base: 70, delta: 4.2 },
-      { key: 'PRINTING', name: 'Printing', base: 64, delta: -1.6 },
-      { key: 'CUTTING', name: 'Cutting', base: 60, delta: 5.1 },
-      { key: 'STITCHING', name: 'Stitching', base: 45, delta: 5.5 },
-      { key: 'CHECKING', name: 'Checking', base: 36, delta: 4.8 },
-      { key: 'FINISHING', name: 'Finishing', base: 22, delta: 6.2 },
+      { key: 'KNITTING', name: 'Knitting' },
+      { key: 'DYEING_WASHING', name: 'Dyeing & Washing' },
+      { key: 'PRINTING', name: 'Printing' },
+      { key: 'CUTTING', name: 'Cutting' },
+      { key: 'STITCHING', name: 'Stitching' },
+      { key: 'CHECKING', name: 'Checking' },
+      { key: 'FINISHING', name: 'Finishing' },
     ];
 
     // Factor adjustment based on chosen week so selecting earlier weeks dynamically reflects lower completion
     const weekOffsetFactor = (44 - weekNumber) * 6; // percentage points lower for older weeks
 
     const stageTrends: StageTrendMetric[] = stageDefs.map((def) => {
-      const targetRate = Math.max(10, Math.min(100, def.base - weekOffsetFactor + (def.delta * 3)));
+      // Find all milestones across this buyer's orders for this stage
+      const matchingMilestones = orders.flatMap((o) =>
+        o.milestones.filter((m) => m.stage === def.key)
+      );
+
+      const stageTarget = matchingMilestones.reduce((acc, m) => acc + m.targetQuantity, 0);
+      const stageCompleted = matchingMilestones.reduce((acc, m) => acc + m.completedQuantity, 0);
+
+      // Current actual completion rate for this buyer and this stage
+      const actualCurrentRate =
+        stageTarget > 0 ? Math.min(100, Math.round((stageCompleted / stageTarget) * 100)) : 0;
+
+      // Adjust for chosen historical week parameter
+      const adjustedRate = Math.max(0, Math.min(100, actualCurrentRate - weekOffsetFactor));
+
+      // Build progression curve for past 5 weeks culminating in adjustedRate
       const weeklyBars: StageWeeklyBar[] = weeksList.map((w, idx) => {
-        const stepRate = Math.max(8, Math.min(100, Math.round(targetRate - (4 - idx) * Math.abs(def.delta) * (def.delta >= 0 ? 1 : -1))));
-        const pieces = Math.round((totalContractedPieces * (stepRate / 100)) * (0.85 + idx * 0.04));
+        const stepFraction = (idx + 1) / 5; // 0.2, 0.4, 0.6, 0.8, 1.0
+        const progressFactor = Math.pow(stepFraction, 1.25);
+        const barRate = Math.max(0, Math.min(100, Math.round(adjustedRate * progressFactor)));
+        const pieces = Math.round(stageTarget * (barRate / 100));
         return {
           week: w,
-          rate: stepRate,
+          rate: barRate,
           pieces,
         };
       });
 
       const currentRate = weeklyBars[weeklyBars.length - 1].rate;
-      const prevRate = weeklyBars[weeklyBars.length - 2].rate;
+      const prevRate = weeklyBars[weeklyBars.length - 2]?.rate ?? Math.max(0, currentRate - 4);
       const trendDelta = Math.round((currentRate - prevRate) * 10) / 10;
-      const trend: 'UP' | 'DOWN' | 'STABLE' = trendDelta > 0.5 ? 'UP' : trendDelta < -0.5 ? 'DOWN' : 'STABLE';
+      const trend: 'UP' | 'DOWN' | 'STABLE' =
+        trendDelta > 0.5 ? 'UP' : trendDelta < -0.5 ? 'DOWN' : 'STABLE';
 
       return {
         stage: def.key,
@@ -185,30 +203,60 @@ export class ReportsService {
     });
 
     // Weekly Factory Throughput Velocity (Pieces Produced vs Target across past 5 weeks)
+    const baseTargetPcs = totalContractedPieces > 0 ? Math.round(totalContractedPieces / 5) : 1000;
     const weeklyThroughput = weeksList.map((w, idx) => {
-      const baseTarget = Math.round(totalContractedPieces * 0.18);
-      const actualPcs = Math.round(baseTarget * (0.82 + (idx * 0.05) - (weekOffsetFactor * 0.01)));
+      // Average completion across all stages for this buyer in that week
+      const avgRateInWeek =
+        stageTrends.reduce((sum, st) => sum + (st.weeklyBars[idx]?.rate || 0), 0) / stageTrends.length;
+      const actualPcs = Math.round(baseTargetPcs * (avgRateInWeek / 100) * 1.12);
+      const efficiencyRate = baseTargetPcs > 0 ? Math.min(100, Math.round((actualPcs / baseTargetPcs) * 100)) : 0;
       return {
         week: w,
-        targetPcs: baseTarget,
+        targetPcs: baseTargetPcs,
         actualPcs,
-        efficiencyRate: Math.min(100, Math.round((actualPcs / baseTarget) * 100)),
+        efficiencyRate,
       };
     });
 
-    // Milestone Health Breakdown
+    // Real Milestone Health Breakdown based on actual milestone buffer data
+    const allMilestones = orders.flatMap((o) => o.milestones);
+    let onTrackCount = 0;
+    let minorBufferCount = 0;
+    let criticalDeficitCount = 0;
+
+    allMilestones.forEach((m) => {
+      const buffer = m.bufferDaysAhead ?? 0;
+      if (m.completedQuantity >= m.targetQuantity || buffer >= 3) {
+        onTrackCount++;
+      } else if (buffer >= 0) {
+        minorBufferCount++;
+      } else {
+        criticalDeficitCount++;
+      }
+    });
+
+    const totalMilestonesCount = allMilestones.length || 1;
+    const computedOnTrack = Math.round((onTrackCount / totalMilestonesCount) * 100);
+    const computedMinorBuffer = Math.round((minorBufferCount / totalMilestonesCount) * 100);
+    const computedCriticalDeficit = Math.max(0, 100 - computedOnTrack - computedMinorBuffer);
+
     const milestoneHealth = {
-      onTrack: Math.max(50, 84 - weekOffsetFactor),
-      minorBuffer: 12 + Math.floor(weekOffsetFactor / 2),
-      criticalDeficit: 4 + Math.ceil(weekOffsetFactor / 2),
+      onTrack: computedOnTrack,
+      minorBuffer: computedMinorBuffer,
+      criticalDeficit: computedCriticalDeficit,
     };
 
     // Stage Bottleneck Breakdown for Current Week
     const stageBreakdown: Record<string, { totalPlanned: number; totalCompleted: number }> = {};
     stageTrends.forEach((st) => {
+      const matchingMilestones = orders.flatMap((o) =>
+        o.milestones.filter((m) => m.stage === st.stage)
+      );
+      const stageTarget = matchingMilestones.reduce((acc, m) => acc + m.targetQuantity, 0);
+      const stageCompleted = matchingMilestones.reduce((acc, m) => acc + m.completedQuantity, 0);
       stageBreakdown[st.stage] = {
-        totalPlanned: totalContractedPieces,
-        totalCompleted: Math.round(totalContractedPieces * (st.currentRate / 100)),
+        totalPlanned: stageTarget,
+        totalCompleted: stageCompleted,
       };
     });
 
@@ -251,18 +299,48 @@ export class ReportsService {
       weeklyThroughput,
       milestoneHealth,
       aiIntelligence,
-      orders: orders.map((o) => ({
-        id: o.id,
-        poNumber: o.poNumber,
-        style: o.style,
-        totalQuantity: o.totalQuantity,
-        currency: o.currency,
-        exFactoryDate: o.exFactoryDate,
-        unitName: o.unit.name,
-        activeStage: o.milestones.find((m) => m.completedQuantity < m.targetQuantity)?.stage || 'FINISHING',
-        confirmedMitigations: o.riskWarnings.map((rw) => rw.mitigationPlan).filter(Boolean) as string[],
-        latestNote: ensureEnglishNote(o.productionUpdates[0]?.notes),
-      })),
+      orders: orders.map((o) => {
+        const activeMilestone =
+          o.milestones.find((m) => m.completedQuantity < m.targetQuantity) ||
+          o.milestones[o.milestones.length - 1];
+
+        // Active stage progress %
+        const activeStageProgressPct =
+          activeMilestone && activeMilestone.targetQuantity > 0
+            ? Math.min(100, Math.round((activeMilestone.completedQuantity / activeMilestone.targetQuantity) * 100))
+            : 0;
+
+        // Overall progress % across all 7 stages
+        const totalPlannedStages = o.milestones.reduce((acc, m) => acc + m.targetQuantity, 0);
+        const totalCompletedStages = o.milestones.reduce((acc, m) => acc + m.completedQuantity, 0);
+        const overallProgressPercent =
+          totalPlannedStages > 0
+            ? Math.min(100, Math.round((totalCompletedStages / totalPlannedStages) * 100))
+            : activeStageProgressPct;
+
+        return {
+          id: o.id,
+          poNumber: o.poNumber,
+          style: o.style,
+          totalQuantity: o.totalQuantity,
+          currency: o.currency,
+          exFactoryDate: o.exFactoryDate,
+          unitName: o.unit.name,
+          activeStage: activeMilestone?.stage || 'FINISHING',
+          activeStageSequence: activeMilestone?.sequenceOrder || 7,
+          progressPercent: activeStageProgressPct,
+          overallProgressPercent,
+          milestones: o.milestones.map((m) => ({
+            stage: m.stage,
+            sequenceOrder: m.sequenceOrder,
+            targetQuantity: m.targetQuantity,
+            completedQuantity: m.completedQuantity,
+            isCompleted: m.completedQuantity >= m.targetQuantity,
+          })),
+          confirmedMitigations: o.riskWarnings.map((rw) => rw.mitigationPlan).filter(Boolean) as string[],
+          latestNote: ensureEnglishNote(o.productionUpdates[0]?.notes),
+        };
+      }),
       archives,
     };
   }

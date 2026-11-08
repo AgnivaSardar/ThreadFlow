@@ -167,7 +167,7 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
           <div className="flex items-start justify-between border-b-2 border-slate-900 pb-3">
             <div>
               <div className="text-xl font-black tracking-tight text-slate-950 uppercase">
-                Company A Manufacturing Units
+                ThreadFlow Manufacturing Units
               </div>
               <div className="text-xs text-slate-600 mt-0.5">
                 Cotton Knitwear Export Hub • Tiruppur 641602, Tamil Nadu, India
@@ -359,35 +359,107 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Delivery Schedule Health Breakdown */}
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2 flex flex-col justify-between">
-              <div className="font-bold text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-1">
-                <PieChart className="w-3.5 h-3.5 text-emerald-700" />
-                Delivery Schedule Health Status
+            {/* Delivery Schedule Health & Weekly Factory Throughput Velocity */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Throughput Velocity */}
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+                <div className="font-bold text-slate-800 uppercase tracking-wider text-[11px] flex items-center justify-between">
+                  <span>Factory Throughput Velocity</span>
+                  <span className="font-mono text-[10px] text-sky-700 font-bold">{totalContractedPcs.toLocaleString()} pcs</span>
+                </div>
+                <div className="space-y-1.5 pt-1">
+                  {weeklyThroughput.map((wt) => (
+                    <div key={wt.week} className="space-y-0.5">
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="font-mono font-bold text-slate-700">{wt.week}</span>
+                        <span className="font-mono text-slate-600">
+                          {wt.actualPcs.toLocaleString()} / {wt.targetPcs.toLocaleString()} ({wt.efficiencyRate}%)
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${
+                            wt.efficiencyRate >= 90 ? 'bg-emerald-500' : wt.efficiencyRate >= 70 ? 'bg-sky-600' : 'bg-amber-500'
+                          }`}
+                          style={{ width: `${Math.min(100, wt.efficiencyRate)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 text-center my-auto">
-                <div className="p-2 rounded-lg bg-emerald-100/60 border border-emerald-200">
-                  <div className="text-[10px] font-bold text-emerald-900">On Track</div>
-                  <div className="text-base font-black font-mono text-emerald-800">{onTrackPct}%</div>
-                  <div className="text-[9px] text-emerald-700">Clean Extra</div>
+              {/* Delivery Schedule Health Breakdown with SVG Donut Chart */}
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2 flex flex-col justify-between">
+                <div className="font-bold text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-1">
+                  <PieChart className="w-3.5 h-3.5 text-emerald-700" />
+                  Delivery Schedule Health Status
                 </div>
 
-                <div className="p-2 rounded-lg bg-amber-100/60 border border-amber-200">
-                  <div className="text-[10px] font-bold text-amber-900">Minor Extra</div>
-                  <div className="text-base font-black font-mono text-amber-800">{minorBufferPct}%</div>
-                  <div className="text-[9px] text-amber-700">&lt; 3d Extra</div>
+                <div className="flex items-center justify-around my-auto py-1">
+                  {/* Compact SVG Donut Chart */}
+                  {(() => {
+                    const cx = 50;
+                    const cy = 50;
+                    const rOuter = 40;
+                    const rInner = 24;
+                    const total = onTrackPct + minorBufferPct + criticalDeficitPct || 100;
+                    const a1 = (onTrackPct / total) * 360;
+                    const a2 = a1 + (minorBufferPct / total) * 360;
+                    const a3 = 360;
+
+                    const polarToCartesian = (angleDeg: number, r: number) => {
+                      const rad = ((angleDeg - 90) * Math.PI) / 180.0;
+                      return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+                    };
+
+                    const makeArc = (startDeg: number, endDeg: number) => {
+                      const sweep = Math.min(endDeg - startDeg, 359.99);
+                      if (sweep <= 0.5) return '';
+                      const actualEnd = startDeg + sweep;
+                      const p1 = polarToCartesian(startDeg, rOuter);
+                      const p2 = polarToCartesian(actualEnd, rOuter);
+                      const p3 = polarToCartesian(actualEnd, rInner);
+                      const p4 = polarToCartesian(startDeg, rInner);
+                      const largeArc = sweep > 180 ? 1 : 0;
+                      return `M ${p1.x} ${p1.y} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${rInner} ${rInner} 0 ${largeArc} 0 ${p4.x} ${p4.y} Z`;
+                    };
+
+                    return (
+                      <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
+                        <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                          <path d={makeArc(0, a1)} fill="#10B981" stroke="#FFFFFF" strokeWidth="2" />
+                          <path d={makeArc(a1, a2)} fill="#F59E0B" stroke="#FFFFFF" strokeWidth="2" />
+                          <path d={makeArc(a2, a3)} fill="#F43F5E" stroke="#FFFFFF" strokeWidth="2" />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                          <span className="text-[11px] font-black font-mono text-slate-900">{onTrackPct}%</span>
+                          <span className="text-[7px] text-slate-500 font-bold uppercase">On Track</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Pills */}
+                  <div className="space-y-1.5 text-[10px]">
+                    <div className="px-2 py-1 rounded-md bg-emerald-100/70 text-emerald-900 font-bold flex items-center justify-between gap-2">
+                      <span>On Track:</span>
+                      <span className="font-mono">{onTrackPct}%</span>
+                    </div>
+                    <div className="px-2 py-1 rounded-md bg-amber-100/70 text-amber-900 font-bold flex items-center justify-between gap-2">
+                      <span>Minor Extra:</span>
+                      <span className="font-mono">{minorBufferPct}%</span>
+                    </div>
+                    <div className="px-2 py-1 rounded-md bg-rose-100/70 text-rose-900 font-bold flex items-center justify-between gap-2">
+                      <span>Critical:</span>
+                      <span className="font-mono">{criticalDeficitPct}%</span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="p-2 rounded-lg bg-rose-100/60 border border-rose-200">
-                  <div className="text-[10px] font-bold text-rose-900">Critical</div>
-                  <div className="text-base font-black font-mono text-rose-800">{criticalDeficitPct}%</div>
-                  <div className="text-[9px] text-rose-700">Intervention</div>
+                <div className="text-[9px] text-slate-500 text-center border-t border-slate-200 pt-1">
+                  Factory Weighted Pace: {confidenceScore}% confidence to hit ship window.
                 </div>
-              </div>
-
-              <div className="text-[10px] text-slate-500 text-center border-t border-slate-200 pt-1">
-                Factory Weighted Pace: {confidenceScore}% confidence to hit ship window.
               </div>
             </div>
           </div>
