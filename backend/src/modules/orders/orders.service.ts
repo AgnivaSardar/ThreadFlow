@@ -4,7 +4,7 @@ import { AppError } from '../../common/errors/AppError';
 import { calculateAuditHash } from '../../common/utils/crypto';
 import { AuthenticatedUser } from '../../common/types/express';
 import { CreateOrderInput, OrderQueryFilters, AdvanceStageInput } from './orders.schema';
-import { calculateWorkingDaysExcludingSundays } from '../risk/risk.engine';
+import { calculateWorkingDaysExcludingSundays, evaluateProductionRisk } from '../risk/risk.engine';
 import { getSystemToday } from '../../common/utils/dates';
 
 export interface StageLeadTimeConfig {
@@ -601,6 +601,11 @@ export class OrdersService {
           orderBy: { createdAt: 'desc' },
           take: 1,
         },
+        productionUpdates: {
+          select: { id: true, milestoneId: true, goodQuantity: true, clientEventAt: true },
+          orderBy: { clientEventAt: 'desc' },
+          take: 50,
+        },
       },
       orderBy: { exFactoryDate: 'asc' },
     });
@@ -650,25 +655,49 @@ export class OrdersService {
         workingDaysLeft = 0;
       }
 
-      // Health status based on final finishing milestone completion, risk warnings, or buffer compression
-      const latestWarning = order.riskWarnings[0];
+      // Authoritative deterministic risk evaluation synchronized with Risk & Delays page
+      const relevantLogs = order.productionUpdates
+        .filter((u) => u.milestoneId === activeMilestone?.id)
+        .map((u) => ({ date: u.clientEventAt, quantity: u.goodQuantity }));
+
+      const logsToUse =
+        relevantLogs.length > 0
+          ? relevantLogs
+          : order.productionUpdates.map((u) => ({
+              date: u.clientEventAt,
+              quantity: u.goodQuantity,
+            }));
+
+      const evaluation = evaluateProductionRisk({
+        orderId: order.id,
+        milestoneId: activeMilestone?.id || '',
+        stage: activeMilestone?.stage || Stage.FINISHING,
+        targetQuantity: activeMilestone?.targetQuantity || order.totalQuantity,
+        completedQuantity: activeMilestone?.completedQuantity || 0,
+        exFactoryDate: order.exFactoryDate,
+        plannedStageStart: activeMilestone?.plannedStart || order.orderDate,
+        plannedStageEnd: activeMilestone?.plannedEnd || order.exFactoryDate,
+        dailyLogs: logsToUse,
+        simulatedToday: ANCHOR_DATE,
+        fobPricePerPiece: order.fobPricePerPiece || undefined,
+        exchangeRate: order.exchangeRate || (order.currency === 'INR' ? 1.0 : 85.0),
+        currency: order.currency,
+      });
+
       const finalMilestone =
         order.milestones.find((m) => m.stage === 'FINISHING') ||
         order.milestones[order.milestones.length - 1];
       const isCompleted = Boolean(
-        finalMilestone && finalMilestone.completedQuantity >= finalMilestone.targetQuantity
+        order.status === 'COMPLETED' ||
+        evaluation.isCompleted ||
+        (finalMilestone && finalMilestone.completedQuantity >= finalMilestone.targetQuantity)
       );
 
-      let healthStatus: 'GREEN' | 'AMBER' | 'RED' | 'COMPLETED' = 'GREEN';
-      if (isCompleted) {
-        healthStatus = 'COMPLETED';
-      } else if (latestWarning) {
-        healthStatus = latestWarning.riskLevel as any;
-      } else if (bufferCompressionDays >= 3 || (workingDaysLeft <= 5 && overallCompletionPct < 80)) {
-        healthStatus = 'RED';
-      } else if (bufferCompressionDays > 0 || (workingDaysLeft <= 10 && overallCompletionPct < 50)) {
-        healthStatus = 'AMBER';
-      }
+      const latestWarning = order.riskWarnings[0] || null;
+
+      const healthStatus: 'GREEN' | 'AMBER' | 'RED' | 'COMPLETED' = isCompleted
+        ? 'COMPLETED'
+        : evaluation.riskLevel;
 
       return {
         id: order.id,
@@ -839,15 +868,7 @@ export class OrdersService {
 
     const shipWeek = getIsoWeekNumber(order.exFactoryDate);
     const latestRisk = order.riskWarnings[0] || null;
-
-    let healthStatus: 'GREEN' | 'AMBER' | 'RED' = 'GREEN';
-    if (latestRisk) {
-      healthStatus = latestRisk.riskLevel;
-    } else if (workingDaysLeft <= 5 && masterRate < 80) {
-      healthStatus = 'RED';
-    } else if (workingDaysLeft <= 10 && masterRate < 50) {
-      healthStatus = 'AMBER';
-    }
+    const todayAnchor = getSystemToday();
 
     const activeMilestone =
       order.milestones.find((m) => m.completedQuantity < m.targetQuantity) ||
@@ -856,6 +877,36 @@ export class OrdersService {
     const activeStageProgressPct = activeMilestone && activeMilestone.targetQuantity > 0
       ? Math.min(100, Math.round((activeMilestone.completedQuantity / activeMilestone.targetQuantity) * 100))
       : 0;
+
+    const relevantLogs = order.productionUpdates
+      .filter((u) => u.milestoneId === activeMilestone?.id)
+      .map((u) => ({ date: u.clientEventAt, quantity: u.goodQuantity }));
+
+    const logsToUse =
+      relevantLogs.length > 0
+        ? relevantLogs
+        : order.productionUpdates.map((u) => ({
+            date: u.clientEventAt,
+            quantity: u.goodQuantity,
+          }));
+
+    const evaluation = evaluateProductionRisk({
+      orderId: order.id,
+      milestoneId: activeMilestone?.id || '',
+      stage: activeMilestone?.stage || Stage.FINISHING,
+      targetQuantity: activeMilestone?.targetQuantity || order.totalQuantity,
+      completedQuantity: activeMilestone?.completedQuantity || 0,
+      exFactoryDate: order.exFactoryDate,
+      plannedStageStart: activeMilestone?.plannedStart || order.orderDate,
+      plannedStageEnd: activeMilestone?.plannedEnd || order.exFactoryDate,
+      dailyLogs: logsToUse,
+      simulatedToday: todayAnchor,
+      fobPricePerPiece: order.fobPricePerPiece || undefined,
+      exchangeRate: order.exchangeRate || (order.currency === 'INR' ? 1.0 : 85.0),
+      currency: order.currency,
+    });
+
+    const healthStatus: 'GREEN' | 'AMBER' | 'RED' = evaluation.riskLevel;
 
     // Critical Path & Buffer Compression Analysis
     let criticalPathAlert: {
