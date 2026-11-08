@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, LogOut, ChevronDown, Building2, Phone, Settings, Shield } from 'lucide-react';
+import { User, LogOut, ChevronDown, Building2, Phone, Settings, Shield, UserPlus, ClipboardList } from 'lucide-react';
 import { useAuthStore } from '../features/auth/authStore';
 import { useNavigate } from 'react-router-dom';
 import { ProfileModal } from './ProfileModal';
 import { ContactsModal } from './ContactsModal';
+import { AddMemberModal } from './AddMemberModal';
+import { AssignSupervisorModal } from './AssignSupervisorModal';
 import {
   Language,
   translateRole,
@@ -16,6 +18,8 @@ export const UserMenuDropdown: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isContactsModalOpen, setIsContactsModalOpen] = useState(false);
+  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
+  const [isAssignSupervisorModalOpen, setIsAssignSupervisorModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [lang, setLang] = useState<Language>(
     (localStorage.getItem('threadflow_lang') as Language) ||
@@ -99,6 +103,36 @@ export const UserMenuDropdown: React.FC = () => {
 
           {/* Menu Items */}
           <div className="py-1 text-xs">
+            {/* Admin: Add Member */}
+            {user.role === 'ADMIN' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsAddMemberModalOpen(true);
+                }}
+                className="w-full px-4 py-2 text-left flex items-center gap-2.5 hover:bg-sky-50 text-sky-900 hover:text-sky-950 font-semibold transition"
+              >
+                <UserPlus className="w-4 h-4 text-sky-600" />
+                <span>{lang === 'ta' ? 'புதிய உறுப்பினரைச் சேர்க்க (Add Member)' : 'Add New Member'}</span>
+              </button>
+            )}
+
+            {/* Admin & Merchandiser: Assign Floor Work to Supervisor */}
+            {(user.role === 'ADMIN' || user.role === 'MERCHANDISER') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsAssignSupervisorModalOpen(true);
+                }}
+                className="w-full px-4 py-2 text-left flex items-center gap-2.5 hover:bg-amber-50 text-amber-900 hover:text-amber-950 font-semibold transition"
+              >
+                <ClipboardList className="w-4 h-4 text-amber-600" />
+                <span>{lang === 'ta' ? 'மேற்பார்வையாளர் தளப் பணி ஒதுக்கீடு' : 'Assign Supervisor Floor Work'}</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => {
@@ -141,6 +175,14 @@ export const UserMenuDropdown: React.FC = () => {
       {/* Modals */}
       <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
       <ContactsModal isOpen={isContactsModalOpen} onClose={() => setIsContactsModalOpen(false)} />
+      <AddMemberModal
+        isOpen={isAddMemberModalOpen}
+        onClose={() => setIsAddMemberModalOpen(false)}
+      />
+      <AssignSupervisorModal
+        isOpen={isAssignSupervisorModalOpen}
+        onClose={() => setIsAssignSupervisorModalOpen(false)}
+      />
     </div>
   );
 };
