@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   ChevronRight,
   ClipboardList,
+  User,
 } from 'lucide-react';
 import { apiRequest } from '../services/api';
 import { useLanguage } from '../hooks/useLanguage';
@@ -70,6 +71,7 @@ export const AssignSupervisorModal: React.FC<AssignSupervisorModalProps> = ({
   const [activeOrdersByUnit, setActiveOrdersByUnit] = useState<Record<string, any[]>>({});
 
   const [selectedSupervisorId, setSelectedSupervisorId] = useState<string>('');
+  const [selectorMode, setSelectorMode] = useState<'dropdown' | 'grid'>('dropdown');
   const [targetUnitId, setTargetUnitId] = useState<string>('');
   const [shiftName, setShiftName] = useState<string>('Day Shift (08:00 AM - 04:30 PM)');
   const [notingFrequency, setNotingFrequency] = useState<string>('Hourly Line Tally (Every 1 hour)');
@@ -195,7 +197,10 @@ export const AssignSupervisorModal: React.FC<AssignSupervisorModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[92vh] mx-auto animate-in zoom-in-95 duration-150">
+      <div
+        style={{ colorScheme: 'light' }}
+        className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[92vh] mx-auto text-slate-900 animate-in zoom-in-95 duration-150"
+      >
         {/* Header */}
         <div className="bg-[#0C2D48] text-white p-5 flex items-center justify-between border-b border-[#143D60]">
           <div className="flex items-center gap-3">
@@ -250,44 +255,128 @@ export const AssignSupervisorModal: React.FC<AssignSupervisorModalProps> = ({
             </div>
           ) : (
             <>
-              {/* Supervisor Selector */}
+              {/* Supervisor Selector (Dropdown + Cards Grid Option) */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
-                  <span>{isTa ? 'மேற்பார்வையாளரைத் தேர்வு செய்க *' : 'Select Supervisor to Assign *'}</span>
-                  <span className="text-[10px] font-medium text-slate-500">
-                    {supervisors.length} {isTa ? 'மேற்பார்வையாளர்கள் உள்ளனர்' : 'Supervisors Onboarded'}
-                  </span>
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {supervisors.map((s) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => handleSupervisorSelect(s.id)}
-                      className={`p-3 rounded-2xl border text-left transition cursor-pointer flex items-start gap-2.5 ${
-                        selectedSupervisorId === s.id
-                          ? 'border-sky-600 bg-sky-50/70 ring-2 ring-sky-500/20'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="w-8 h-8 rounded-full bg-[#0C2D48] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
-                        {s.name.charAt(0)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-xs font-bold text-slate-900 truncate">{s.name}</div>
-                        <div className="text-[11px] text-slate-500 truncate">{s.email}</div>
-                        <div className="mt-1 flex items-center gap-1.5 text-[10px]">
-                          <span className="px-1.5 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">
-                            {s.assignedUnit?.code || 'UNASSIGNED'}
-                          </span>
-                          <span className="text-slate-400 font-mono">
-                            {s.floorOrders.length} {isTa ? 'ஆர்டர்கள்' : 'active POs'}
-                          </span>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <User className="w-4 h-4 text-sky-600" />
+                    <span>{isTa ? 'மேற்பார்வையாளரைத் தேர்வு செய்க *' : 'Select Supervisor to Assign *'}</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-slate-500">
+                      {supervisors.length} {isTa ? 'மேற்பார்வையாளர்கள்' : 'Supervisors'}
+                    </span>
+                    <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-[10px]">
+                      <button
+                        type="button"
+                        onClick={() => setSelectorMode('dropdown')}
+                        className={`px-2 py-0.5 rounded-md font-semibold transition cursor-pointer ${
+                          selectorMode === 'dropdown'
+                            ? 'bg-white text-sky-900 shadow-2xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        {isTa ? 'டிராப்டவுன்' : 'Dropdown'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectorMode('grid')}
+                        className={`px-2 py-0.5 rounded-md font-semibold transition cursor-pointer ${
+                          selectorMode === 'grid'
+                            ? 'bg-white text-sky-900 shadow-2xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        {isTa ? 'கார்டுகள்' : 'Cards'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dropdown Selector */}
+                {selectorMode === 'dropdown' ? (
+                  <div className="space-y-2.5">
+                    <div className="relative">
+                      <select
+                        value={selectedSupervisorId}
+                        onChange={(e) => handleSupervisorSelect(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+                      >
+                        <option value="" disabled>
+                          {isTa ? '-- மேற்பார்வையாளரைத் தேர்ந்தெடுக்கவும் --' : '-- Choose Supervisor from Dropdown --'}
+                        </option>
+                        {supervisors.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name} ({s.email}) — Current Floor: {s.assignedUnit ? `${s.assignedUnit.name} (${s.assignedUnit.code})` : 'Unassigned'} • {s.floorOrders.length} POs
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Compact Card of Active Selection */}
+                    {selectedSupervisor && (
+                      <div className="p-3 rounded-2xl border border-sky-300/80 bg-sky-50/70 flex items-center justify-between">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-full bg-[#0C2D48] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                            {selectedSupervisor.name.charAt(0)}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                              <span>{selectedSupervisor.name}</span>
+                              <span className="px-1.5 py-0.2 rounded bg-sky-200/70 text-sky-900 text-[10px] font-semibold">
+                                {selectedSupervisor.role}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-600 truncate">{selectedSupervisor.email}</div>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            {isTa ? 'தற்போதைய தளம்' : 'Current Floor'}
+                          </div>
+                          <div className="text-xs font-extrabold text-sky-950 flex items-center justify-end gap-1 mt-0.5">
+                            <span>{selectedSupervisor.assignedUnit?.name || 'Unassigned'}</span>
+                            <span className="px-1.5 py-0.2 rounded bg-white border border-slate-200 text-[10px] text-slate-700 font-mono">
+                              {selectedSupervisor.floorOrders.length} {isTa ? 'ஆர்டர்கள்' : 'POs'}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </button>
-                  ))}
-                </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Cards Grid Selector */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+                    {supervisors.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => handleSupervisorSelect(s.id)}
+                        className={`p-3 rounded-2xl border text-left transition cursor-pointer flex items-start gap-2.5 ${
+                          selectedSupervisorId === s.id
+                            ? 'border-sky-600 bg-sky-50/70 ring-2 ring-sky-500/20'
+                            : 'border-slate-200 bg-white hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-[#0C2D48] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                          {s.name.charAt(0)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-bold text-slate-900 truncate">{s.name}</div>
+                          <div className="text-[11px] text-slate-500 truncate">{s.email}</div>
+                          <div className="mt-1 flex items-center gap-1.5 text-[10px]">
+                            <span className="px-1.5 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">
+                              {s.assignedUnit?.code || 'UNASSIGNED'}
+                            </span>
+                            <span className="text-slate-400 font-mono">
+                              {s.floorOrders.length} {isTa ? 'ஆர்டர்கள்' : 'active POs'}
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Floor Work Assignment (Target Unit) */}
@@ -301,7 +390,7 @@ export const AssignSupervisorModal: React.FC<AssignSupervisorModalProps> = ({
                 <select
                   value={targetUnitId}
                   onChange={(e) => setTargetUnitId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
                 >
                   {units.map((u) => (
                     <option key={u.id} value={u.id}>
@@ -379,7 +468,7 @@ export const AssignSupervisorModal: React.FC<AssignSupervisorModalProps> = ({
                   <select
                     value={shiftName}
                     onChange={(e) => setShiftName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
                   >
                     <option value="Day Shift (08:00 AM - 04:30 PM)">Day Shift (08:00 AM - 04:30 PM)</option>
                     <option value="Evening Shift (04:30 PM - 01:00 AM)">Evening Shift (04:30 PM - 01:00 AM)</option>
@@ -396,7 +485,7 @@ export const AssignSupervisorModal: React.FC<AssignSupervisorModalProps> = ({
                   <select
                     value={notingFrequency}
                     onChange={(e) => setNotingFrequency(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
                   >
                     <option value="Hourly Line Tally (Every 1 hour)">Hourly Line Tally (Every 1 hour)</option>
                     <option value="Bi-Hourly Output Audit (Every 2 hours)">Bi-Hourly Output Audit (Every 2 hours)</option>
@@ -414,7 +503,7 @@ export const AssignSupervisorModal: React.FC<AssignSupervisorModalProps> = ({
                     value={assignedLines}
                     onChange={(e) => setAssignedLines(e.target.value)}
                     placeholder="e.g. Line 1, Line 2, Checking Tables"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
                   />
                 </div>
 
@@ -429,7 +518,7 @@ export const AssignSupervisorModal: React.FC<AssignSupervisorModalProps> = ({
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+91 98422 30003"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
                   />
                 </div>
               </div>

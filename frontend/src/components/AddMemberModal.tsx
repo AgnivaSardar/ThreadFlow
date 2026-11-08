@@ -170,7 +170,10 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] mx-auto animate-in zoom-in-95 duration-150">
+      <div
+        style={{ colorScheme: 'light' }}
+        className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] mx-auto text-slate-900 animate-in zoom-in-95 duration-150"
+      >
         {/* Header */}
         <div className="bg-[#0C2D48] text-white p-5 flex items-center justify-between border-b border-[#143D60]">
           <div className="flex items-center gap-3">
@@ -224,7 +227,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={isTa ? 'எ.கா: சுந்தரம் ஆர்.' : 'e.g. Kavitha Sundaram'}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500"
             />
           </div>
 
@@ -281,7 +284,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
                     ? 'sourcing@brand.co.uk'
                     : 'first.name@threadflow.com'
                 }
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500"
               />
             </div>
           </div>
@@ -298,7 +301,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+91 98422 12345"
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500"
               />
             </div>
           </div>
@@ -416,7 +419,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
                 type="text"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 bg-slate-50"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 bg-slate-50 text-slate-900 placeholder:text-slate-400 font-medium"
               />
             </div>
           </div>

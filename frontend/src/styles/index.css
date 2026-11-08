@@ -128,7 +128,37 @@ table thead th,
   font-weight: 700 !important;
 }
 
-/* Table alternating row distinction across the entire project */
+/* Universal Form Field Color & Contrast Enforcement */
+input,
+select,
+textarea {
+  color: #0F172A !important;
+  -webkit-text-fill-color: #0F172A !important;
+  color-scheme: light !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94A3B8 !important;
+  -webkit-text-fill-color: #94A3B8 !important;
+  opacity: 1 !important;
+}
+
+/* Chrome/Edge Autofill Override to Prevent White/Inverted Text */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: #0F172A !important;
+  -webkit-box-shadow: 0 0 0px 1000px #FFFFFF inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 table tbody tr:nth-child(even) {
   background-color: #F8FAFC;
 }
