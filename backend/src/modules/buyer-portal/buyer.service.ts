@@ -4,6 +4,7 @@ import { AppError } from '../../common/errors/AppError';
 import { calculateAuditHash } from '../../common/utils/crypto';
 import { AuthenticatedUser } from '../../common/types/express';
 import { getSystemToday } from '../../common/utils/dates';
+import { enforceStagePredecessorCeilings } from '../../common/utils/milestones';
 
 export class BuyerPortalService {
   /**
@@ -116,6 +117,9 @@ export class BuyerPortalService {
     });
 
     return orders.map((order) => {
+      // Enforce physical manufacturing constraint: downstream stage cannot exceed upstream stage output
+      order.milestones = enforceStagePredecessorCeilings(order.milestones, order.totalQuantity);
+
       // Aggregate approved photos across all production updates
       const approvedPhotos = order.productionUpdates.flatMap((pu) =>
         pu.photos.map((photo) => ({
@@ -123,8 +127,8 @@ export class BuyerPortalService {
           s3Url: photo.s3Url,
           stage: photo.stage,
           timestamp: photo.createdAt,
-          shift: pu.shift || 'DAY',
-          machineLine: pu.machineLine || 'Line 1',
+          shift: pu.shift || '-',
+          machineLine: pu.machineLine || '-',
         }))
       );
 
@@ -152,13 +156,13 @@ export class BuyerPortalService {
         ? {
             id: latestUpdate.id,
             stage: latestUpdate.stage,
-            shift: latestUpdate.shift || 'DAY',
-            machineLine: latestUpdate.machineLine || 'Line 1',
+            shift: latestUpdate.shift || '-',
+            machineLine: latestUpdate.machineLine || '-',
             goodQuantity: latestUpdate.goodQuantity,
             rejectedQuantity: latestUpdate.rejectedQuantity,
             notes: englishNotes,
             timestamp: latestUpdate.clientEventAt || latestUpdate.createdAt,
-            supervisorName: latestUpdate.supervisor?.name || 'Floor Supervisor',
+            supervisorName: latestUpdate.supervisor?.name || 'Supervisor',
             photosCount: latestUpdate.photos.length,
           }
         : null;
@@ -207,7 +211,7 @@ export class BuyerPortalService {
         orderDate: order.orderDate,
         exFactoryDate: order.exFactoryDate,
         daysToExFactory,
-        activeStage: activeMilestone?.stage || 'FINISHING',
+        activeStage: activeMilestone?.stage || order.milestones[0]?.stage || 'KNITTING',
         progressPercent,
         completedStages,
         totalStages,
@@ -229,7 +233,7 @@ export class BuyerPortalService {
         })),
         confirmedAlerts: order.riskWarnings.map((rw) => ({
           id: rw.id,
-          stage: order.milestones.find((m) => m.id === rw.milestoneId)?.stage || 'CUTTING',
+          stage: order.milestones.find((m) => m.id === rw.milestoneId)?.stage || activeMilestone?.stage || 'KNITTING',
           riskLevel: rw.riskLevel,
           mitigationPlan: rw.mitigationPlan,
           reviewedAt: rw.reviewedAt || rw.createdAt,
@@ -310,6 +314,9 @@ export class BuyerPortalService {
       throw new AppError('Forbidden: Order does not belong to your organization', 403);
     }
 
+    // Enforce physical manufacturing constraint: downstream stage cannot exceed upstream stage output
+    order.milestones = enforceStagePredecessorCeilings(order.milestones, order.totalQuantity);
+
     // Aggregate approved photos
     const approvedPhotos = order.productionUpdates.flatMap((pu) =>
       pu.photos.map((photo) => ({
@@ -317,8 +324,8 @@ export class BuyerPortalService {
         s3Url: photo.s3Url,
         stage: photo.stage,
         timestamp: photo.createdAt,
-        shift: pu.shift || 'DAY',
-        machineLine: pu.machineLine || 'Line 1',
+        shift: pu.shift || '-',
+        machineLine: pu.machineLine || '-',
       }))
     );
 
@@ -345,13 +352,13 @@ export class BuyerPortalService {
       ? {
           id: latestUpdate.id,
           stage: latestUpdate.stage,
-          shift: latestUpdate.shift || 'DAY',
-          machineLine: latestUpdate.machineLine || 'Line 1',
+          shift: latestUpdate.shift || '-',
+          machineLine: latestUpdate.machineLine || '-',
           goodQuantity: latestUpdate.goodQuantity,
           rejectedQuantity: latestUpdate.rejectedQuantity,
           notes: englishNotes,
           timestamp: latestUpdate.clientEventAt || latestUpdate.createdAt,
-          supervisorName: latestUpdate.supervisor?.name || 'Floor Supervisor',
+          supervisorName: latestUpdate.supervisor?.name || 'Supervisor',
           photosCount: latestUpdate.photos.length,
         }
       : null;
@@ -396,7 +403,7 @@ export class BuyerPortalService {
       orderDate: order.orderDate,
       exFactoryDate: order.exFactoryDate,
       daysToExFactory,
-      activeStage: activeMilestone?.stage || 'FINISHING',
+      activeStage: activeMilestone?.stage || order.milestones[0]?.stage || 'KNITTING',
       progressPercent,
       completedStages,
       totalStages,
@@ -425,7 +432,7 @@ export class BuyerPortalService {
       })),
       confirmedAlerts: order.riskWarnings.map((rw) => ({
         id: rw.id,
-        stage: order.milestones.find((m) => m.id === rw.milestoneId)?.stage || 'CUTTING',
+        stage: order.milestones.find((m) => m.id === rw.milestoneId)?.stage || activeMilestone?.stage || 'KNITTING',
         riskLevel: rw.riskLevel,
         mitigationPlan: rw.mitigationPlan,
         reviewedAt: rw.reviewedAt || rw.createdAt,

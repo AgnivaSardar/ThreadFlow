@@ -21,6 +21,7 @@ import {
 interface CircularTnaPipelineProps {
   milestones: TnaMilestone[];
   currentStage?: Stage;
+  totalOrderQuantity?: number;
 }
 
 const STAGE_METADATA: Record<
@@ -74,9 +75,10 @@ const STAGE_METADATA: Record<
 export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
   milestones,
   currentStage,
+  totalOrderQuantity,
 }) => {
   const { lang, isTa, t } = useLanguage();
-  const sanitized = enforceStagePredecessorCeilings(milestones);
+  const sanitized = enforceStagePredecessorCeilings(milestones, totalOrderQuantity);
   const sorted = [...sanitized].sort((a, b) => a.sequenceOrder - b.sequenceOrder);
 
   const getDepartment = (stage: Stage) => {

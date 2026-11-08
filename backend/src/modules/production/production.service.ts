@@ -78,7 +78,7 @@ export class ProductionService {
       }
       if (!unitId) {
         const defaultUnit = await prisma.unit.findFirst({
-          where: { code: 'UNIT_1' },
+          orderBy: { createdAt: 'asc' },
         });
         unitId = defaultUnit?.id || null;
       }

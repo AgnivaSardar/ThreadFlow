@@ -16,6 +16,7 @@ import {
 interface TnaTimelineProps {
   milestones: TnaMilestone[];
   currentStage?: Stage;
+  totalOrderQuantity?: number;
 }
 
 const STAGE_METADATA: Record<
@@ -66,8 +67,12 @@ const STAGE_METADATA: Record<
   },
 };
 
-export const TnaTimeline: React.FC<TnaTimelineProps> = ({ milestones, currentStage }) => {
-  const sanitized = enforceStagePredecessorCeilings(milestones);
+export const TnaTimeline: React.FC<TnaTimelineProps> = ({
+  milestones,
+  currentStage,
+  totalOrderQuantity,
+}) => {
+  const sanitized = enforceStagePredecessorCeilings(milestones, totalOrderQuantity);
   const sorted = [...sanitized].sort((a, b) => a.sequenceOrder - b.sequenceOrder);
 
   const formatDate = (dateStr: string) => {

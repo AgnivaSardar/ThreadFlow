@@ -215,7 +215,7 @@ export class ReportsService {
     // AI Sourcing Intelligence Analysis (Gemini dynamic generation with storage/caching)
     const aiIntelligence = await ReportsService.getOrGenerateAIIntelligence(
       buyer.name,
-      buyer.country || 'Europe',
+      buyer.country || '-',
       selectedWeek,
       stageTrends,
       milestoneHealth,

@@ -82,17 +82,18 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
     // - Then the POs which the supervisor has been assigned: daily shift production form filling of that day
     if (role === 'SUPERVISOR') {
       const userEmail = (user?.email || '').toLowerCase();
+      const assignedUnitCode = user?.assignedUnit?.code || '';
       const assignedUnitName = user?.assignedUnit?.name || '';
 
-      let unitCode = 'UNIT_1';
-      let unitTitle = isTa ? 'யூனிட் 1 (காட்டன் ஹப் - சொந்த)' : 'Unit 1 (Cotton Hub - Own)';
+      let unitCode = assignedUnitCode || 'UNIT_1';
+      let unitTitle = assignedUnitName || (isTa ? 'யூனிட் 1 (காட்டன் ஹப் - சொந்த)' : 'Unit 1 (Cotton Hub - Own)');
 
-      if (userEmail.includes('selvam') || userEmail.includes('manickam') || assignedUnitName.includes('Unit 2')) {
+      if (assignedUnitCode === 'UNIT_2' || userEmail.includes('selvam') || userEmail.includes('manickam') || assignedUnitName.includes('Unit 2')) {
         unitCode = 'UNIT_2';
-        unitTitle = isTa ? 'யூனிட் 2 (தையல் மையம் - சொந்த)' : 'Unit 2 (Stitching Hub - Own)';
-      } else if (userEmail.includes('murugan') || assignedUnitName.includes('Unit 3')) {
+        unitTitle = assignedUnitName || (isTa ? 'யூனிட் 2 (தையல் மையம் - சொந்த)' : 'Unit 2 (Stitching Hub - Own)');
+      } else if (assignedUnitCode === 'UNIT_3' || userEmail.includes('murugan') || assignedUnitName.includes('Unit 3')) {
         unitCode = 'UNIT_3';
-        unitTitle = isTa ? 'யூனிட் 3 (ஸ்பெஷாலிட்டி & ஏற்றுமதி)' : 'Unit 3 (Specialty & Export - Own)';
+        unitTitle = assignedUnitName || (isTa ? 'யூனிட் 3 (ஸ்பெஷாலிட்டி & ஏற்றுமதி)' : 'Unit 3 (Specialty & Export - Own)');
       }
 
       const tasksList: WorkTask[] = [];

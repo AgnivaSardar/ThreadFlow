@@ -220,7 +220,7 @@ export const OrdersPage: React.FC = () => {
       `"${o.style.replace(/"/g, '""')}"`,
       `"${o.buyer.name}"`,
       `"${o.buyer.code}"`,
-      `"${o.buyer.country || 'Europe'}"`,
+      `"${o.buyer.country || '-'}"`,
       `"${o.unit.name}"`,
       o.totalQuantity,
       o.shipWeek,
@@ -250,7 +250,7 @@ export const OrdersPage: React.FC = () => {
     ...buyers.map((b) => ({
       value: b.id,
       label: `${b.name} (${b.code})`,
-      badge: b.country || 'Europe',
+      badge: b.country || '-',
     })),
   ];
 
@@ -563,7 +563,7 @@ export const OrdersPage: React.FC = () => {
                         </div>
                         <div className="text-[11px] text-slate-500 flex items-center gap-1">
                           <Building2 className="w-3 h-3 text-slate-400" />
-                          {order.buyer.country || 'Europe'}
+                          {order.buyer.country || '-'}
                         </div>
                       </td>
 

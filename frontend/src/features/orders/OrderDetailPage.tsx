@@ -567,7 +567,11 @@ export const OrderDetailPage: React.FC = () => {
       )}
 
       {/* 7-Stage Circular Radial Donut Pipeline */}
-      <CircularTnaPipeline milestones={order.milestones} currentStage={order.activeStage} />
+      <CircularTnaPipeline
+        milestones={order.milestones}
+        currentStage={order.activeStage}
+        totalOrderQuantity={order.totalQuantity}
+      />
 
       {/* Feature 10: Human-in-the-Loop Review Gate Section (Single Card Pagination) */}
       {orderAlerts.length > 0 && (

@@ -395,11 +395,7 @@ export const MyWorkPage: React.FC = () => {
                 value={selectedUnitFilter}
                 options={[
                   { value: 'ALL', label: lang === 'ta' ? 'அனைத்து பிரிவுகள்' : 'All Manufacturing Units' },
-                  ...(workData?.allUnits || [
-                    { id: 'unit-1', name: 'Unit 1 (Cotton Hub - Own)', code: 'UNIT_1', type: 'OWN' },
-                    { id: 'unit-2', name: 'Unit 2 (Stitching Hub - Own)', code: 'UNIT_2', type: 'OWN' },
-                    { id: 'sub-1', name: 'Subcontract - PrintTex', code: 'PRINTTEX', type: 'SUBCONTRACTOR' },
-                  ]).map((u: any) => ({
+                  ...(workData?.allUnits || []).map((u: any) => ({
                     value: u.id,
                     label: translateUnit(u.name, lang),
                     badge: u.type === 'SUBCONTRACTOR' ? 'Subcontract' : 'In-House',

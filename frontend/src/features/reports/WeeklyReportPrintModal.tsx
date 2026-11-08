@@ -199,7 +199,7 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
             <div>
               <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Foreign Buyer</div>
               <div className="font-bold text-slate-900 mt-0.5 text-sm">{buyer.name}</div>
-              <div className="text-slate-500 text-[11px]">{buyer.country || 'Europe'}</div>
+              <div className="text-slate-500 text-[11px]">{buyer.country || '-'}</div>
             </div>
 
             <div>

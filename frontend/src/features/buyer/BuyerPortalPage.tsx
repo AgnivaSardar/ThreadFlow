@@ -384,14 +384,14 @@ export const BuyerPortalPage: React.FC = () => {
         <div>
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              {profile?.name || 'Company B (UK)'}
+              {profile?.name || 'Buyer Portal'}
             </h1>
           </div>
 
           <div className="flex items-center gap-2 mt-1.5 flex-wrap text-sm font-semibold text-slate-600">
             <span className="flex items-center gap-1.5 text-sky-800 bg-sky-50 px-2.5 py-0.5 rounded-lg border border-sky-100">
               <MapPin className="w-4 h-4 text-sky-600" />
-              <span className="font-bold">{profile?.country || 'United Kingdom'}</span>
+              <span className="font-bold">{profile?.country || '-'}</span>
             </span>
             <span className="text-slate-300">•</span>
             <span className="text-xs font-medium text-slate-500">
@@ -524,7 +524,7 @@ export const BuyerPortalPage: React.FC = () => {
                       </span>
                       <span className="text-white/40">•</span>
                       <span className="font-semibold text-sky-200">
-                        {t.buyer.productionHub} {order.unit?.name || 'Unit 1 (Cotton Hub)'}
+                        {t.buyer.productionHub} {order.unit?.name || '-'}
                       </span>
                       {order.currency && (
                         <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-white/15 text-sky-200 border border-white/20">
