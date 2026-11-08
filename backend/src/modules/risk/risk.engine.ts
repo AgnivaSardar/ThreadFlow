@@ -174,8 +174,12 @@ export function calculate3DayWeightedRate(
 
     const rollingDays: Date[] = [];
     while (rollingDays.length < 3) {
-      if (scan.getDay() !== 0) {
-        // Exclude Sundays
+      const isSunday = scan.getDay() === 0;
+      const key = toDateKey(scan);
+      const hasLogs = (qtyByDate[key] || 0) > 0;
+
+      // Include day if it's a regular weekday, or if it's a Sunday with actual shift production logged
+      if (!isSunday || hasLogs) {
         rollingDays.push(new Date(scan));
       }
       scan.setDate(scan.getDate() - 1);
