@@ -11,6 +11,21 @@ export class ApiError extends Error {
 let currentAccessToken: string | null = null;
 let refreshPromise: Promise<string | null> | null = null;
 
+// Fast In-Memory Cache for Static / Semi-Static Metadata (e.g. master-data)
+const apiCache = new Map<string, { data: any; expiry: number }>();
+
+export const clearApiCache = (endpointPrefix?: string) => {
+  if (!endpointPrefix) {
+    apiCache.clear();
+    return;
+  }
+  for (const key of apiCache.keys()) {
+    if (key.includes(endpointPrefix)) {
+      apiCache.delete(key);
+    }
+  }
+};
+
 export const setApiAccessToken = (token: string | null) => {
   currentAccessToken = token;
 };
@@ -22,6 +37,15 @@ export async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  const isGet = !options.method || options.method.toUpperCase() === 'GET';
+
+  // Instant cache hit for master-data (cache TTL: 3 minutes)
+  if (isGet && endpoint.includes('/orders/master-data')) {
+    const cached = apiCache.get(url);
+    if (cached && cached.expiry > Date.now()) {
+      return cached.data as T;
+    }
+  }
 
   const headers = new Headers(options.headers || {});
   headers.set('Content-Type', 'application/json');
@@ -78,6 +102,9 @@ export async function apiRequest<T>(
       if (!retryRes.ok) {
         throw new ApiError(retryData.message || `Request failed (${retryRes.status})`, retryRes.status);
       }
+      if (isGet && endpoint.includes('/orders/master-data')) {
+        apiCache.set(url, { data: retryData, expiry: Date.now() + 180000 });
+      }
       return retryData as T;
     }
 
@@ -95,6 +122,10 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     throw new ApiError(data.message || `Request failed with status ${response.status}`, response.status);
+  }
+
+  if (isGet && endpoint.includes('/orders/master-data')) {
+    apiCache.set(url, { data, expiry: Date.now() + 180000 });
   }
 
   return data as T;

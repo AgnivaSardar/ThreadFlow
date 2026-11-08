@@ -516,27 +516,42 @@ export class RiskService {
       ],
     });
 
-    // For each warning, attach latest relevant production update with raw Tamil voice/text and AI triage
-    const alerts = await Promise.all(
-      warnings.map(async (w) => {
-        const update = await prisma.productionUpdate.findFirst({
-          where: {
-            orderId: w.orderId,
-            milestoneId: w.milestoneId,
-          },
-          orderBy: { clientEventAt: 'desc' },
-          include: {
-            supervisor: { select: { id: true, name: true } },
-            issueClassification: true,
-          },
-        });
+    // Efficient batch query for latest production updates and reviewers (eliminating N+1 roundtrips)
+    const orderIds = Array.from(new Set(warnings.map((w) => w.orderId)));
+    const reviewerIds = Array.from(new Set(warnings.map((w) => w.reviewedById).filter(Boolean) as string[]));
 
-        const reviewer = w.reviewedById
-          ? await prisma.user.findUnique({
-              where: { id: w.reviewedById },
-              select: { id: true, name: true, email: true },
-            })
-          : null;
+    const [recentUpdates, reviewers] = await Promise.all([
+      orderIds.length > 0
+        ? prisma.productionUpdate.findMany({
+            where: { orderId: { in: orderIds } },
+            orderBy: { clientEventAt: 'desc' },
+            include: {
+              supervisor: { select: { id: true, name: true } },
+              issueClassification: true,
+            },
+            take: 150,
+          })
+        : [],
+      reviewerIds.length > 0
+        ? prisma.user.findMany({
+            where: { id: { in: reviewerIds } },
+            select: { id: true, name: true, email: true },
+          })
+        : [],
+    ]);
+
+    const reviewerMap = new Map(reviewers.map((r) => [r.id, r]));
+    const updateMap = new Map<string, typeof recentUpdates[0]>();
+    for (const u of recentUpdates) {
+      const key = `${u.orderId}_${u.milestoneId}`;
+      if (!updateMap.has(key)) {
+        updateMap.set(key, u);
+      }
+    }
+
+    const alerts = warnings.map((w) => {
+      const update = updateMap.get(`${w.orderId}_${w.milestoneId}`) || null;
+      const reviewer = w.reviewedById ? reviewerMap.get(w.reviewedById) || null : null;
 
         return {
           id: w.id,
@@ -591,8 +606,7 @@ export class RiskService {
               }
             : null,
         };
-      })
-    );
+      });
 
     // Compute Executive Financial Summary
     const allActiveWarnings = await prisma.riskWarning.findMany({
