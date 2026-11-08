@@ -28,16 +28,23 @@ This document serves as the authoritative operational manual for reviewers and t
 
 | Role | Name | Login Email | Password | Unit / Scope |
 | :--- | :--- | :--- | :--- | :--- |
-| **Merchandiser** | Ramesh Merchandiser | `merchandiser@threadflow.com` | `ThreadFlow@2026` | Factory-Wide (All Units) |
+| **System Administrator** | System Administrator | `admin@threadflow.com` | `ThreadFlow@2026` | System Administration |
+| **Operations Admin** | Tiruppur Operations Admin | `admin.tiruppur@threadflow.com` | `ThreadFlow@2026` | Tiruppur Facility Operations |
+| **Senior Merchandiser** | Ramesh Merchandiser | `merchandiser@threadflow.com` | `ThreadFlow@2026` | Factory-Wide Merchandising (All Units) |
+| **Merchandiser** | Priya Sundaram | `priya.merchandiser@threadflow.com` | `ThreadFlow@2026` | Export Merchandising |
+| **Merchandiser** | Karthik Rajan | `karthik.merchandiser@threadflow.com` | `ThreadFlow@2026` | Export Merchandising |
 | **Supervisor (Unit 1)** | Muthu Floor Supervisor | `supervisor.muthu@threadflow.com` | `ThreadFlow@2026` | Unit 1 (Cotton Hub - 5 POs) |
 | **Supervisor (Unit 1 Co-Lead)** | Kumaravel Shift In-Charge | `supervisor.kumar@threadflow.com` | `ThreadFlow@2026` | Unit 1 (Cotton Hub - 5 POs) |
 | **Supervisor (Unit 2)** | Selvam Floor Supervisor | `supervisor.selvam@threadflow.com` | `ThreadFlow@2026` | Unit 2 (Stitching Hub - 4 POs) |
 | **Supervisor (Unit 2 Co-Lead)** | Manickam Floor Supervisor | `supervisor.manickam@threadflow.com` | `ThreadFlow@2026` | Unit 2 (Stitching Hub - 4 POs) |
-| **Supervisor (Unit 3)** | Murugan Floor Supervisor | `supervisor.murugan@threadflow.com` | `ThreadFlow@2026` | Unit 3 (Specialty - 1 PO) |
-| **Buyer (UK)** | Sarah Jenkins | `buyer@company-b.co.uk` | `ThreadFlow@2026` | Company B Only |
-| **Buyer (Germany)** | Klaus Mueller | `compliance@company-c.de` | `ThreadFlow@2026` | Company C Only |
-| **Managing Director / Admin** | Agniva Sardar / Ops Admin | `agniva.sardar@gmail.com` | `ThreadFlow@2026` | Factory Administration |
-| **System Administrator** | System Administrator | `admin@threadflow.com` | `ThreadFlow@2026` | System Administration |
+| **Supervisor (Unit 3)** | Murugan Floor Supervisor | `supervisor.murugan@threadflow.com` | `ThreadFlow@2026` | Unit 3 (Specialty & Export - 1 PO) |
+| **Supervisor (PrintTex)** | Palanisamy PrintTex Supervisor | `supervisor.printtex@threadflow.com` | `ThreadFlow@2026` | Subcontract - PrintTex |
+| **Supervisor (WashTex)** | Kandasamy WashTex Supervisor | `supervisor.washtex@threadflow.com` | `ThreadFlow@2026` | Subcontract - WashTex |
+| **Buyer (UK - Company B)** | Sarah Jenkins | `buyer@company-b.co.uk` | `ThreadFlow@2026` | Company B Only |
+| **Buyer (Germany - Company C)** | Klaus Mueller | `compliance@company-c.de` | `ThreadFlow@2026` | Company C Only |
+| **Buyer (Spain - Zara/Inditex)** | Laura Gomez | `laura.inditex@inditex.com` | `ThreadFlow@2026` | Zara / Inditex Only |
+| **Buyer (UK - Marks & Spencer)** | David Ross | `sourcing@marksandspencer.co.uk` | `ThreadFlow@2026` | Marks & Spencer Only |
+| **Buyer (UK - Next Retail)** | Emma Watson | `knitwear@next.co.uk` | `ThreadFlow@2026` | Next Retail Only |
 
 ### Key Workflows to Test by Role
 

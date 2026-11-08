@@ -7,6 +7,7 @@ import { aiRoutes } from '../modules/ai/ai.routes';
 import { buyerPortalRoutes } from '../modules/buyer-portal/buyer.routes';
 import { auditRoutes } from '../modules/audit/audit.routes';
 import { reportsRoutes } from '../modules/reports/reports.routes';
+import { usersRoutes } from '../modules/users/users.routes';
 
 const router = Router();
 
@@ -18,6 +19,7 @@ router.use('/ai', aiRoutes);
 router.use('/buyer-portal', buyerPortalRoutes);
 router.use('/audit', auditRoutes);
 router.use('/reports', reportsRoutes);
+router.use('/users', usersRoutes);
 
 // Health check endpoint
 router.get('/health', (_req, res) => {
