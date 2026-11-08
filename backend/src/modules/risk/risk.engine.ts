@@ -307,15 +307,11 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
 
   const projectedCompletionDate = addWorkingDaysExcludingSundays(simulatedToday, workingDaysNeeded);
 
-  // Days late: only late if working days needed exceeds effective days available to ship with buffers intact
+  // Days late: strictly measures overrun beyond effective working days available to protect downstream buffer & ship window
   let daysLate = 0;
   if (remainingPieces > 0) {
     if (workingDaysNeeded > effectiveWorkingDays) {
       daysLate = workingDaysNeeded - effectiveWorkingDays;
-      if (projectedCompletionDate > plannedStageEnd) {
-        const stageEndLate = calculateWorkingDaysExcludingSundays(plannedStageEnd, projectedCompletionDate);
-        daysLate = Math.max(daysLate, stageEndLate);
-      }
     } else {
       // Pace is on track to protect all downstream buffers: exactly 0 days late
       daysLate = 0;
@@ -404,10 +400,10 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
       result: varianceQtyPerDay,
     },
     daysLateMath: {
-      formula: 'Days Late = Projected Completion Date - Planned Stage End Date (Excl. Sundays)',
+      formula: 'Days Late = Math.max(0, Working Days Needed - Effective Working Days Available)',
       substituted: isCompleted
         ? '0 days (Completed on Schedule)'
-        : `${projectedCompletionDate.toISOString().split('T')[0]} - ${plannedStageEnd.toISOString().split('T')[0]} = ${daysLate} days`,
+        : `${workingDaysNeeded}d needed − ${effectiveWorkingDays}d available = ${daysLate} days`,
       result: daysLate,
     },
     workingDaysTotal: workingDaysToShip,

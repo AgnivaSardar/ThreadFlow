@@ -23,6 +23,7 @@ async function runProductionTestSuite() {
     }
   }
 
+  let dedicatedTestOrder: any = null;
   try {
     // Setup Mock Supervisor User (Muthu assigned to Unit 1)
     const unit1 = await prisma.unit.findFirst({ where: { code: 'UNIT_1' } });
@@ -121,16 +122,62 @@ async function runProductionTestSuite() {
     }
 
     // -------------------------------------------------------------
-    // Test Group 3: 3% Cutting Allowance Tolerance Ceiling Check
+    // Setup Dedicated Isolated Test Order (Prevents polluting live buyer orders)
     // -------------------------------------------------------------
-    console.log('\n[Test Group 3] Cutting Allowance Tolerance Ceiling (PO Qty * 1.03)');
+    const testBuyer = await prisma.buyer.findFirst();
+    if (!testBuyer) throw new Error('No buyer available for isolated test');
 
-    const targetOrder = await prisma.order.findUnique({
-      where: { id: firstOrder.orderId },
-      include: { milestones: { orderBy: { sequenceOrder: 'asc' } } },
+    dedicatedTestOrder = await prisma.order.create({
+      data: {
+        poNumber: `TEST-ISOLATED-${Date.now()}`,
+        style: 'Automated Test Polo',
+        description: 'Isolated test order for production updates',
+        totalQuantity: 5000,
+        currency: 'GBP',
+        exchangeRate: 105,
+        fobPricePerPiece: 12,
+        totalOrderValue: 6300000,
+        orderDate: new Date('2026-10-01'),
+        exFactoryDate: new Date('2026-12-01'),
+        unitId: unit1.id,
+        buyerId: testBuyer.id,
+        status: 'ACTIVE',
+        orderLines: {
+          create: [
+            { size: 'M', color: 'White', plannedQty: 2500, completedQty: 0 },
+            { size: 'L', color: 'White', plannedQty: 2500, completedQty: 0 },
+          ],
+        },
+        milestones: {
+          create: [
+            {
+              stage: Stage.KNITTING,
+              sequenceOrder: 1,
+              plannedStart: new Date('2026-10-01'),
+              plannedEnd: new Date('2026-10-10'),
+              targetQuantity: 5000,
+              completedQuantity: 1000,
+              bufferDaysAhead: 18,
+            },
+            {
+              stage: Stage.DYEING_WASHING,
+              sequenceOrder: 2,
+              plannedStart: new Date('2026-10-11'),
+              plannedEnd: new Date('2026-10-18'),
+              targetQuantity: 5000,
+              completedQuantity: 500,
+              bufferDaysAhead: 14,
+            },
+          ],
+        },
+      },
+      include: {
+        milestones: { orderBy: { sequenceOrder: 'asc' } },
+        orderLines: true,
+      },
     });
-    if (!targetOrder) throw new Error('Target order not found');
 
+    const targetOrder = dedicatedTestOrder;
     const firstMilestone = targetOrder.milestones[0];
     const ceilingExceedingQty = Math.round(targetOrder.totalQuantity * 1.10); // 10% overage
     let ceilingBlocked = false;
@@ -163,30 +210,9 @@ async function runProductionTestSuite() {
     // -------------------------------------------------------------
     console.log('\n[Test Group 4] Valid Shift Production Update Logging');
 
-    const headroomOrder = await prisma.order.findFirst({
-      where: {
-        totalQuantity: { gte: 5000 },
-        milestones: { some: { sequenceOrder: 1, completedQuantity: { lt: 5000 } } },
-      },
-      include: { milestones: { orderBy: { sequenceOrder: 'asc' } } },
-    });
-    const orderForLogging = headroomOrder || targetOrder;
+    const orderForLogging = dedicatedTestOrder;
     const testMilestone = orderForLogging.milestones[0];
-    const originalMilestoneQty =
-      orderForLogging.poNumber === 'B-PO-88260' ? 5000 : testMilestone.completedQuantity;
-
-    // Ensure milestone has headroom for incremental test updates (+50, +10)
-    if (testMilestone.completedQuantity >= testMilestone.targetQuantity - 200) {
-      await prisma.tnaMilestone.update({
-        where: { id: testMilestone.id },
-        data: { completedQuantity: Math.max(0, testMilestone.targetQuantity - 1000) },
-      });
-    }
-
-    // Clean prior test audit events for testMilestone to verify unbroken fresh chain
-    await prisma.auditEvent.deleteMany({
-      where: { entityId: testMilestone.id },
-    });
+    const originalMilestoneQty = testMilestone.completedQuantity;
 
     const testIdempotencyKey = randomUUID();
     const qtyToLog = 50;
@@ -313,10 +339,7 @@ async function runProductionTestSuite() {
     // -------------------------------------------------------------
     console.log('\n[Test Group 7] Per-Size Breakdown Reconciliation');
 
-    const orderWithLines = await prisma.order.findFirst({
-      where: { unitId: unit1.id, orderLines: { some: {} } },
-      include: { orderLines: true, milestones: { orderBy: { sequenceOrder: 'asc' } } },
-    });
+    const orderWithLines = dedicatedTestOrder;
 
     if (orderWithLines && orderWithLines.orderLines.length > 0) {
       const line1 = orderWithLines.orderLines[0];
@@ -443,13 +466,32 @@ async function runProductionTestSuite() {
     process.exit(1);
   } finally {
     try {
-      if (testMilestone) {
-        await prisma.tnaMilestone.update({
-          where: { id: testMilestone.id },
-          data: { completedQuantity: originalMilestoneQty },
+      if (dedicatedTestOrder) {
+        await prisma.issueClassification.deleteMany({
+          where: { productionUpdate: { orderId: dedicatedTestOrder.id } },
+        });
+        await prisma.productionUpdateLine.deleteMany({
+          where: { productionUpdate: { orderId: dedicatedTestOrder.id } },
+        });
+        await prisma.auditEvent.deleteMany({
+          where: { orderId: dedicatedTestOrder.id },
+        });
+        await prisma.productionUpdate.deleteMany({
+          where: { orderId: dedicatedTestOrder.id },
+        });
+        await prisma.tnaMilestone.deleteMany({
+          where: { orderId: dedicatedTestOrder.id },
+        });
+        await prisma.orderLine.deleteMany({
+          where: { orderId: dedicatedTestOrder.id },
+        });
+        await prisma.order.delete({
+          where: { id: dedicatedTestOrder.id },
         });
       }
-    } catch {}
+    } catch (cleanupErr) {
+      console.warn('Isolated test order cleanup warning:', cleanupErr);
+    }
     await prisma.$disconnect();
   }
 }

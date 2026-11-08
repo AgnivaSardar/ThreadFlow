@@ -32,15 +32,16 @@ export function enforceStagePredecessorCeilings<
       };
     }
 
-    // Downstream stage: absolute maximum is the predecessor stage's completed quantity
+    // Downstream stage: absolute maximum completed is capped by the predecessor stage's completed quantity.
+    // Note: targetQuantity must NEVER be reduced to stageCeiling because targetQuantity represents
+    // the contractual order volume (e.g. 8,000 pcs). Reducing targetQuantity would distort milestone percentages.
     const stageCeiling = previousStageCompleted;
     if (stageCeiling > 0) {
-      const effectiveTarget = Math.min(ms.targetQuantity, stageCeiling);
       const effectiveCompleted = Math.min(ms.completedQuantity, stageCeiling);
       previousStageCompleted = effectiveCompleted;
       return {
         ...ms,
-        targetQuantity: effectiveTarget,
+        targetQuantity: ms.targetQuantity,
         completedQuantity: effectiveCompleted,
       };
     } else {
@@ -48,6 +49,7 @@ export function enforceStagePredecessorCeilings<
       previousStageCompleted = 0;
       return {
         ...ms,
+        targetQuantity: ms.targetQuantity,
         completedQuantity: 0,
       };
     }
