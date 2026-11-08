@@ -29,7 +29,7 @@ const DEFAULT_NOTIFICATIONS: AppNotification[] = [
   {
     id: 'notif-1',
     title: 'Line 1 Target Updated',
-    message: 'Knitting quota for B-PO-88213 is set to 500 pcs today. Buffer remaining: 2 days.',
+    message: 'Knitting quota for B-PO-88213 is set to 500 pcs today. Extra remaining: 2 days.',
     timestamp: '10 mins ago',
     type: 'info',
     read: false,
@@ -50,7 +50,7 @@ const DEFAULT_NOTIFICATIONS: AppNotification[] = [
   {
     id: 'notif-3',
     title: 'Buyer Feedback Received',
-    message: 'Sarah Jenkins (Company B UK) approved revised shipment buffer for B-PO-88213.',
+    message: 'Sarah Jenkins (Company B UK) approved revised shipment extra margin for B-PO-88213.',
     timestamp: '1 hour ago',
     type: 'info',
     read: false,
@@ -59,8 +59,8 @@ const DEFAULT_NOTIFICATIONS: AppNotification[] = [
   },
   {
     id: 'notif-4',
-    title: 'Critical Buffer Alert',
-    message: 'B-PO-88260 Mercerized Cotton Tee consumed 1.5 days buffer in Knitting stage.',
+    title: 'Critical Extra Margin Alert',
+    message: 'B-PO-88260 Mercerized Cotton Tee consumed 1.5 days extra in Knitting stage.',
     timestamp: '3 hours ago',
     type: 'alert',
     read: false,

@@ -850,7 +850,7 @@ export class RiskService {
     if (daysLate > 0) {
       draftText = `During operations in the ${stageName} stage, ${cleanIssue.toLowerCase()} Our factory management has mobilized auxiliary line capacity and scheduled a 1.5-hour evening shift extension to recover the pace. We anticipate catching up within 48 hours and preserving the scheduled delivery date.`;
     } else {
-      draftText = `A brief technical pause occurred in ${stageName} (${cleanIssue.toLowerCase()}). Our downstream buffer absorbs this adjustment with zero impact to the promised ex-factory shipment schedule.`;
+      draftText = `A brief technical pause occurred in ${stageName} (${cleanIssue.toLowerCase()}). Our downstream extra margin absorbs this adjustment with zero impact to the promised ex-factory shipment schedule.`;
     }
 
     return { draftText };

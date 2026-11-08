@@ -80,7 +80,7 @@ export class AssistantService {
           : topRisk?.riskLevel === 'RED'
           ? 'Critical Deficit (RED)'
           : topRisk?.riskLevel === 'AMBER'
-          ? 'Buffer Caution (AMBER)'
+          ? 'Extra Caution (AMBER)'
           : 'On Track (GREEN)';
 
         return `• PO ${o.poNumber} ("${o.style}", ${o.totalQuantity.toLocaleString()} pcs, Buyer: ${
@@ -98,7 +98,7 @@ export class AssistantService {
 THREADFLOW PAGES & CAPABILITIES:
 1. "Export Order Board" (/orders):
    - Overview of all foreign buyer orders across the 7 sequential TNA stages (Knitting, Dyeing/Washing, Printing, Cutting, Stitching, Checking, Finishing).
-   - Filter by Buyer, Production Unit, TNA Stage, and Health Status (Critical Deficit, Buffer Caution, On Track, Completed).
+   - Filter by Buyer, Production Unit, TNA Stage, and Health Status (Critical Deficit, Extra Caution, On Track, Completed).
    - Pagination controls, bulk ex-factory date shifting, and standup memo generation.
    - Interactive Run-Rate Simulator: Test "What-If" output run-rates, evaluate overtime ROI, and calculate air freight conversion liabilities.
 2. "Floor Production Work" (/supervisor/my-work):

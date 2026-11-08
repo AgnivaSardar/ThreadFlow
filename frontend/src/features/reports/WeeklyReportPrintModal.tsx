@@ -223,7 +223,7 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
               <div className="font-bold text-[#0C2D48] mt-0.5 font-mono text-sm">
                 {confidenceScore}% On-Time
               </div>
-              <div className="text-slate-500 text-[11px]">{onTrackPct}% Clean Buffer</div>
+              <div className="text-slate-500 text-[11px]">{onTrackPct}% Clean Extra</div>
             </div>
           </div>
 
@@ -370,13 +370,13 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
                 <div className="p-2 rounded-lg bg-emerald-100/60 border border-emerald-200">
                   <div className="text-[10px] font-bold text-emerald-900">On Track</div>
                   <div className="text-base font-black font-mono text-emerald-800">{onTrackPct}%</div>
-                  <div className="text-[9px] text-emerald-700">Clean Buffer</div>
+                  <div className="text-[9px] text-emerald-700">Clean Extra</div>
                 </div>
 
                 <div className="p-2 rounded-lg bg-amber-100/60 border border-amber-200">
-                  <div className="text-[10px] font-bold text-amber-900">Minor Buffer</div>
+                  <div className="text-[10px] font-bold text-amber-900">Minor Extra</div>
                   <div className="text-base font-black font-mono text-amber-800">{minorBufferPct}%</div>
-                  <div className="text-[9px] text-amber-700">&lt; 3d Buffer</div>
+                  <div className="text-[9px] text-amber-700">&lt; 3d Extra</div>
                 </div>
 
                 <div className="p-2 rounded-lg bg-rose-100/60 border border-rose-200">

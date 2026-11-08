@@ -285,7 +285,7 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
             <p className="text-[11px] text-slate-500 mb-2">
               {lang === 'ta'
                 ? 'இந்த உற்பத்திப் பிரச்சனையை சர்வதேச வாங்குபவருக்குத் தெரிவிக்க வேண்டுமா அல்லது ஆலையிலேயே தீர்க்க முடியுமா என்பதை முடிவு செய்யுங்கள்.'
-                : 'Decide whether this operational problem requires international buyer notification or can be resolved internally within factory buffers.'}
+                : 'Decide whether this operational problem requires international buyer notification or can be resolved internally within factory extra margins.'}
             </p>
 
             {/* Resolved state: Confirmed */}
@@ -326,7 +326,7 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
                 <div className="text-[10px] text-slate-400 text-right">
                   {lang === 'ta'
                     ? 'வாங்குபவர் போர்ட்டலில் இருந்து மறைக்கப்பட்டது • ஆலைக்குள் கையாளப்பட்டது'
-                    : 'Hidden from buyer portal • Managed within factory line buffers'}
+                    : 'Hidden from buyer portal • Managed within factory line extra margins'}
                 </div>
               </div>
             )}
@@ -444,13 +444,13 @@ export const RiskReviewCard: React.FC<RiskReviewCardProps> = ({
                   onClick={() =>
                     setResolutionReason(
                       lang === 'ta'
-                        ? 'தாங்கல் நேரம் தாமதத்தை ஈடுசெய்கிறது.'
-                        : 'Buffer absorbs delay with zero delivery impact.'
+                        ? 'கூடுதல் நேரம் தாமதத்தை ஈடுசெய்கிறது.'
+                        : 'Extra margin absorbs delay with zero delivery impact.'
                     )
                   }
                   className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-200 cursor-pointer"
                 >
-                  {lang === 'ta' ? 'தாங்கல் நேரம் ஈடுசெய்கிறது' : 'Buffer absorbs delay'}
+                  {lang === 'ta' ? 'கூடுதல் நேரம் ஈடுசெய்கிறது' : 'Extra margin absorbs delay'}
                 </button>
                 <button
                   type="button"

@@ -720,8 +720,8 @@ export class OrdersService {
         workingDaysLeft,
         buyer: order.buyer,
         unit: order.unit,
-        activeStage: activeMilestone?.stage || 'FINISHING',
-        activeStageSequence: activeMilestone?.sequenceOrder || 7,
+        activeStage: activeMilestone?.stage || (order.milestones[0]?.stage ?? 'KNITTING'),
+        activeStageSequence: activeMilestone?.sequenceOrder || (order.milestones[0]?.sequenceOrder ?? 1),
         activeStageProgressPct: activeMilestone && activeMilestone.targetQuantity > 0
           ? Math.min(100, Math.round((activeMilestone.completedQuantity / activeMilestone.targetQuantity) * 100))
           : 0,
@@ -988,8 +988,8 @@ export class OrdersService {
       workingDaysLeft,
       healthStatus,
       riskEvaluation: evaluation,
-      activeStage: activeMilestone?.stage || 'FINISHING',
-      activeStageSequence: activeMilestone?.sequenceOrder || 7,
+      activeStage: activeMilestone?.stage || (order.milestones[0]?.stage ?? 'KNITTING'),
+      activeStageSequence: activeMilestone?.sequenceOrder || (order.milestones[0]?.sequenceOrder ?? 1),
       activeStageProgressPct,
       activeMilestoneCompleted: activeMilestone?.completedQuantity || 0,
       activeMilestoneTarget: activeMilestone?.targetQuantity || order.totalQuantity,

@@ -335,7 +335,7 @@ Respond with a strictly valid JSON object matching this schema:
                 const parsed = JSON.parse(textOutput);
                 const result: WeeklyAIIntelligence = {
                   headline: parsed.headline || `${buyerName} Throughput Pacing at Optimal Efficiency for ${week}`,
-                  executiveSummary: parsed.executiveSummary || `Factory throughput has maintained strong momentum across Tiruppur units with cutting and stitching stages demonstrating steady week-over-week gains. Delivery schedules remain well within contracted shipping buffers.`,
+                  executiveSummary: parsed.executiveSummary || `Factory throughput has maintained strong momentum across Tiruppur units with cutting and stitching stages demonstrating steady week-over-week gains. Delivery schedules remain well within contracted shipping extra margins.`,
                   riskLevel: parsed.riskLevel || 'LOW',
                   confidenceScore: Number(parsed.confidenceScore) || 94,
                   keyStrengths: Array.isArray(parsed.keyStrengths) ? parsed.keyStrengths : ['Stitching throughput running above target pace', 'Knitting yarn inventory fully secured'],
@@ -372,7 +372,7 @@ Respond with a strictly valid JSON object matching this schema:
       ],
       keyBottlenecks: [
         `${lowestGainer.displayName} pace recorded ${lowestGainer.trendDelta}% delta requiring proactive floor balancing`,
-        `Ex-factory delivery buffers tighten towards packaging cut-offs`,
+        `Ex-factory delivery extra margins tighten towards packaging cut-offs`,
       ],
       aiRecommendation: `Reallocate 4 experienced operators to ${lowestGainer.displayName} during Day Shift to balance pipeline progression before next weekly export cycle.`,
       generatedAt: new Date().toISOString(),

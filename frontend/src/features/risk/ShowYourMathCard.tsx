@@ -206,7 +206,7 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
   };
 
   const piecesInDeficit = Math.max(0, mathBreakdown.remainingPieces - (actualRollingRate * effWorkingDays));
-  const estOvertimeCost = Math.round(Math.max(4500, piecesInDeficit * 10));
+  const estOvertimeCost = piecesInDeficit > 0 ? Math.round(piecesInDeficit * 10) : 0;
   const netRoi = Math.max(0, financialExposureRupees - estOvertimeCost);
 
   // Air freight conversion liability: ~0.30 kg/pc, ₹450/kg international air cargo freight vs ocean vessel

@@ -339,7 +339,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
             : 'Check If All Lines Are Going Okay & On Track',
           description: isTa
             ? 'உற்பத்தி வேகம், 3-நாள் சராசரி மற்றும் பஃபர் நாட்களை ஆய்வு செய்து அனைத்து ஏற்றுமதி ஆர்டர்களும் சரியான நேரத்தில் முடியும் என்பதை உறுதிப்படுத்தவும்.'
-            : 'Audit "Show-Your-Math" run-rates, rolling 3-day weighted velocity, and downstream buffer days to ensure all export orders will meet ex-factory shipping targets.',
+            : 'Audit "Show-Your-Math" run-rates, rolling 3-day weighted velocity, and downstream extra days to ensure all export orders will meet ex-factory shipping targets.',
           unit: isTa ? 'ஆபத்து & வேகம் மதிப்பாய்வு' : 'Risk & Throughput Engine',
           buyerOrPo: isTa ? 'முக்கிய வழித்தட கண்காணிப்பு' : 'Critical Path Run-Rate',
           completed: false,

@@ -158,7 +158,7 @@ export const TnaTimeline: React.FC<TnaTimelineProps> = ({
                     {ms.isCriticalPathBottleneck && (ms.bufferCompressionDays || 0) > 0 ? (
                       <span
                         className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200 flex items-center gap-1"
-                        title={`Extra compressed by ${ms.bufferCompressionDays} working days`}
+                        title={`Downstream extra margin reduced by ${ms.bufferCompressionDays} working days`}
                       >
                         -{ms.bufferCompressionDays}d extra
                       </span>

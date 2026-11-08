@@ -660,7 +660,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
                 )}
                 <span>
                   {finalBufferDays >= 0
-                    ? `Production finishes on ${stageRows[6]?.plannedEnd} with ${finalBufferDays} working days buffer before Ex-Factory.`
+                    ? `Production finishes on ${stageRows[6]?.plannedEnd} with ${finalBufferDays} working days extra before Ex-Factory.`
                     : `Schedule overrun: Finishing completes on ${stageRows[6]?.plannedEnd}, exceeding Ex-Factory by ${Math.abs(
                         finalBufferDays
                       )} working days.`}

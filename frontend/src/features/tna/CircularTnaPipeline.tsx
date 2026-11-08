@@ -121,7 +121,7 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
   };
 
   // Dynamic count of stages (e.g. 7 stages for printed styles, 6 stages for solid/unprinted garments)
-  const totalStages = sorted.length || 7;
+  const totalStages = Math.max(1, sorted.length);
   const hasPrintingStage = sorted.some((m) => m.stage === 'PRINTING');
 
   // Math for SVG Circular Gauge with distinct gap and separators adapting to stage count
@@ -372,8 +372,8 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
               <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
               <span>
                 {isTa
-                  ? `அட்டவணை தாமதம்: கூடுதல் ${selectedMilestone.bufferCompressionDays} வேலை நாட்கள் குறைக்கப்பட்டது.`
-                  : `Schedule Overrun: Extra compressed by ${selectedMilestone.bufferCompressionDays} working days.`}
+                  ? `அட்டவணை தாமதம்: கீழ்நிலை கூடுதல் பாதுகாப்பில் ${selectedMilestone.bufferCompressionDays} வேலை நாட்கள் குறைக்கப்பட்டது.`
+                  : `Schedule Overrun: Downstream extra margin reduced by ${selectedMilestone.bufferCompressionDays} working days.`}
               </span>
             </div>
           )}
