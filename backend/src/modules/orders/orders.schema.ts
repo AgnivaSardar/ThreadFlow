@@ -139,6 +139,7 @@ export const orderQuerySchema = z.object({
     search: z.string().optional(),
     page: z.string().optional(),
     limit: z.string().optional(),
+    asOfDate: z.string().optional(),
   }),
 });
 

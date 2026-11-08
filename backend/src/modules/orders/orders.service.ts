@@ -612,7 +612,10 @@ export class OrdersService {
     });
 
     // Dynamic current date anchor
-    const ANCHOR_DATE = getSystemToday();
+    let ANCHOR_DATE = filters.asOfDate ? new Date(filters.asOfDate) : getSystemToday();
+    if (isNaN(ANCHOR_DATE.getTime())) {
+      ANCHOR_DATE = getSystemToday();
+    }
 
     const mapped = orders.map((order) => {
       // Enforce physical manufacturing constraint: downstream stage cannot exceed upstream stage output
@@ -780,7 +783,7 @@ export class OrdersService {
    * Retrieves full details of an order including size ratio skew calculations,
    * 7-stage TNA milestone pipeline, and audit event history.
    */
-  static async getOrderById(orderId: string, user: AuthenticatedUser) {
+  static async getOrderById(orderId: string, user: AuthenticatedUser, asOfDate?: string) {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
@@ -862,7 +865,10 @@ export class OrdersService {
     });
 
     // Dynamic current date anchor
-    const ANCHOR_DATE = getSystemToday();
+    let ANCHOR_DATE = asOfDate ? new Date(asOfDate) : getSystemToday();
+    if (isNaN(ANCHOR_DATE.getTime())) {
+      ANCHOR_DATE = getSystemToday();
+    }
     let workingDaysLeft = 0;
     const cur = new Date(ANCHOR_DATE);
     const exFac = new Date(order.exFactoryDate);
@@ -875,7 +881,7 @@ export class OrdersService {
 
     const shipWeek = getIsoWeekNumber(order.exFactoryDate);
     const latestRisk = order.riskWarnings[0] || null;
-    const todayAnchor = getSystemToday();
+    const todayAnchor = ANCHOR_DATE;
 
     const activeMilestone =
       order.milestones.find((m) => m.completedQuantity < m.targetQuantity) ||

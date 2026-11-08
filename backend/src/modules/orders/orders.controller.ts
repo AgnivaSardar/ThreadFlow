@@ -40,7 +40,8 @@ export class OrdersController {
     if (!req.user) {
       throw new AppError('Authentication required', 401);
     }
-    const order = await OrdersService.getOrderById(req.params.id, req.user);
+    const asOfDate = typeof req.query.asOfDate === 'string' ? req.query.asOfDate : undefined;
+    const order = await OrdersService.getOrderById(req.params.id, req.user, asOfDate);
     res.status(200).json({
       success: true,
       data: order,

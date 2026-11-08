@@ -199,6 +199,17 @@ export const OrderDetailPage: React.FC = () => {
       );
       if (res.data) {
         setRiskEvaluation(res.data);
+        setOrder((prev) =>
+          prev
+            ? {
+                ...prev,
+                healthStatus: res.data.isCompleted ? 'COMPLETED' : res.data.riskLevel,
+                hasCriticalBottleneck:
+                  res.data.riskLevel === 'RED' && (prev.bufferCompressionDays || 0) > 0,
+                criticalPathAlert: res.data.riskLevel === 'RED' ? prev.criticalPathAlert : null,
+              }
+            : null
+        );
       }
     } catch {
       // Non-blocking fallback
@@ -223,7 +234,8 @@ export const OrderDetailPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await apiRequest<{ success: boolean; data: OrderDetail }>(`/orders/${id}`);
+      const authoritativeDate = getAuthoritativeServerDate().toISOString().split('T')[0];
+      const res = await apiRequest<{ success: boolean; data: OrderDetail }>(`/orders/${id}?asOfDate=${authoritativeDate}`);
       if (res.data?.milestones) {
         res.data.milestones = enforceStagePredecessorCeilings(res.data.milestones, res.data.totalQuantity);
       }

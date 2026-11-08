@@ -20,7 +20,7 @@ import {
   Check,
 } from 'lucide-react';
 import { OrderListItem, Buyer, Unit, RiskLevel, PaginationMeta } from '../../types';
-import { apiRequest } from '../../services/api';
+import { apiRequest, getAuthoritativeServerDate } from '../../services/api';
 import { StatusBadge } from '../../components/StatusBadge';
 import { CustomSelect, Option } from '../../components/CustomSelect';
 import { OrderForm } from './OrderForm';
@@ -91,6 +91,8 @@ export const OrdersPage: React.FC = () => {
       setError(null);
 
       const params = new URLSearchParams();
+      const authoritativeDate = getAuthoritativeServerDate().toISOString().split('T')[0];
+      params.append('asOfDate', authoritativeDate);
       if (statusFilter !== 'ALL') params.append('status', statusFilter);
       if (buyerFilter !== 'ALL') params.append('buyerId', buyerFilter);
       if (unitFilter !== 'ALL') params.append('unitId', unitFilter);
