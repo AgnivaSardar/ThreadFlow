@@ -51,7 +51,7 @@ export class AuditService {
       ];
     }
 
-    const [total, events, financialAgg, todayCount] = await Promise.all([
+    const [total, events, financialAgg, todayCount, distinctActions] = await Promise.all([
       prisma.auditEvent.count({ where }),
       prisma.auditEvent.findMany({
         where,
@@ -89,6 +89,10 @@ export class AuditService {
           },
         },
       }),
+      prisma.auditEvent.findMany({
+        select: { action: true },
+        distinct: ['action'],
+      }),
     ]);
 
     return {
@@ -115,6 +119,7 @@ export class AuditService {
         page,
         limit,
         totalPages: Math.ceil(total / limit),
+        availableActions: distinctActions.map((d) => d.action),
       },
       summary: {
         totalAuditedEvents: total,

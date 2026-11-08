@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { apiRequest } from '../../services/api';
 import { CustomSelect, Option } from '../../components/CustomSelect';
 import { useLanguage } from '../../hooks/useLanguage';
@@ -92,6 +92,7 @@ export const AuditPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState('ALL');
   const [roleFilter, setRoleFilter] = useState('ALL');
+  const [dbActions, setDbActions] = useState<string[]>([]);
 
   // Inspection Drawer
   const [inspectedEvent, setInspectedEvent] = useState<AuditEventItem | null>(null);
@@ -121,7 +122,7 @@ export const AuditPage: React.FC = () => {
         success: boolean;
         data: {
           events: AuditEventItem[];
-          meta: { total: number; totalPages: number };
+          meta: { total: number; totalPages: number; availableActions?: string[] };
         };
       }>(`/audit?${params.toString()}`);
 
@@ -129,6 +130,9 @@ export const AuditPage: React.FC = () => {
         setEvents(res.data.events || []);
         setTotalPages(res.data.meta.totalPages || 1);
         setTotalEvents(res.data.meta.total || 0);
+        if (res.data.meta.availableActions) {
+          setDbActions((prev) => Array.from(new Set([...prev, ...(res.data.meta.availableActions || [])])));
+        }
       }
     } catch {
       // Graceful error fallback
@@ -147,15 +151,50 @@ export const AuditPage: React.FC = () => {
     fetchAuditData();
   };
 
-  const actionOptions: Option[] = [
-    { value: 'ALL', label: t.audit.allActions },
-    { value: 'UPDATE_EX_FACTORY_DATE', label: isTa ? 'புறப்பாடு தேதி மாற்றப்பட்டது' : 'Ex-Factory Revised' },
-    { value: 'BULK_UPDATE_EX_FACTORY_DATE', label: isTa ? 'மொத்த அட்டவணை மாற்றம்' : 'Bulk Schedule Shift' },
-    { value: 'BUYER_DAILY_RESPONSE', label: isTa ? 'வாங்குபவர் தினசரி ஒப்புதல்' : 'Buyer Sign-off & Feedback' },
-    { value: 'WHATSAPP_SHIFT_NUDGE', label: isTa ? 'வாட்ஸ்அப் நினைவூட்டல்' : 'WhatsApp Shift Nudge' },
-    { value: 'CREATE_ORDER', label: isTa ? 'ஆர்டர் உருவாக்கப்பட்டது' : 'Order Created' },
-    { value: 'AUTHORIZE_OVERTIME', label: isTa ? 'கூடுதல் நேரம் அனுமதிக்கப்பட்டது' : 'Overtime Authorized' },
-  ];
+  const actionOptions: Option[] = useMemo(() => {
+    const predefined: Record<string, { en: string; ta: string }> = {
+      RECORD_STAGE_OUTPUT: { en: 'Floor Output Recorded', ta: 'தள உற்பத்தி பதிவு' },
+      UPDATE_EX_FACTORY_DATE: { en: 'Ex-Factory Revised', ta: 'புறப்பாடு தேதி மாற்றப்பட்டது' },
+      BULK_UPDATE_EX_FACTORY_DATE: { en: 'Bulk Schedule Shift', ta: 'மொத்த அட்டவணை மாற்றம்' },
+      CONFIRM_RISK_WARNING: { en: 'Risk Mitigation Confirmed', ta: 'இடர் தணிப்பு உறுதி' },
+      OVERRIDE_RISK_WARNING: { en: 'Risk Warning Overridden', ta: 'இடர் நிலை மேலெழுதப்பட்டது' },
+      AUTHORIZE_OVERTIME: { en: 'Overtime Authorized', ta: 'கூடுதல் நேரம் அனுமதி' },
+      BUYER_DAILY_RESPONSE: { en: 'Buyer Sign-off & Feedback', ta: 'வாங்குபவர் தினசரி ஒப்புதல்' },
+      BUYER_SCHEDULE_NOTIFICATION: { en: 'Buyer Schedule Notification', ta: 'வாங்குபவர் அறிவிப்பு' },
+      WHATSAPP_SHIFT_NUDGE: { en: 'WhatsApp Shift Nudge', ta: 'வாட்ஸ்அப் நினைவூட்டல்' },
+      CREATE_ORDER: { en: 'Order Created', ta: 'ஆர்டர் உருவாக்கப்பட்டது' },
+      CONFIRM_ISSUE_CLASSIFICATION: { en: 'Issue Classification Confirmed', ta: 'சிக்கல் வகைப்பாடு உறுதி' },
+      OVERRIDE_ISSUE_CLASSIFICATION: { en: 'Issue Classification Overridden', ta: 'சிக்கல் வகைப்பாடு மாற்றம்' },
+      MANUAL_STAGE_ADVANCE_OVERRIDE: { en: 'Manual Stage Advance', ta: 'கைமுறை நிலை முன்னேற்றம்' },
+      CREATE_USER: { en: 'New Member Onboarded', ta: 'புதிய உறுப்பினர் சேர்க்கை' },
+      UPDATE_SUPERVISOR_ASSIGNMENT: { en: 'Supervisor Work Assigned', ta: 'மேற்பார்வையாளர் பணி மாற்றம்' },
+      SEED_RUN_CALIBRATED: { en: 'System Calibration', ta: 'கணினி அளவீடு' },
+    };
+
+    const options: Option[] = [
+      { value: 'ALL', label: t.audit.allActions },
+      ...Object.entries(predefined).map(([val, labels]) => ({
+        value: val,
+        label: isTa ? labels.ta : labels.en,
+      })),
+    ];
+
+    const knownValues = new Set(options.map((o) => o.value));
+
+    // Also include any dynamic actions discovered from the backend database or current events
+    const allDiscovered = [...dbActions, ...events.map((e) => e.action)];
+    allDiscovered.forEach((act) => {
+      if (act && !knownValues.has(act)) {
+        knownValues.add(act);
+        options.push({
+          value: act,
+          label: act.replace(/_/g, ' '),
+        });
+      }
+    });
+
+    return options;
+  }, [isTa, t.audit.allActions, dbActions, events]);
 
   const roleOptions: Option[] = [
     { value: 'ALL', label: t.audit.allRoles },
@@ -289,7 +328,7 @@ export const AuditPage: React.FC = () => {
           </form>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:flex items-center gap-2.5 w-full md:w-auto">
-            <div className="w-full sm:w-44">
+            <div className="w-full sm:w-60">
               <CustomSelect
                 value={actionFilter}
                 options={actionOptions}
