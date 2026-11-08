@@ -6,6 +6,7 @@ import { AuthenticatedUser } from '../../common/types/express';
 import { CreateOrderInput, OrderQueryFilters, AdvanceStageInput } from './orders.schema';
 import { calculateWorkingDaysExcludingSundays, evaluateProductionRisk } from '../risk/risk.engine';
 import { getSystemToday } from '../../common/utils/dates';
+import { enforceStagePredecessorCeilings } from '../../common/utils/milestones';
 
 export interface StageLeadTimeConfig {
   stage: Stage;
@@ -614,6 +615,9 @@ export class OrdersService {
     const ANCHOR_DATE = getSystemToday();
 
     const mapped = orders.map((order) => {
+      // Enforce physical manufacturing constraint: downstream stage cannot exceed upstream stage output
+      order.milestones = enforceStagePredecessorCeilings(order.milestones, order.totalQuantity);
+
       const totalPlanned = order.orderLines.reduce((acc, l) => acc + l.plannedQty, 0);
       const totalCompleted = order.orderLines.reduce((acc, l) => acc + l.completedQty, 0);
       const overallCompletionPct = totalPlanned > 0 ? Math.round((totalCompleted / totalPlanned) * 100) : 0;
@@ -827,6 +831,9 @@ export class OrdersService {
     if (user.role === Role.BUYER && user.buyerId !== order.buyerId) {
       throw new AppError('Forbidden: Access to this order is restricted', 403);
     }
+
+    // Enforce physical manufacturing constraint: downstream stage cannot exceed upstream stage output
+    order.milestones = enforceStagePredecessorCeilings(order.milestones, order.totalQuantity);
 
     // Size Breakdown & Ratio Skew Calculation (Anti-99% Done Trap)
     const totalPlanned = order.orderLines.reduce((acc, l) => acc + l.plannedQty, 0);

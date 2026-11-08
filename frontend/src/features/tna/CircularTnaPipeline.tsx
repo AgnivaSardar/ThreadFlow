@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TnaMilestone, Stage } from '../../types';
 import { useLanguage } from '../../hooks/useLanguage';
 import { translateStage } from '../supervisor/supervisorTranslations';
+import { enforceStagePredecessorCeilings } from '../../utils/milestones';
 import {
   CheckCircle2,
   Clock,
@@ -75,7 +76,8 @@ export const CircularTnaPipeline: React.FC<CircularTnaPipelineProps> = ({
   currentStage,
 }) => {
   const { lang, isTa, t } = useLanguage();
-  const sorted = [...milestones].sort((a, b) => a.sequenceOrder - b.sequenceOrder);
+  const sanitized = enforceStagePredecessorCeilings(milestones);
+  const sorted = [...sanitized].sort((a, b) => a.sequenceOrder - b.sequenceOrder);
 
   const getDepartment = (stage: Stage) => {
     if (lang === 'ta') {

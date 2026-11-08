@@ -4,6 +4,7 @@ import { AppError } from '../../common/errors/AppError';
 import { AuthenticatedUser } from '../../common/types/express';
 import { calculateAuditHash } from '../../common/utils/crypto';
 import { getSystemToday } from '../../common/utils/dates';
+import { enforceStagePredecessorCeilings } from '../../common/utils/milestones';
 import {
   evaluateProductionRisk,
   calculateWorkingDaysExcludingSundays,
@@ -214,6 +215,9 @@ export class RiskService {
 
     // Run real-time deterministic risk evaluation for each order's active milestone
     const evaluatedRisks = orders.map((order) => {
+      // Enforce physical manufacturing constraint: downstream stage cannot exceed upstream stage output
+      order.milestones = enforceStagePredecessorCeilings(order.milestones, order.totalQuantity);
+
       const activeMilestone =
         order.milestones.find((m) => m.completedQuantity < m.targetQuantity) ||
         order.milestones[order.milestones.length - 1];

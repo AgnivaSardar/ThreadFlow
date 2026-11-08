@@ -1,5 +1,6 @@
 import React from 'react';
 import { TnaMilestone, Stage } from '../../types';
+import { enforceStagePredecessorCeilings } from '../../utils/milestones';
 import {
   CheckCircle2,
   Clock,
@@ -66,7 +67,8 @@ const STAGE_METADATA: Record<
 };
 
 export const TnaTimeline: React.FC<TnaTimelineProps> = ({ milestones, currentStage }) => {
-  const sorted = [...milestones].sort((a, b) => a.sequenceOrder - b.sequenceOrder);
+  const sanitized = enforceStagePredecessorCeilings(milestones);
+  const sorted = [...sanitized].sort((a, b) => a.sequenceOrder - b.sequenceOrder);
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-';

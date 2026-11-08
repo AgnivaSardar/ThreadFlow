@@ -35,6 +35,7 @@ import { RiskReviewCard } from '../risk/RiskReviewCard';
 import { getSafeImageUrl, handleImageError } from '../../utils/imageUtils';
 import { useLanguage } from '../../hooks/useLanguage';
 import { calculateWorkingDaysLeft } from '../../utils/dateUtils';
+import { enforceStagePredecessorCeilings } from '../../utils/milestones';
 import {
   translateStage,
   translateUnit,
@@ -223,6 +224,9 @@ export const OrderDetailPage: React.FC = () => {
       setLoading(true);
       setError(null);
       const res = await apiRequest<{ success: boolean; data: OrderDetail }>(`/orders/${id}`);
+      if (res.data?.milestones) {
+        res.data.milestones = enforceStagePredecessorCeilings(res.data.milestones, res.data.totalQuantity);
+      }
       setOrder(res.data);
       if (res.data?.riskEvaluation) {
         setRiskEvaluation(res.data.riskEvaluation);
@@ -460,7 +464,7 @@ export const OrderDetailPage: React.FC = () => {
           </div>
           <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
             <Building2 className="w-3.5 h-3.5 text-slate-400" />
-            {order.buyer.country || 'Europe'}
+            {order.buyer.country || '-'}
           </div>
         </div>
 
@@ -755,7 +759,7 @@ export const OrderDetailPage: React.FC = () => {
                   <div className="flex items-center justify-between text-[11px] pb-1.5 border-b border-slate-100">
                     <span className="font-bold text-slate-800 flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                      {fb.user?.name || 'Buyer Representative'} ({fb.user?.email || 'Official Channel'})
+                      {fb.user?.name || translateBuyer(order.buyer.name.replace(/\s*\([^)]*\)$/, ''), lang)} {fb.user?.email ? `(${fb.user.email})` : ''}
                     </span>
                     <span className="text-slate-400 font-mono text-[10px]">
                       {new Date(fb.timestamp).toLocaleString(undefined, {
@@ -831,10 +835,12 @@ export const OrderDetailPage: React.FC = () => {
                   hour12: true,
                 });
 
-                const lineName = (update.machineLine || 'Line 1')
-                  .replace('UNIT_3 Floor Line', 'U3 Line')
-                  .replace('Floor Line', 'Line')
-                  .trim();
+                const lineName = update.machineLine
+                  ? update.machineLine
+                      .replace('UNIT_3 Floor Line', 'U3 Line')
+                      .replace('Floor Line', 'Line')
+                      .trim()
+                  : '-';
 
                 const supervisorName = update.supervisor?.name
                   ? update.supervisor.name
@@ -872,7 +878,7 @@ export const OrderDetailPage: React.FC = () => {
                     {/* Output & Line Row */}
                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
                       <div className="text-slate-600 font-medium text-[11px]">
-                        <span className="font-bold text-slate-800">{update.shift || 'DAY'}</span> · {lineName}
+                        <span className="font-bold text-slate-800">{update.shift || '-'}</span> · {lineName}
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className="inline-flex items-center font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-xs">
@@ -972,10 +978,12 @@ export const OrderDetailPage: React.FC = () => {
                       hour12: true,
                     });
 
-                    const lineName = (update.machineLine || 'Line 1')
-                      .replace('UNIT_3 Floor Line', 'U3 Line')
-                      .replace('Floor Line', 'Line')
-                      .trim();
+                    const lineName = update.machineLine
+                      ? update.machineLine
+                          .replace('UNIT_3 Floor Line', 'U3 Line')
+                          .replace('Floor Line', 'Line')
+                          .trim()
+                      : '-';
 
                     const supervisorName = update.supervisor?.name
                       ? update.supervisor.name
@@ -1019,7 +1027,7 @@ export const OrderDetailPage: React.FC = () => {
                         {/* 3. Shift & Machine Line */}
                         <td className="py-3 px-2 text-[11px] leading-tight whitespace-nowrap">
                           <span className="text-slate-800 font-bold">
-                            {update.shift || 'DAY'}
+                            {update.shift || '-'}
                           </span>
                           <span className="text-slate-300 mx-1">·</span>
                           <span className="text-slate-600 font-medium" title={update.machineLine || ''}>
