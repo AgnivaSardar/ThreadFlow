@@ -27,6 +27,37 @@ export interface SpeechRecognitionHook {
   resetTranscript: () => void;
 }
 
+/**
+ * Deduplicates stuttered or repeated phrases from speech recognition on mobile browsers.
+ * Replaces consecutive identical words ("thousand thousand" -> "thousand") and repeated n-grams.
+ */
+export function deduplicateVoiceTranscript(text: string): string {
+  if (!text) return '';
+  let words = text.trim().split(/\s+/);
+  if (words.length <= 1) return text.trim();
+
+  let changed = true;
+  let iterations = 0;
+  while (changed && iterations < 10) {
+    changed = false;
+    iterations++;
+    for (let phraseLen = 1; phraseLen <= Math.min(8, Math.floor(words.length / 2)); phraseLen++) {
+      for (let i = 0; i <= words.length - 2 * phraseLen; i++) {
+        const phraseA = words.slice(i, i + phraseLen).map((w) => w.toLowerCase()).join(' ');
+        const phraseB = words.slice(i + phraseLen, i + 2 * phraseLen).map((w) => w.toLowerCase()).join(' ');
+        if (phraseA === phraseB) {
+          words.splice(i + phraseLen, phraseLen);
+          changed = true;
+          break;
+        }
+      }
+      if (changed) break;
+    }
+  }
+
+  return words.join(' ');
+}
+
 export function useTamilSpeechRecognition(initialLang: SpeechLanguage = 'ta-IN'): SpeechRecognitionHook {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
@@ -79,6 +110,7 @@ export function useTamilSpeechRecognition(initialLang: SpeechLanguage = 'ta-IN')
   // Instantiate SpeechRecognition on demand directly inside user gesture
   const startListening = useCallback(() => {
     setError(null);
+    setTranscript('');
     setInterimTranscript('');
 
     const win = typeof window !== 'undefined' ? (window as unknown as IWindow) : null;
@@ -112,22 +144,34 @@ export function useTamilSpeechRecognition(initialLang: SpeechLanguage = 'ta-IN')
       };
 
       recognition.onresult = (event: any) => {
-        let currentInterim = '';
-        let finalTrans = '';
+        let interimText = '';
+        const finalSegments: string[] = [];
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          const item = event.results[i];
-          if (item.isFinal) {
-            finalTrans += item[0].transcript + ' ';
+        // Iterate through all accumulated results in the current session
+        for (let i = 0; i < event.results.length; ++i) {
+          const res = event.results[i];
+          const text = (res[0]?.transcript || '').trim();
+          if (!text) continue;
+
+          if (res.isFinal) {
+            // Avoid duplicate adjacent phrase chunks emitted by mobile speech engines
+            if (
+              finalSegments.length === 0 ||
+              finalSegments[finalSegments.length - 1].toLowerCase() !== text.toLowerCase()
+            ) {
+              finalSegments.push(text);
+            }
           } else {
-            currentInterim += item[0].transcript;
+            interimText = interimText ? `${interimText} ${text}` : text;
           }
         }
 
-        if (finalTrans) {
-          setTranscript((prev) => (prev ? `${prev} ${finalTrans.trim()}` : finalTrans.trim()));
+        let fullFinal = finalSegments.join(' ').trim();
+        if (fullFinal) {
+          fullFinal = deduplicateVoiceTranscript(fullFinal);
+          setTranscript(fullFinal);
         }
-        setInterimTranscript(currentInterim);
+        setInterimTranscript(deduplicateVoiceTranscript(interimText.trim()));
       };
 
       recognition.onerror = (event: any) => {

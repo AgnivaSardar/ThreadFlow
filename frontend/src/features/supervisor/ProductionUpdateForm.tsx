@@ -171,18 +171,55 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
   // AI & Voice Size Guidance Notice
   const [aiSizeNotice, setAiSizeNotice] = useState<string | null>(null);
 
+  // Baseline notes before voice listening begins (prevents duplicate compounding concatenation on mobile)
+  const baseNotesBeforeSpeechRef = useRef<string>('');
+
   const isListeningRef = useRef(isListening);
   useEffect(() => {
     isListeningRef.current = isListening;
   }, [isListening]);
 
   /**
-   * Normalizes colloquial Tamil number words into digits so entity extractors can parse quantities accurately.
+   * Normalizes spoken number words (Tamil, English, Hindi) into digits so entity extractors parse quantities accurately.
    */
-  const normalizeTamilSpeechNumbers = (text: string): string => {
+  const normalizeSpeechNumbers = (text: string): string => {
     if (!text) return '';
     let normalized = text;
-    const tamilWordMap: [RegExp, string][] = [
+    const wordMap: [RegExp, string][] = [
+      // English multi-word numbers
+      [/\b(?:ten\s*thousand)\b/gi, '10000 '],
+      [/\b(?:nine\s*thousand)\b/gi, '9000 '],
+      [/\b(?:eight\s*thousand)\b/gi, '8000 '],
+      [/\b(?:seven\s*thousand)\b/gi, '7000 '],
+      [/\b(?:six\s*thousand)\b/gi, '6000 '],
+      [/\b(?:five\s*thousand)\b/gi, '5000 '],
+      [/\b(?:four\s*thousand)\b/gi, '4000 '],
+      [/\b(?:three\s*thousand)\b/gi, '3000 '],
+      [/\b(?:two\s*thousand)\b/gi, '2000 '],
+      [/\b(?:one\s*thousand|a\s*thousand|thousand)\b/gi, '1000 '],
+      [/\b(?:nine\s*hundred)\b/gi, '900 '],
+      [/\b(?:eight\s*hundred)\b/gi, '800 '],
+      [/\b(?:seven\s*hundred)\b/gi, '700 '],
+      [/\b(?:six\s*hundred)\b/gi, '600 '],
+      [/\b(?:five\s*hundred)\b/gi, '500 '],
+      [/\b(?:four\s*hundred)\b/gi, '400 '],
+      [/\b(?:three\s*hundred)\b/gi, '300 '],
+      [/\b(?:two\s*hundred)\b/gi, '200 '],
+      [/\b(?:one\s*hundred|a\s*hundred|hundred)\b/gi, '100 '],
+      [/\b(?:fifty)\b/gi, '50 '],
+      [/\b(?:twenty\s*five)\b/gi, '25 '],
+
+      // Hindi number words
+      [/\b(?:das\s*hazar|das\s*hazaar)\b/gi, '10000 '],
+      [/\b(?:panch\s*hazar|panch\s*hazaar)\b/gi, '5000 '],
+      [/\b(?:do\s*hazar|do\s*hazaar)\b/gi, '2000 '],
+      [/\b(?:ek\s*hazar|ek\s*hazaar|hazar|hazaar)\b/gi, '1000 '],
+      [/\b(?:panch\s*sau)\b/gi, '500 '],
+      [/\b(?:sau|ek\s*sau)\b/gi, '100 '],
+      [/\b(?:pachas)\b/gi, '50 '],
+      [/\b(?:pachis)\b/gi, '25 '],
+
+      // Tamil number words
       [/ஒன்று|ஒரு\s*பீஸ்/gi, '1 '],
       [/இரண்டு|ரெண்டு/gi, '2 '],
       [/மூன்று|மூணு/gi, '3 '],
@@ -216,7 +253,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       [/ஐந்தாயிரம்/gi, '5000 '],
     ];
 
-    for (const [pattern, replacement] of tamilWordMap) {
+    for (const [pattern, replacement] of wordMap) {
       normalized = normalized.replace(pattern, replacement);
     }
     return normalized;
@@ -225,7 +262,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
   // Smart speech entity extractor: parses good quantity, rejected quantity, and issue reasons
   const parseAndAutofillFromSpeech = (rawText: string) => {
     if (!rawText.trim()) return;
-    const spokenText = normalizeTamilSpeechNumbers(rawText);
+    const spokenText = normalizeSpeechNumbers(rawText);
 
     // 1. Extract Good Output Quantity
     // Matches patterns like "300 good outputs", "300 pieces done", "output 300", "completed 250 pcs", etc.
@@ -264,11 +301,28 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       setRejectedQty(extractedRej);
     }
 
-    // 3. Extract Per-Size Breakdown with Order Context (handling "others are of XS", "50 of small", etc.)
+    // 3. Extract Per-Size Breakdown with Order Context (handling "others are of XS", "50 of small", "250 each", etc.)
     const targetLines = order.orderLines || [];
     const sizeMap: Record<string, number> = {};
     let totalExplicit = 0;
     let remainingTargetId: string | null = null;
+
+    // Check for "X each" / "250 each" / "250 in each size"
+    const eachSizeMatch = spokenText.match(
+      /(\d+)\s*(?:each|per\s*size|in\s*each(?:\s*size)?|in\s*all(?:\s*sizes)?|for\s*each(?:\s*size)?|piece\s*each|pcs\s*each|ஒவ்வொன்றும்|ஒவ்வொரு\s*அளவிலும்)/i
+    );
+    if (eachSizeMatch && targetLines.length > 0) {
+      const perSize = parseInt(eachSizeMatch[1], 10);
+      if (perSize > 0) {
+        targetLines.forEach((line) => {
+          sizeMap[line.id] = perSize;
+        });
+        totalExplicit = perSize * targetLines.length;
+        if (extractedGood === null) {
+          extractedGood = totalExplicit;
+        }
+      }
+    }
 
     targetLines.forEach((line) => {
       const sUpper = line.size.toUpperCase();
@@ -380,16 +434,13 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
   // Synchronize transcribed speech into notes input and autofill quantities/issues
   useEffect(() => {
     if (transcript) {
-      setRawSpokenText((prev) => (prev ? `${prev} ${transcript}` : transcript));
-      setNotes((prev) => {
-        const trimmed = prev.trim();
-        const combined = trimmed ? `${trimmed} ${transcript}` : transcript;
-        parseAndAutofillFromSpeech(combined);
-        return combined;
-      });
-      resetTranscript();
+      const base = baseNotesBeforeSpeechRef.current;
+      const combined = base ? `${base} ${transcript}` : transcript;
+      setRawSpokenText(transcript);
+      setNotes(combined);
+      parseAndAutofillFromSpeech(combined);
     }
-  }, [transcript, resetTranscript]);
+  }, [transcript]);
 
   // Debounced Live AI Classification Preview effect
   useEffect(() => {
@@ -687,6 +738,8 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
     if (isListening) {
       stopListening();
     } else {
+      baseNotesBeforeSpeechRef.current = notes.trim();
+      resetTranscript();
       await startListening();
     }
   };

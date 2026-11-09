@@ -206,16 +206,15 @@ export const AIChatbot: React.FC = () => {
     resetTranscript,
   } = useTamilSpeechRecognition('en-IN');
 
+  const baseInputBeforeSpeechRef = useRef<string>('');
+
   // Sync speech transcript into input box
   useEffect(() => {
     if (transcript) {
-      setInputMessage((prev) => {
-        const trimmed = prev.trim();
-        return trimmed ? `${trimmed} ${transcript}` : transcript;
-      });
-      resetTranscript();
+      const base = baseInputBeforeSpeechRef.current;
+      setInputMessage(base ? `${base} ${transcript}` : transcript);
     }
-  }, [transcript, resetTranscript]);
+  }, [transcript]);
 
   // Auto-scroll messages
   useEffect(() => {
@@ -309,6 +308,8 @@ export const AIChatbot: React.FC = () => {
     if (isListening) {
       stopListening();
     } else {
+      baseInputBeforeSpeechRef.current = inputMessage.trim();
+      resetTranscript();
       startListening();
     }
   };
