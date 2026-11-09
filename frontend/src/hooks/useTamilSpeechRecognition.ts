@@ -205,7 +205,18 @@ export function useTamilSpeechRecognition(initialLang: SpeechLanguage = 'ta-IN')
         setIsListening(false);
 
         if (mediaErr.name === 'NotAllowedError' || mediaErr.name === 'PermissionDeniedError') {
-          setError('Microphone permission denied. Click the lock/settings icon in your browser address bar and allow microphone access.');
+          const isSystemDenied =
+            (mediaErr.message && mediaErr.message.toLowerCase().includes('system')) ||
+            mediaErr.name === 'NotAllowedError';
+          if (isSystemDenied) {
+            setError(
+              'Windows is blocking Chrome from accessing the microphone. In the Chrome popup next to the URL bar, click the blue "system settings" link (or open Windows Settings → Privacy & security → Microphone) and turn ON "Let desktop apps access your microphone", then click Reload.'
+            );
+          } else {
+            setError(
+              'Microphone permission denied. Click the lock/settings icon in your browser address bar and allow microphone access.'
+            );
+          }
           return;
         } else if (mediaErr.name === 'NotFoundError' || mediaErr.name === 'DevicesNotFoundError') {
           setError('No microphone found. Please connect or enable a microphone in Windows Sound settings.');
