@@ -1074,6 +1074,7 @@ export const BuyerPortalPage: React.FC = () => {
                     }}
                     className="w-28"
                     buttonClassName="py-1 px-2.5"
+                    menuPlacement="top"
                   />
                 </div>
 

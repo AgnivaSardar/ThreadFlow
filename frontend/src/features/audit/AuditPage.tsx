@@ -364,8 +364,8 @@ export const AuditPage: React.FC = () => {
       </div>
 
       {/* 3. Audit Trail Table - Fixed Layout, No Horizontal Scroll, Truncate Overflows */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="w-full overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs">
+        <div className="w-full overflow-hidden rounded-t-2xl">
           <table className="w-full text-left text-xs table-fixed">
             <colgroup>
               <col className="w-[15%]" />
@@ -456,6 +456,7 @@ export const AuditPage: React.FC = () => {
                 }}
                 className="w-28"
                 buttonClassName="py-1 px-2.5"
+                menuPlacement="top"
               />
             </div>
 

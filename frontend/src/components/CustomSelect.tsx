@@ -15,6 +15,8 @@ interface CustomSelectProps {
   placeholder?: string;
   className?: string;
   buttonClassName?: string;
+  menuPlacement?: 'top' | 'bottom' | 'top-right' | 'bottom-right' | 'auto';
+  menuClassName?: string;
 }
 
 export const CustomSelect: React.FC<CustomSelectProps> = ({
@@ -24,8 +26,12 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   placeholder = 'Select an option',
   className = '',
   buttonClassName = '',
+  menuPlacement = 'auto',
+  menuClassName = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
+  const [alignRight, setAlignRight] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,6 +43,27 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceRight = window.innerWidth - rect.left;
+
+      const shouldOpenUp =
+        menuPlacement === 'top' ||
+        menuPlacement === 'top-right' ||
+        (menuPlacement === 'auto' && spaceBelow < 220 && rect.top > spaceBelow);
+
+      const shouldAlignRight =
+        menuPlacement === 'top-right' ||
+        menuPlacement === 'bottom-right' ||
+        spaceRight < 180;
+
+      setOpenUpward(shouldOpenUp);
+      setAlignRight(shouldAlignRight);
+    }
+  }, [isOpen, menuPlacement]);
 
   const selectedOption = options.find((opt) => opt.value === value);
 
@@ -60,7 +87,9 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
       {isOpen && (
         <div
           style={{ colorScheme: 'light' }}
-          className="absolute left-0 mt-1 w-full min-w-[200px] max-h-60 overflow-y-auto bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100"
+          className={`absolute ${alignRight ? 'right-0' : 'left-0'} ${
+            openUpward ? 'bottom-full mb-1.5' : 'top-full mt-1'
+          } min-w-[130px] max-h-60 overflow-y-auto bg-white rounded-xl shadow-2xl border border-slate-200 py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-100 ${menuClassName}`}
         >
           {options.map((opt) => {
             const isSelected = opt.value === value;
