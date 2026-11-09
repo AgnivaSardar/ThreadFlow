@@ -45,9 +45,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       const { accessToken, user } = response;
+      const refreshToken = (response as any).refreshToken;
       setApiAccessToken(accessToken);
       localStorage.setItem('threadflow_token', accessToken);
+      if (refreshToken) {
+        localStorage.setItem('threadflow_refresh_token', refreshToken);
+      }
       localStorage.setItem('threadflow_user', JSON.stringify(user));
+      localStorage.setItem('threadflow_last_activity', String(Date.now()));
 
       set({
         user,
@@ -72,7 +77,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } finally {
       setApiAccessToken(null);
       localStorage.removeItem('threadflow_token');
+      localStorage.removeItem('threadflow_refresh_token');
       localStorage.removeItem('threadflow_user');
+      localStorage.removeItem('threadflow_last_activity');
       set({
         user: null,
         accessToken: null,
@@ -89,9 +96,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         method: 'POST',
       });
       const { accessToken, user } = response;
+      const refreshToken = (response as any).refreshToken;
       setApiAccessToken(accessToken);
       localStorage.setItem('threadflow_token', accessToken);
+      if (refreshToken) {
+        localStorage.setItem('threadflow_refresh_token', refreshToken);
+      }
       localStorage.setItem('threadflow_user', JSON.stringify(user));
+      localStorage.setItem('threadflow_last_activity', String(Date.now()));
 
       set({
         user,

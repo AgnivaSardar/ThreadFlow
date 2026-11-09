@@ -34,13 +34,14 @@ export class AuthController {
       success: true,
       message: 'Authentication successful',
       accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       user,
     });
   }
 
   /**
    * POST /api/v1/auth/refresh
-   * Exchanges 7-day refresh token for a fresh 15-minute access token
+   * Exchanges 7-day refresh token for a fresh access token
    */
   public async refresh(req: Request, res: Response): Promise<void> {
     const token = req.cookies?.refreshToken || req.body?.refreshToken;
@@ -57,6 +58,7 @@ export class AuthController {
     res.status(200).json({
       success: true,
       accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       user,
     });
   }
