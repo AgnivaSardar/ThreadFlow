@@ -411,23 +411,24 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
     // - The product under their company
     // - Check each day's function and acknowledge
     if (role === 'BUYER') {
-      const userEmail = (user?.email || '').toLowerCase();
-      const buyerName = user?.buyer?.name || (userEmail.includes('company-c') ? 'Company C (Germany)' : userEmail.includes('company-b') ? 'Company B (UK)' : 'Foreign Buyer');
-      const buyerId = user?.buyerId;
-      const buyerCode = user?.buyer?.code || '';
+      const buyerName = user?.buyer?.name || user?.name || (isTa ? 'வாங்குபவர் நிறுவனம்' : 'Client Organization');
+      const buyerId = user?.buyerId || user?.buyer?.id;
+      const buyerCode = user?.buyer?.code;
 
       const matchingPOs = (floorOrders || risks || [])
-        .filter((o: any) =>
-          (buyerId && (o.buyerId === buyerId || o.buyer?.id === buyerId)) ||
-          (buyerCode && o.buyer?.code === buyerCode) ||
-          (buyerName && o.buyer?.name && o.buyer.name.toLowerCase().includes(buyerName.toLowerCase())) ||
-          (userEmail.includes('company-c') ? o.poNumber?.startsWith('C-PO-') : o.poNumber?.startsWith('B-PO-'))
-        )
+        .filter((o: any) => {
+          if (buyerId && (o.buyerId === buyerId || o.buyer?.id === buyerId)) return true;
+          if (buyerCode && o.buyer?.code === buyerCode) return true;
+          if (user?.buyer?.name && o.buyer?.name && o.buyer.name.toLowerCase() === user.buyer.name.toLowerCase()) return true;
+          return false;
+        })
         .map((o: any) => o.poNumber)
         .filter(Boolean);
 
       const companyOrders = matchingPOs.length > 0
         ? `PO: ${Array.from(new Set(matchingPOs)).join(', ')}`
+        : isTa
+        ? `${buyerName} நிறுவனத்தின் செயலில் உள்ள அனைத்து கொள்முதல் ஆர்டர்கள்`
         : `All Active ${buyerName} Purchase Orders`;
 
       return [
