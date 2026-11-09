@@ -382,7 +382,7 @@ export const ReportsPage: React.FC = () => {
 
         <div className="text-xs font-semibold text-slate-600 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>{t.reports.activePartner} <strong className="text-slate-900 font-bold">{data?.buyer.name || 'Company B (UK)'}</strong></span>
+          <span>{t.reports.activePartner} <strong className="text-slate-900 font-bold">{data?.buyer.name || (buyers.find(b => b.id === selectedBuyerId)?.name) || '-'}</strong></span>
         </div>
       </div>
 

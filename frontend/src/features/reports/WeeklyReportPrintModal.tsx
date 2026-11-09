@@ -532,7 +532,7 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
                         {o.progressPercent}%
                       </td>
                       <td className="py-2 px-2 text-slate-700 border-r border-slate-300 whitespace-nowrap text-[10px]">
-                        {o.unit?.name || 'Tiruppur Unit'}
+                        {o.unit?.name || '-'}
                       </td>
                       <td className="py-2 px-3 text-[10px] text-slate-700 leading-relaxed break-words whitespace-normal">
                         {o.confirmedAlerts.map((a) => a.mitigationPlan).filter(Boolean).join(' • ') ||

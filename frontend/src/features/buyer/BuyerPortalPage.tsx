@@ -503,7 +503,12 @@ export const BuyerPortalPage: React.FC = () => {
             </div>
           ) : (
             filteredOrders.map((order) => {
-              const isFinished = order.progressPercent >= 100;
+              const isFinished = Boolean(
+                order.progressPercent >= 100 ||
+                (order as any).status === 'COMPLETED' ||
+                (order.completedStages >= order.totalStages && order.totalStages > 0) ||
+                (order.milestones && order.milestones.every((m) => m.isCompleted || m.completedQuantity >= m.targetQuantity))
+              );
               return (
                 <div
                   key={order.id}
@@ -536,22 +541,32 @@ export const BuyerPortalPage: React.FC = () => {
                     <div className="flex items-center gap-2.5 flex-wrap">
                       <div className="text-xs text-slate-300 flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-sky-300" />
-                        <span>{t.common.exFactory}: <strong className="text-white font-semibold">{formatDate(order.exFactoryDate)}</strong></span>
+                        <span>
+                          {isFinished ? (isTa ? 'அனுப்பப்பட்ட தேதி' : 'Handover Complete') : t.common.exFactory}:{' '}
+                          <strong className="text-white font-semibold">{formatDate(order.exFactoryDate)}</strong>
+                        </span>
                       </div>
 
-                      <span
-                        className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border shadow-2xs ${
-                          order.daysToExFactory <= 5
-                            ? 'bg-rose-500 text-white border-rose-400'
-                            : order.daysToExFactory <= 14
-                            ? 'bg-amber-400 text-amber-950 border-amber-300'
-                            : 'bg-emerald-400 text-emerald-950 border-emerald-300'
-                        }`}
-                      >
-                        {order.daysToExFactory > 0
-                          ? `${order.daysToExFactory}${t.buyer.daysLeft}`
-                          : t.buyer.shipmentWindow}
-                      </span>
+                      {isFinished ? (
+                        <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-lg bg-emerald-500 text-white border border-emerald-400 shadow-2xs uppercase tracking-wide flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>{isTa ? 'நிறைவடைந்தது' : 'COMPLETED'}</span>
+                        </span>
+                      ) : (
+                        <span
+                          className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border shadow-2xs ${
+                            order.daysToExFactory <= 5
+                              ? 'bg-rose-500 text-white border-rose-400'
+                              : order.daysToExFactory <= 14
+                              ? 'bg-amber-400 text-amber-950 border-amber-300'
+                              : 'bg-emerald-400 text-emerald-950 border-emerald-300'
+                          }`}
+                        >
+                          {order.daysToExFactory > 0
+                            ? `${order.daysToExFactory}${t.buyer.daysLeft}`
+                            : t.buyer.shipmentWindow}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -569,8 +584,14 @@ export const BuyerPortalPage: React.FC = () => {
                         </span>
                         <span className="text-slate-500 text-[11px]">
                           {t.buyer.activeStageLabel}{' '}
-                          <strong className="text-sky-800 font-bold uppercase tracking-wide">
-                            {isTa ? STAGE_TRANSLATIONS[order.activeStage]?.ta || order.activeStage : order.activeStage.replace(/_/g, ' ')}
+                          <strong className={`font-bold uppercase tracking-wide ${isFinished ? 'text-emerald-700' : 'text-sky-800'}`}>
+                            {isFinished
+                              ? isTa
+                                ? 'நிறைவடைந்தது (அனுப்பப்பட்டது)'
+                                : 'COMPLETED (DISPATCHED)'
+                              : isTa
+                              ? STAGE_TRANSLATIONS[order.activeStage]?.ta || order.activeStage
+                              : order.activeStage.replace(/_/g, ' ')}
                           </strong>
                         </span>
                       </div>
@@ -627,235 +648,259 @@ export const BuyerPortalPage: React.FC = () => {
                       })}
                     </div>
 
-                    {/* Vetted Delivery Mitigation Bulletins (Only Confirmed Alerts) */}
-                    {order.confirmedAlerts.length > 0 && (
-                      <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl space-y-1.5">
-                        <div className="flex items-center justify-between text-xs text-amber-950 font-bold">
-                          <span className="flex items-center gap-1.5">
-                            <ShieldCheck className="w-3.5 h-3.5 text-amber-700" />
-                            Confirmed Operational Mitigation Directive
-                          </span>
-                          <span className="text-[10px] text-amber-700 font-medium">
-                            Verified by Merchandiser
-                          </span>
+                    {isFinished ? (
+                      <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-5 text-center space-y-3">
+                        <div className="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-2xl mx-auto flex items-center justify-center shadow-xs">
+                          <CheckCircle2 className="w-6 h-6 text-emerald-600" />
                         </div>
-
-                        {order.confirmedAlerts.map((alert) => (
-                          <div
-                            key={alert.id}
-                            className="text-xs text-slate-800 bg-white p-2.5 rounded-lg border border-amber-200/70 shadow-2xs"
-                          >
-                            <p className="leading-relaxed">
-                              {alert.mitigationPlan ||
-                                'Floor schedule balanced to ensure on-time ex-factory departure.'}
-                            </p>
-                            <div className="mt-1 text-[10px] text-slate-400 font-medium">
-                              Stage: {alert.stage.replace(/_/g, ' ')} • Logged on{' '}
-                              {formatDate(alert.reviewedAt)}
-                            </div>
-                          </div>
-                        ))}
+                        <div>
+                          <h4 className="text-base font-extrabold text-emerald-950">
+                            {isTa ? 'உற்பத்தி நிறைவு பெற்றது' : 'Production Completed & Verified'}
+                          </h4>
+                          <p className="text-xs text-emerald-800 mt-1 max-w-lg mx-auto">
+                            {isTa
+                              ? `அனைத்து ${order.totalStages} நிலைகளும் வெற்றிகரமாக முடிக்கப்பட்டு, ${order.totalQuantity.toLocaleString()} ஆடைகள் இறுதி தர பரிசோதனை செய்யப்பட்டு தயாராக உள்ளன.`
+                              : `All ${order.totalStages} stages completed. 100% final quality sign-off confirmed for ${order.totalQuantity.toLocaleString()} pieces. Ex-factory hand-off scheduled/completed on ${formatDate(order.exFactoryDate)}.`}
+                          </p>
+                        </div>
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold shadow-xs">
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>{isTa ? '100% தர ஒப்புதல் மற்றும் அனுப்பல் நிறைவு' : '100% Final Quality Passed & Handover Ready'}</span>
+                        </div>
                       </div>
-                    )}
+                    ) : (
+                      <>
+                        {/* Vetted Delivery Mitigation Bulletins (Only Confirmed Alerts) */}
+                        {order.confirmedAlerts.length > 0 && (
+                          <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl space-y-1.5">
+                            <div className="flex items-center justify-between text-xs text-amber-950 font-bold">
+                              <span className="flex items-center gap-1.5">
+                                <ShieldCheck className="w-3.5 h-3.5 text-amber-700" />
+                                Confirmed Operational Mitigation Directive
+                              </span>
+                              <span className="text-[10px] text-amber-700 font-medium">
+                                Verified by Merchandiser
+                              </span>
+                            </div>
 
-                    {/* ======================================================== */}
-                    {/* NEW: LATEST DAILY PRODUCTION LOG OF THE DAY              */}
-                    {/* ======================================================== */}
-                    <div className="bg-slate-50/80 rounded-xl border border-slate-200 p-3.5 space-y-2.5">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center">
-                            <Activity className="w-3.5 h-3.5" />
-                          </div>
-                          <span className="font-bold text-xs text-slate-800">
-                            Latest Floor Work Log (Today / Recent Shift)
-                          </span>
-                          {order.latestDailyLog && (
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200">
-                              {order.latestDailyLog.shift} SHIFT
-                            </span>
-                          )}
-                        </div>
-
-                        {order.latestDailyLog && (
-                          <div className="text-[11px] text-slate-500 flex items-center gap-2">
-                            <span>Supervisor: <strong className="text-slate-700 font-semibold">{order.latestDailyLog.supervisorName}</strong></span>
-                            <span className="text-slate-300">•</span>
-                            <span>{new Date(order.latestDailyLog.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                            {order.confirmedAlerts.map((alert) => (
+                              <div
+                                key={alert.id}
+                                className="text-xs text-slate-800 bg-white p-2.5 rounded-lg border border-amber-200/70 shadow-2xs"
+                              >
+                                <p className="leading-relaxed">
+                                  {alert.mitigationPlan ||
+                                    'Floor schedule balanced to ensure on-time ex-factory departure.'}
+                                </p>
+                                <div className="mt-1 text-[10px] text-slate-400 font-medium">
+                                  Stage: {alert.stage.replace(/_/g, ' ')} • Logged on{' '}
+                                  {formatDate(alert.reviewedAt)}
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         )}
-                      </div>
 
-                      {order.latestDailyLog ? (
-                        <div className="space-y-2">
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                            <div className="bg-white p-2 rounded-lg border border-slate-200">
-                              <div className="text-[10px] font-semibold text-slate-400 uppercase">Stage</div>
-                              <div className="font-bold text-slate-800 font-mono mt-0.5">
-                                {order.latestDailyLog.stage.replace(/_/g, ' ')}
+                        {/* ======================================================== */}
+                        {/* NEW: LATEST DAILY PRODUCTION LOG OF THE DAY              */}
+                        {/* ======================================================== */}
+                        <div className="bg-slate-50/80 rounded-xl border border-slate-200 p-3.5 space-y-2.5">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center">
+                                <Activity className="w-3.5 h-3.5" />
                               </div>
+                              <span className="font-bold text-xs text-slate-800">
+                                Latest Floor Work Log (Today / Recent Shift)
+                              </span>
+                              {order.latestDailyLog && (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200">
+                                  {order.latestDailyLog.shift} SHIFT
+                                </span>
+                              )}
                             </div>
-                            <div className="bg-white p-2 rounded-lg border border-slate-200">
-                              <div className="text-[10px] font-semibold text-slate-400 uppercase">Machine Line</div>
-                              <div className="font-bold text-slate-800 font-mono mt-0.5">
-                                {order.latestDailyLog.machineLine}
+
+                            {order.latestDailyLog && (
+                              <div className="text-[11px] text-slate-500 flex items-center gap-2">
+                                <span>Supervisor: <strong className="text-slate-700 font-semibold">{order.latestDailyLog.supervisorName}</strong></span>
+                                <span className="text-slate-300">•</span>
+                                <span>{new Date(order.latestDailyLog.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                               </div>
-                            </div>
-                            <div className="bg-white p-2 rounded-lg border border-emerald-200">
-                              <div className="text-[10px] font-semibold text-emerald-600 uppercase">Good Output</div>
-                              <div className="font-bold text-emerald-800 font-mono mt-0.5">
-                                +{order.latestDailyLog.goodQuantity.toLocaleString()} pcs
-                              </div>
-                            </div>
-                            <div className="bg-white p-2 rounded-lg border border-slate-200">
-                              <div className="text-[10px] font-semibold text-slate-400 uppercase">Defect / Rejection</div>
-                              <div className={`font-bold font-mono mt-0.5 ${order.latestDailyLog.rejectedQuantity > 0 ? 'text-rose-600' : 'text-slate-600'}`}>
-                                {order.latestDailyLog.rejectedQuantity} pcs
-                              </div>
-                            </div>
+                            )}
                           </div>
 
-                          {/* Supervisor Note strictly in English */}
-                          <div className="text-xs bg-white p-2.5 rounded-lg border border-slate-200 text-slate-700 flex items-start gap-2">
-                            <span className="font-semibold text-slate-900 shrink-0">Supervisor Note:</span>
-                            <p className="text-slate-600 italic leading-relaxed">
-                              {order.latestDailyLog.notes || 'Floor operations running as scheduled.'}
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="py-2.5 text-center text-xs text-slate-500 italic bg-white rounded-lg border border-dashed border-slate-200">
-                          No shift updates filed today yet for this PO — awaiting supervisor synchronization.
-                        </div>
-                      )}
-                    </div>
-
-                    {/* ======================================================== */}
-                    {/* NEW: BUYER INTERACTIVE DAILY RESPONSE & SIGN-OFF         */}
-                    {/* ======================================================== */}
-                    <div className="bg-gradient-to-r from-sky-50/50 to-indigo-50/30 rounded-xl border border-sky-100 p-3.5 space-y-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-lg bg-sky-600 text-white flex items-center justify-center shadow-xs">
-                          <MessageSquare className="w-3.5 h-3.5" />
-                        </div>
-                        <h5 className="text-xs font-bold text-slate-900">
-                          {t.buyer.buyerFeedbackTitle}
-                        </h5>
-                      </div>
-
-                      {/* Previous Responses */}
-                      {order.buyerResponses && order.buyerResponses.length > 0 && (
-                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                          {order.buyerResponses.map((resp) => (
-                            <div
-                              key={resp.id}
-                              className="bg-white p-2.5 rounded-lg border border-sky-100 shadow-2xs space-y-1 text-xs"
-                            >
-                              <div className="flex items-center justify-between text-[10px]">
-                                <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                  {resp.userName} ({resp.userEmail || (isTa ? 'வாங்குபவர் பிரதிநிதி' : 'Buyer Representative')})
-                                </span>
-                                <span className="text-slate-400 font-mono">
-                                  {new Date(resp.timestamp).toLocaleString(undefined, {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })}
-                                </span>
+                          {order.latestDailyLog ? (
+                            <div className="space-y-2">
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                                <div className="bg-white p-2 rounded-lg border border-slate-200">
+                                  <div className="text-[10px] font-semibold text-slate-400 uppercase">Stage</div>
+                                  <div className="font-bold text-slate-800 font-mono mt-0.5">
+                                    {order.latestDailyLog.stage.replace(/_/g, ' ')}
+                                  </div>
+                                </div>
+                                <div className="bg-white p-2 rounded-lg border border-slate-200">
+                                  <div className="text-[10px] font-semibold text-slate-400 uppercase">Machine Line</div>
+                                  <div className="font-bold text-slate-800 font-mono mt-0.5">
+                                    {order.latestDailyLog.machineLine}
+                                  </div>
+                                </div>
+                                <div className="bg-white p-2 rounded-lg border border-emerald-200">
+                                  <div className="text-[10px] font-semibold text-emerald-600 uppercase">Good Output</div>
+                                  <div className="font-bold text-emerald-800 font-mono mt-0.5">
+                                    +{order.latestDailyLog.goodQuantity.toLocaleString()} pcs
+                                  </div>
+                                </div>
+                                <div className="bg-white p-2 rounded-lg border border-slate-200">
+                                  <div className="text-[10px] font-semibold text-slate-400 uppercase">Defect / Rejection</div>
+                                  <div className={`font-bold font-mono mt-0.5 ${order.latestDailyLog.rejectedQuantity > 0 ? 'text-rose-600' : 'text-slate-600'}`}>
+                                    {order.latestDailyLog.rejectedQuantity} pcs
+                                  </div>
+                                </div>
                               </div>
-                              <p className="text-slate-700 text-xs pl-3 border-l-2 border-sky-400 leading-relaxed">
-                                {resp.message}
-                              </p>
+
+                              {/* Supervisor Note strictly in English */}
+                              <div className="text-xs bg-white p-2.5 rounded-lg border border-slate-200 text-slate-700 flex items-start gap-2">
+                                <span className="font-semibold text-slate-900 shrink-0">Supervisor Note:</span>
+                                <p className="text-slate-600 italic leading-relaxed">
+                                  {order.latestDailyLog.notes || 'Floor operations running as scheduled.'}
+                                </p>
+                              </div>
                             </div>
-                          ))}
+                          ) : (
+                            <div className="py-2.5 text-center text-xs text-slate-500 italic bg-white rounded-lg border border-dashed border-slate-200">
+                              No shift updates filed today yet for this PO — awaiting supervisor synchronization.
+                            </div>
+                          )}
                         </div>
-                      )}
 
-                      {/* Only Foreign BUYER and ADMIN are authorized to submit buyer daily feedback responses */}
-                      {hasRole('BUYER', 'ADMIN') ? (
-                        <>
-                      {/* Quick Response Preset Pills in ONE LINE */}
-                      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">
-                          {isTa ? 'விரைவு பதில்கள்:' : 'Quick Presets:'}
-                        </span>
-                        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                          {QUICK_FEEDBACK_PILLS.map((pill, idx) => (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() =>
-                                setFeedbackInputs((prev) => ({
-                                  ...prev,
-                                  [order.id]: pill,
-                                }))
-                              }
-                              className="text-[11px] px-2.5 py-1 bg-white hover:bg-sky-50 border border-slate-200 hover:border-sky-300 rounded-lg text-slate-700 transition cursor-pointer font-medium whitespace-nowrap shrink-0 shadow-3xs"
-                            >
-                              {pill}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                        {/* ======================================================== */}
+                        {/* NEW: BUYER INTERACTIVE DAILY RESPONSE & SIGN-OFF         */}
+                        {/* ======================================================== */}
+                        <div className="bg-gradient-to-r from-sky-50/50 to-indigo-50/30 rounded-xl border border-sky-100 p-3.5 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-lg bg-sky-600 text-white flex items-center justify-center shadow-xs">
+                              <MessageSquare className="w-3.5 h-3.5" />
+                            </div>
+                            <h5 className="text-xs font-bold text-slate-900">
+                              {t.buyer.buyerFeedbackTitle}
+                            </h5>
+                          </div>
 
-                      {/* Response Input Bar */}
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                        <input
-                          type="text"
-                          placeholder={t.buyer.feedbackPlaceholder}
-                          value={feedbackInputs[order.id] || ''}
-                          onChange={(e) =>
-                            setFeedbackInputs((prev) => ({
-                              ...prev,
-                              [order.id]: e.target.value,
-                            }))
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handlePostFeedback(order.id);
-                            }
-                          }}
-                          className="flex-1 min-w-0 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 transition"
-                        />
+                          {/* Previous Responses */}
+                          {order.buyerResponses && order.buyerResponses.length > 0 && (
+                            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                              {order.buyerResponses.map((resp) => (
+                                <div
+                                  key={resp.id}
+                                  className="bg-white p-2.5 rounded-lg border border-sky-100 shadow-2xs space-y-1 text-xs"
+                                >
+                                  <div className="flex items-center justify-between text-[10px]">
+                                    <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                      {resp.userName} ({resp.userEmail || (isTa ? 'வாங்குபவர் பிரதிநிதி' : 'Buyer Representative')})
+                                    </span>
+                                    <span className="text-slate-400 font-mono">
+                                      {new Date(resp.timestamp).toLocaleString(undefined, {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                      })}
+                                    </span>
+                                  </div>
+                                  <p className="text-slate-700 text-xs pl-3 border-l-2 border-sky-400 leading-relaxed">
+                                    {resp.message}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
 
-                        <button
-                          type="button"
-                          onClick={() => handlePostFeedback(order.id)}
-                          disabled={
-                            submittingOrderId === order.id ||
-                            !(feedbackInputs[order.id] && feedbackInputs[order.id].trim())
-                          }
-                          className="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#0C2D48] hover:bg-[#143D60] text-white rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
-                        >
-                          {submittingOrderId === order.id ? (
+                          {/* Only Foreign BUYER and ADMIN are authorized to submit buyer daily feedback responses */}
+                          {hasRole('BUYER', 'ADMIN') ? (
                             <>
-                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                              <span>{t.buyer.saving}</span>
-                            </>
-                          ) : feedbackSuccess[order.id] ? (
-                            <>
-                              <Check className="w-3.5 h-3.5 text-emerald-400" />
-                              <span>{t.buyer.recorded}</span>
+                              {/* Quick Response Preset Pills in ONE LINE */}
+                              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">
+                                  {isTa ? 'விரைவு பதில்கள்:' : 'Quick Presets:'}
+                                </span>
+                                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                                  {QUICK_FEEDBACK_PILLS.map((pill, idx) => (
+                                    <button
+                                      key={idx}
+                                      type="button"
+                                      onClick={() =>
+                                        setFeedbackInputs((prev) => ({
+                                          ...prev,
+                                          [order.id]: pill,
+                                        }))
+                                      }
+                                      className="text-[11px] px-2.5 py-1 bg-white hover:bg-sky-50 border border-slate-200 hover:border-sky-300 rounded-lg text-slate-700 transition cursor-pointer font-medium whitespace-nowrap shrink-0 shadow-3xs"
+                                    >
+                                      {pill}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Response Input Bar */}
+                              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                <input
+                                  type="text"
+                                  placeholder={t.buyer.feedbackPlaceholder}
+                                  value={feedbackInputs[order.id] || ''}
+                                  onChange={(e) =>
+                                    setFeedbackInputs((prev) => ({
+                                      ...prev,
+                                      [order.id]: e.target.value,
+                                    }))
+                                  }
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      handlePostFeedback(order.id);
+                                    }
+                                  }}
+                                  className="flex-1 min-w-0 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 transition"
+                                />
+
+                                <button
+                                  type="button"
+                                  onClick={() => handlePostFeedback(order.id)}
+                                  disabled={
+                                    submittingOrderId === order.id ||
+                                    !(feedbackInputs[order.id] && feedbackInputs[order.id].trim())
+                                  }
+                                  className="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#0C2D48] hover:bg-[#143D60] text-white rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                                >
+                                  {submittingOrderId === order.id ? (
+                                    <>
+                                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                      <span>{t.buyer.saving}</span>
+                                    </>
+                                  ) : feedbackSuccess[order.id] ? (
+                                    <>
+                                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                      <span>{t.buyer.recorded}</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <SendHorizontal className="w-3.5 h-3.5" />
+                                      <span>{t.buyer.postResponse}</span>
+                                    </>
+                                  )}
+                                </button>
+                              </div>
                             </>
                           ) : (
-                            <>
-                              <SendHorizontal className="w-3.5 h-3.5" />
-                              <span>{t.buyer.postResponse}</span>
-                            </>
+                            <div className="p-3 bg-white/70 rounded-xl border border-sky-100 text-[11px] text-slate-500 italic flex items-center justify-between">
+                              <span>Buyer Daily Response input is authenticated for foreign buyers only. Merchandisers have oversight audit access.</span>
+                              <span className="text-[10px] font-mono font-bold text-sky-700 uppercase bg-sky-50 px-2 py-0.5 rounded border border-sky-200">READ ONLY</span>
+                            </div>
                           )}
-                        </button>
-                      </div>
-                        </>
-                      ) : (
-                        <div className="p-3 bg-white/70 rounded-xl border border-sky-100 text-[11px] text-slate-500 italic flex items-center justify-between">
-                          <span>Buyer Daily Response input is authenticated for foreign buyers only. Merchandisers have oversight audit access.</span>
-                          <span className="text-[10px] font-mono font-bold text-sky-700 uppercase bg-sky-50 px-2 py-0.5 rounded border border-sky-200">READ ONLY</span>
                         </div>
-                      )}
-                    </div>
+                      </>
+                    )}
 
                     {/* Order Visual Proof Thumbnails */}
                     {order.approvedPhotos.length > 0 && (

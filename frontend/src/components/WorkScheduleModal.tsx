@@ -412,37 +412,34 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
     // - Check each day's function and acknowledge
     if (role === 'BUYER') {
       const userEmail = (user?.email || '').toLowerCase();
+      const buyerName = user?.buyer?.name || (userEmail.includes('company-c') ? 'Company C (Germany)' : userEmail.includes('company-b') ? 'Company B (UK)' : 'Foreign Buyer');
+      const buyerId = user?.buyerId;
       const buyerCode = user?.buyer?.code || '';
-
-      const isCompanyC = userEmail.includes('company-c') || buyerCode === 'COMPANY_C';
-      const companyTitle = isCompanyC
-        ? (isTa ? 'நிறுவனம் சி (ஜெர்மனி)' : 'Company C (Germany)')
-        : (isTa ? 'நிறுவனம் பி (இங்கிலாந்து)' : 'Company B (UK)');
 
       const matchingPOs = (floorOrders || risks || [])
         .filter((o: any) =>
-          isCompanyC
-            ? (o.poNumber?.startsWith('C-PO-') || o.buyer?.code === 'COMPANY_C')
-            : (o.poNumber?.startsWith('B-PO-') || o.buyer?.code === 'COMPANY_B')
+          (buyerId && (o.buyerId === buyerId || o.buyer?.id === buyerId)) ||
+          (buyerCode && o.buyer?.code === buyerCode) ||
+          (buyerName && o.buyer?.name && o.buyer.name.toLowerCase().includes(buyerName.toLowerCase())) ||
+          (userEmail.includes('company-c') ? o.poNumber?.startsWith('C-PO-') : o.poNumber?.startsWith('B-PO-'))
         )
-        .map((o: any) => o.poNumber);
+        .map((o: any) => o.poNumber)
+        .filter(Boolean);
 
       const companyOrders = matchingPOs.length > 0
         ? `PO: ${Array.from(new Set(matchingPOs)).join(', ')}`
-        : isCompanyC
-        ? 'All Active Company C Purchase Orders'
-        : 'All Active Company B Purchase Orders';
+        : `All Active ${buyerName} Purchase Orders`;
 
       return [
         {
           id: `buy-check-function-${dateKey}`,
           time: '09:30 AM GMT',
           title: isTa
-            ? `${companyTitle} பொருட்களின் தினசரி உற்பத்தி செயல்பாட்டை சரிபார்த்தல்`
-            : `Check Daily Production Functions for ${companyTitle} Products`,
+            ? `${buyerName} பொருட்களின் தினசரி உற்பத்தி செயல்பாட்டை சரிபார்த்தல்`
+            : `Check Daily Production Functions for ${buyerName} Products`,
           description: isTa
             ? 'உங்கள் நிறுவனத்திற்கு ஒதுக்கப்பட்ட அனைத்து ஆர்டர்களுக்கான உற்பத்தி நிலைகள், மணிநேர துண்டுகள் எண்ணிக்கை மற்றும் வேகத்தை சரிபார்க்கவும்.'
-            : `Inspect today's active manufacturing stages, hourly piece counts, and throughput pace for all products under ${companyTitle}.`,
+            : `Inspect today's active manufacturing stages, hourly piece counts, and throughput pace for all products under ${buyerName}.`,
           unit: isTa ? 'ஒதுக்கப்பட்ட உற்பத்தி அலகுகள்' : 'Assigned Production Lines',
           buyerOrPo: companyOrders,
           completed: isPast,

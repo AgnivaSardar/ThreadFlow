@@ -262,5 +262,6 @@ function runDeterministicAssistantFallback(query: string, orders: any[], user: A
   }
 
   // General help
-  return 'Welcome to ThreadFlow! You can ask me:\n• Status of any PO (e.g. "What is the status of C-PO-0501?")\n• "Which orders are at risk?"\n• "How do I log shift output?"\n• "How does the air freight simulator work?"\nI will guide you strictly based on the live factory database.';
+  const samplePo = orders[0]?.poNumber || 'an order';
+  return `Welcome to ThreadFlow! You can ask me:\n• Status of any PO (e.g. "What is the status of ${samplePo}?")\n• "Which orders are at risk?"\n• "How do I log shift output?"\n• "How does the air freight simulator work?"\nI will guide you strictly based on the live factory database.`;
 }
