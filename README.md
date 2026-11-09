@@ -1,35 +1,283 @@
 # ThreadFlow — Knitwear Production Intelligence & Critical Path OS
-> **Know the delay before it happens.**  
-> Real-time production tracking, deterministic run-rate risk engine, bilingual Tamil/Hindi voice telemetry, and scoped buyer visibility for export garment manufacturers.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-18.3-61DAFB.svg)](https://react.dev/)
-[![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791.svg)](https://www.postgresql.org/)
-[![Prisma](https://img.shields.io/badge/Prisma-5.22-2D3748.svg)](https://www.prisma.io/)
-[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3.4-38B2AC.svg)](https://tailwindcss.com/)
-[![Tests](https://img.shields.io/badge/Tests-128%20Passing-brightgreen.svg)]()
+> **Know the delay before it happens.**  
+> Real-time shop floor telemetry, deterministic "Show-Your-Math" run-rate risk engine, bilingual Tamil/Hindi voice AI, and multi-tenant buyer visibility engineered for export garment manufacturers.
+
+<p align="center">
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white" alt="TypeScript" /></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=black" alt="React" /></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-20.x-339933?logo=nodedotjs&logoColor=white" alt="Node.js" /></a>
+  <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" /></a>
+  <a href="https://www.prisma.io/"><img src="https://img.shields.io/badge/Prisma-5.22-2D3748?logo=prisma&logoColor=white" alt="Prisma" /></a>
+  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/TailwindCSS-3.4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/Tests-128%20Passing%20(100%25)-brightgreen?logo=jest&logoColor=white" alt="Tests" /></a>
+</p>
 
 ---
 
 ## Executive Overview & Business Value
 
-Built for **Company A** (Tiruppur, Tamil Nadu) — a knitwear exporter manufacturing ~500 export POs annually (₹95–110 Crore turnover) for UK and European retail brands.
+Built for knitwear export clusters (such as Tiruppur, Tamil Nadu) manufacturing 500+ export purchase orders annually (₹95–110 Crore turnover) for UK and European retail brands.
 
 ThreadFlow replaces fragmented WhatsApp chats, manual phone calls, and static spreadsheets with an automated, explainable operational command center that halts a **₹1.08 Crore annual financial bleed**:
 
-| Source of Loss | Pre-ThreadFlow Reality | With ThreadFlow | Annual Savings |
+| Source of Loss | Pre-ThreadFlow Reality | With ThreadFlow | Annual Financial Recovery |
 | :--- | :--- | :--- | :---: |
-| **Emergency Air Freight** | 15 orders/yr forced to air cargo @ ₹3.5L extra | Early bottleneck detection & buffer mitigation | **₹52.5 Lakh** |
-| **Late Delivery Deductions** | 25 orders hit with 5% invoice penalties | Proactive schedule recovery & buyer alignment | **₹26.25 Lakh** |
-| **Merchandiser Chasing Overhead** | 12 merchandisers spending 2 hrs/day calling units | Automated real-time floor telemetry | **₹28.8 Lakh** |
+| **Emergency Air Freight** | 15 orders/yr forced to air cargo @ ₹3.5L extra | 10-day advance bottleneck warning & buffer mitigation | **₹52.5 Lakh** |
+| **Late Delivery Deductions** | 25 orders hit with 5% invoice contract penalties | Proactive schedule recovery & buyer sign-off alignment | **₹26.25 Lakh** |
+| **Merchandiser Chasing Overhead** | 12 merchandisers spending 2 hrs/day calling units | Automated real-time floor telemetry & voice updates | **₹28.8 Lakh** |
 | **Total Annual Recovery** | | | **₹1.08 Crore / yr** |
+
+---
+
+## Interactive Platform Walkthrough & Feature Guide
+
+Explore the core areas of ThreadFlow, how to navigate to each screen, and the engineering that powers them.
+
+---
+
+### 1. Export Orders Board & Critical Path Overview
+
+The primary mission control dashboard for merchandisers and factory leadership, providing cross-factory visibility across all active purchase orders, assigned production units, shipping calendar weeks (CW), and real-time status.
+
+<p align="center">
+  <img src="./public/images/readme_order_board.png" alt="Export Orders Board" width="100%" />
+</p>
+
+* **How to Navigate There:**
+  * **Role:** `ADMIN`, `MERCHANDISER`, or `SUPERVISOR`
+  * **Path:** Click **Order Board** in the left sidebar menu (or navigate to `/orders`).
+* **Key Functionality:**
+  * **Live Status Filter Chips:** Instantly filter orders by `All Orders`, `Critical Deficit`, `Extra Caution`, `On Track`, and `Completed`.
+  * **Multi-Parameter Filtering:** Sift orders by Foreign Buyer (`Company B (UK)`, `Company C (Germany)`, etc.), Manufacturing Hub (Own Units vs Subcontractors), or Shipping Calendar Week (`CW 47`, `CW 48`, etc.).
+  * **Real-Time Progress Indicators:** Displays active TNA stage (e.g., `Finishing`, `Checking`, `Stitching`), completed vs target piece counts, and exact ex-factory dates with countdown days remaining.
+  * **One-Click Actions:** Direct access to `Export CSV` and `+ New Export Order` creation wizard with automatic 7-stage TNA schedule generation.
+
+---
+
+### 2. Purchase Order Deep Dive, Financials & Size Allocation
+
+Detailed commercial and physical breakdown of individual purchase orders, linking commercial FOB value directly to size ratios and verified garment counts.
+
+<p align="center">
+  <img src="./public/images/readme_po_details_sizes.png" alt="Purchase Order Details and Size Allocation" width="100%" />
+</p>
+
+* **How to Navigate There:**
+  * **Role:** `ADMIN`, `MERCHANDISER`
+  * **Path:** From the **Order Board**, click any PO number link (e.g., `B-PO-88260`) to open `/orders/:id`.
+* **Key Functionality:**
+  * **Commercial Summary Header:** Real-time display of destination market, assigned manufacturing unit, ex-factory deadline (with non-Sunday working days remaining), and total FOB order value in INR and foreign currency (e.g., `₹3,903,500` / `GBP 7.4/pc`).
+  * **Visual Size Breakdown Donut & Progress:** Compares planned order ratios against completed physical garments across all sizes (`S`, `M`, `L`, `XL`).
+  * **Strict Cap Verification:** Enforces that completed pieces strictly respect planned order lines (e.g., Size L: 1,500/1,500 pcs @ 100%, Size M: 1,940/2,000 pcs @ 97%), preventing accidental over-allocation or phantom production.
+  * **Rescheduling Actions:** Features the `Shift Ex-Factory Date` button (which triggers mandatory cryptographic audit logging) and `Advance Stage Manually`.
+
+---
+
+### 3. 6/7-Stage Time & Action (TNA) Milestone Pipeline
+
+Interactive visual pipeline detailing each critical manufacturing stage from knitting to final packing, complete with buffer margins and upstream lead time dependencies.
+
+<p align="center">
+  <img src="./public/images/readme_tna_pipeline.png" alt="6-Stage Time and Action Pipeline" width="100%" />
+</p>
+
+* **How to Navigate There:**
+  * **Role:** `ADMIN`, `MERCHANDISER`
+  * **Path:** Inside `/orders/:id`, scroll down to the **Time & Action Pipeline** card.
+* **Key Functionality:**
+  * **Circular Pipeline Health Gauge:** Dynamic health percentage showing overall milestone completion (e.g., `Stage 6 of 6 — Finishing @ 100% Health`).
+  * **Dynamic Stage Adaptation:** Automatically detects product specifications (e.g., solid-dyed garments skip the printing stage to form a streamlined 6-stage pipeline, while printed items run a full 7-stage pipeline).
+  * **Stage Inspection Navigator:** Click any interactive stage badge (`1 Knitting`, `2 Dyeing/Washing`, `3 Cutting`, `4 Stitching`, `5 Checking`, `6 Finishing`) to inspect planned date windows, completed piece counts, and downstream extra protection buffers.
+  * **Predecessor Invariant Enforcement:** Physically prevents downstream stages from recording more output than has been cleared by preceding upstream stages.
+
+---
+
+### 4. Shop Floor Production Hub & Active Work Orders
+
+High-contrast, touch-optimized shop floor view designed for factory supervisors and unit heads to view operational queues and log daily shifts.
+
+<p align="center">
+  <img src="./public/images/readme_floor_hub.png" alt="Shop Floor Production Hub" width="100%" />
+</p>
+
+* **How to Navigate There:**
+  * **Role:** `SUPERVISOR`, `MERCHANDISER`, `ADMIN`
+  * **Path:** Click **Floor Work** in the left sidebar menu (or navigate to `/floor`).
+* **Key Functionality:**
+  * **Live Order Cards:** Displays active shop floor purchase orders with per-size fulfillment meters, remaining piece count badges, and current milestone badges.
+  * **Unit Scoping:** Factory supervisors (e.g., Muthu in Unit 1, Selvam in Unit 2) automatically see their designated factory unit's work orders by default.
+  * **One-Tap Output Entry:** Clicking **Log Output** on any card instantly launches the bilingual shift entry modal for that specific order.
+
+---
+
+### 5. Shift Output Logging & Strict Cap Enforcement
+
+A resilient shift entry form enabling supervisors to log day or night production outputs with per-size precision and zero overrun tolerance.
+
+<p align="center">
+  <img src="./public/images/readme_floor_modal_sizes.png" alt="Log Shift Output Modal" width="55%" />
+</p>
+
+* **How to Navigate There:**
+  * **Role:** `SUPERVISOR`, `ADMIN`
+  * **Path:** Inside **Floor Work** (`/floor`), tap the **Log Output** button on any order card.
+* **Key Functionality:**
+  * **Shift & Line Routing:** Toggle between `Day` and `Night` shifts and select the designated machine line (`Line 1`, `Line 2`, `Packing Line`).
+  * **Compulsory Size Breakdown Matrix:** Output must be logged per size (`S`, `M`, `L`, `XL`) with quick-add helper buttons (`+10`, `+25`, `+50`) for rapid floor data entry on mobile devices.
+  * **Strict Cap Amount Validation:** Rejects any input that causes a size line or the stage total to exceed the planned cap. An instant warning alerts the supervisor:
+    > *"Size L output exceeds required cap of 1,500 pcs! Maximum remaining allowed: 0 pcs. Please recheck your entry."*
+  * **Automatic Summation:** Automatically sums individual size counts to ensure aggregate good output matches the total stage delivery.
+
+---
+
+### 6. Multi-Select Floor Issue Chips & Bilingual Voice Telemetry
+
+Empowers floor supervisors to capture mechanical disruptions and voice notes in native languages (`தமிழ்`, `English`, `हिंदी`) with zero keyboard dependency.
+
+<p align="center">
+  <img src="./public/images/readme_voice_issues.png" alt="Floor Issue Chips and Voice Input" width="55%" />
+</p>
+
+* **How to Navigate There:**
+  * **Role:** `SUPERVISOR`, `ADMIN`
+  * **Path:** Inside the **Log Shift Output** modal, scroll to the bottom section.
+* **Key Functionality:**
+  * **Multi-Select Operational Issue Chips:** Tap one or multiple visual chips to classify disruptions:
+    * ⚡ **Power Outage** (EB cut / generator fuel delay)
+    * 🔧 **Machine Breakdown** (Needle / motor mechanical fault)
+    * ✂️ **Fabric Defect** (Yarn holes / GSM skew)
+    * 🎨 **Dyeing Delay** (Shade variation / wash batch wait)
+    * 👥 **Labour Shortage** (Operator / tailor absenteeism)
+    * ⏱️ **Subcontractor Delay** (Outside lot not returned on gate pass)
+  * **Bilingual Voice Recognition:** Powered by the browser's native **Web Speech API** (`ta-IN`, `hi-IN`, `en-IN`). Supervisors tap the microphone and speak colloquially in Tamil or Hindi.
+  * **Gemini AI Root-Cause Classifier:** Analyzes spoken transcripts using Google Gemini API to extract root causes, falling back to a deterministic dual-script regex dictionary (`TAMIL_FALLBACK_DICTIONARY`) if network latency exceeds 3 seconds.
+  * **Photo Defect Capture:** Built-in camera integration with automatic client-side canvas compression (< 800 KB) and offline IndexedDB queueing.
+
+---
+
+### 7. Human-in-the-Loop Risk Review Gate
+
+Protects commercial buyer relationships by routing shop floor operational disruptions to senior merchandisers for triage before international buyers are notified.
+
+<p align="center">
+  <img src="./public/images/readme_risk_review_gate.png" alt="Human-in-the-Loop Risk Review Gate" width="100%" />
+</p>
+
+* **How to Navigate There:**
+  * **Role:** `MERCHANDISER`, `ADMIN`
+  * **Path:** Click **Risk & Delays** in the left sidebar menu $\to$ select the **Issue Review** tab (or navigate to `/risks`).
+* **Key Functionality:**
+  * **Factory At-Risk Counter:** Real-time badge computing total financial exposure across all open operational bottlenecks (e.g., `FACTORY AT-RISK: ₹568,645`).
+  * **Automated Risk Escalation:** Any floor log with an operational disruption (e.g. *Machine Breakdown*) automatically elevates the milestone to `AMBER` / `PENDING_REVIEW` status so it immediately surfaces here.
+  * **Buyer Notification Decision Gate:**
+    * 🟢 **Inform Buyer:** Approves the risk alert and dispatches an official schedule notification to the foreign buyer portal with transparent recovery dates.
+    * ⚪ **Keep Internal:** Resolves the issue using in-house buffers (overtime, extra line allocation) without causing buyer panic or commercial penalties.
+
+---
+
+### 8. Deterministic "Show-Your-Math" Run-Rate Engine
+
+Eliminates speculative guesswork with mathematical proof of delivery pacing, comparing required run-rate against real floor velocity.
+
+<p align="center">
+  <img src="./public/images/readme_run_rate_math.png" alt="Deterministic Show-Your-Math Run-Rate Engine" width="100%" />
+</p>
+
+* **How to Navigate There:**
+  * **Role:** `MERCHANDISER`, `ADMIN`
+  * **Path:** Inside **Risk & Delays** (`/risks`), select the **Run-Rate Pace** tab.
+* **Key Functionality:**
+  * **Formula 1 (Required Run-Rate):**
+    $$\text{Req} = \frac{\text{Remaining Pieces}}{\text{Working Days} - \text{Downstream Buffer}}$$
+    *Calculates exact pieces per day required to hit ex-factory deadlines, strictly excluding non-working Sundays and reserving downstream quality buffers.*
+  * **Formula 2 (Actual Rate via 3-Day Weighted Moving Average):**
+    $$\text{Actual WMA} = (Q_{\text{today}} \cdot 0.50) + (Q_{\text{yesterday}} \cdot 0.30) + (Q_{\text{day-2}} \cdot 0.20)$$
+    *Prioritizes recent floor velocity over distant averages.*
+  * **Projected Finish Date & Financial Exposure:** Displays the exact forecasted completion date, deficit or surplus in pcs/day, days late, and rupee value at risk.
+  * **Standup Memo Generator:** One-click `Copy Standup Memo` formats an executive briefing ready for daily production meetings.
+
+---
+
+### 9. Multi-Tenant Scoped Buyer Portal & Collaborative Sign-Off
+
+Secure, tenant-isolated transparency portal for international buyers (UK, Germany, EU) to track orders and sign off on milestone quality.
+
+<p align="center">
+  <img src="./public/images/readme_buyer_portal.png" alt="Scoped Buyer Portal" width="100%" />
+</p>
+
+* **How to Navigate There:**
+  * **Role:** `BUYER` (e.g. Sarah Jenkins for UK, Klaus Mueller for Germany) or `ADMIN`
+  * **Path:** Click **Buyer Portal** in the sidebar menu (or navigate to `/buyer`).
+* **Key Functionality:**
+  * **Strict Data Isolation:** Foreign buyers can only see purchase orders belonging to their buyer ID or buyer code. European buyers cannot view UK orders, and vice versa.
+  * **Milestone Progress & Verified Evidence:** Displays verified completion percentages and approved quality inspection photos only after merchandiser confirmation.
+  * **Buyer Daily Feedback & Sign-Off:** Provides quick presets (`Output approved — proceed with next scheduled milestone`, `Quality inspection verified`, `Vessel shipping window confirmed`) and a response channel for contractual sign-offs.
+
+---
+
+### 10. Tamper-Evident Cryptographic Audit History
+
+An immutable, append-only compliance ledger recording every schedule shift, milestone override, and buyer response.
+
+<p align="center">
+  <img src="./public/images/readme_audit_trail.png" alt="Cryptographic Audit History" width="100%" />
+</p>
+
+* **How to Navigate There:**
+  * **Role:** `ADMIN`, `MERCHANDISER`
+  * **Path:** Click **Audit History** in the left sidebar menu (or navigate to `/audit`).
+* **Key Functionality:**
+  * **SHA-256 Merkle Hash Chaining:** Every event calculates an HMAC/SHA-256 hash linking `previousHash`, `timestamp`, `action`, `reasonCode`, `targetEntityId`, and acting `userId`. Any unauthorized database mutation breaks the cryptographic chain.
+  * **Mandatory Commercial Reason Codes:** Rescheduling an ex-factory date or overriding a milestone requires selecting verified reasons (`BUYER_REQUEST`, `FABRIC_DELAY`, `LABOUR_SHORTAGE`, `SUBCONTRACTOR_DELAY`, etc.).
+  * **Complete Audit Trail Filter:** Search and filter event streams by PO number, action category, author, or role.
+
+---
+
+### 11. 5-Week TNA Pipeline Velocity & Executive Reporting
+
+Strategic analytics for factory leadership and brand sourcing directors comparing weekly garment throughput and stage velocity.
+
+<p align="center">
+  <img src="./public/images/readme_tna_velocity_bars.png" alt="7-Stage TNA Pipeline Velocity" width="100%" />
+</p>
+<p align="center">
+  <img src="./public/images/readme_executive_report.png" alt="Executive Sourcing Intelligence Report" width="100%" />
+</p>
+
+* **How to Navigate There:**
+  * **Role:** `ADMIN`, `MERCHANDISER`
+  * **Path:** Click **Weekly Reports** in the left sidebar menu (or navigate to `/reports`).
+* **Key Functionality:**
+  * **5-Week Multi-Bar Comparison:** Visualizes throughput trends across all 7 TNA stages over five consecutive calendar weeks (`CW 40` to `CW 44`) with velocity growth badges (e.g., `Knitting: 94% [↗ +23%]`).
+  * **AI Sourcing Intelligence Analysis:** Synthesizes weekly production logs into executive insights with quantified confidence scores:
+    * 🟢 **Operational Strengths** (e.g., *Exceptional upstream acceleration in knitting and dyeing*)
+    * ⚠️ **Bottlenecks to Monitor** (e.g., *Stitching trailing behind upstream volume*)
+    * 🧭 **Floor Merchandiser Directive** (actionable labor re-allocation instructions)
+  * **Delivery Schedule Health Donut:** Clear percentage of on-time POs vs minor buffer consumed vs critical deficits.
+  * **Executive PDF Generation:** One-click **Print Full Page PDF** compiles a formatted commercial pack for brand sourcing meetings.
+
+---
+
+## Pre-Configured Demo Accounts
+
+All pre-seeded demo accounts use the standard password: `ThreadFlow@2026`
+
+| Persona | Login Email | Assigned Role | Recommended Navigation & Verification Flow |
+| :--- | :--- | :--- | :--- |
+| **System Admin** | `admin@threadflow.com` | `ADMIN` | Full global access across all orders, audit trails, and user management. |
+| **Senior Merchandiser** | `merchandiser@threadflow.com` | `MERCHANDISER` | Order Board (`/orders`), PO Details, Run-Rate Pace (`/risks`), Issue Review Gate, and Weekly PDF Reports. |
+| **Floor Supervisor (Unit 1)** | `supervisor.muthu@threadflow.com` | `SUPERVISOR` | Unit 1 Floor Hub (`/floor`), Tamil voice logging (`தமிழ்`), and multi-select issue chips. |
+| **Floor Supervisor (Unit 2)** | `supervisor.selvam@threadflow.com` | `SUPERVISOR` | Unit 2 Stitching and Finishing operations. |
+| **Foreign Buyer (UK)** | `sourcing@company-b.co.uk` | `BUYER` | Scoped Buyer Portal (`/buyer`) viewing Company B UK POs (`B-PO-88260`, `B-PO-88240`, `B-PO-88213`). |
+| **Foreign Buyer (Germany)** | `compliance@company-c.de` | `BUYER` | Scoped Buyer Portal (`/buyer`) strictly displaying German POs (`C-PO-0488`, `C-PO-0492`, `C-PO-0501`). |
 
 ---
 
 ## System Architecture
 
-ThreadFlow is architected as a robust **Modular Monolith** with clear domain separation, strictly scoped role permissions, and an offline-resilient edge for factory shop floor conditions.
+ThreadFlow is architected as a modular TypeScript stack with strict domain boundaries:
 
 ```
                     ┌────────────────────────────────────────────────────────┐
@@ -37,7 +285,7 @@ ThreadFlow is architected as a robust **Modular Monolith** with clear domain sep
                     │         React 18 • TypeScript • Tailwind CSS • Vite     │
                     └──────────────────────────┬─────────────────────────────┘
                                                │
-                                 Reverse Proxy /api/v1 (JWT)
+                                  Reverse Proxy /api/v1 (JWT)
                                                │
                     ┌──────────────────────────▼─────────────────────────────┐
                     │               THREADFLOW BACKEND ENGINE                │
@@ -57,48 +305,12 @@ ThreadFlow is architected as a robust **Modular Monolith** with clear domain sep
 
 ---
 
-## Key System Features
-
-1. **Order Setup & 7-Stage TNA Milestone Engine:**  
-   Automatically instantiates knitting, dyeing/washing, printing, cutting, stitching, checking, and finishing stages with industry buffer offsets and size breakdown ratios (`S`, `M`, `L`, `XL`).
-
-2. **Deterministic "Show-Your-Math" Run-Rate Engine:**  
-   Calculates daily required rate vs 3-day weighted moving average ($0.50 \cdot R_1 + 0.30 \cdot R_2 + 0.20 \cdot R_3$), excludes non-working Sundays, factors downstream buffers, and computes rupee exposure directly.
-
-3. **Bilingual Shop Floor Telemetry & Tamil Voice:**  
-   Floor supervisors log shift output on low-end hardware using the browser's native **Web Speech API** in Tamil (`ta-IN`), Hindi (`hi-IN`), or English (`en-IN`), with offline-first IndexedDB queueing and photo compression.
-
-4. **Resilient AI Classification with Deterministic Fallback:**  
-   Classifies colloquial factory notes into 7 operational root causes using Google Gemini API, automatically falling back to an embedded dual-script regex dictionary (`TAMIL_FALLBACK_DICTIONARY`) if latency exceeds 3,000 ms.
-
-5. **Human-in-the-Loop Buyer Portal:**  
-   Strict multi-tenant buyer isolation. Foreign brands view real-time milestone progress and defect photos *only after merchandiser confirmation*, eliminating premature panic.
-
-6. **Tamper-Evident Cryptographic Audit Trail:**  
-   Continuous SHA-256 Merkle chain recording every critical date reschedule with mandatory reason codes, previous/new diffs, and acting user IDs.
-
----
-
-## Pre-Configured Demo Accounts
-
-All demo accounts use password: `ThreadFlow@2026`
-
-| Persona | Email | Role | Recommended Test Flow |
-| :--- | :--- | :--- | :--- |
-| **System Admin** | `admin@threadflow.com` | `ADMIN` | Global oversight, audit log review, and user administration. |
-| **Senior Merchandiser** | `merchandiser@threadflow.com` | `MERCHANDISER` | Order Board, "Show-Your-Math" details, What-If simulator, and PDF report generator. |
-| **Floor Supervisor (Unit 1)** | `supervisor.muthu@threadflow.com` | `SUPERVISOR` | Unit 1 floor view, Tamil voice logging, and photo proof capture. |
-| **Floor Supervisor (Unit 2)** | `supervisor.selvam@threadflow.com` | `SUPERVISOR` | Unit 2 & 3 stitching lines. |
-| **Foreign Buyer (UK)** | `sourcing@company-b.co.uk` | `BUYER` | Scoped Buyer Portal (`B-PO-88213`, `B-PO-88240`), confirmed photos only. |
-| **Foreign Buyer (Germany)** | `compliance@company-c.de` | `BUYER` | Scoped Buyer Portal (`C-PO-0488`). |
-
----
-
 ## Quick Start (Local Setup)
 
 ### 1. Prerequisites
-* Node.js v20+ (LTS)
-* npm v10+
+* **Node.js** v20+ (LTS)
+* **npm** v10+
+* **PostgreSQL** (Local instance or Supabase connection string)
 
 ### 2. Backend Setup
 ```bash
@@ -108,22 +320,22 @@ npx prisma db push
 npm run seed:calibrated
 npm run dev
 ```
-Backend runs on `http://localhost:4000`.
+*The backend API server will start on `http://localhost:4000`.*
 
 ### 3. Frontend Setup
-In a second terminal:
+In a second terminal window:
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Open `http://localhost:5173` to sign in.
+*The frontend development server will start on `http://localhost:5173`.*
 
 ---
 
 ## Automated Test Verification
 
-Run all test suites across the 4 major operational engines:
+ThreadFlow includes 128 automated unit, integration, and mathematical invariant tests:
 
 ```bash
 npm --prefix backend test
@@ -141,26 +353,18 @@ TOTAL: 128 PASSED | 0 FAILED (100% PASS RATE)
 
 ---
 
-## Cloud Deployment (Render)
+## Engineering Documentation
 
-ThreadFlow deploys natively on Render as a Node.js Web Service (backend) and Static Site (frontend):
+Detailed technical specifications and design runbooks are available in the repository:
 
-1. **Backend Service:**
-   * Build Command: `npm install && npx prisma db push && npm run build`
-   * Start Command: `npm start`
-2. **Frontend Site:**
-   * Build Command: `npm install && npm run build`
-   * Publish Directory: `dist`
-   * Rewrite: `/*` $\to$ `/index.html`
+* [**Reviewer Evaluation Guide (`docs/REVIEWER_GUIDE.md`)**](docs/REVIEWER_GUIDE.md) — Persona evaluation journeys, live credentials, and problem-solving mappings.
+* [**Technical Design Document (`TECHNICAL_DESIGN_DOCUMENT.md`)**](TECHNICAL_DESIGN_DOCUMENT.md) — Comprehensive technical design covering relational schemas, invariant rules, and mathematical proofs.
+* [**Deployment & Operations Runbook (`docs/DEPLOYMENT_RUNBOOK.md`)**](docs/DEPLOYMENT_RUNBOOK.md) — Render deployment guide, Supabase pooler tuning, and environment variable references.
+* [**API & Data Model Specification (`docs/API_AND_DATA_SPECIFICATION.md`)**](docs/API_AND_DATA_SPECIFICATION.md) — Complete REST endpoint contract, entity dictionary, and design system tokens.
+* [**Client Brief & Problem Statement (`docs/PROBLEM_STATEMENT.md`)**](docs/PROBLEM_STATEMENT.md) — Initial client brief, Tiruppur factory operational constraints, and baseline parameters.
 
 ---
 
-## Documentation Directory
-
-The project documentation has been consolidated into 4 comprehensive guides:
-
-* [**Reviewer Evaluation Guide (`docs/REVIEWER_GUIDE.md`)**](docs/REVIEWER_GUIDE.md): Direct mapping to the 50% Quality / 30% Problem Solving / 20% Communication rubric with step-by-step persona test paths.
-* [**Technical Design Document (`TECHNICAL_DESIGN_DOCUMENT.md`)**](TECHNICAL_DESIGN_DOCUMENT.md): Exhaustive TDD covering architectural decisions, relational invariants, and mathematical formulas.
-* [**Deployment & Operations Runbook (`docs/DEPLOYMENT_RUNBOOK.md`)**](docs/DEPLOYMENT_RUNBOOK.md): Complete setup guide, Supabase pooler tuning, Render instructions, and environment variable dictionary.
-* [**API & Data Model Specification (`docs/API_AND_DATA_SPECIFICATION.md`)**](docs/API_AND_DATA_SPECIFICATION.md): Definitive entity dictionary, foreign key invariants, complete REST endpoints, and UI design tokens.
-* [**Client Brief & Problem Statement (`docs/PROBLEM_STATEMENT.md`)**](docs/PROBLEM_STATEMENT.md): Problem background, operational boundaries, and seed baseline parameters.
+<p align="center">
+  <b>ThreadFlow Operating System</b> • Built for Modern Textile Manufacturing & Export Compliance
+</p>
