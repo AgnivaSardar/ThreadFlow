@@ -69,33 +69,120 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
     activeMilestone?: { stage: string };
   }> | null>(null);
 
+  const [activeRisks, setActiveRisks] = useState<Array<{
+    orderId: string;
+    poNumber: string;
+    style: string;
+    riskLevel: 'RED' | 'AMBER' | 'GREEN';
+    activeStage: string;
+    varianceQtyPerDay: number;
+    requiredDailyRate: number;
+    actualRollingRate: number;
+    unit?: { id: string; name: string; code: string; type?: string };
+    rulesTriggered?: string[];
+  }>>([]);
+
+  const [activeIssues, setActiveIssues] = useState<Array<{
+    id: string;
+    poNumber: string;
+    style: string;
+    stage: string;
+    notes?: string;
+    issueCategory?: string;
+    rejectedQuantity?: number;
+    machineLine?: string;
+  }>>([]);
+
   useEffect(() => {
-    if (!isOpen || currentRole !== 'SUPERVISOR') return;
+    if (!isOpen) return;
     let isSubscribed = true;
-    const fetchActiveFloorOrders = async () => {
+
+    const fetchWorkData = async () => {
       try {
-        const url = user?.assignedUnitId
+        const workUrl = user?.assignedUnitId
           ? `/production/work?unitId=${user.assignedUnitId}`
           : '/production/work';
-        const res = await apiRequest<{ data: { orders: Array<{ poNumber: string; style: string; activeMilestone?: { stage: string } }> } }>(url);
-        if (isSubscribed && res.data?.orders) {
-          setActiveFloorOrders(res.data.orders);
+        const workRes = await apiRequest<{
+          data: {
+            orders: Array<{ poNumber: string; style: string; activeMilestone?: { stage: string } }>;
+            recentUpdates?: Array<{
+              id: string;
+              poNumber: string;
+              style: string;
+              stage: string;
+              notes?: string;
+              issueCategory?: string | null;
+              rejectedQuantity?: number;
+              machineLine?: string;
+              approvalStatus?: string;
+            }>;
+          };
+        }>(workUrl);
+
+        if (isSubscribed && workRes.data?.orders) {
+          setActiveFloorOrders(workRes.data.orders);
         }
-      } catch {
-        // Fallback gracefully to offline list
+        if (isSubscribed && workRes.data?.recentUpdates) {
+          const reportedIssues = workRes.data.recentUpdates
+            .filter((u) => Boolean(u.issueCategory) || (u.rejectedQuantity && u.rejectedQuantity > 0))
+            .map((u) => ({
+              id: u.id,
+              poNumber: u.poNumber,
+              style: u.style,
+              stage: u.stage,
+              notes: u.notes,
+              issueCategory: u.issueCategory || undefined,
+              rejectedQuantity: u.rejectedQuantity,
+              machineLine: u.machineLine,
+            }));
+          setActiveIssues(reportedIssues);
+        }
+      } catch (err) {
+        console.warn('Could not load supervisor work orders:', err);
+      }
+
+      try {
+        const riskUrl = user?.assignedUnitId
+          ? `/risk?unitId=${user.assignedUnitId}`
+          : '/risk';
+        const riskRes = await apiRequest<{
+          data: {
+            risks: Array<{
+              orderId: string;
+              poNumber: string;
+              style: string;
+              riskLevel: 'RED' | 'AMBER' | 'GREEN';
+              activeStage: string;
+              varianceQtyPerDay: number;
+              requiredDailyRate: number;
+              actualRollingRate: number;
+              unit?: { id: string; name: string; code: string; type?: string };
+              rulesTriggered?: string[];
+            }>;
+          };
+        }>(riskUrl);
+
+        if (isSubscribed && riskRes.data?.risks) {
+          setActiveRisks(riskRes.data.risks);
+        }
+      } catch (err) {
+        console.warn('Could not load active risks:', err);
       }
     };
-    fetchActiveFloorOrders();
+
+    fetchWorkData();
     return () => {
       isSubscribed = false;
     };
-  }, [isOpen, currentRole, user?.assignedUnitId]);
+  }, [isOpen, user?.assignedUnitId]);
 
   // Role-specific task generator for given date
   const getTasksForRoleAndDate = (
     role: string,
     date: Date,
-    floorOrders?: Array<{ poNumber: string; style: string; activeMilestone?: { stage: string } }> | null
+    floorOrders?: Array<{ poNumber: string; style: string; activeMilestone?: { stage: string } }> | null,
+    risks?: typeof activeRisks,
+    issues?: typeof activeIssues
   ): WorkTask[] => {
     const isTa = lang === 'ta';
     const today = getAuthoritativeServerDate();
@@ -110,8 +197,9 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
 
     // 2. SUPERVISOR
     // Requirement:
-    // - If any unit that supervisor is has functional problems detected on that day, or previous unresolved problems not tick-marked
-    // - Then the POs which the supervisor has been assigned: daily shift production form filling of that day
+    // - If any unit that supervisor is has functional problems or active risks, then ONLY have those tasks
+    // - If unit has NO active risk and NO issues, 0 disruption/quarantine tasks
+    // - Daily shift production form filling for each active PO assigned to that unit
     if (role === 'SUPERVISOR') {
       const userEmail = (user?.email || '').toLowerCase();
       const assignedUnitCode = user?.assignedUnit?.code || '';
@@ -136,50 +224,66 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
 
       const tasksList: WorkTask[] = [];
 
-      // A. Check functional problem resolution tasks (previous un-ticked issues carry over until resolved)
-      const prob1Key = `prob_needle_${unitCode}`;
-      const prob1Resolved = localStorage.getItem(`threadflow_issue_${prob1Key}`) === 'resolved';
+      // A. Dynamic Risk Intervention Tasks: ONLY present if this unit actually has RED / AMBER risks
+      const unitRisks = (risks || []).filter(
+        (r) =>
+          (r.riskLevel === 'RED' || r.riskLevel === 'AMBER') &&
+          (!r.unit?.code || r.unit.code === unitCode || (user?.assignedUnitId && r.unit.id === user.assignedUnitId))
+      );
 
-      // Problem 1: Machine / Line functional breakdown
-      tasksList.push({
-        id: `sup-issue-needle-${unitCode}-${dateKey}`,
-        time: '07:00 AM - 08:00 AM',
-        title: isTa
-          ? 'உற்பத்தி லைன் செயல்பாட்டு சிக்கலை தீர்த்து முடித்தல்'
-          : 'Resolve & Clear Line Functional Disruption',
-        description: isTa
-          ? `${unitTitle} இல் கண்டறியப்பட்ட இயந்திர ஊசி மற்றும் மோட்டார் அழுத்த சிக்கலை சரிசெய்து, பராமரிப்புக் குழுவுடன் உறுதிப்படுத்தவும்.`
-          : `Inspect Line functional problem detected in ${unitTitle}. Verify machine needle alignment and motor tension with maintenance team before resuming bulk run.`,
-        unit: unitTitle,
-        buyerOrPo: isTa ? 'செயல்பாட்டு பிரச்சனை (Line 1)' : 'Functional Issue (Line 1)',
-        completed: prob1Resolved || isPast,
-        role: ['SUPERVISOR'],
-        isCarriedOver: !prob1Resolved && dateZero >= todayZero,
-      });
-
-      // Problem 2: Batch defect quarantine check if Unit 1 or Unit 2
-      if (unitCode === 'UNIT_1' || unitCode === 'UNIT_2') {
-        const prob2Key = `prob_defect_${unitCode}`;
-        const prob2Resolved = localStorage.getItem(`threadflow_issue_${prob2Key}`) === 'resolved';
+      unitRisks.forEach((r) => {
+        const isRed = r.riskLevel === 'RED';
+        const stageName = r.activeStage?.replace(/_/g, ' ') || 'Assembly';
+        const deficitQty = Math.abs(r.varianceQtyPerDay || 0);
+        const taskKey = `sup-risk-${r.poNumber}-${unitCode}`;
+        const isResolved = localStorage.getItem(`threadflow_task_resolved_${taskKey}`) === 'resolved';
 
         tasksList.push({
-          id: `sup-issue-defect-${unitCode}-${dateKey}`,
+          id: `sup-risk-${r.poNumber}-${dateKey}`,
+          time: isRed ? '07:00 AM - 08:00 AM' : '08:00 AM - 08:45 AM',
+          title: isTa
+            ? `${isRed ? 'அவசர உற்பத்தி வேகம் சீரமைப்பு' : 'உற்பத்தி வேகக் கண்காணிப்பு'}: PO ${r.poNumber}`
+            : `${isRed ? 'Resolve Throughput Deficit' : 'Monitor Pace Buffer'}: PO ${r.poNumber}`,
+          description: isTa
+            ? `${unitTitle} இல் ${r.style} தயாரிப்பில் ${stageName} கட்டத்தில் பற்றாக்குறை (-${deficitQty} pcs/day) கண்டறியப்பட்டுள்ளது. தேவை: ${r.requiredDailyRate} pcs/day vs தற்போதைய வேகம்: ${r.actualRollingRate} pcs/day. தாமதத்தை தவிர்க்க லைன் சமநிலையை சரிசெய்யவும்.`
+            : `Pace deficit (-${deficitQty} pcs/day) detected in ${stageName} stage for ${r.style}. Required daily rate: ${r.requiredDailyRate} pcs/day vs actual rolling rate: ${r.actualRollingRate} pcs/day. Reallocate line labor, schedule overtime, or unblock bottlenecks to prevent ex-factory breach.`,
+          unit: unitTitle,
+          buyerOrPo: `PO: ${r.poNumber} (${isRed ? 'RED Risk' : 'AMBER Risk'})`,
+          completed: isResolved || isPast,
+          role: ['SUPERVISOR'],
+          isCarriedOver: !isResolved && dateZero >= todayZero,
+        });
+      });
+
+      // B. Dynamic Reported Issue Tasks: ONLY present if this unit actually has reported downtime / defects
+      const unitReportedIssues = (issues || []).filter((issue) => {
+        if (!floorOrders || floorOrders.length === 0) return true;
+        return floorOrders.some((fo) => fo.poNumber === issue.poNumber);
+      });
+
+      unitReportedIssues.forEach((issue) => {
+        const issueCatFormatted = (issue.issueCategory || 'DISRUPTION').replace(/_/g, ' ');
+        const taskKey = `sup-issue-${issue.id || issue.poNumber}`;
+        const isResolved = localStorage.getItem(`threadflow_task_resolved_${taskKey}`) === 'resolved';
+
+        tasksList.push({
+          id: `sup-issue-${issue.id || issue.poNumber}-${dateKey}`,
           time: '08:15 AM - 09:00 AM',
           title: isTa
-            ? 'செயல்பாட்டு குறைபாடு தனிமைப்படுத்தலை சரிசெய்து அனுமதித்தல்'
-            : 'Clear Functional Defect Quarantine & Batch Re-Check',
+            ? `தள சிக்கலை ஆய்வு செய்து தீர்த்தல்: ${issueCatFormatted}`
+            : `Resolve & Clear Reported Issue: ${issueCatFormatted}`,
           description: isTa
-            ? 'முன்னர் தெரிவிக்கப்பட்ட துணி நிற வேறுபாடு / தையல் குறைபாட்டை சரிபார்த்து, குறைபாடு விகிதம் 1.5% க்கும் குறைவாக இருப்பதை உறுதிப்படுத்தவும்.'
-            : 'Inspect previously reported fabric shade variation / skip stitch defect. Sign off quality clearance once defect rate is below 1.5%.',
+            ? `${unitTitle} இல் ${issue.poNumber} (${issue.style}) குறித்து பதிவு செய்யப்பட்ட குறிப்பு: "${issue.notes || 'செயல்பாட்டு பிரச்சனை'}". பராமரிப்பு மற்றும் தரக் குழுவுடன் உறுதிப்படுத்தவும்.`
+            : `Follow up on reported floor note for ${issue.poNumber} (${issue.style}): "${issue.notes || 'Reported line disruption / defect'}". Inspect line alignment and QC clearance before resuming bulk shift.`,
           unit: unitTitle,
-          buyerOrPo: isTa ? 'தர ஆய்வு (Defect Log)' : 'Quality Issue (Defect Log)',
-          completed: prob2Resolved || isPast,
+          buyerOrPo: `PO: ${issue.poNumber} (${issueCatFormatted})`,
+          completed: isResolved || isPast,
           role: ['SUPERVISOR'],
-          isCarriedOver: !prob2Resolved && dateZero >= todayZero,
+          isCarriedOver: !isResolved && dateZero >= todayZero,
         });
-      }
+      });
 
-      // B. Daily Shift Form Filling for all ACTIVE POs assigned to this supervisor's unit
+      // C. Daily Shift Form Filling for all ACTIVE POs assigned to this supervisor's unit
       const timeSlots = [
         '09:30 AM - 11:00 AM',
         '11:30 AM - 01:00 PM',
@@ -209,7 +313,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
           });
         });
       } else {
-        // Accurate unit-specific active orders (completed orders excluded)
+        // Accurate unit-specific active orders fallback
         let activeUnitPOs: Array<{ po: string; style: string; stage: string }> = [];
         if (unitCode === 'UNIT_1') {
           activeUnitPOs = [
@@ -265,6 +369,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
     // - Check all the supervisors have done their work
     // - Check upon the stuff and numbers and if all are going okay
     if (role === 'MERCHANDISER') {
+      const totalActiveOrders = floorOrders?.length || risks?.length || 11;
       return [
         {
           id: `mer-check-supervisors-${dateKey}`,
@@ -273,9 +378,9 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
             ? 'அனைத்து மேற்பார்வையாளர்களும் தங்கள் பணியை முடித்துவிட்டார்களா என சரிபார்த்தல்'
             : 'Check All Floor Supervisors Have Completed Their Work',
           description: isTa
-            ? 'யூனிட் 1 (முத்து/குமரவேல்), யூனிட் 2 (செல்வம்/மாணிக்கம்), மற்றும் யூனிட் 3 (முருகன்) மேற்பார்வையாளர்கள் மாலை 6 மணிக்குள் தங்களது ஷிப்ட் படிவங்களை சமர்ப்பித்துள்ளனரா என சரிபார்க்கவும்.'
-            : 'Verify that supervisors across Unit 1 (Muthu/Kumaravel), Unit 2 (Selvam/Manickam), and Unit 3 (Murugan) have logged and submitted today shift production forms without missing updates.',
-          unit: isTa ? 'தொழிற்சாலை முழுவதும் (யூனிட் 1, 2, 3)' : 'Factory-Wide (Unit 1, 2, 3)',
+            ? 'அனைத்து உற்பத்தி யூனிட்களிலும் உள்ள மேற்பார்வையாளர்கள் மாலை 6 மணிக்குள் தங்களது ஷிப்ட் படிவங்களை சமர்ப்பித்துள்ளனரா என சரிபார்க்கவும்.'
+            : 'Verify that supervisors across Unit 1, Unit 2, Unit 3, and Subcontract facilities have logged and submitted today shift production forms without missing updates.',
+          unit: isTa ? 'தொழிற்சாலை முழுவதும்' : 'Factory-Wide Production Hubs',
           buyerOrPo: isTa ? 'அனைத்து மேற்பார்வையாளர்கள்' : 'All Unit Supervisors',
           completed: isPast,
           role: ['MERCHANDISER'],
@@ -290,7 +395,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
             ? 'அனைத்து லைன்களிலும் துண்டுகள் எண்ணிக்கை, நல்ல உற்பத்தி மற்றும் நிராகரிப்புகளை சரிபார்த்து, வெட்டுதல் மற்றும் துணி பயன்பாட்டுடன் ஒப்பிடவும்.'
             : 'Check upon the stuff and piece count numbers across lines. Verify good output vs rejects, and ensure numbers match cutting and fabric consumption allowances.',
           unit: isTa ? 'மத்திய வணிக அலுவலகம்' : 'Central Merchandising Hub',
-          buyerOrPo: isTa ? 'அனைத்து 14 ஏற்றுமதி ஆர்டர்கள்' : 'All 14 Active POs',
+          buyerOrPo: isTa ? 'அனைத்து ஏற்றுமதி ஆர்டர்கள்' : `All Active Export POs (${totalActiveOrders})`,
           completed: isPast,
           role: ['MERCHANDISER'],
         },
@@ -337,7 +442,18 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
       const companyTitle = isCompanyC
         ? (isTa ? 'நிறுவனம் சி (ஜெர்மனி)' : 'Company C (Germany)')
         : (isTa ? 'நிறுவனம் பி (இங்கிலாந்து)' : 'Company B (UK)');
-      const companyOrders = isCompanyC
+
+      const matchingPOs = (floorOrders || risks || [])
+        .filter((o: any) =>
+          isCompanyC
+            ? (o.poNumber?.startsWith('C-PO-') || o.buyer?.code === 'COMPANY_C')
+            : (o.poNumber?.startsWith('B-PO-') || o.buyer?.code === 'COMPANY_B')
+        )
+        .map((o: any) => o.poNumber);
+
+      const companyOrders = matchingPOs.length > 0
+        ? `PO: ${Array.from(new Set(matchingPOs)).join(', ')}`
+        : isCompanyC
         ? 'PO: C-PO-0488, C-PO-0492, C-PO-0501, C-PO-0515'
         : 'PO: B-PO-88213, B-PO-88240, B-PO-88255, B-PO-88260, B-PO-88272';
 
@@ -391,7 +507,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
   };
 
   const [tasks, setTasks] = useState<WorkTask[]>(() => {
-    const freshTasks = getTasksForRoleAndDate(currentRole, currentDate, activeFloorOrders);
+    const freshTasks = getTasksForRoleAndDate(currentRole, currentDate, activeFloorOrders, activeRisks, activeIssues);
     try {
       const savedChecks = localStorage.getItem(`checks_${storageKey}`);
       if (savedChecks) {
@@ -407,9 +523,9 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
     return freshTasks;
   });
 
-  // Reload when date, role, or floor orders change
+  // Reload when date, role, floor orders, risks, or issues change
   useEffect(() => {
-    const freshTasks = getTasksForRoleAndDate(currentRole, currentDate, activeFloorOrders);
+    const freshTasks = getTasksForRoleAndDate(currentRole, currentDate, activeFloorOrders, activeRisks, activeIssues);
     try {
       const savedChecks = localStorage.getItem(`checks_${storageKey}`);
       if (savedChecks) {
@@ -426,7 +542,7 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
       // ignore
     }
     setTasks(freshTasks);
-  }, [dateKey, currentRole, storageKey, lang, activeFloorOrders]);
+  }, [dateKey, currentRole, storageKey, lang, activeFloorOrders, activeRisks, activeIssues]);
 
   // Persist task updates
   const handleToggleTask = (taskId: string) => {
@@ -441,22 +557,24 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
       });
       localStorage.setItem(`checks_${storageKey}`, JSON.stringify(checkMap));
 
-      // If this is a functional problem task, sync persistent problem resolution
-      if (taskId.startsWith('sup-issue-needle-')) {
+      // If this is a dynamic risk or issue task, sync persistent resolution
+      if (taskId.startsWith('sup-risk-')) {
         const target = updated.find((t) => t.id === taskId);
-        const unitPart = taskId.split('-')[3];
+        const poPart = taskId.replace('sup-risk-', '').replace(`-${dateKey}`, '');
+        const key = `sup-risk-${poPart}`;
         if (target?.completed) {
-          localStorage.setItem(`threadflow_issue_prob_needle_${unitPart}`, 'resolved');
+          localStorage.setItem(`threadflow_task_resolved_${key}`, 'resolved');
         } else {
-          localStorage.removeItem(`threadflow_issue_prob_needle_${unitPart}`);
+          localStorage.removeItem(`threadflow_task_resolved_${key}`);
         }
-      } else if (taskId.startsWith('sup-issue-defect-')) {
+      } else if (taskId.startsWith('sup-issue-')) {
         const target = updated.find((t) => t.id === taskId);
-        const unitPart = taskId.split('-')[3];
+        const issuePart = taskId.replace('sup-issue-', '').replace(`-${dateKey}`, '');
+        const key = `sup-issue-${issuePart}`;
         if (target?.completed) {
-          localStorage.setItem(`threadflow_issue_prob_defect_${unitPart}`, 'resolved');
+          localStorage.setItem(`threadflow_task_resolved_${key}`, 'resolved');
         } else {
-          localStorage.removeItem(`threadflow_issue_prob_defect_${unitPart}`);
+          localStorage.removeItem(`threadflow_task_resolved_${key}`);
         }
       }
 
