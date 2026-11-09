@@ -22,7 +22,7 @@ interface ChatMessage {
 }
 
 const QUICK_PROMPTS = [
-  'What is the status of C-PO-0501?',
+  'What is the status of my active orders?',
   'How do I log shift output?',
   'Which orders are delayed or at risk?',
   'How does the Air Freight Simulator work?',

@@ -312,49 +312,25 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
             role: ['SUPERVISOR'],
           });
         });
-      } else {
-        // Accurate unit-specific active orders fallback
-        let activeUnitPOs: Array<{ po: string; style: string; stage: string }> = [];
-        if (unitCode === 'UNIT_1') {
-          activeUnitPOs = [
-            { po: 'B-PO-88240', style: "Men's Polo White", stage: 'Knitting' },
-            { po: 'B-PO-88255', style: 'French Terry Hoodie Navy', stage: 'Cutting' },
-            { po: 'B-PO-88213', style: 'Classic Crew Neck T-Shirt Olive', stage: 'Stitching' },
-            { po: 'IND-PO-77401', style: 'Oversized Acid Wash Tee Charcoal', stage: 'Dyeing & Washing' },
-            { po: 'NEXT-PO-33104', style: 'Waffle Knit Henley Heather Grey', stage: 'Knitting' },
-          ];
-        } else if (unitCode === 'UNIT_2') {
-          activeUnitPOs = [
-            { po: 'C-PO-0501', style: 'Striped Interlock Polo Navy/White', stage: 'Checking' },
-            { po: 'M-PO-91022', style: 'Pima Cotton V-Neck Black', stage: 'Stitching' },
-            { po: 'C-PO-0515', style: 'Baby Rib Sleepsuit 2-Pack Pastel', stage: 'Cutting' },
-          ];
-        } else if (unitCode === 'UNIT_3') {
-          activeUnitPOs = [
-            { po: 'B-PO-88272', style: 'Mercerized Cotton Dress Polo Black', stage: 'Finishing' },
-          ];
-        } else if (unitCode === 'PRINTTEX') {
-          activeUnitPOs = [
-            { po: 'C-PO-0488', style: 'Kids Printed Tee Yellow', stage: 'Printing' },
-          ];
-        } else if (unitCode === 'WASHTEX') {
-          activeUnitPOs = [
-            { po: 'C-PO-0492', style: 'Organic Rib Tank Top Sage', stage: 'Dyeing & Washing' },
-          ];
-        }
-
-        activeUnitPOs.forEach((ord, idx) => {
+      } else if (risks && risks.length > 0) {
+        // Fallback dynamically derived from loaded active risks for this unit
+        const unitOrdersFallback = risks.filter(
+          (r) => !r.unit?.code || r.unit.code === unitCode || (user?.assignedUnitId && r.unit.id === user.assignedUnitId)
+        );
+        unitOrdersFallback.forEach((ord, idx) => {
+          const timeSlot = timeSlots[idx % timeSlots.length];
+          const stageName = ord.activeStage?.replace(/_/g, ' ') || 'Assembly';
           tasksList.push({
-            id: `sup-form-${ord.po}-${dateKey}`,
-            time: timeSlots[idx % timeSlots.length],
+            id: `sup-form-${ord.poNumber}-${dateKey}`,
+            time: timeSlot,
             title: isTa
-              ? `தினசரி ஷிப்ட் உற்பத்தி படிவத்தை நிரப்புதல்: PO ${ord.po}`
-              : `Fill Daily Shift Production Form: PO ${ord.po}`,
+              ? `தினசரி ஷிப்ட் உற்பத்தி படிவத்தை நிரப்புதல்: PO ${ord.poNumber}`
+              : `Fill Daily Shift Production Form: PO ${ord.poNumber}`,
             description: isTa
               ? `${ord.style} தயாரிப்பிற்கான இன்றைய உற்பத்தி வெளியீட்டு எண்ணிக்கையை சமர்ப்பிக்கவும்.`
-              : `Submit today piece count for active stage (${ord.stage} - ${ord.style}) and verify operator tally.`,
+              : `Submit today piece count for active stage (${stageName} - ${ord.style}) and verify operator tally.`,
             unit: unitTitle,
-            buyerOrPo: `PO: ${ord.po}`,
+            buyerOrPo: `PO: ${ord.poNumber}`,
             completed: isPast,
             role: ['SUPERVISOR'],
           });
@@ -454,8 +430,8 @@ export const WorkScheduleModal: React.FC<WorkScheduleModalProps> = ({
       const companyOrders = matchingPOs.length > 0
         ? `PO: ${Array.from(new Set(matchingPOs)).join(', ')}`
         : isCompanyC
-        ? 'PO: C-PO-0488, C-PO-0492, C-PO-0501, C-PO-0515'
-        : 'PO: B-PO-88213, B-PO-88240, B-PO-88255, B-PO-88260, B-PO-88272';
+        ? 'All Active Company C Purchase Orders'
+        : 'All Active Company B Purchase Orders';
 
       return [
         {

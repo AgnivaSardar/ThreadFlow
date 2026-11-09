@@ -127,17 +127,7 @@ export class OrdersSeedRunner {
 
       const orderLinesByCombo = new Map<string, any>();
       for (const line of fixture.orderLines) {
-        let lineCompletedQty = 0;
-        if (fixture.poNumber === 'B-PO-88240') {
-          // Classic anti-99% trap calibration
-          if (line.size === 'XL') lineCompletedQty = 400; // 33%
-          else if (line.size === 'S') lineCompletedQty = 1150; // 72%
-          else if (line.size === 'M') lineCompletedQty = 1950; // 70%
-          else if (line.size === 'L') lineCompletedQty = 1700; // 71%
-          else lineCompletedQty = Math.round(line.plannedQty * overallRatio);
-        } else {
-          lineCompletedQty = Math.min(line.plannedQty, Math.round(line.plannedQty * overallRatio));
-        }
+        const lineCompletedQty = Math.min(line.plannedQty, Math.round(line.plannedQty * overallRatio));
 
         const orderLine = await prisma.orderLine.upsert({
           where: {

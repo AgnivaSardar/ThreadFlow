@@ -28,8 +28,8 @@ const DEFAULT_NOTIFICATIONS: AppNotification[] = [
   // Supervisor scoped
   {
     id: 'notif-1',
-    title: 'Line 1 Target Updated',
-    message: 'Knitting quota for B-PO-88213 is set to 500 pcs today. Extra remaining: 2 days.',
+    title: 'Daily Line Target Updated',
+    message: 'Shift production target initialized. Log good output and operator tallies before 6:00 PM cutoff.',
     timestamp: '10 mins ago',
     type: 'info',
     read: false,
@@ -38,8 +38,8 @@ const DEFAULT_NOTIFICATIONS: AppNotification[] = [
   },
   {
     id: 'notif-2',
-    title: 'Machine Alert: Line 2 Motor Inspected',
-    message: 'Maintenance team cleared stitching line 2 motor. Running at 100% capacity.',
+    title: 'Machine Maintenance Clearance',
+    message: 'Maintenance team cleared stitching and assembly lines. Operations running at normal capacity.',
     timestamp: '45 mins ago',
     type: 'success',
     read: false,
@@ -49,8 +49,8 @@ const DEFAULT_NOTIFICATIONS: AppNotification[] = [
   // Merchandiser scoped
   {
     id: 'notif-3',
-    title: 'Buyer Feedback Received',
-    message: 'Sarah Jenkins (Company B UK) approved revised shipment extra margin for B-PO-88213.',
+    title: 'Buyer Portal Activity',
+    message: 'Buyer partner reviewed active milestone progress and approved current shipment timelines.',
     timestamp: '1 hour ago',
     type: 'info',
     read: false,
@@ -59,19 +59,19 @@ const DEFAULT_NOTIFICATIONS: AppNotification[] = [
   },
   {
     id: 'notif-4',
-    title: 'Critical Extra Margin Alert',
-    message: 'B-PO-88260 Mercerized Cotton Tee consumed 1.5 days extra in Knitting stage.',
+    title: 'Throughput Deficit Alert',
+    message: 'Active stage pace alert flagged in Risk Engine. Check Show-Your-Math breakdown for recommended pacing.',
     timestamp: '3 hours ago',
     type: 'alert',
     read: false,
-    link: '/orders',
+    link: '/risk',
     targetRole: ['MERCHANDISER', 'ADMIN'],
   },
   // Buyer scoped
   {
     id: 'notif-5',
-    title: 'Production Milestone Complete',
-    message: 'Finishing & Packing completed for Waffle Knit Henley (B-PO-88272). Ready for carton loading.',
+    title: 'Milestone Progress Update',
+    message: 'Verified stage output pass recorded by factory merchandiser. Inspection photos updated in portal.',
     timestamp: '2 hours ago',
     type: 'success',
     read: false,
