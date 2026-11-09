@@ -120,6 +120,13 @@ interface BuyerOrderItem {
     code: string;
     location: string | null;
   };
+  orderLines?: {
+    id: string;
+    color: string;
+    size: string;
+    plannedQty: number;
+    completedQty: number;
+  }[];
   milestones: MilestoneItem[];
   confirmedAlerts: ConfirmedAlertItem[];
   approvedPhotos: ApprovedPhotoItem[];
@@ -531,6 +538,29 @@ export const BuyerPortalPage: React.FC = () => {
                 (order.completedStages >= order.totalStages && order.totalStages > 0) ||
                 (order.milestones && order.milestones.every((m) => m.isCompleted || m.completedQuantity >= m.targetQuantity))
               );
+
+              const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL', '4XL', 'FREE'];
+              const sizeSummary = (() => {
+                if (!order.orderLines || order.orderLines.length === 0) return [];
+                const map = new Map<string, number>();
+                for (const line of order.orderLines) {
+                  const qty = isFinished
+                    ? (line.completedQty > 0 ? line.completedQty : line.plannedQty)
+                    : (line.completedQty || 0);
+                  map.set(line.size, (map.get(line.size) || 0) + qty);
+                }
+                return Array.from(map.entries())
+                  .map(([size, count]) => ({ size, count }))
+                  .sort((a, b) => {
+                    const idxA = SIZE_ORDER.indexOf(a.size.toUpperCase());
+                    const idxB = SIZE_ORDER.indexOf(b.size.toUpperCase());
+                    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                    if (idxA !== -1) return -1;
+                    if (idxB !== -1) return 1;
+                    return a.size.localeCompare(b.size);
+                  });
+              })();
+              const totalFinishedPcs = sizeSummary.reduce((acc, curr) => acc + curr.count, 0) || order.totalQuantity;
               return (
                 <div
                   key={order.id}
@@ -594,104 +624,164 @@ export const BuyerPortalPage: React.FC = () => {
 
                   {/* Order Body */}
                   <div className="p-4 space-y-4">
-                    {/* Overall Progress Bar */}
-                    <div>
-                      <div className="flex items-center justify-between text-xs mb-1.5">
-                        <span className="font-bold text-slate-700 flex items-center gap-1.5">
-                          <Layers className="w-3.5 h-3.5 text-sky-600" />
-                          <span>{t.buyer.milestoneCompletion}</span>
-                          <strong className="text-slate-900 font-black">
-                            {order.progressPercent}%
-                          </strong>
-                        </span>
-                        <span className="text-slate-500 text-[11px]">
-                          {t.buyer.activeStageLabel}{' '}
-                          <strong className={`font-bold uppercase tracking-wide ${isFinished ? 'text-emerald-700' : 'text-sky-800'}`}>
-                            {isFinished
-                              ? isTa
-                                ? 'நிறைவடைந்தது (அனுப்பப்பட்டது)'
-                                : 'COMPLETED (DISPATCHED)'
-                              : isTa
-                              ? STAGE_TRANSLATIONS[order.activeStage]?.ta || order.activeStage
-                              : order.activeStage.replace(/_/g, ' ')}
-                          </strong>
-                        </span>
-                      </div>
+                    {isFinished ? (
+                      <div className="space-y-3">
+                        {/* Compact Production Completed & Verified + Finished Sizes Summary */}
+                        <div className="bg-emerald-50/70 border border-emerald-200/90 rounded-xl p-3.5 sm:p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                                <CheckCircle2 className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-extrabold text-emerald-950 leading-tight">
+                                  {isTa ? 'உற்பத்தி நிறைவு & சரிபார்க்கப்பட்டது' : 'Production Completed & Verified'}
+                                </h4>
+                                <span className="text-[10px] font-bold text-emerald-700">
+                                  {isTa ? '100% இறுதி தரம் அங்கீகரிக்கப்பட்டது' : '100% Final Quality Passed'}
+                                </span>
+                              </div>
+                            </div>
 
-                      <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                        <div
-                          className={`h-full transition-all duration-500 rounded-full ${
-                            isFinished
-                              ? 'bg-emerald-500'
-                              : 'bg-gradient-to-r from-sky-600 to-[#0C2D48]'
-                          }`}
-                          style={{ width: `${order.progressPercent}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* 7-Stage TNA Pipeline Track */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 pt-1">
-                      {order.milestones.map((m) => {
-                        const stageLabel = m.stage.replace(/_/g, ' ');
-                        return (
-                          <div
-                            key={m.id}
-                            className={`p-2 rounded-xl border text-[11px] space-y-1 transition ${
-                              m.isCompleted
-                                ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
-                                : m.stage === order.activeStage
-                                ? 'bg-sky-50 border-sky-300 text-sky-950 shadow-2xs ring-1 ring-sky-300'
-                                : 'bg-slate-50/60 border-slate-200 text-slate-500'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-mono font-bold text-[10px] text-slate-400">
-                                #{m.sequenceOrder}
+                            <div className="text-xs font-bold text-emerald-900 bg-white border border-emerald-200 px-3 py-1 rounded-lg shadow-3xs flex items-center gap-1.5 font-mono">
+                              <span className="text-slate-500 font-sans font-medium text-[11px]">
+                                {isTa ? 'மொத்த தயாரிப்பு:' : 'Total Output:'}
                               </span>
-                              {m.isCompleted ? (
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                              ) : m.stage === order.activeStage ? (
-                                <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
-                              ) : (
-                                <Clock className="w-3 h-3 text-slate-300 shrink-0" />
-                              )}
-                            </div>
-
-                            <div className="font-bold capitalize truncate" title={stageLabel}>
-                              {stageLabel}
-                            </div>
-
-                            <div className="text-[10px] text-slate-500 font-mono">
-                              {m.completedQuantity.toLocaleString()} / {m.targetQuantity.toLocaleString()}
+                              <span className="text-emerald-950 font-black">{totalFinishedPcs.toLocaleString()} pcs</span>
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
 
-                    {isFinished ? (
-                      <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-5 text-center space-y-3">
-                        <div className="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-2xl mx-auto flex items-center justify-center shadow-xs">
-                          <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                          {/* Size Breakdown Summary */}
+                          {sizeSummary.length > 0 && (
+                            <div className="mt-3 pt-2.5 border-t border-emerald-200/60">
+                              <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 mb-1.5 flex items-center justify-between">
+                                <span>{isTa ? 'முடிக்கப்பட்ட ஆடைகள் (அளவு வாரியாக):' : 'Finished Garments Breakdown by Size:'}</span>
+                                <span className="font-mono text-slate-500 font-semibold">{sizeSummary.length} {isTa ? 'அளவுகள்' : 'Sizes'}</span>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                {sizeSummary.map((item) => (
+                                  <div
+                                    key={item.size}
+                                    className="bg-white border border-emerald-200/90 rounded-lg px-2.5 py-1.5 flex items-center gap-2 shadow-3xs"
+                                  >
+                                    <span className="font-mono font-bold text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                                      {item.size}
+                                    </span>
+                                    <div className="text-xs font-extrabold font-mono text-slate-800">
+                                      {item.count.toLocaleString()} <span className="text-[10px] text-slate-400 font-sans font-normal">pcs</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div>
-                          <h4 className="text-base font-extrabold text-emerald-950">
-                            {isTa ? 'உற்பத்தி நிறைவு பெற்றது' : 'Production Completed & Verified'}
-                          </h4>
-                          <p className="text-xs text-emerald-800 mt-1 max-w-lg mx-auto">
-                            {isTa
-                              ? `அனைத்து ${order.totalStages} நிலைகளும் வெற்றிகரமாக முடிக்கப்பட்டு, ${order.totalQuantity.toLocaleString()} ஆடைகள் இறுதி தர பரிசோதனை செய்யப்பட்டு தயாராக உள்ளன.`
-                              : `All ${order.totalStages} stages completed. 100% final quality sign-off confirmed for ${order.totalQuantity.toLocaleString()} pieces. Ex-factory hand-off scheduled/completed on ${formatDate(order.exFactoryDate)}.`}
-                          </p>
-                        </div>
-                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold shadow-xs">
-                          <ShieldCheck className="w-4 h-4" />
-                          <span>{isTa ? '100% தர ஒப்புதல் மற்றும் அனுப்பல் நிறைவு' : '100% Final Quality Passed & Handover Ready'}</span>
-                        </div>
+
+                        {/* Approved Evidence Images directly below */}
+                        {order.approvedPhotos.length > 0 && (
+                          <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2 shadow-3xs">
+                            <div className="text-[11px] font-bold text-slate-700 flex items-center justify-between">
+                              <span className="flex items-center gap-1.5">
+                                <ImageIcon className="w-3.5 h-3.5 text-sky-600" />
+                                <span>Approved Quality & Inspection Evidence ({order.approvedPhotos.length})</span>
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-medium">Click thumbnail to inspect</span>
+                            </div>
+
+                            <div className="flex items-center gap-2.5 overflow-x-auto pb-1">
+                              {order.approvedPhotos.map((photo) => (
+                                <button
+                                  key={photo.id}
+                                  type="button"
+                                  onClick={() => setLightboxPhoto(photo)}
+                                  className="group relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shrink-0 cursor-pointer hover:border-emerald-500 transition shadow-2xs"
+                                  title={`View ${photo.stage} inspection photo`}
+                                >
+                                  <img
+                                    src={getSafeImageUrl(photo.s3Url, photo.stage)}
+                                    onError={(e) => handleImageError(e, photo.stage)}
+                                    alt="Inspection evidence"
+                                    className="w-full h-full object-cover group-hover:scale-105 transition"
+                                  />
+                                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                    <Maximize2 className="w-3.5 h-3.5 text-white" />
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <>
+                        {/* Overall Progress Bar */}
+                        <div>
+                          <div className="flex items-center justify-between text-xs mb-1.5">
+                            <span className="font-bold text-slate-700 flex items-center gap-1.5">
+                              <Layers className="w-3.5 h-3.5 text-sky-600" />
+                              <span>{t.buyer.milestoneCompletion}</span>
+                              <strong className="text-slate-900 font-black">
+                                {order.progressPercent}%
+                              </strong>
+                            </span>
+                            <span className="text-slate-500 text-[11px]">
+                              {t.buyer.activeStageLabel}{' '}
+                              <strong className="font-bold uppercase tracking-wide text-sky-800">
+                                {isTa
+                                  ? STAGE_TRANSLATIONS[order.activeStage]?.ta || order.activeStage
+                                  : order.activeStage.replace(/_/g, ' ')}
+                              </strong>
+                            </span>
+                          </div>
+
+                          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                            <div
+                              className="h-full transition-all duration-500 rounded-full bg-gradient-to-r from-sky-600 to-[#0C2D48]"
+                              style={{ width: `${order.progressPercent}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* 7-Stage TNA Pipeline Track */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 pt-1">
+                          {order.milestones.map((m) => {
+                            const stageLabel = m.stage.replace(/_/g, ' ');
+                            return (
+                              <div
+                                key={m.id}
+                                className={`p-2 rounded-xl border text-[11px] space-y-1 transition ${
+                                  m.isCompleted
+                                    ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
+                                    : m.stage === order.activeStage
+                                    ? 'bg-sky-50 border-sky-300 text-sky-950 shadow-2xs ring-1 ring-sky-300'
+                                    : 'bg-slate-50/60 border-slate-200 text-slate-500'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="font-mono font-bold text-[10px] text-slate-400">
+                                    #{m.sequenceOrder}
+                                  </span>
+                                  {m.isCompleted ? (
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                  ) : m.stage === order.activeStage ? (
+                                    <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
+                                  ) : (
+                                    <Clock className="w-3 h-3 text-slate-300 shrink-0" />
+                                  )}
+                                </div>
+
+                                <div className="font-bold capitalize truncate" title={stageLabel}>
+                                  {stageLabel}
+                                </div>
+
+                                <div className="text-[10px] text-slate-500 font-mono">
+                                  {m.completedQuantity.toLocaleString()} / {m.targetQuantity.toLocaleString()}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
                         {/* Vetted Delivery Mitigation Bulletins (Only Confirmed Alerts) */}
                         {order.confirmedAlerts.length > 0 && (
                           <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl space-y-1.5">
@@ -921,39 +1011,39 @@ export const BuyerPortalPage: React.FC = () => {
                             </div>
                           )}
                         </div>
+
+                        {/* Order Visual Proof Thumbnails for Active Orders */}
+                        {order.approvedPhotos.length > 0 && (
+                          <div className="pt-2 border-t border-slate-100">
+                            <div className="text-[11px] font-bold text-slate-600 mb-2 flex items-center gap-1.5">
+                              <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
+                              <span>Approved Quality & Inspection Evidence ({order.approvedPhotos.length})</span>
+                            </div>
+
+                            <div className="flex items-center gap-2.5 overflow-x-auto pb-1">
+                              {order.approvedPhotos.map((photo) => (
+                                <button
+                                  key={photo.id}
+                                  type="button"
+                                  onClick={() => setLightboxPhoto(photo)}
+                                  className="group relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shrink-0 cursor-pointer hover:border-sky-500 transition shadow-2xs"
+                                  title={`View ${photo.stage} inspection photo`}
+                                >
+                                  <img
+                                    src={getSafeImageUrl(photo.s3Url, photo.stage)}
+                                    onError={(e) => handleImageError(e, photo.stage)}
+                                    alt="Inspection evidence"
+                                    className="w-full h-full object-cover group-hover:scale-105 transition"
+                                  />
+                                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                    <Maximize2 className="w-3.5 h-3.5 text-white" />
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </>
-                    )}
-
-                    {/* Order Visual Proof Thumbnails */}
-                    {order.approvedPhotos.length > 0 && (
-                      <div className="pt-2 border-t border-slate-100">
-                        <div className="text-[11px] font-bold text-slate-600 mb-2 flex items-center gap-1.5">
-                          <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
-                          <span>Approved Quality & Inspection Evidence ({order.approvedPhotos.length})</span>
-                        </div>
-
-                        <div className="flex items-center gap-2.5 overflow-x-auto pb-1">
-                          {order.approvedPhotos.map((photo) => (
-                            <button
-                              key={photo.id}
-                              type="button"
-                              onClick={() => setLightboxPhoto(photo)}
-                              className="group relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shrink-0 cursor-pointer hover:border-sky-500 transition shadow-2xs"
-                              title={`View ${photo.stage} inspection photo`}
-                            >
-                              <img
-                                src={getSafeImageUrl(photo.s3Url, photo.stage)}
-                                onError={(e) => handleImageError(e, photo.stage)}
-                                alt="Inspection evidence"
-                                className="w-full h-full object-cover group-hover:scale-105 transition"
-                              />
-                              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                                <Maximize2 className="w-3.5 h-3.5 text-white" />
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
                     )}
                   </div>
                 </div>
