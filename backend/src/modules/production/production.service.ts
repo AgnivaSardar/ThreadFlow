@@ -443,17 +443,17 @@ export class ProductionService {
       }
     }
 
-    // 5. Invariant 2 (Cutting Tolerance Ceiling Check):
-    const ceilingAllowed = Math.round(order.totalQuantity * 1.03);
+    // 5. Invariant 2 (Required Stage Cap Check):
+    const currentCumulativeOutput = targetMilestone.completedQuantity;
+    const ceilingAllowed = targetMilestone.targetQuantity;
     if (input.goodQuantity > 0 && proposedCumulativeOutput > ceilingAllowed) {
       throw new AppError(
-        `Tolerance ceiling exceeded: Proposed stage output (${proposedCumulativeOutput.toLocaleString()} pcs) ` +
-          `exceeds maximum allowed ${ceilingAllowed.toLocaleString()} pcs (PO Qty: ${order.totalQuantity.toLocaleString()} + 3% tolerance ceiling). Check entry for extra zeroes.`,
+        `Cap amount exceeded: Proposed stage output (${proposedCumulativeOutput.toLocaleString()} pcs) exceeds the required cap amount of ${ceilingAllowed.toLocaleString()} pcs. Maximum remaining allowed: ${Math.max(0, ceilingAllowed - currentCumulativeOutput).toLocaleString()} pcs. Please recheck your entry.`,
         400
       );
     }
 
-    // 6. Invariant 3 (Per-Size Breakdown Lines Reconciliation):
+    // 6. Invariant 3 (Per-Size Breakdown Lines Reconciliation & Cap Enforcement):
     if (input.sizeBreakdownLines && input.sizeBreakdownLines.length > 0 && input.goodQuantity > 0) {
       const sizeSum = input.sizeBreakdownLines.reduce((acc, l) => acc + l.goodQuantity, 0);
       if (sizeSum !== input.goodQuantity) {
@@ -466,7 +466,7 @@ export class ProductionService {
       for (const line of input.sizeBreakdownLines) {
         const orderLine = order.orderLines.find((ol) => ol.id === line.orderLineId);
         if (orderLine) {
-          const lineCeiling = Math.round(orderLine.plannedQty * 1.03);
+          const lineCap = orderLine.plannedQty;
           const stageAgg = await prisma.productionUpdateLine.aggregate({
             where: {
               orderLineId: line.orderLineId,
@@ -476,9 +476,9 @@ export class ProductionService {
           });
           const stageCompleted = stageAgg._sum.goodQuantity || 0;
           const proposedLineTotal = stageCompleted + line.goodQuantity;
-          if (proposedLineTotal > lineCeiling) {
+          if (proposedLineTotal > lineCap) {
             throw new AppError(
-              `Tolerance ceiling exceeded for size ${orderLine.size}: Proposed stage output (${proposedLineTotal.toLocaleString()} pcs) exceeds maximum allowed ${lineCeiling.toLocaleString()} pcs (Planned: ${orderLine.plannedQty.toLocaleString()} + 3%).`,
+              `Cap amount exceeded for Size ${orderLine.size}: Proposed output (${proposedLineTotal.toLocaleString()} pcs) exceeds required cap of ${lineCap.toLocaleString()} pcs (Planned: ${orderLine.plannedQty.toLocaleString()} pcs). Maximum remaining allowed: ${Math.max(0, lineCap - stageCompleted).toLocaleString()} pcs. Please recheck your entry.`,
               400
             );
           }
@@ -587,10 +587,12 @@ export class ProductionService {
           // Only increment OrderLine.completedQty if this is the final milestone (FINISHING)
           // because OrderLine.completedQty represents the final finished garments ready for dispatch!
           if (targetMilestone.sequenceOrder === order.milestones.length) {
+            const dbLine = await tx.orderLine.findUnique({ where: { id: line.orderLineId } });
+            const cappedQty = Math.min(dbLine?.plannedQty || 999999, (dbLine?.completedQty || 0) + line.goodQuantity);
             await tx.orderLine.update({
               where: { id: line.orderLineId },
               data: {
-                completedQty: { increment: line.goodQuantity },
+                completedQty: cappedQty,
               },
             });
           }

@@ -127,8 +127,8 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
     }
   }, [order.orderId]);
 
-  // Issues & Notes
-  const [selectedChip, setSelectedChip] = useState<IssueChipItem | null>(null);
+  // Issues & Notes - Multiple Chips Support
+  const [selectedChips, setSelectedChips] = useState<IssueChipItem[]>([]);
   const [notes, setNotes] = useState<string>('');
   const [compressedPhoto, setCompressedPhoto] = useState<string | null>(null);
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
@@ -370,7 +370,9 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
     if (matchedCategory) {
       const targetChip = SUPERVISOR_ISSUE_CHIPS.find((c) => c.category === matchedCategory);
       if (targetChip) {
-        setSelectedChip(targetChip);
+        setSelectedChips((prev) =>
+          prev.some((c) => c.id === targetChip.id) ? prev : [...prev, targetChip]
+        );
       }
     }
   };
@@ -500,7 +502,11 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           // Auto-select issue chip
           if (res.data.category) {
             const chip = SUPERVISOR_ISSUE_CHIPS.find((c) => c.category === res.data.category);
-            if (chip) setSelectedChip(chip);
+            if (chip) {
+              setSelectedChips((prev) =>
+                prev.some((c) => c.id === chip.id) ? prev : [...prev, chip]
+              );
+            }
           }
         }
       } catch {
@@ -612,18 +618,26 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
     setRejectedQty(0);
   };
 
-  // Issue Chip toggle
+  // Issue Chip toggle - Multiple selection supported
   const handleToggleChip = (chip: IssueChipItem) => {
     triggerHaptic(50);
-    if (selectedChip?.id === chip.id) {
-      setSelectedChip(null);
-    } else {
-      setSelectedChip(chip);
-      const chipText = lang === 'ta' ? chip.labelTa : chip.labelEn;
-      if (!notes.includes(chipText)) {
-        setNotes((prev) => (prev ? `${prev} [${chipText}]` : `[${chipText}]`));
+    setSelectedChips((prev) => {
+      const exists = prev.some((c) => c.id === chip.id);
+      if (exists) {
+        return prev.filter((c) => c.id !== chip.id);
+      } else {
+        const chipText = lang === 'ta' ? chip.labelTa : chip.labelEn;
+        if (!notes.includes(chipText)) {
+          setNotes((curr) => (curr ? `${curr} [${chipText}]` : `[${chipText}]`));
+        }
+        return [...prev, chip];
       }
-    }
+    });
+  };
+
+  const handleClearChips = () => {
+    triggerHaptic(30);
+    setSelectedChips([]);
   };
 
   // Helper to render pure Lucide SVG icons instead of emojis
@@ -680,7 +694,7 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
   // Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (goodQty <= 0 && rejectedQty <= 0 && !notes.trim() && !selectedChip) {
+    if (goodQty <= 0 && rejectedQty <= 0 && !notes.trim() && selectedChips.length === 0) {
       setFormError(t.validationErrorQty);
       return;
     }
@@ -698,11 +712,40 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       }
     }
 
-    setIsSubmitting(true);
-    setFormError(null);
-
     const targetMilestone =
       order.milestones.find((m) => m.stage === selectedStage) || activeMilestone;
+
+    // Strict Cap Validation: No individual size can exceed plannedQty (cap amount)
+    if (order.orderLines && order.orderLines.length > 0) {
+      for (const line of order.orderLines) {
+        const entered = sizeQuantities[line.id] || 0;
+        const proposedTotal = line.completedQty + entered;
+        if (proposedTotal > line.plannedQty) {
+          triggerHaptic(120);
+          setFormError(
+            lang === 'ta'
+              ? `அளவு ${line.size}-ன் மொத்த எண்ணிக்கை (${proposedTotal.toLocaleString()} பீஸ்) திட்டமிட்ட வரம்பை (${line.plannedQty.toLocaleString()} பீஸ்) விட அதிகமாக உள்ளது! அதிகபட்சமாக சேர்க்கக்கூடியது: ${Math.max(0, line.plannedQty - line.completedQty).toLocaleString()} பீஸ். தயவுசெய்து சரிபார்க்கவும்.`
+              : `Quantity for Size ${line.size} (${proposedTotal.toLocaleString()} pcs) exceeds the required cap amount of ${line.plannedQty.toLocaleString()} pcs! Remaining allowed: ${Math.max(0, line.plannedQty - line.completedQty).toLocaleString()} pcs. Please recheck your entry.`
+          );
+          return;
+        }
+      }
+    }
+
+    // Strict Cap Validation: Total stage output cannot exceed targetQuantity
+    const proposedStageTotal = targetMilestone.completedQuantity + goodQty;
+    if (proposedStageTotal > targetMilestone.targetQuantity) {
+      triggerHaptic(120);
+      setFormError(
+        lang === 'ta'
+          ? `மொத்த நிலை எண்ணிக்கை (${proposedStageTotal.toLocaleString()} பீஸ்) அதிகபட்ச வரம்பை (${targetMilestone.targetQuantity.toLocaleString()} பீஸ்) விட அதிகமாக உள்ளது! அதிகபட்சமாக சேர்க்கக்கூடியது: ${Math.max(0, targetMilestone.targetQuantity - targetMilestone.completedQuantity).toLocaleString()} பீஸ். தயவுசெய்து சரிபார்க்கவும்.`
+          : `Total stage output (${proposedStageTotal.toLocaleString()} pcs) exceeds the required cap amount of ${targetMilestone.targetQuantity.toLocaleString()} pcs! Remaining allowed: ${Math.max(0, targetMilestone.targetQuantity - targetMilestone.completedQuantity).toLocaleString()} pcs. Please recheck your entry.`
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFormError(null);
 
     // Prepare per-size breakdown array for database and offline queue
     const sizeBreakdownLines =
@@ -723,7 +766,14 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       ? notes.split('[English:')[1]?.replace(/\]$/, '').trim()
       : notes.trim();
 
-    const finalFormattedNote = englishText || undefined;
+    // Include multiple selected issue chips in formatted notes
+    const chipLabels = selectedChips.map((c) => (lang === 'ta' ? c.labelTa : c.labelEn));
+    const chipPrefix = chipLabels.length > 0 ? `[Issues: ${chipLabels.join(', ')}] ` : '';
+    const cleanNoteWithChips = englishText
+      ? (chipLabels.some((lbl) => englishText.includes(lbl)) ? englishText : `${chipPrefix}${englishText}`)
+      : chipPrefix.trim() || undefined;
+
+    const primaryIssueCategory = selectedChips.length > 0 ? selectedChips[0].category : undefined;
 
     const payload = {
       orderId: order.orderId,
@@ -735,8 +785,8 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
       machineLine,
       goodQuantity: goodQty,
       rejectedQuantity: rejectedQty,
-      notes: finalFormattedNote,
-      issueCategory: selectedChip?.category || undefined,
+      notes: cleanNoteWithChips,
+      issueCategory: primaryIssueCategory,
       compressedPhotoBase64: compressedPhoto || undefined,
       clientEventAt: new Date().toISOString(),
       sizeBreakdownLines,
@@ -780,8 +830,8 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
               machineLine,
               goodQty,
               rejectedQty,
-              notes: finalFormattedNote || null,
-              issueCategory: selectedChip?.category || null,
+              notes: cleanNoteWithChips || null,
+              issueCategory: primaryIssueCategory || null,
               photoFile: rawPhotoFile,
               sizeBreakdownLines,
               cacheKey: `work_${order.unit?.id || 'default'}`,
@@ -813,8 +863,8 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           machineLine,
           goodQty,
           rejectedQty,
-          notes: finalFormattedNote || null,
-          issueCategory: selectedChip?.category || null,
+          notes: cleanNoteWithChips || null,
+          issueCategory: primaryIssueCategory || null,
           photoFile: rawPhotoFile,
           sizeBreakdownLines,
           cacheKey: `work_${order.unit?.id || 'default'}`,
@@ -1205,20 +1255,20 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
             {t.issueChipsTitle}
           </span>
-          {selectedChip && (
+          {selectedChips.length > 0 && (
             <button
               type="button"
-              onClick={() => setSelectedChip(null)}
+              onClick={handleClearChips}
               className="text-xs text-slate-400 hover:text-slate-600 font-bold cursor-pointer"
             >
-              {t.clear}
+              {t.clear} ({selectedChips.length})
             </button>
           )}
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {SUPERVISOR_ISSUE_CHIPS.map((chip) => {
-            const isSelected = selectedChip?.id === chip.id;
+            const isSelected = selectedChips.some((c) => c.id === chip.id);
             return (
               <button
                 key={chip.id}

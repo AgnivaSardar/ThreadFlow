@@ -1,5 +1,5 @@
 import { prisma } from '../../config/db';
-import { Role, RiskLevel, Stage, ApprovalStatus, AuditCategory } from '@prisma/client';
+import { Role, RiskLevel, Stage, ApprovalStatus, AuditCategory, IssueCategory } from '@prisma/client';
 import { AppError } from '../../common/errors/AppError';
 import { AuthenticatedUser } from '../../common/types/express';
 import { calculateAuditHash } from '../../common/utils/crypto';
@@ -101,30 +101,57 @@ export class RiskService {
 
     const evaluation = evaluateProductionRisk(riskInput);
 
+    // Check if any recent production update on this milestone reported an operational issue (Machine Breakdown, etc.)
+    const recentIssueUpdate = await prisma.productionUpdate.findFirst({
+      where: {
+        orderId: order.id,
+        milestoneId: milestone.id,
+        issueClassification: {
+          category: { notIn: [IssueCategory.OTHER] },
+        },
+      },
+      include: { issueClassification: true },
+      orderBy: { clientEventAt: 'desc' },
+    });
+
+    const hasFloorIssue = Boolean(recentIssueUpdate?.issueClassification);
+    let finalRiskLevel = evaluation.riskLevel;
+    let finalExposure = evaluation.financialExposureRupees;
+
     // Persist or update RiskWarning table
     const existing = await prisma.riskWarning.findFirst({
       where: { orderId: order.id, milestoneId: milestone.id },
     });
 
-    const isConfirmed = existing?.approvalStatus === ApprovalStatus.CONFIRMED;
-    const isOverridden = existing?.approvalStatus === ApprovalStatus.OVERRIDDEN;
+    let finalApprovalStatus = existing?.approvalStatus || ApprovalStatus.PENDING_REVIEW;
+
+    if (hasFloorIssue) {
+      // If there is an active operational issue on the floor, elevate at least to AMBER
+      if (finalRiskLevel === RiskLevel.GREEN) {
+        finalRiskLevel = RiskLevel.AMBER;
+      }
+      // If a floor issue was logged and hasn't been reviewed by merchandiser yet, reset to PENDING_REVIEW
+      if (!existing?.reviewedAt || (recentIssueUpdate && new Date(existing.reviewedAt) < new Date(recentIssueUpdate.clientEventAt))) {
+        finalApprovalStatus = ApprovalStatus.PENDING_REVIEW;
+      }
+      if (finalExposure === 0) {
+        const remainingPieces = Math.max(0, milestone.targetQuantity - milestone.completedQuantity);
+        finalExposure = Math.max(25000, Math.round(remainingPieces * (order.fobPricePerPiece || 10) * (order.exchangeRate || 85) * 0.06));
+      }
+    }
 
     const dataToSave = {
-      riskLevel: evaluation.riskLevel,
+      riskLevel: finalRiskLevel,
       requiredDailyRate: evaluation.requiredDailyRate,
       actualRollingRate: evaluation.actualRollingRate,
       varianceQtyPerDay: evaluation.varianceQtyPerDay,
       projectedCompletionDate: evaluation.projectedCompletionDate,
       daysLate: evaluation.daysLate,
-      financialExposureRupees: evaluation.financialExposureRupees,
+      financialExposureRupees: finalExposure,
       mathBreakdown: JSON.stringify(evaluation.mathBreakdown),
       // Raw panic is never buyer-visible without merchandiser confirmation
-      isBuyerVisible: isConfirmed,
-      approvalStatus: isConfirmed
-        ? ApprovalStatus.CONFIRMED
-        : isOverridden
-        ? ApprovalStatus.OVERRIDDEN
-        : ApprovalStatus.PENDING_REVIEW,
+      isBuyerVisible: finalApprovalStatus === ApprovalStatus.CONFIRMED,
+      approvalStatus: finalApprovalStatus,
     };
 
     if (existing) {
