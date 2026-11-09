@@ -10,7 +10,7 @@ export const config = {
   databaseUrl: process.env.DATABASE_URL || '',
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET || 'threadflow_access_secret_super_secure_key_12345',
-    accessExpiry: process.env.JWT_ACCESS_EXPIRY || '15m',
+    accessExpiry: process.env.JWT_ACCESS_EXPIRY || '45m',
     refreshSecret: process.env.JWT_REFRESH_SECRET || 'threadflow_refresh_secret_super_secure_key_67890',
     refreshExpiry: process.env.JWT_REFRESH_EXPIRY || '7d',
     refreshExpiryDays: 7,

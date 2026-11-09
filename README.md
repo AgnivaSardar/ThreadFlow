@@ -32,11 +32,30 @@ ThreadFlow replaces fragmented WhatsApp chats, manual phone calls, and static sp
 
 ## Interactive Platform Walkthrough & Feature Guide
 
-Explore the core areas of ThreadFlow, how to navigate to each screen, and the engineering that powers them.
+Explore each area of ThreadFlow, how to navigate to that screen, and the engineering that powers it.
 
 ---
 
-### 1. Export Orders Board & Critical Path Overview
+### 1. Unified Navigation Sidebar & Factory Horizon Calendar
+
+The persistent operational command backbone accessible across the platform, providing instantaneous workspace switching, role-scoped links, and an interactive production horizon calendar.
+
+<p align="center">
+  <img src="./public/images/readme_sidebar.png" alt="Unified Navigation Sidebar & Horizon Calendar" width="30%" />
+</p>
+
+* **How to Navigate There:**
+  * **Role:** Persistent for all authenticated roles (`ADMIN`, `MERCHANDISER`, `SUPERVISOR`, `BUYER`).
+  * **Path:** Located on the left-hand rail of every desktop viewport across all routes.
+* **Key Functionality:**
+  * **Cluster Identity & Branding:** Features the official ThreadFlow Tiruppur Knitwear seal with real-time connectivity status.
+  * **Role-Aware Primary Navigation:** Instant switching between **Order Board** (`/orders`), **Floor Work** (`/floor`), **Risk & Delays** (`/risks`), **Buyer Portal** (`/buyer`), **Audit History** (`/audit`), and **Weekly Reports** (`/reports`). Unpermitted modules are automatically hidden for restricted roles (e.g., buyer isolation).
+  * **Interactive Horizon Calendar:** Live month-at-a-glance planner calibrated to the operational horizon (`NOVEMBER 2026`). Highlights current day (`Today (Nov 09)`), displays gold indicators on dates with planned ex-factory handoffs or milestone completion targets, and allows month navigation (`<` / `>`) to inspect upcoming critical shipping weeks.
+  * **Secure Session Logout:** One-tap authenticated JWT session destruction and local queue cache flush.
+
+---
+
+### 2. Export Orders Board & Critical Path Overview
 
 The primary mission control dashboard for merchandisers and factory leadership, providing cross-factory visibility across all active purchase orders, assigned production units, shipping calendar weeks (CW), and real-time status.
 
@@ -55,7 +74,7 @@ The primary mission control dashboard for merchandisers and factory leadership, 
 
 ---
 
-### 2. Purchase Order Deep Dive, Financials & Size Allocation
+### 3. Purchase Order Deep Dive, Financials & Size Allocation
 
 Detailed commercial and physical breakdown of individual purchase orders, linking commercial FOB value directly to size ratios and verified garment counts.
 
@@ -74,7 +93,7 @@ Detailed commercial and physical breakdown of individual purchase orders, linkin
 
 ---
 
-### 3. 6/7-Stage Time & Action (TNA) Milestone Pipeline
+### 4. 6/7-Stage Time & Action (TNA) Milestone Pipeline
 
 Interactive visual pipeline detailing each critical manufacturing stage from knitting to final packing, complete with buffer margins and upstream lead time dependencies.
 
@@ -93,7 +112,7 @@ Interactive visual pipeline detailing each critical manufacturing stage from kni
 
 ---
 
-### 4. Shop Floor Production Hub & Active Work Orders
+### 5. Shop Floor Production Hub & Active Work Orders
 
 High-contrast, touch-optimized shop floor view designed for factory supervisors and unit heads to view operational queues and log daily shifts.
 
@@ -111,7 +130,7 @@ High-contrast, touch-optimized shop floor view designed for factory supervisors 
 
 ---
 
-### 5. Shift Output Logging & Strict Cap Enforcement
+### 6. Shift Output Logging & Strict Cap Enforcement
 
 A resilient shift entry form enabling supervisors to log day or night production outputs with per-size precision and zero overrun tolerance.
 
@@ -131,7 +150,7 @@ A resilient shift entry form enabling supervisors to log day or night production
 
 ---
 
-### 6. Multi-Select Floor Issue Chips & Bilingual Voice Telemetry
+### 7. Multi-Select Floor Issue Chips & Bilingual Voice Telemetry
 
 Empowers floor supervisors to capture mechanical disruptions and voice notes in native languages (`தமிழ்`, `English`, `हिंदी`) with zero keyboard dependency.
 
@@ -156,7 +175,7 @@ Empowers floor supervisors to capture mechanical disruptions and voice notes in 
 
 ---
 
-### 7. Human-in-the-Loop Risk Review Gate
+### 8. Human-in-the-Loop Risk Review Gate
 
 Protects commercial buyer relationships by routing shop floor operational disruptions to senior merchandisers for triage before international buyers are notified.
 
@@ -176,7 +195,7 @@ Protects commercial buyer relationships by routing shop floor operational disrup
 
 ---
 
-### 8. Deterministic "Show-Your-Math" Run-Rate Engine
+### 9. Deterministic "Show-Your-Math" Run-Rate Engine
 
 Eliminates speculative guesswork with mathematical proof of delivery pacing, comparing required run-rate against real floor velocity.
 
@@ -199,7 +218,7 @@ Eliminates speculative guesswork with mathematical proof of delivery pacing, com
 
 ---
 
-### 9. Multi-Tenant Scoped Buyer Portal & Collaborative Sign-Off
+### 10. Multi-Tenant Scoped Buyer Portal & Collaborative Sign-Off
 
 Secure, tenant-isolated transparency portal for international buyers (UK, Germany, EU) to track orders and sign off on milestone quality.
 
@@ -217,7 +236,7 @@ Secure, tenant-isolated transparency portal for international buyers (UK, German
 
 ---
 
-### 10. Tamper-Evident Cryptographic Audit History
+### 11. Tamper-Evident Cryptographic Audit History
 
 An immutable, append-only compliance ledger recording every schedule shift, milestone override, and buyer response.
 
@@ -235,7 +254,7 @@ An immutable, append-only compliance ledger recording every schedule shift, mile
 
 ---
 
-### 11. 5-Week TNA Pipeline Velocity & Executive Reporting
+### 12. 5-Week TNA Pipeline Velocity & Executive Reporting
 
 Strategic analytics for factory leadership and brand sourcing directors comparing weekly garment throughput and stage velocity.
 
@@ -257,6 +276,28 @@ Strategic analytics for factory leadership and brand sourcing directors comparin
     * 🧭 **Floor Merchandiser Directive** (actionable labor re-allocation instructions)
   * **Delivery Schedule Health Donut:** Clear percentage of on-time POs vs minor buffer consumed vs critical deficits.
   * **Executive PDF Generation:** One-click **Print Full Page PDF** compiles a formatted commercial pack for brand sourcing meetings.
+
+---
+
+### 13. ThreadFlow AI Copilot: Natural Language Orders & Risk Assistant
+
+An intelligent, context-aware conversational copilot available anywhere in the workspace for querying active production orders, milestone statuses, and critical risks.
+
+<p align="center">
+  <img src="./public/images/readme_ai_assistant.png" alt="ThreadFlow AI Copilot Assistant" width="45%" />
+</p>
+
+* **How to Navigate / Open It:**
+  * **Role:** Available to all logged-in roles (`ADMIN`, `MERCHANDISER`, `SUPERVISOR`, `BUYER`).
+  * **Path:** Click the floating **ThreadFlow AI button** (with the glowing star/robot emblem) anchored at the bottom-right corner of any screen.
+* **Key Functionality:**
+  * **Natural Language Database Telemetry:** Powered by Google Gemini and live production database grounding. Users can ask conversational questions such as:
+    * *"What is the status of my active orders?"*
+    * *"Which orders are currently in Finishing and what are their deficit rates?"*
+    * *"Summarize B-PO-88260 progress and ex-factory risk."*
+  * **Instant Structured Status Badges:** Formats replies with clear color-coded risk tags (`Extra Caution [AMBER]`, `Critical Deficit [RED]`, `On Track [GREEN]`), active TNA stage progress (`FINISHING: 4,900 / 5,000 pcs, 98%`), and precise ex-factory dates.
+  * **Hands-Free Voice Querying:** Includes a native speech-to-text microphone button in the input pill, allowing shop floor managers and busy merchandisers to speak queries aloud.
+  * **Thread Session Reset:** Includes a reload/reset button to clear context and start a clean inquiry session.
 
 ---
 
