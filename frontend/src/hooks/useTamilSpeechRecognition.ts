@@ -22,7 +22,7 @@ export interface SpeechRecognitionHook {
   error: string | null;
   speechLang: SpeechLanguage;
   setSpeechLang: (lang: SpeechLanguage) => void;
-  startListening: () => Promise<void>;
+  startListening: () => void;
   stopListening: () => void;
   resetTranscript: () => void;
 }
@@ -96,15 +96,21 @@ export function useTamilSpeechRecognition(initialLang: SpeechLanguage = 'ta-IN')
         const errType = event.error;
 
         if (errType === 'not-allowed') {
-          setError('Microphone permission denied. Please allow microphone access in your browser settings.');
+          setError(
+            'Microphone access blocked. In Windows Settings (Win + I → Privacy & security → Microphone), ensure "Let desktop apps access your microphone" is turned ON.'
+          );
           isListeningRef.current = false;
           setIsListening(false);
         } else if (errType === 'audio-capture') {
-          setError('Audio capture failed: No microphone detected or audio input was blocked. Ensure your microphone is plugged in, unmuted, and allowed in Windows settings.');
+          setError(
+            'Audio capture failed: Windows is blocking Chrome from accessing the microphone (Permission denied by system), or no microphone is plugged in. In Windows Settings (Win + I → Privacy & security → Microphone), turn ON "Let desktop apps access your microphone".'
+          );
           isListeningRef.current = false;
           setIsListening(false);
         } else if (errType === 'network') {
-          setError('Network error: Speech recognition service could not be reached. Please check your internet connection.');
+          setError(
+            'Speech recognition network error: Google speech service could not be reached. Please check your internet connection.'
+          );
           isListeningRef.current = false;
           setIsListening(false);
         } else if (errType === 'service-not-allowed') {
@@ -112,22 +118,12 @@ export function useTamilSpeechRecognition(initialLang: SpeechLanguage = 'ta-IN')
           isListeningRef.current = false;
           setIsListening(false);
         } else if (errType === 'no-speech') {
-          // Non-fatal: user paused or stayed quiet
-          if (isListeningRef.current) {
-            // Re-arm smoothly if still listening
-            try {
-              recognition.start();
-            } catch {
-              setIsListening(false);
-              isListeningRef.current = false;
-            }
-          }
+          setError('No speech was detected. Please try speaking closer to your microphone.');
         } else if (errType === 'aborted') {
-          // User stopped listening, ignore
-          setIsListening(false);
           isListeningRef.current = false;
+          setIsListening(false);
         } else {
-          setError(`Speech recognition error: ${errType}`);
+          setError(`Speech recognition notice: ${errType}`);
           isListeningRef.current = false;
           setIsListening(false);
         }
@@ -184,7 +180,7 @@ export function useTamilSpeechRecognition(initialLang: SpeechLanguage = 'ta-IN')
     }
   }, []);
 
-  const startListening = useCallback(async () => {
+  const startListening = useCallback(() => {
     setError(null);
     setInterimTranscript('');
 
@@ -193,50 +189,13 @@ export function useTamilSpeechRecognition(initialLang: SpeechLanguage = 'ta-IN')
       return;
     }
 
-    // Explicitly verify microphone hardware and prompt browser permission if needed
-    if (typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // Immediately release tracks so SpeechRecognition has dedicated device access
-        stream.getTracks().forEach((track) => track.stop());
-      } catch (mediaErr: any) {
-        console.warn('Microphone permission / hardware check failed:', mediaErr);
-        isListeningRef.current = false;
-        setIsListening(false);
-
-        if (mediaErr.name === 'NotAllowedError' || mediaErr.name === 'PermissionDeniedError') {
-          const isSystemDenied =
-            (mediaErr.message && mediaErr.message.toLowerCase().includes('system')) ||
-            mediaErr.name === 'NotAllowedError';
-          if (isSystemDenied) {
-            setError(
-              'Windows is blocking Chrome from accessing the microphone. In the Chrome popup next to the URL bar, click the blue "system settings" link (or open Windows Settings → Privacy & security → Microphone) and turn ON "Let desktop apps access your microphone", then click Reload.'
-            );
-          } else {
-            setError(
-              'Microphone permission denied. Click the lock/settings icon in your browser address bar and allow microphone access.'
-            );
-          }
-          return;
-        } else if (mediaErr.name === 'NotFoundError' || mediaErr.name === 'DevicesNotFoundError') {
-          setError('No microphone found. Please connect or enable a microphone in Windows Sound settings.');
-          return;
-        } else if (mediaErr.name === 'NotReadableError' || mediaErr.name === 'TrackStartError') {
-          setError('Microphone is in use by another application or Windows audio device is busy.');
-          return;
-        } else {
-          setError(`Microphone error: ${mediaErr.message || mediaErr.name || 'Unable to access audio device'}`);
-          return;
-        }
-      }
-    }
-
     try {
       isListeningRef.current = true;
       recognitionRef.current.lang = speechLang;
       recognitionRef.current.start();
     } catch (err: any) {
       if (err.name !== 'InvalidStateError') {
+        console.warn('SpeechRecognition start error:', err);
         setError(`Failed to start microphone: ${err.message || 'Start failed'}`);
         isListeningRef.current = false;
         setIsListening(false);

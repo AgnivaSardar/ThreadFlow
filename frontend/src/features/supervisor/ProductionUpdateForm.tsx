@@ -1333,11 +1333,46 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           )}
 
           {speechError && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 font-medium flex items-start gap-2 shadow-sm">
-              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-              <div className="flex-1 leading-relaxed">
-                <span className="font-bold text-rose-900 block mb-0.5">Microphone Notice</span>
-                {speechError}
+            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 shadow-sm space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <div className="flex-1 leading-relaxed">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-rose-950">Microphone Notice</span>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleVoice()}
+                      className="text-[11px] font-bold text-rose-700 hover:text-rose-900 underline cursor-pointer"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                  <p className="mt-1 text-slate-700">{speechError}</p>
+                </div>
+              </div>
+
+              {/* Windows OS vs Browser settings hint & Quick Simulation */}
+              <div className="pt-2 border-t border-rose-200/60 flex flex-wrap items-center justify-between gap-2">
+                <div className="text-[11px] text-slate-600">
+                  <span className="font-semibold text-slate-800">Quick fix:</span> Press <kbd className="px-1 py-0.5 bg-white border border-slate-300 rounded text-[10px] font-mono shadow-xs">Win + I</kbd> → <strong>Privacy & security</strong> → <strong>Microphone</strong> → turn ON <strong>"Let desktop apps access your microphone"</strong>.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sample =
+                      speechLang === 'ta-IN'
+                        ? 'இன்று 450 பீஸ் முடிந்தது 5 ரிஜெக்ட், மெஷின் ஊசி உடைந்தது'
+                        : speechLang === 'hi-IN'
+                        ? 'आज 450 पीस पूरा हुआ 5 रिजेक्ट, मशीन सुई टूटी'
+                        : 'Shift completed 450 pcs good, 5 rejected, machine stopped due to needle breakage on line 2';
+                    setNotes(sample);
+                    parseAndAutofillFromSpeech(sample);
+                  }}
+                  className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-xs cursor-pointer flex items-center gap-1"
+                >
+                  <Sparkles className="w-3 h-3 text-amber-300" />
+                  Simulate Voice Input
+                </button>
               </div>
             </div>
           )}
