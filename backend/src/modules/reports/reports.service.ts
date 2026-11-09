@@ -143,6 +143,14 @@ export class ReportsService {
       `CW ${weekNumber}`,
     ];
 
+    // Compute calendar end dates for the 5 weeks (e.g. CW 44 ends 2026-11-08)
+    const baseCW44End = new Date('2026-11-08T23:59:59.999Z').getTime();
+    const weekEndTimes = weeksList.map((_, idx) => {
+      const offsetWeeks = 4 - idx; // 4, 3, 2, 1, 0 weeks before selected week
+      const selectedWeekDiff = (weekNumber - 44) * 7 * 86400000;
+      return baseCW44End + selectedWeekDiff - offsetWeeks * 7 * 86400000;
+    });
+
     // Compute 7-stage multi-bar trend data dynamically from this buyer's REAL milestones in DB
     const stageDefs = [
       { key: 'KNITTING', name: 'Knitting' },
@@ -154,9 +162,6 @@ export class ReportsService {
       { key: 'FINISHING', name: 'Finishing' },
     ];
 
-    // Factor adjustment based on chosen week so selecting earlier weeks dynamically reflects lower completion
-    const weekOffsetFactor = (44 - weekNumber) * 6; // percentage points lower for older weeks
-
     const stageTrends: StageTrendMetric[] = stageDefs.map((def) => {
       // Find all milestones across this buyer's orders for this stage
       const matchingMilestones = orders.flatMap((o) =>
@@ -166,23 +171,39 @@ export class ReportsService {
       const stageTarget = matchingMilestones.reduce((acc, m) => acc + m.targetQuantity, 0);
       const stageCompleted = matchingMilestones.reduce((acc, m) => acc + m.completedQuantity, 0);
 
-      // Current actual completion rate for this buyer and this stage
-      const actualCurrentRate =
-        stageTarget > 0 ? Math.min(100, Math.round((stageCompleted / stageTarget) * 100)) : 0;
-
-      // Adjust for chosen historical week parameter
-      const adjustedRate = Math.max(0, Math.min(100, actualCurrentRate - weekOffsetFactor));
-
-      // Build progression curve for past 5 weeks culminating in adjustedRate
+      // Compute actual weekly progress dynamically from real milestone schedules and completed counts
       const weeklyBars: StageWeeklyBar[] = weeksList.map((w, idx) => {
-        const stepFraction = (idx + 1) / 5; // 0.2, 0.4, 0.6, 0.8, 1.0
-        const progressFactor = Math.pow(stepFraction, 1.25);
-        const barRate = Math.max(0, Math.min(100, Math.round(adjustedRate * progressFactor)));
-        const pieces = Math.round(stageTarget * (barRate / 100));
+        const curEndTime = weekEndTimes[idx];
+        let piecesInWeek = 0;
+
+        for (const m of matchingMilestones) {
+          if (!m.plannedStart || !m.plannedEnd) {
+            piecesInWeek += m.completedQuantity;
+            continue;
+          }
+          const start = new Date(m.plannedStart).getTime();
+          const end = new Date(m.plannedEnd).getTime();
+
+          if (curEndTime < start) {
+            piecesInWeek += 0;
+          } else if (curEndTime >= end) {
+            piecesInWeek += m.completedQuantity;
+          } else {
+            const frac = Math.max(0, Math.min(1, (curEndTime - start) / Math.max(1, end - start)));
+            piecesInWeek += Math.round(m.completedQuantity * frac);
+          }
+        }
+
+        // On the final/current week, ensure pieces match exact real completedQuantity in DB
+        if (idx === weeksList.length - 1) {
+          piecesInWeek = stageCompleted;
+        }
+
+        const barRate = stageTarget > 0 ? Math.min(100, Math.round((piecesInWeek / stageTarget) * 100)) : 0;
         return {
           week: w,
           rate: barRate,
-          pieces,
+          pieces: piecesInWeek,
         };
       });
 
@@ -205,10 +226,17 @@ export class ReportsService {
     // Weekly Factory Throughput Velocity (Pieces Produced vs Target across past 5 weeks)
     const baseTargetPcs = totalContractedPieces > 0 ? Math.round(totalContractedPieces / 5) : 1000;
     const weeklyThroughput = weeksList.map((w, idx) => {
-      // Average completion across all stages for this buyer in that week
+      // Real weighted pieces delivered across all stages in that week
+      const totalPiecesInWeek = stageTrends.reduce(
+        (sum, st) => sum + (st.weeklyBars[idx]?.pieces || 0),
+        0
+      );
       const avgRateInWeek =
         stageTrends.reduce((sum, st) => sum + (st.weeklyBars[idx]?.rate || 0), 0) / stageTrends.length;
-      const actualPcs = Math.round(baseTargetPcs * (avgRateInWeek / 100) * 1.12);
+      const actualPcs = Math.min(
+        totalContractedPieces,
+        Math.round(baseTargetPcs * (avgRateInWeek / 100) * 1.12)
+      );
       const efficiencyRate = baseTargetPcs > 0 ? Math.min(100, Math.round((actualPcs / baseTargetPcs) * 100)) : 0;
       return {
         week: w,

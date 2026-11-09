@@ -8,6 +8,7 @@ import { UserMenuDropdown } from './UserMenuDropdown';
 import { OfflineQueueDrawer } from './OfflineQueueDrawer';
 import { AIChatbot } from './AIChatbot';
 import { NotificationPopover } from './NotificationPopover';
+import { useSessionInactivity } from '../hooks/useSessionInactivity';
 import {
   getPendingOfflineCount,
 } from '../offline/queue/queue';
@@ -26,6 +27,9 @@ export const AppLayout: React.FC = () => {
   const location = useLocation();
   const [serverTime, setServerTime] = useState<Date>(getAuthoritativeServerDate());
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Inactivity tracking (30m timeout + proactive keepalive for active users)
+  const { showWarning, secondsRemaining, extendSession } = useSessionInactivity();
 
   // Network & Sync states in Main Header
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
@@ -277,6 +281,34 @@ export const AppLayout: React.FC = () => {
           }}
           lang={lang}
         />
+
+        {/* Inactivity Warning Modal (28m to 30m idle zone) */}
+        {showWarning && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fadeIn">
+            <div className="bg-white rounded-3xl shadow-2xl border border-amber-200 max-w-sm w-full p-6 text-center space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto shadow-inner">
+                <Clock className="w-6 h-6 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900">Are you still there?</h3>
+                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                  You have been idle for 28 minutes. Your session will automatically close in{' '}
+                  <span className="font-bold text-rose-600 font-mono text-sm">{secondsRemaining}s</span>{' '}
+                  to protect factory data.
+                </p>
+              </div>
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={extendSession}
+                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 active:scale-95 transition-all cursor-pointer"
+                >
+                  Stay Logged In
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Global Floating AI Chatbot Guide & Status Assistant */}
         <AIChatbot />

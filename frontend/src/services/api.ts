@@ -70,8 +70,11 @@ export async function apiRequest<T>(
     if (!refreshPromise) {
       refreshPromise = (async () => {
         try {
+          const savedRefreshToken = localStorage.getItem('threadflow_refresh_token');
           const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken: savedRefreshToken }),
             credentials: 'include',
           });
           const refreshData = await refreshRes.json();
@@ -79,9 +82,13 @@ export async function apiRequest<T>(
           if (refreshRes.ok && refreshData.accessToken) {
             currentAccessToken = refreshData.accessToken;
             localStorage.setItem('threadflow_token', refreshData.accessToken);
+            if (refreshData.refreshToken) {
+              localStorage.setItem('threadflow_refresh_token', refreshData.refreshToken);
+            }
             if (refreshData.user) {
               localStorage.setItem('threadflow_user', JSON.stringify(refreshData.user));
             }
+            localStorage.setItem('threadflow_last_activity', String(Date.now()));
             return refreshData.accessToken as string;
           }
           return null;
@@ -110,10 +117,12 @@ export async function apiRequest<T>(
 
     // Unrecoverable 401: clear session and redirect to login automatically
     localStorage.removeItem('threadflow_token');
+    localStorage.removeItem('threadflow_refresh_token');
     localStorage.removeItem('threadflow_user');
+    localStorage.removeItem('threadflow_last_activity');
     currentAccessToken = null;
     if (window.location.pathname !== '/login') {
-      window.location.href = '/login';
+      window.location.href = '/login?reason=session_expired';
     }
     throw new ApiError('Session expired. Redirecting to login...', 401);
   }

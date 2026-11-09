@@ -197,12 +197,12 @@ async function runProductionTestSuite() {
         mockSupervisorAuth
       );
     } catch (err: any) {
-      ceilingBlocked = err.message.includes('Tolerance ceiling exceeded');
+      ceilingBlocked = err.message.includes('Cap amount exceeded') || err.message.includes('Tolerance ceiling exceeded');
     }
 
     assert(
       ceilingBlocked,
-      `Rejects output exceeding 3% fabric overage ceiling (Typo extra-zero protection)`
+      `Rejects output exceeding stage cap amount (Typo extra-zero protection)`
     );
 
     // -------------------------------------------------------------

@@ -263,76 +263,50 @@ export const ReportsPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-4 pb-12 animate-in fade-in duration-200">
-      {/* Printable Formal Header Letterhead (Visible strictly during print) */}
-      <div className="hidden print:block pb-4 mb-4 border-b-2 border-slate-900 break-inside-avoid">
-        <div className="flex items-start justify-between">
+    <>
+      <div className="space-y-4 pb-12 animate-in fade-in duration-200 print:hidden">
+        {/* 1. Header & Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-black uppercase tracking-tight text-slate-950">
-              ThreadFlow Manufacturing Units
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              {t.reports.title}
             </h1>
-            <p className="text-xs text-slate-600 mt-0.5">
-              Cotton Knitwear Export Hub • Tiruppur 641602, Tamil Nadu, India
+            <p className="text-xs text-slate-500 mt-0.5">
+              {t.reports.subtitle}
             </p>
-            <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-1">
-              <span>ISO 9001:2015 Certified</span>
-              <span>•</span>
-              <span>Sedex SMETA Audited Facility</span>
-              <span>•</span>
-              <span>OEKO-TEX Standard 100</span>
-            </div>
           </div>
-          <div className="text-right">
-            <span className="inline-block px-2.5 py-0.5 rounded bg-[#0C2D48] font-mono font-bold text-xs text-white">
-              WEEKLY PRODUCTION & SOURCING REPORT
-            </span>
-            <div className="text-xs font-bold text-slate-900 mt-1">
-              Export Partner: {data?.buyer.name} ({data?.buyer.country || 'International'})
-            </div>
-            <div className="text-[10px] text-slate-600 font-mono">
-              Cycle: {data?.selectedWeek || selectedWeek} • Date: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* 1. Header & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            {t.reports.title}
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {t.reports.subtitle}
-          </p>
-        </div>
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            {/* Export CSV */}
+            <button
+              type="button"
+              onClick={() => {
+                if (data?.buyer) exportOrdersToCsv(data.buyer, exportFormattedOrders);
+              }}
+              disabled={!data || data.orders.length === 0}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-xl text-xs shadow-2xs transition cursor-pointer disabled:opacity-50"
+              title="Download formatted RFC 4180 CSV spreadsheet"
+            >
+              <Download className="w-3.5 h-3.5 text-sky-700" />
+              <span>{t.common.exportCsv}</span>
+            </button>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-          {/* Export CSV */}
-          <button
-            type="button"
-            onClick={() => {
-              if (data?.buyer) exportOrdersToCsv(data.buyer, exportFormattedOrders);
-            }}
-            disabled={!data || data.orders.length === 0}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-xl text-xs shadow-2xs transition cursor-pointer disabled:opacity-50"
-            title="Download formatted RFC 4180 CSV spreadsheet"
-          >
-            <Download className="w-3.5 h-3.5 text-sky-700" />
-            <span>{t.common.exportCsv}</span>
-          </button>
-
-          {/* Print Whole Page PDF */}
-          <button
-            type="button"
-            onClick={() => window.print()}
-            disabled={!data || data.orders.length === 0}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-xs transition cursor-pointer disabled:opacity-50"
-            title="Print or Save Full Page PDF with all graphs, charts, tables and executive sign-off"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>{isTa ? 'முழு பக்க PDF அச்சிடு' : 'Print Full Page PDF'}</span>
-          </button>
+            {/* Print Full PDF via Clean Document Preview Modal */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsPrintModalOpen(true);
+                setTimeout(() => {
+                  window.print();
+                }, 250);
+              }}
+              disabled={!data || data.orders.length === 0}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-xs transition cursor-pointer disabled:opacity-50"
+              title="Print or Save Full Page PDF using Document Preview layout"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>{isTa ? 'முழு பக்க PDF அச்சிடு' : 'Print Full Page PDF'}</span>
+            </button>
 
           {/* Document Preview Modal */}
           <button
@@ -843,44 +817,9 @@ export const ReportsPage: React.FC = () => {
           </table>
         </div>
       </div>
-
-      {/* Executive Review & Sign-Off Block for Print (Rendered at bottom of printable page) */}
-      <div className="hidden print:block pt-6 mt-6 border-t-2 border-slate-900 break-inside-avoid">
-        <div className="text-xs font-bold uppercase tracking-wider text-slate-900 mb-4">
-          Executive Review & Quality Verification Sign-Off
-        </div>
-        <div className="grid grid-cols-3 gap-8 text-xs">
-          <div className="space-y-8">
-            <div className="border-b border-slate-400 pb-1 text-slate-400 italic text-[10px]">
-              Sign & Date
-            </div>
-            <div>
-              <div className="font-bold text-slate-900">Factory General Manager</div>
-              <div className="text-[10px] text-slate-500">Manufacturing Operations</div>
-            </div>
-          </div>
-          <div className="space-y-8">
-            <div className="border-b border-slate-400 pb-1 text-slate-400 italic text-[10px]">
-              Sign & Date
-            </div>
-            <div>
-              <div className="font-bold text-slate-900">Lead Merchandiser</div>
-              <div className="text-[10px] text-slate-500">TNA Planning & Buyer Dispatch</div>
-            </div>
-          </div>
-          <div className="space-y-8">
-            <div className="border-b border-slate-400 pb-1 text-slate-400 italic text-[10px]">
-              Sign & Date
-            </div>
-            <div>
-              <div className="font-bold text-slate-900">Quality Assurance Head</div>
-              <div className="text-[10px] text-slate-500">Sedex SMETA Compliance</div>
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* 7. Printable Report Modal */}
+      {/* 7. Printable Report Modal (Used for both Preview and Full Document Printing) */}
       {data?.buyer && (
         <WeeklyReportPrintModal
           isOpen={isPrintModalOpen}
@@ -895,6 +834,6 @@ export const ReportsPage: React.FC = () => {
           milestoneHealth={data.milestoneHealth}
         />
       )}
-    </div>
+    </>
   );
 };

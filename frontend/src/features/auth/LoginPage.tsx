@@ -14,6 +14,7 @@ import {
   X,
   ShieldCheck,
   RotateCcw,
+  Clock,
 } from 'lucide-react';
 import { useAuthStore } from './authStore';
 
@@ -28,6 +29,15 @@ export const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loginSuccessMessage, setLoginSuccessMessage] = useState<string | null>(null);
+  const [inactivityNotice, setInactivityNotice] = useState(false);
+
+  // Check URL params for session reasons
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('reason') === 'inactivity') {
+      setInactivityNotice(true);
+    }
+  }, []);
 
   // Forgot Password / OTP Modal State
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -218,6 +228,15 @@ export const LoginPage: React.FC = () => {
           </div>
 
           {/* Feedback Alerts */}
+          {inactivityNotice && (
+            <div className="mb-6 p-3.5 rounded-xl bg-amber-950/70 border border-amber-500/50 flex items-start gap-2.5 text-xs text-amber-200 animate-fadeIn shadow-lg">
+              <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <span className="font-medium">
+                Your session ended after 30 minutes of inactivity. Please sign in again to resume your work.
+              </span>
+            </div>
+          )}
+
           {error && (
             <div className="mb-6 p-3.5 rounded-xl bg-rose-950/60 border border-rose-500/40 flex items-start gap-2.5 text-xs text-rose-200 animate-fadeIn shadow-lg">
               <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />

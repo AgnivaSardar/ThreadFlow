@@ -130,9 +130,9 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-2 sm:p-4 backdrop-blur-xs overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-2 sm:p-4 backdrop-blur-xs overflow-y-auto print:static print:inset-auto print:bg-white print:p-0 print:m-0 print:block print:w-full print:h-auto print:overflow-visible print:backdrop-blur-none">
       {/* Modal Container */}
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:m-0 print:p-0 print:max-w-none print:max-h-none print:shadow-none print:rounded-none">
+      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:static print:m-0 print:p-0 print:max-w-none print:w-full print:max-h-none print:h-auto print:shadow-none print:rounded-none print:border-none print:overflow-visible print:block">
         {/* Top Control Bar (Hidden during Print) */}
         <div className="p-3 bg-[#0C2D48] text-white flex items-center justify-between border-b border-[#143D60] print:hidden">
           <div className="flex items-center gap-2">
@@ -162,7 +162,7 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
         </div>
 
         {/* Printable Full Document Body */}
-        <div className="p-6 sm:p-8 overflow-y-auto flex-1 space-y-5 text-slate-900 font-sans print:p-4 print:space-y-4">
+        <div className="p-6 sm:p-8 overflow-y-auto flex-1 space-y-5 text-slate-900 font-sans print:p-2 print:m-0 print:space-y-4 print:overflow-visible print:h-auto print:max-h-none print:block">
           {/* 1. Formal Letterhead */}
           <div className="flex items-start justify-between border-b-2 border-slate-900 pb-3">
             <div>
@@ -484,38 +484,38 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
           </div>
 
           {/* 5. Purchase Orders Status Table */}
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 break-inside-avoid print:break-inside-avoid">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 border-b border-slate-200 pb-1">
               Active Export Purchase Orders & TNA Milestones ({orders.length})
             </h4>
 
-            <div className="border border-slate-300 rounded-xl overflow-hidden">
-              <table className="w-full text-left text-[11px]">
+            <div className="border border-slate-300 rounded-xl overflow-hidden print:border-slate-400 print:rounded-none">
+              <table className="w-full text-left text-[11px] print:text-[9.5px]">
                 <thead className="bg-[#0C2D48] text-white font-bold uppercase text-[9px] tracking-wider">
                   <tr>
-                    <th className="py-2 px-2.5 border-r border-[#143D60]">PO Number</th>
-                    <th className="py-2 px-2.5 border-r border-[#143D60]">Style Description</th>
-                    <th className="py-2 px-2 text-right border-r border-[#143D60]">Qty (pcs)</th>
-                    <th className="py-2 px-2 border-r border-[#143D60]">Ex-Factory</th>
-                    <th className="py-2 px-2 border-r border-[#143D60]">Active Stage</th>
-                    <th className="py-2 px-2 text-center border-r border-[#143D60]">Progress</th>
-                    <th className="py-2 px-2 border-r border-[#143D60]">Manufacturing Unit</th>
-                    <th className="py-2 px-3">Confirmed Delivery Directives & Floor Notes</th>
+                    <th className="py-2 px-2 border-r border-[#143D60] w-[14%]">PO Number</th>
+                    <th className="py-2 px-2 border-r border-[#143D60] w-[18%]">Style Description</th>
+                    <th className="py-2 px-1.5 text-right border-r border-[#143D60] w-[9%]">Qty (pcs)</th>
+                    <th className="py-2 px-1.5 border-r border-[#143D60] w-[11%]">Ex-Factory</th>
+                    <th className="py-2 px-1.5 border-r border-[#143D60] w-[11%]">Active Stage</th>
+                    <th className="py-2 px-1.5 text-center border-r border-[#143D60] w-[7%]">Progress</th>
+                    <th className="py-2 px-2 border-r border-[#143D60] w-[14%]">Manufacturing Unit</th>
+                    <th className="py-2 px-2 w-[16%]">Directives & Floor Notes</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {orders.map((o) => (
-                    <tr key={o.id} className="even:bg-slate-50 odd:bg-white break-inside-avoid">
-                      <td className="py-2 px-2.5 font-mono font-bold text-slate-900 border-r border-slate-300 whitespace-nowrap">
+                    <tr key={o.id} className="even:bg-slate-50 odd:bg-white break-inside-avoid print:break-inside-avoid">
+                      <td className="py-2 px-2 font-mono font-bold text-slate-900 border-r border-slate-300 whitespace-nowrap">
                         {o.poNumber}
                       </td>
-                      <td className="py-2 px-2.5 font-medium text-slate-800 border-r border-slate-300 break-words">
+                      <td className="py-2 px-2 font-medium text-slate-800 border-r border-slate-300 break-words whitespace-normal">
                         {o.style}
                       </td>
-                      <td className="py-2 px-2 text-right font-mono font-bold text-slate-900 border-r border-slate-300 whitespace-nowrap">
+                      <td className="py-2 px-1.5 text-right font-mono font-bold text-slate-900 border-r border-slate-300 whitespace-nowrap">
                         {o.totalQuantity.toLocaleString()}
                       </td>
-                      <td className="py-2 px-2 whitespace-nowrap text-slate-700 border-r border-slate-300">
+                      <td className="py-2 px-1.5 whitespace-nowrap text-slate-700 border-r border-slate-300">
                         {new Date(o.exFactoryDate).toLocaleDateString('en-GB', {
                           day: '2-digit',
                           month: 'short',
@@ -525,16 +525,16 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
                           ({o.daysToExFactory}d left)
                         </span>
                       </td>
-                      <td className="py-2 px-2 font-semibold text-slate-800 border-r border-slate-300 capitalize whitespace-nowrap">
+                      <td className="py-2 px-1.5 font-semibold text-slate-800 border-r border-slate-300 capitalize whitespace-nowrap">
                         {o.activeStage.replace(/_/g, ' ')}
                       </td>
-                      <td className="py-2 px-2 text-center font-mono font-bold border-r border-slate-300 whitespace-nowrap">
+                      <td className="py-2 px-1.5 text-center font-mono font-bold border-r border-slate-300 whitespace-nowrap">
                         {o.progressPercent}%
                       </td>
-                      <td className="py-2 px-2 text-slate-700 border-r border-slate-300 whitespace-nowrap text-[10px]">
+                      <td className="py-2 px-2 text-slate-700 border-r border-slate-300 break-words whitespace-normal text-[10px]">
                         {o.unit?.name || '-'}
                       </td>
-                      <td className="py-2 px-3 text-[10px] text-slate-700 leading-relaxed break-words whitespace-normal">
+                      <td className="py-2 px-2 text-[10px] text-slate-700 leading-tight break-words whitespace-normal">
                         {o.confirmedAlerts.map((a) => a.mitigationPlan).filter(Boolean).join(' • ') ||
                           o.latestDailyLog?.notes ||
                           'Floor schedule on-track for vessel cut-off.'}
@@ -547,7 +547,7 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
           </div>
 
           {/* 6. Executive Sign-Off Block */}
-          <div className="pt-4 border-t-2 border-slate-800 space-y-2">
+          <div className="pt-4 border-t-2 border-slate-800 space-y-2 break-inside-avoid print:break-inside-avoid">
             <div className="text-[11px] font-bold uppercase tracking-wider text-slate-800">
               Executive Review & Quality Verification Sign-Off
             </div>
