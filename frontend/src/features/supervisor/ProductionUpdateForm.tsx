@@ -668,12 +668,12 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
   };
 
   // Voice recording toggle
-  const handleToggleVoice = () => {
+  const handleToggleVoice = async () => {
     triggerHaptic(50);
     if (isListening) {
       stopListening();
     } else {
-      startListening();
+      await startListening();
     }
   };
 
@@ -1324,33 +1324,6 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
             )}
           </button>
 
-          {/* Quick Tamil speech prompt templates */}
-          <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-            <span className="text-[10px] font-bold text-slate-400">உதாரணம் (Examples):</span>
-            <button
-              type="button"
-              onClick={() => {
-                const sample = 'இன்று 400 பீஸ் முடிந்தது 10 ரிஜெக்ட்';
-                setNotes(sample);
-                parseAndAutofillFromSpeech(sample);
-              }}
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
-            >
-              "400 பீஸ் முடிந்தது 10 ரிஜெக்ட்"
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const sample = '350 தயார் இயந்திர கோளாறு காரணமாக தாமதம்';
-                setNotes(sample);
-                parseAndAutofillFromSpeech(sample);
-              }}
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
-            >
-              "350 தயார் இயந்திர கோளாறு"
-            </button>
-          </div>
-
           {/* Interim speech transcript live preview */}
           {isListening && interimTranscript && (
             <div className="p-2.5 bg-indigo-50/80 border border-indigo-200 rounded-lg text-xs font-medium text-indigo-950 italic flex items-center gap-2">
@@ -1360,8 +1333,12 @@ export const ProductionUpdateForm: React.FC<ProductionUpdateFormProps> = ({
           )}
 
           {speechError && (
-            <div className="p-2 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 font-semibold">
-              {speechError}
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 font-medium flex items-start gap-2 shadow-sm">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <div className="flex-1 leading-relaxed">
+                <span className="font-bold text-rose-900 block mb-0.5">Microphone Notice</span>
+                {speechError}
+              </div>
             </div>
           )}
         </div>
