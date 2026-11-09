@@ -83,12 +83,12 @@ export class AssistantService {
           ? 'Extra Caution (AMBER)'
           : 'On Track (GREEN)';
 
-        return `• PO ${o.poNumber} ("${o.style}", ${o.totalQuantity.toLocaleString()} pcs, Buyer: ${
+        return `- **PO ${o.poNumber}** ("${o.style}", ${o.totalQuantity.toLocaleString()} pcs, Buyer: ${
           o.buyer?.name || 'N/A'
         }, Unit: ${o.unit?.name || 'N/A'}, Ex-Factory: ${o.exFactoryDate.toISOString().slice(0, 10)}):
-  - Status: ${healthStatus}
-  - Active Stage: ${activeMs?.stage || 'N/A'} (${(activeMs?.completedQuantity || 0).toLocaleString()} / ${(activeMs?.targetQuantity || 0).toLocaleString()} pcs, ${progressPct}%)
-  ${topRisk ? `- Risk: ${topRisk.riskLevel} (${topRisk.daysLate || 0}d late in ${topRisk.milestone?.stage || 'stage'})` : '- Risk: None / On Track'}`;
+  - **Status:** ${healthStatus}
+  - **Active Stage:** ${activeMs?.stage || 'N/A'} (${(activeMs?.completedQuantity || 0).toLocaleString()} / ${(activeMs?.targetQuantity || 0).toLocaleString()} pcs, ${progressPct}%)
+  ${topRisk ? `- **Risk:** ${topRisk.riskLevel} (${topRisk.daysLate || 0}d late in ${topRisk.milestone?.stage || 'stage'})` : '- **Risk:** None / On Track'}`;
       })
       .join('\n');
 
@@ -125,6 +125,11 @@ STRICT OPERATIONAL GUIDELINES:
 3. CONCISE & PRACTICAL:
    - Keep answers concise (2 to 4 sentences or brief bullet points).
    - Direct the user to the exact page or button they need.
+4. CLEAN MARKDOWN FORMATTING:
+   - Always format output with structured GitHub Flavored Markdown.
+   - Use bullet lists with hyphen ('- ') instead of raw unicode bullets.
+   - Always place an empty blank line before starting a bullet or numbered list.
+   - Bold important entities: **PO numbers**, **statuses** (e.g. **Critical Deficit (RED)**, **Extra Caution (AMBER)**, **On Track (GREEN)**, **Completed**), **dates**, and **stages**.
 
 CURRENT LIVE DATABASE SNAPSHOT:
 Units: ${unitsSummary}
@@ -218,12 +223,12 @@ function runDeterministicAssistantFallback(query: string, orders: any[], user: A
 
   // Navigation: How to log output
   if (/how to log|how do i log|log shift|floor output|record output/i.test(lower)) {
-    return 'To log shift output:\n1. Click "Floor Production Work" from the top navigation bar.\n2. Find your active order card and tap "Log Output".\n3. Enter the good output pieces per size (S, M, L, XL).\n4. You can also tap the speak button to dictate shift notes and numbers.\n5. Click "Submit Shift Output".';
+    return 'To log shift output:\n\n1. Click **"Floor Production Work"** (/supervisor/my-work) from the top navigation bar.\n2. Find your active order card and tap **"Log Output"**.\n3. Enter the good output pieces per size (**S, M, L, XL**).\n4. You can also tap the mic button to dictate shift notes and numbers.\n5. Click **"Submit Shift Output"** to record into the tamper-evident audit ledger.';
   }
 
   // Navigation: Simulator
   if (/simulator|air freight|what-if|run rate/i.test(lower)) {
-    return 'The Run-Rate & Air Freight Simulator is available on the Export Order Board (/orders). Click the "Simulator" button to test different daily production paces, see projected completion dates, and view overtime ROI and financial air freight liability.';
+    return 'The **Run-Rate & Air Freight Simulator** is available on the **Export Order Board** (/orders).\n\nClick the **"Simulator"** button to:\n- Test different daily production paces\n- See projected completion dates\n- View overtime ROI and financial air freight conversion liabilities.';
   }
 
   // Specific Order queries
@@ -238,11 +243,11 @@ function runDeterministicAssistantFallback(query: string, orders: any[], user: A
           ? Math.round((activeMs.completedQuantity / activeMs.targetQuantity) * 100)
           : 0;
 
-      return `Order ${o.poNumber} (${o.style}, ${o.totalQuantity.toLocaleString()} pcs):\n• Status: ${
+      return `**Order ${o.poNumber}** ("${o.style}", ${o.totalQuantity.toLocaleString()} pcs):\n\n- **Status:** ${
         isDone ? 'Completed' : o.healthStatus
-      }\n• Active Stage: ${activeMs?.stage || 'N/A'} (${(activeMs?.completedQuantity || 0).toLocaleString()} / ${(activeMs?.targetQuantity || 0).toLocaleString()} pcs, ${pct}%)\n• Buyer: ${
+      }\n- **Active Stage:** ${activeMs?.stage || 'N/A'} (${(activeMs?.completedQuantity || 0).toLocaleString()} / ${(activeMs?.targetQuantity || 0).toLocaleString()} pcs, **${pct}%**)\n- **Buyer:** ${
         o.buyer?.name || 'N/A'
-      }\n• Ex-Factory Date: ${o.exFactoryDate.toISOString().slice(0, 10)}`;
+      }\n- **Ex-Factory Date:** ${o.exFactoryDate.toISOString().slice(0, 10)}`;
     }
   }
 
@@ -250,18 +255,18 @@ function runDeterministicAssistantFallback(query: string, orders: any[], user: A
   if (/risk|delay|late|critical|deficit/i.test(lower)) {
     const atRisk = orders.filter((o) => o.healthStatus === 'RED' || o.healthStatus === 'AMBER');
     if (atRisk.length === 0) {
-      return 'All orders in the system are currently on track!';
+      return 'All orders in the system are currently **On Track (GREEN)**!';
     }
     const list = atRisk
       .map(
         (o) =>
-          `• ${o.poNumber} (${o.style}): Status ${o.healthStatus}, Ex-Factory ${o.exFactoryDate.toISOString().slice(0, 10)}`
+          `- **${o.poNumber}** ("${o.style}"): Status **${o.healthStatus}**, Ex-Factory **${o.exFactoryDate.toISOString().slice(0, 10)}**`
       )
       .join('\n');
-    return `Currently ${atRisk.length} order(s) have risk warnings or delivery deficits:\n${list}\nYou can view their recovery plans on the Export Order Board.`;
+    return `Currently **${atRisk.length} order(s)** have risk warnings or delivery deficits:\n\n${list}\n\nYou can view their recovery plans on the **Export Order Board**.`;
   }
 
   // General help
   const samplePo = orders[0]?.poNumber || 'an order';
-  return `Welcome to ThreadFlow! You can ask me:\n• Status of any PO (e.g. "What is the status of ${samplePo}?")\n• "Which orders are at risk?"\n• "How do I log shift output?"\n• "How does the air freight simulator work?"\nI will guide you strictly based on the live factory database.`;
+  return `Welcome to **ThreadFlow AI**! You can ask me:\n\n- Status of any PO (e.g. *"What is the status of ${samplePo}?"*)\n- *"Which orders are delayed or at risk?"*\n- *"How do I log shift output?"*\n- *"How does the Air Freight Simulator work?"*\n\nI will guide you strictly based on the live factory database.`;
 }

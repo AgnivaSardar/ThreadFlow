@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import { apiRequest } from '../services/api';
 import { useTamilSpeechRecognition } from '../hooks/useTamilSpeechRecognition';
 import {
@@ -11,6 +14,8 @@ import {
   RotateCcw,
   Bot,
   User,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -28,10 +33,150 @@ const QUICK_PROMPTS = [
   'How does the Air Freight Simulator work?',
 ];
 
+const getTextContent = (node: any): string => {
+  if (!node) return '';
+  if (typeof node === 'string') return node;
+  if (typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(getTextContent).join('');
+  if (node.props && node.props.children) return getTextContent(node.props.children);
+  return '';
+};
+
+const preprocessMarkdown = (raw: string): string => {
+  if (!raw) return '';
+
+  let text = raw;
+
+  // 1. Convert unicode bullets (•, ●, ▪, etc.) to standard markdown list syntax "- "
+  text = text.replace(/^([ \t]*)[•●▪▫][ \t]*/gm, '$1- ');
+
+  // 2. Ensure blank line before bullet or numbered list starts if preceded by normal text
+  text = text.replace(/([^\n])\n([ \t]*[-*+]\s+)/g, '$1\n\n$2');
+  text = text.replace(/([^\n])\n([ \t]*\d+\.\s+)/g, '$1\n\n$2');
+
+  // 3. Highlight status indicators if not already enclosed in **
+  text = text.replace(
+    /(?<!\*\*)\b(Critical Deficit|Extra Caution|On Track|Completed|\bRED\b|\bAMBER\b|\bGREEN\b)(?!\*\*)/g,
+    '**$1**'
+  );
+
+  return text;
+};
+
+const AIMarkdownRenderer: React.FC<{ content: string }> = ({ content }) => {
+  const processed = useMemo(() => preprocessMarkdown(content), [content]);
+
+  return (
+    <div className="text-xs leading-relaxed text-slate-800 break-words space-y-1.5 font-normal">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm, remarkBreaks]}
+        components={{
+          p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed text-slate-800">{children}</p>,
+          ul: ({ children }) => (
+            <ul className="my-2 space-y-1.5 list-disc pl-4 text-slate-800 marker:text-indigo-500">
+              {children}
+            </ul>
+          ),
+          ol: ({ children }) => (
+            <ol className="my-2 space-y-1.5 list-decimal pl-4 text-slate-800 marker:text-indigo-600 font-medium">
+              {children}
+            </ol>
+          ),
+          li: ({ children }) => <li className="leading-relaxed pl-0.5">{children}</li>,
+          strong: ({ children, ...props }) => {
+            const text = getTextContent(children).trim();
+            if (/\b(Critical Deficit|RED)\b/i.test(text)) {
+              return (
+                <span
+                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300 mx-0.5 shadow-3xs"
+                  {...props}
+                >
+                  {children}
+                </span>
+              );
+            }
+            if (/\b(Extra Caution|AMBER)\b/i.test(text)) {
+              return (
+                <span
+                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 mx-0.5 shadow-3xs"
+                  {...props}
+                >
+                  {children}
+                </span>
+              );
+            }
+            if (/\b(On Track|GREEN|Completed)\b/i.test(text)) {
+              return (
+                <span
+                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 mx-0.5 shadow-3xs"
+                  {...props}
+                >
+                  {children}
+                </span>
+              );
+            }
+            return (
+              <strong className="font-bold text-slate-900" {...props}>
+                {children}
+              </strong>
+            );
+          },
+          em: ({ children }) => <em className="italic text-slate-700">{children}</em>,
+          h1: ({ children }) => <h1 className="text-sm font-bold text-slate-900 mt-2.5 mb-1 first:mt-0">{children}</h1>,
+          h2: ({ children }) => <h2 className="text-xs font-bold text-slate-900 mt-2 mb-1 first:mt-0">{children}</h2>,
+          h3: ({ children }) => <h3 className="text-xs font-semibold text-slate-900 mt-1.5 mb-0.5 first:mt-0">{children}</h3>,
+          code: ({ inline, className, children, ...props }: any) => {
+            return inline ? (
+              <code
+                className="bg-slate-100 text-indigo-700 px-1 py-0.5 rounded font-mono text-[11px] font-semibold border border-slate-200"
+                {...props}
+              >
+                {children}
+              </code>
+            ) : (
+              <pre className="bg-slate-900 text-slate-100 p-2.5 rounded-lg overflow-x-auto text-[11px] font-mono my-2 border border-slate-800">
+                <code {...props}>{children}</code>
+              </pre>
+            );
+          },
+          blockquote: ({ children }) => (
+            <blockquote className="border-l-2 border-indigo-500 pl-2.5 py-1 my-2 italic text-slate-600 bg-indigo-50/40 rounded-r">
+              {children}
+            </blockquote>
+          ),
+          a: ({ href, children }) => (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-600 underline font-medium hover:text-indigo-800"
+            >
+              {children}
+            </a>
+          ),
+          table: ({ children }) => (
+            <div className="overflow-x-auto my-2 rounded-lg border border-slate-200 shadow-3xs">
+              <table className="min-w-full divide-y divide-slate-200 text-[11px]">{children}</table>
+            </div>
+          ),
+          thead: ({ children }) => <thead className="bg-slate-100 text-slate-800 font-semibold">{children}</thead>,
+          tbody: ({ children }) => <tbody className="divide-y divide-slate-100 bg-white">{children}</tbody>,
+          th: ({ children }) => <th className="px-2 py-1.5 text-left text-slate-800 font-semibold">{children}</th>,
+          td: ({ children }) => <td className="px-2 py-1.5 text-slate-700">{children}</td>,
+          hr: () => <hr className="my-2 border-slate-200" />,
+        }}
+      >
+        {processed}
+      </ReactMarkdown>
+    </div>
+  );
+};
+
 export const AIChatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
@@ -44,6 +189,12 @@ export const AIChatbot: React.FC = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleCopyMessage = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   // Speech recognition hook for voice input
   const {
@@ -245,11 +396,15 @@ export const AIChatbot: React.FC = () => {
                 <div
                   className={`max-w-[88%] rounded-2xl p-3 text-xs leading-relaxed shadow-3xs ${
                     msg.role === 'user'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-br-xs'
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-br-xs whitespace-pre-wrap'
                       : 'bg-white text-slate-800 border border-slate-200/90 rounded-bl-xs'
                   }`}
                 >
-                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                  {msg.role === 'user' ? (
+                    <div>{msg.content}</div>
+                  ) : (
+                    <AIMarkdownRenderer content={msg.content} />
+                  )}
 
                   {/* Beneath the greeting: Quick click capsules */}
                   {msg.showQuickPrompts && (
@@ -269,11 +424,35 @@ export const AIChatbot: React.FC = () => {
                   )}
 
                   <div
-                    className={`mt-1.5 text-[9px] text-right font-mono ${
-                      msg.role === 'user' ? 'text-blue-200' : 'text-slate-400'
+                    className={`mt-2 pt-1 border-t flex items-center justify-between text-[9px] ${
+                      msg.role === 'user'
+                        ? 'border-blue-500/40 text-blue-200'
+                        : 'border-slate-100 text-slate-400'
                     }`}
                   >
-                    {msg.timestamp}
+                    {msg.role === 'assistant' ? (
+                      <button
+                        type="button"
+                        onClick={() => handleCopyMessage(msg.id, msg.content)}
+                        className="inline-flex items-center gap-1 text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer py-0.5 px-1 rounded hover:bg-slate-50 font-medium"
+                        title="Copy message"
+                      >
+                        {copiedId === msg.id ? (
+                          <>
+                            <Check className="w-2.5 h-2.5 text-emerald-600" />
+                            <span className="text-emerald-600 font-semibold">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-2.5 h-2.5" />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <span />
+                    )}
+                    <span className="font-mono">{msg.timestamp}</span>
                   </div>
                 </div>
 
