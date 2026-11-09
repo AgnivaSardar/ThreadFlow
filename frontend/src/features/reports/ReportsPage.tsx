@@ -6,7 +6,6 @@ import { WeeklyReportPrintModal } from './WeeklyReportPrintModal';
 import { useLanguage } from '../../hooks/useLanguage';
 import { STAGE_TRANSLATIONS } from '../supervisor/supervisorTranslations';
 import {
-  FileText,
   Printer,
   Download,
   Calendar,
@@ -169,18 +168,6 @@ export const ReportsPage: React.FC = () => {
   const [selectedBuyerId, setSelectedBuyerId] = useState<string>('');
   const [selectedWeek, setSelectedWeek] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
-
-  // Close print modal on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isPrintModalOpen) {
-        setIsPrintModalOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isPrintModalOpen]);
 
   // Load buyers master data
   useEffect(() => {
@@ -308,34 +295,17 @@ export const ReportsPage: React.FC = () => {
               <span>{t.common.exportCsv}</span>
             </button>
 
-            {/* Print Full PDF via Clean Document Preview Modal */}
+            {/* Print Full Page PDF */}
             <button
               type="button"
-              onClick={() => {
-                setIsPrintModalOpen(true);
-                setTimeout(() => {
-                  window.print();
-                }, 250);
-              }}
+              onClick={() => window.print()}
               disabled={!data || data.orders.length === 0}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-xs transition cursor-pointer disabled:opacity-50"
-              title="Print or Save Full Page PDF using Document Preview layout"
+              title="Print or Save Full Page PDF"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>{isTa ? 'முழு பக்க PDF அச்சிடு' : 'Print Full Page PDF'}</span>
             </button>
-
-          {/* Document Preview Modal */}
-          <button
-            type="button"
-            onClick={() => setIsPrintModalOpen(true)}
-            disabled={!data || data.orders.length === 0}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-xl text-xs shadow-2xs transition cursor-pointer disabled:opacity-50"
-            title="Open Document Sign-Off Preview"
-          >
-            <FileText className="w-3.5 h-3.5 text-sky-700" />
-            <span>{isTa ? 'அறிக்கை மாதிரி' : 'Preview Modal'}</span>
-          </button>
 
           <button
             type="button"
@@ -839,11 +809,9 @@ export const ReportsPage: React.FC = () => {
       </div>
       </div>
 
-      {/* 7. Printable Report Modal (Used for both Preview and Full Document Printing) */}
+      {/* 7. Printable Report Document (Rendered strictly during window.print()) */}
       {data?.buyer && (
         <WeeklyReportPrintModal
-          isOpen={isPrintModalOpen}
-          onClose={() => setIsPrintModalOpen(false)}
           buyer={data.buyer}
           orders={exportFormattedOrders}
           selectedWeek={data.selectedWeek || selectedWeek}

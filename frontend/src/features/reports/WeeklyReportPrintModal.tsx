@@ -2,9 +2,6 @@ import React from 'react';
 import { BuyerProfile, BuyerExportOrder } from './exportService';
 import { useLanguage } from '../../hooks/useLanguage';
 import {
-  Printer,
-  X,
-  ShieldCheck,
   Building2,
   Sparkles,
   BarChart2,
@@ -48,8 +45,8 @@ export interface WeeklyThroughputItem {
 }
 
 interface Props {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
   buyer: BuyerProfile;
   orders: BuyerExportOrder[];
   selectedWeek?: string;
@@ -71,8 +68,6 @@ interface Props {
 }
 
 export const WeeklyReportPrintModal: React.FC<Props> = ({
-  isOpen,
-  onClose,
   buyer,
   orders,
   selectedWeek = 'CW 45 (02 Nov - 08 Nov)',
@@ -82,19 +77,6 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
   weeklyThroughput = [],
   milestoneHealth,
 }) => {
-  const { isTa } = useLanguage();
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
   const totalContractedPcs =
     metrics?.totalContractedPieces ?? orders.reduce((sum, o) => sum + o.totalQuantity, 0);
   const completedOrders =
@@ -125,45 +107,9 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
     year: 'numeric',
   });
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   return (
-    <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-2 sm:p-4 backdrop-blur-xs overflow-y-auto print:static print:inset-auto print:bg-white print:p-0 print:m-0 print:block print:w-full print:h-auto print:overflow-visible print:backdrop-blur-none">
-      {/* Modal Container */}
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden print:static print:m-0 print:p-0 print:max-w-none print:w-full print:max-h-none print:h-auto print:shadow-none print:rounded-none print:border-none print:overflow-visible print:block">
-        {/* Top Control Bar (Hidden during Print) */}
-        <div className="p-3 bg-[#0C2D48] text-white flex items-center justify-between border-b border-[#143D60] print:hidden">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span className="font-bold text-xs sm:text-sm">
-              Official Weekly Production & Delivery Report • {buyer.name}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs transition cursor-pointer shadow-xs"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>{isTa ? 'அச்சிடு / முழு PDF சேமி' : 'Print / Save Full PDF'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Printable Full Document Body */}
-        <div className="p-6 sm:p-8 overflow-y-auto flex-1 space-y-5 text-slate-900 font-sans print:p-2 print:m-0 print:space-y-4 print:overflow-visible print:h-auto print:max-h-none print:block">
-          {/* 1. Formal Letterhead */}
+    <div className="hidden print:block print:w-full print:bg-white text-slate-900 font-sans print:p-2 print:m-0 print:space-y-4">
+      {/* 1. Formal Letterhead */}
           <div className="flex items-start justify-between border-b-2 border-slate-900 pb-3">
             <div>
               <div className="text-xl font-black tracking-tight text-slate-950 uppercase">
@@ -585,7 +531,5 @@ export const WeeklyReportPrintModal: React.FC<Props> = ({
             </div>
           </div>
         </div>
-      </div>
-    </div>
   );
 };
