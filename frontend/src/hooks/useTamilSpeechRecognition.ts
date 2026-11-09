@@ -44,31 +44,70 @@ export function useTamilSpeechRecognition(initialLang: SpeechLanguage = 'ta-IN')
   });
 
   const recognitionRef = useRef<any>(null);
-  const isListeningRef = useRef<boolean>(false);
-  const restartTimeoutRef = useRef<any>(null);
 
-  // Initialize SpeechRecognition instance
+  // Check initial browser support
   useEffect(() => {
+    const win = typeof window !== 'undefined' ? (window as unknown as IWindow) : null;
+    const SpeechRec = win?.SpeechRecognition || win?.webkitSpeechRecognition;
+    if (!SpeechRec) {
+      setIsSupported(false);
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch {
+          // ignore cleanup abort
+        }
+      }
+    };
+  }, []);
+
+  const setSpeechLang = useCallback((lang: SpeechLanguage) => {
+    setSpeechLangState(lang);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('threadflow_speech_lang', lang);
+      } catch {}
+    }
+    if (recognitionRef.current) {
+      recognitionRef.current.lang = lang;
+    }
+  }, []);
+
+  // Instantiate SpeechRecognition on demand directly inside user gesture
+  const startListening = useCallback(() => {
+    setError(null);
+    setInterimTranscript('');
+
     const win = typeof window !== 'undefined' ? (window as unknown as IWindow) : null;
     const SpeechRec = win?.SpeechRecognition || win?.webkitSpeechRecognition;
 
     if (!SpeechRec) {
+      setError('Speech recognition is not supported in this browser.');
       setIsSupported(false);
       return;
     }
 
     try {
+      // Abort any prior running instance cleanly
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch {
+          // ignore
+        }
+      }
+
       const recognition = new SpeechRec();
       recognition.lang = speechLang;
-      // Using continuous = false with auto-rearm is substantially more stable in Chromium
-      // on Windows and prevents the infamous 'audio-capture' buffer drop error.
-      recognition.continuous = false;
+      recognition.continuous = true;
       recognition.interimResults = true;
       recognition.maxAlternatives = 1;
 
       recognition.onstart = () => {
         setIsListening(true);
-        isListeningRef.current = true;
         setError(null);
       };
 
@@ -93,121 +132,31 @@ export function useTamilSpeechRecognition(initialLang: SpeechLanguage = 'ta-IN')
 
       recognition.onerror = (event: any) => {
         console.warn('Speech recognition notice:', event.error);
-        const errType = event.error;
-
-        if (errType === 'not-allowed') {
-          setError(
-            'Microphone access blocked. In Windows Settings (Win + I → Privacy & security → Microphone), ensure "Let desktop apps access your microphone" is turned ON.'
-          );
-          isListeningRef.current = false;
-          setIsListening(false);
-        } else if (errType === 'audio-capture') {
-          setError(
-            'Audio capture failed: Windows is blocking Chrome from accessing the microphone (Permission denied by system), or no microphone is plugged in. In Windows Settings (Win + I → Privacy & security → Microphone), turn ON "Let desktop apps access your microphone".'
-          );
-          isListeningRef.current = false;
-          setIsListening(false);
-        } else if (errType === 'network') {
-          setError(
-            'Speech recognition network error: Google speech service could not be reached. Please check your internet connection.'
-          );
-          isListeningRef.current = false;
-          setIsListening(false);
-        } else if (errType === 'service-not-allowed') {
-          setError('Speech recognition service is not allowed by this browser or network policy.');
-          isListeningRef.current = false;
-          setIsListening(false);
-        } else if (errType === 'no-speech') {
-          setError('No speech was detected. Please try speaking closer to your microphone.');
-        } else if (errType === 'aborted') {
-          isListeningRef.current = false;
-          setIsListening(false);
-        } else {
-          setError(`Speech recognition notice: ${errType}`);
-          isListeningRef.current = false;
-          setIsListening(false);
+        if (event.error === 'not-allowed') {
+          setError('Microphone permission denied. Please allow microphone access in your browser.');
+        } else if (event.error === 'audio-capture') {
+          setError('Audio capture failed: Unable to capture audio from microphone. Please ensure microphone is connected and unmuted.');
+        } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
+          setError(`Speech recognition error: ${event.error}`);
         }
+        setIsListening(false);
       };
 
       recognition.onend = () => {
+        setIsListening(false);
         setInterimTranscript('');
-        // If the user hasn't explicitly stopped listening, smoothly re-arm recognition
-        if (isListeningRef.current) {
-          restartTimeoutRef.current = setTimeout(() => {
-            if (isListeningRef.current && recognitionRef.current) {
-              try {
-                recognitionRef.current.start();
-              } catch {
-                setIsListening(false);
-                isListeningRef.current = false;
-              }
-            }
-          }, 200);
-        } else {
-          setIsListening(false);
-        }
       };
 
       recognitionRef.current = recognition;
-    } catch (e: any) {
-      console.warn('SpeechRecognition initialization error:', e);
-      setIsSupported(false);
-    }
-
-    return () => {
-      if (restartTimeoutRef.current) {
-        clearTimeout(restartTimeoutRef.current);
-      }
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch {
-          // ignore cleanup abort
-        }
-      }
-    };
-  }, [speechLang]);
-
-  const setSpeechLang = useCallback((lang: SpeechLanguage) => {
-    setSpeechLangState(lang);
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('threadflow_speech_lang', lang);
-      } catch {}
-    }
-    if (recognitionRef.current) {
-      recognitionRef.current.lang = lang;
-    }
-  }, []);
-
-  const startListening = useCallback(() => {
-    setError(null);
-    setInterimTranscript('');
-
-    if (!recognitionRef.current) {
-      setError('Speech recognition API is not supported in this browser.');
-      return;
-    }
-
-    try {
-      isListeningRef.current = true;
-      recognitionRef.current.lang = speechLang;
-      recognitionRef.current.start();
+      recognition.start();
     } catch (err: any) {
-      if (err.name !== 'InvalidStateError') {
-        console.warn('SpeechRecognition start error:', err);
-        setError(`Failed to start microphone: ${err.message || 'Start failed'}`);
-        isListeningRef.current = false;
-        setIsListening(false);
-      }
+      console.warn('SpeechRecognition start error:', err);
+      setError(`Failed to start microphone: ${err.message || 'Start failed'}`);
+      setIsListening(false);
     }
   }, [speechLang]);
 
   const stopListening = useCallback(() => {
-    isListeningRef.current = false;
-    if (restartTimeoutRef.current) {
-      clearTimeout(restartTimeoutRef.current);
-    }
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -216,6 +165,7 @@ export function useTamilSpeechRecognition(initialLang: SpeechLanguage = 'ta-IN')
       }
     }
     setIsListening(false);
+    setInterimTranscript('');
   }, []);
 
   const resetTranscript = useCallback(() => {
