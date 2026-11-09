@@ -1,6 +1,14 @@
 import { prisma } from '../../config/db';
 import { AppError } from '../../common/errors/AppError';
 import { config } from '../../config/env';
+import {
+  getSystemToday,
+  getISOWeekInfo,
+  getISOWeekRange,
+  getAvailableWeeksForBuyer,
+  parseWeekParam,
+  AvailableWeek,
+} from '../../common/utils/dates';
 
 export interface StageWeeklyBar {
   week: string;
@@ -82,10 +90,6 @@ export class ReportsService {
    * Compiles executive weekly summary metrics for a selected buyer organization and week.
    */
   static async getWeeklySummary(buyerId?: string, weekParam?: string) {
-    const selectedWeek = weekParam && ['CW40', 'CW41', 'CW42', 'CW43', 'CW44'].includes(weekParam.toUpperCase())
-      ? weekParam.toUpperCase()
-      : 'CW44';
-
     // If no buyerId provided, default to first active buyer
     let resolvedBuyerId = buyerId;
     if (!resolvedBuyerId || resolvedBuyerId === 'ALL') {
@@ -126,6 +130,40 @@ export class ReportsService {
       throw new AppError('Buyer organization not found', 404);
     }
 
+    // Dynamically calculate active operational weeks for this company from registration
+    const availableWeeks = getAvailableWeeksForBuyer(buyer);
+    const currentWeekEntry = availableWeeks.find((w) => w.isCurrent) || availableWeeks[0];
+    let selectedWeekEntry = currentWeekEntry;
+
+    if (weekParam && weekParam.trim()) {
+      const parsed = parseWeekParam(weekParam);
+      const match = availableWeeks.find(
+        (w) =>
+          w.value.toUpperCase() === weekParam.toUpperCase() ||
+          (w.weekNumber === parsed.weekNumber && w.year === parsed.year) ||
+          w.weekNumber === parsed.weekNumber
+      );
+      if (match) {
+        selectedWeekEntry = match;
+      } else {
+        const dynamicRange = getISOWeekRange(parsed.year, parsed.weekNumber);
+        selectedWeekEntry = {
+          value: parsed.weekKey,
+          weekNumber: parsed.weekNumber,
+          year: parsed.year,
+          label: dynamicRange.label,
+          labelTa: dynamicRange.labelTa,
+          startDate: dynamicRange.start.toISOString(),
+          endDate: dynamicRange.end.toISOString(),
+          isCurrent: false,
+        };
+      }
+    }
+
+    const selectedWeek = selectedWeekEntry.value;
+    const selectedYear = selectedWeekEntry.year;
+    const selectedWeekNumber = selectedWeekEntry.weekNumber;
+
     const orders = buyer.orders;
     const totalContractedPieces = orders.reduce((sum, o) => sum + o.totalQuantity, 0);
     const completedOrders = orders.filter((o) => {
@@ -133,23 +171,17 @@ export class ReportsService {
       return lastMs && lastMs.completedQuantity >= lastMs.targetQuantity;
     }).length;
 
-    // Build the 5-week timeline relative to the chosen week
-    const weekNumber = parseInt(selectedWeek.replace('CW', ''), 10) || 44;
-    const weeksList = [
-      `CW ${weekNumber - 4}`,
-      `CW ${weekNumber - 3}`,
-      `CW ${weekNumber - 2}`,
-      `CW ${weekNumber - 1}`,
-      `CW ${weekNumber}`,
-    ];
+    // Build the 5-week historical window ending at the selected week using pure ISO calendar arithmetic
+    const selectedRange = getISOWeekRange(selectedYear, selectedWeekNumber);
+    const weeksList: string[] = [];
+    const weekEndTimes: number[] = [];
 
-    // Compute calendar end dates for the 5 weeks (e.g. CW 44 ends 2026-11-08)
-    const baseCW44End = new Date('2026-11-08T23:59:59.999Z').getTime();
-    const weekEndTimes = weeksList.map((_, idx) => {
-      const offsetWeeks = 4 - idx; // 4, 3, 2, 1, 0 weeks before selected week
-      const selectedWeekDiff = (weekNumber - 44) * 7 * 86400000;
-      return baseCW44End + selectedWeekDiff - offsetWeeks * 7 * 86400000;
-    });
+    for (let offset = 4; offset >= 0; offset--) {
+      const cutoffDate = new Date(selectedRange.end.getTime() - offset * 7 * 86400000);
+      const weekInfo = getISOWeekInfo(cutoffDate);
+      weeksList.push(`CW ${weekInfo.weekNumber}`);
+      weekEndTimes.push(cutoffDate.getTime());
+    }
 
     // Compute 7-stage multi-bar trend data dynamically from this buyer's REAL milestones in DB
     const stageDefs = [
@@ -315,6 +347,7 @@ export class ReportsService {
         contactEmail: buyer.contactEmail,
       },
       selectedWeek,
+      availableWeeks,
       metrics: {
         totalOrders: orders.length,
         activeOrders: orders.length - completedOrders,

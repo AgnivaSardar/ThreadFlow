@@ -3,6 +3,7 @@ import { Role } from '@prisma/client';
 import { asyncHandler } from '../../common/utils/asyncHandler';
 import { AppError } from '../../common/errors/AppError';
 import { ReportsService } from './reports.service';
+import { getISOWeekInfo, getSystemToday } from '../../common/utils/dates';
 
 export class ReportsController {
   static getWeeklySummary = asyncHandler(async (req: Request, res: Response) => {
@@ -40,22 +41,12 @@ export class ReportsController {
       }
       buyerId = req.user.buyerId;
     }
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const target = new Date(now.valueOf());
-    const dayNr = (now.getDay() + 6) % 7;
-    target.setDate(target.getDate() - dayNr + 3);
-    const firstThursday = target.valueOf();
-    target.setMonth(0, 1);
-    if (target.getDay() !== 4) {
-      target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
-    }
-    const currentWeek = 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
+    const currentWeekInfo = getISOWeekInfo(getSystemToday());
 
     const report = await ReportsService.saveWeeklyReportSnapshot(
       buyerId,
-      Number(weekNumber) || currentWeek,
-      Number(year) || currentYear,
+      Number(weekNumber) || currentWeekInfo.weekNumber,
+      Number(year) || currentWeekInfo.year,
       req.user?.id
     );
     res.status(201).json({

@@ -60,9 +60,21 @@ interface WeeklyThroughputItem {
   efficiencyRate: number;
 }
 
+export interface AvailableWeekOption {
+  value: string;
+  weekNumber: number;
+  year: number;
+  label: string;
+  labelTa: string;
+  startDate: string;
+  endDate: string;
+  isCurrent: boolean;
+}
+
 interface WeeklySummaryData {
   buyer: BuyerProfile;
   selectedWeek: string;
+  availableWeeks?: AvailableWeekOption[];
   metrics: {
     totalOrders: number;
     activeOrders: number;
@@ -155,7 +167,7 @@ export const ReportsPage: React.FC = () => {
   const [data, setData] = useState<WeeklySummaryData | null>(null);
   const [buyers, setBuyers] = useState<{ id: string; name: string; code: string; country?: string | null }[]>([]);
   const [selectedBuyerId, setSelectedBuyerId] = useState<string>('');
-  const [selectedWeek, setSelectedWeek] = useState<string>('CW44');
+  const [selectedWeek, setSelectedWeek] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
@@ -188,7 +200,7 @@ export const ReportsPage: React.FC = () => {
     setIsLoading(true);
     try {
       const bId = buyerId || selectedBuyerId;
-      const wId = week || selectedWeek;
+      const wId = week !== undefined ? week : selectedWeek;
       const params = new URLSearchParams();
       if (bId) params.append('buyerId', bId);
       if (wId) params.append('week', wId);
@@ -198,6 +210,9 @@ export const ReportsPage: React.FC = () => {
       );
       if (res.data) {
         setData(res.data);
+        if (res.data.selectedWeek && (!wId || !selectedWeek)) {
+          setSelectedWeek(res.data.selectedWeek);
+        }
       }
     } catch {
       // Graceful error fallback
@@ -218,13 +233,15 @@ export const ReportsPage: React.FC = () => {
     badge: b.country || b.code,
   }));
 
-  const weekOptions: Option[] = [
-    { value: 'CW44', label: isTa ? 'காலண்டர் வாரம் 44 (நவ 02 - நவ 08)' : 'Calendar Week 44 (Nov 02 - Nov 08)' },
-    { value: 'CW43', label: isTa ? 'காலண்டர் வாரம் 43 (அக் 26 - நவ 01)' : 'Calendar Week 43 (Oct 26 - Nov 01)' },
-    { value: 'CW42', label: isTa ? 'காலண்டர் வாரம் 42 (அக் 19 - அக் 25)' : 'Calendar Week 42 (Oct 19 - Oct 25)' },
-    { value: 'CW41', label: isTa ? 'காலண்டர் வாரம் 41 (அக் 12 - அக் 18)' : 'Calendar Week 41 (Oct 12 - Oct 18)' },
-    { value: 'CW40', label: isTa ? 'காலண்டர் வாரம் 40 (அக் 05 - அக் 11)' : 'Calendar Week 40 (Oct 05 - Oct 11)' },
-  ];
+  const weekOptions: Option[] = (data?.availableWeeks && data.availableWeeks.length > 0)
+    ? data.availableWeeks.map((w) => ({
+        value: w.value,
+        label: isTa && w.labelTa ? w.labelTa : w.label,
+        badge: w.isCurrent ? (isTa ? 'நடப்பு' : 'Current') : undefined,
+      }))
+    : selectedWeek
+    ? [{ value: selectedWeek, label: `Calendar Week ${selectedWeek.replace('CW', '')}` }]
+    : [];
 
   // Map orders for export service format
   const exportFormattedOrders: BuyerExportOrder[] = (data?.orders || []).map((o) => ({
@@ -339,7 +356,10 @@ export const ReportsPage: React.FC = () => {
             <CustomSelect
               value={selectedBuyerId}
               options={buyerOptions}
-              onChange={(val) => setSelectedBuyerId(val)}
+              onChange={(val) => {
+                setSelectedBuyerId(val);
+                setSelectedWeek('');
+              }}
               placeholder={t.reports.selectBuyer}
             />
           </div>
