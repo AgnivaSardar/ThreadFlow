@@ -1015,8 +1015,13 @@ export class OrdersService {
    */
   static async getMasterData(user: AuthenticatedUser) {
     const buyerWhere: Prisma.BuyerWhereInput = {};
-    if (user.role === Role.BUYER && user.buyerId) {
-      buyerWhere.id = user.buyerId;
+    if (user.role === Role.BUYER) {
+      buyerWhere.id = user.buyerId || '__NO_ACCESS__';
+    }
+
+    const unitWhere: Prisma.UnitWhereInput = {};
+    if (user.role === Role.SUPERVISOR && user.assignedUnitId) {
+      unitWhere.id = user.assignedUnitId;
     }
 
     const [buyers, units] = await Promise.all([
@@ -1026,6 +1031,7 @@ export class OrdersService {
         orderBy: { name: 'asc' },
       }),
       prisma.unit.findMany({
+        where: unitWhere,
         select: { id: true, name: true, code: true, type: true, location: true },
         orderBy: { name: 'asc' },
       }),

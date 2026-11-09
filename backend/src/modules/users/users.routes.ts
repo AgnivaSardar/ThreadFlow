@@ -9,8 +9,12 @@ const router = Router();
 // Protect all user routes
 router.use(authMiddleware);
 
-// Dropdown metadata (Units & Buyers)
-router.get('/metadata', asyncHandler(UsersController.getMetadata));
+// Dropdown metadata (Units & Buyers) - Admin and Merchandiser only
+router.get(
+  '/metadata',
+  requireRole(Role.ADMIN, Role.MERCHANDISER),
+  asyncHandler(UsersController.getMetadata)
+);
 
 // List all supervisors with their floor work assignments (Admin and Merchandiser)
 router.get(
