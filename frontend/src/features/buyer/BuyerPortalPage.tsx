@@ -29,6 +29,8 @@ import {
   Printer,
   Download,
   ExternalLink,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { exportOrdersToCsv } from '../reports/exportService';
 import { WeeklyReportPrintModal } from '../reports/WeeklyReportPrintModal';
@@ -290,6 +292,26 @@ export const BuyerPortalPage: React.FC = () => {
     });
   }, [orders, searchQuery, statusFilter, stageFilter]);
 
+  // Client-side pagination & Rows-per-page for Buyer Portal
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, statusFilter, stageFilter, limit]);
+
+  const totalPages = Math.ceil(filteredOrders.length / limit) || 1;
+  const paginatedOrders = useMemo(() => {
+    return filteredOrders.slice((page - 1) * limit, page * limit);
+  }, [filteredOrders, page, limit]);
+
+  const limitOptions: Option[] = useMemo(() => [
+    { value: '5', label: isTa ? '5 / பக்கம்' : '5 per page' },
+    { value: '10', label: isTa ? '10 / பக்கம்' : '10 per page' },
+    { value: '20', label: isTa ? '20 / பக்கம்' : '20 per page' },
+    { value: '50', label: isTa ? '50 / பக்கம்' : '50 per page' },
+  ], [isTa]);
+
   // Aggregate all approved inspection photos across all buyer orders
   const allApprovedPhotos = useMemo(() => {
     return orders.flatMap((o) =>
@@ -502,7 +524,7 @@ export const BuyerPortalPage: React.FC = () => {
               </p>
             </div>
           ) : (
-            filteredOrders.map((order) => {
+            paginatedOrders.map((order) => {
               const isFinished = Boolean(
                 order.progressPercent >= 100 ||
                 (order as any).status === 'COMPLETED' ||
@@ -937,6 +959,73 @@ export const BuyerPortalPage: React.FC = () => {
                 </div>
               );
             })
+          )}
+
+          {/* Pagination Controls for Buyer Portal Orders */}
+          {filteredOrders.length > 0 && (
+            <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+              <span className="text-slate-500 font-medium">
+                {isTa ? 'ஆர்டர்கள் காண்பிக்கப்படுகின்றன' : 'Showing'}{' '}
+                <strong className="text-slate-800 font-bold">{(page - 1) * limit + 1}</strong> {isTa ? 'முதல்' : 'to'}{' '}
+                <strong className="text-slate-800 font-bold">{Math.min(page * limit, filteredOrders.length)}</strong> {isTa ? 'மொத்தம்' : 'of'}{' '}
+                <strong className="text-slate-800 font-bold">{filteredOrders.length}</strong> {isTa ? 'ஆர்டர்கள்' : 'orders'}
+              </span>
+
+              <div className="flex items-center gap-4 flex-wrap">
+                {/* Rows per page selector with CustomSelect */}
+                <div className="flex items-center gap-2 text-xs text-slate-600">
+                  <span className="text-slate-400">{isTa ? 'வரிசைகள்:' : 'Rows:'}</span>
+                  <CustomSelect
+                    value={limit.toString()}
+                    options={limitOptions}
+                    onChange={(val) => {
+                      setLimit(Number(val));
+                      setPage(1);
+                    }}
+                    className="w-28"
+                    buttonClassName="py-1 px-2.5"
+                  />
+                </div>
+
+                {/* Prev / Page / Next Buttons */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                    className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
+                    title="Previous page"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setPage(p)}
+                      className={`w-7 h-7 text-xs font-bold rounded-lg transition cursor-pointer ${
+                        p === page
+                          ? 'bg-[#0C2D48] text-white shadow-xs'
+                          : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                    className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
+                    title="Next page"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
 

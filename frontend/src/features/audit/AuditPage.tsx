@@ -85,6 +85,7 @@ export const AuditPage: React.FC = () => {
   const [events, setEvents] = useState<AuditEventItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalEvents, setTotalEvents] = useState(0);
 
@@ -113,7 +114,7 @@ export const AuditPage: React.FC = () => {
     try {
       const params = new URLSearchParams();
       params.append('page', page.toString());
-      params.append('limit', '15');
+      params.append('limit', limit.toString());
       if (actionFilter !== 'ALL') params.append('action', actionFilter);
       if (roleFilter !== 'ALL') params.append('userRole', roleFilter);
       if (search.trim()) params.append('search', search.trim());
@@ -143,7 +144,7 @@ export const AuditPage: React.FC = () => {
 
   useEffect(() => {
     fetchAuditData();
-  }, [page, actionFilter, roleFilter]);
+  }, [page, limit, actionFilter, roleFilter]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,6 +204,13 @@ export const AuditPage: React.FC = () => {
     { value: 'ADMIN', label: isTa ? 'முதன்மை நிர்வாகி' : 'Administrator' },
     { value: 'BUYER', label: isTa ? 'வெளிநாட்டு வாங்குபவர்' : 'Foreign Buyer' },
   ];
+
+  const limitOptions: Option[] = useMemo(() => [
+    { value: '5', label: isTa ? '5 / பக்கம்' : '5 per page' },
+    { value: '10', label: isTa ? '10 / பக்கம்' : '10 per page' },
+    { value: '20', label: isTa ? '20 / பக்கம்' : '20 per page' },
+    { value: '50', label: isTa ? '50 / பக்கம்' : '50 per page' },
+  ], [isTa]);
 
   // Helper for rendering pagination numbers: 1 2 3 ... [last]
   const renderPaginationButtons = () => {
@@ -430,33 +438,51 @@ export const AuditPage: React.FC = () => {
         </div>
 
         {/* Dynamic Interactive Pagination Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between p-3 border-t border-slate-100 text-xs gap-2">
-          <span className="text-slate-500">
+        <div className="flex flex-col sm:flex-row items-center justify-between p-3 border-t border-slate-100 text-xs gap-3">
+          <span className="text-slate-500 font-medium">
             {t.audit.showingPage} <strong className="text-slate-800 font-bold">{page}</strong> {t.audit.of} <strong className="text-slate-800 font-bold">{totalPages}</strong> ({totalEvents} {t.audit.totalEntries})
           </span>
 
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white text-slate-700 shadow-2xs cursor-pointer transition flex items-center justify-center"
-              title="Previous Page"
-            >
-              <ChevronLeft className="w-4 h-4 stroke-[2.5] text-slate-800" />
-            </button>
+          <div className="flex items-center gap-4 flex-wrap">
+            {/* Rows per page selector with CustomSelect */}
+            <div className="flex items-center gap-2 text-xs text-slate-600">
+              <span className="text-slate-400">{isTa ? 'வரிசைகள்:' : 'Rows:'}</span>
+              <CustomSelect
+                value={limit.toString()}
+                options={limitOptions}
+                onChange={(val) => {
+                  setLimit(Number(val));
+                  setPage(1);
+                }}
+                className="w-28"
+                buttonClassName="py-1 px-2.5"
+              />
+            </div>
 
-            {renderPaginationButtons()}
+            {/* Prev / Page / Next Buttons */}
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white text-slate-700 shadow-2xs cursor-pointer transition flex items-center justify-center"
+                title="Previous Page"
+              >
+                <ChevronLeft className="w-4 h-4 stroke-[2.5] text-slate-800" />
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white text-slate-700 shadow-2xs cursor-pointer transition flex items-center justify-center"
-              title="Next Page"
-            >
-              <ChevronRight className="w-4 h-4 stroke-[2.5] text-slate-800" />
-            </button>
+              {renderPaginationButtons()}
+
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white text-slate-700 shadow-2xs cursor-pointer transition flex items-center justify-center"
+                title="Next Page"
+              >
+                <ChevronRight className="w-4 h-4 stroke-[2.5] text-slate-800" />
+              </button>
+            </div>
           </div>
         </div>
       </div>

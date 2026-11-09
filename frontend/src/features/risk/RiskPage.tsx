@@ -154,6 +154,7 @@ export const RiskPage: React.FC = () => {
   }, []);
 
   const t = RISK_PAGE_I18N[lang] || RISK_PAGE_I18N.en;
+  const isTa = lang === 'ta';
 
   const [risks, setRisks] = useState<RiskItem[]>([]);
   const [summary, setSummary] = useState<RiskSummary>({
@@ -302,11 +303,18 @@ export const RiskPage: React.FC = () => {
 
   // Client-side pagination for Monitored Orders
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const pageSize = 5;
+  const [pageSize, setPageSize] = useState<number>(10);
+
+  const limitOptions: Option[] = useMemo(() => [
+    { value: '5', label: isTa ? '5 / பக்கம்' : '5 per page' },
+    { value: '10', label: isTa ? '10 / பக்கம்' : '10 per page' },
+    { value: '20', label: isTa ? '20 / பக்கம்' : '20 per page' },
+    { value: '50', label: isTa ? '50 / பக்கம்' : '50 per page' },
+  ], [isTa]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [riskLevelFilter, buyerFilter, unitFilter, stageFilter, searchTerm]);
+  }, [riskLevelFilter, buyerFilter, unitFilter, stageFilter, searchTerm, pageSize]);
 
   const totalPages = Math.ceil(sortedRisks.length / pageSize) || 1;
   const paginatedRisks = sortedRisks.slice(
@@ -763,7 +771,7 @@ export const RiskPage: React.FC = () => {
               })}
 
               {/* Pagination Controls for Monitored Orders */}
-              {sortedRisks.length > pageSize && (
+              {sortedRisks.length > 0 && (
                 <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
                   <span className="text-slate-500 font-medium">
                     {t.showingOrdersPagination(
@@ -772,41 +780,60 @@ export const RiskPage: React.FC = () => {
                       sortedRisks.length
                     )}
                   </span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage <= 1}
-                      className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
-                      title="Previous page"
-                    >
-                      <ChevronLeft className="w-3.5 h-3.5" />
-                    </button>
 
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <div className="flex items-center gap-4 flex-wrap">
+                    {/* Rows per page selector with CustomSelect */}
+                    <div className="flex items-center gap-2 text-xs text-slate-600">
+                      <span className="text-slate-400">{isTa ? 'வரிசைகள்:' : 'Rows:'}</span>
+                      <CustomSelect
+                        value={pageSize.toString()}
+                        options={limitOptions}
+                        onChange={(val) => {
+                          setPageSize(Number(val));
+                          setCurrentPage(1);
+                        }}
+                        className="w-28"
+                        buttonClassName="py-1 px-2.5"
+                      />
+                    </div>
+
+                    {/* Prev / Page / Next Buttons */}
+                    <div className="flex items-center gap-1.5">
                       <button
-                        key={p}
                         type="button"
-                        onClick={() => setCurrentPage(p)}
-                        className={`w-7 h-7 text-xs font-bold rounded-lg transition cursor-pointer ${
-                          p === currentPage
-                            ? 'bg-[#0C2D48] text-white shadow-xs'
-                            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-                        }`}
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage <= 1}
+                        className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
+                        title="Previous page"
                       >
-                        {p}
+                        <ChevronLeft className="w-3.5 h-3.5" />
                       </button>
-                    ))}
 
-                    <button
-                      type="button"
-                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={currentPage >= totalPages}
-                      className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
-                      title="Next page"
-                    >
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setCurrentPage(p)}
+                          className={`w-7 h-7 text-xs font-bold rounded-lg transition cursor-pointer ${
+                            p === currentPage
+                              ? 'bg-[#0C2D48] text-white shadow-xs'
+                              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      ))}
+
+                      <button
+                        type="button"
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage >= totalPages}
+                        className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition cursor-pointer"
+                        title="Next page"
+                      >
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
