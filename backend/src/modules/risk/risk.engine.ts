@@ -52,6 +52,7 @@ export interface RiskEvaluationResult {
   varianceQtyPerDay: number;
   differencePill: string;
   workingDaysNeeded: number;
+  projectedStageCompletionDate?: Date;
   projectedCompletionDate: Date;
   daysLate: number;
   financialExposureRupees: number;
@@ -305,15 +306,22 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
     }
   }
 
-  const projectedCompletionDate = addWorkingDaysExcludingSundays(simulatedToday, workingDaysNeeded);
+  // Total working days needed from simulated today to finish the current stage PLUS all downstream stages to shipment
+  const totalWorkingDaysNeeded = isCompleted ? 0 : workingDaysNeeded + downstreamBufferDays;
 
-  // Days late: strictly measures overrun beyond effective working days available to protect downstream buffer & ship window
+  // The projected date when the ENTIRE ORDER will be finished and ready for Ex-Factory shipment
+  const projectedCompletionDate = addWorkingDaysExcludingSundays(simulatedToday, totalWorkingDaysNeeded);
+
+  // Projected date when the current stage specifically finishes
+  const projectedStageCompletionDate = addWorkingDaysExcludingSundays(simulatedToday, workingDaysNeeded);
+
+  // Days late: strictly measures overrun beyond total working days available to ship
   let daysLate = 0;
   if (remainingPieces > 0) {
-    if (workingDaysNeeded > effectiveWorkingDays) {
-      daysLate = workingDaysNeeded - effectiveWorkingDays;
+    if (totalWorkingDaysNeeded > workingDaysToShip) {
+      daysLate = totalWorkingDaysNeeded - workingDaysToShip;
     } else {
-      // Pace is on track to protect all downstream buffers: exactly 0 days late
+      // Pace is on track to protect all downstream buffers and ship on time
       daysLate = 0;
     }
   }
@@ -341,7 +349,7 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
     const penaltyPct = Math.min(0.40, 0.10 + daysLate * 0.02);
     financialExposureRupees = Math.round(remainingValueInr * penaltyPct);
     rulesTriggered.push(
-      `Projected stage finish is ${daysLate} working day(s) late past planned window.`
+      `Projected shipment is ${daysLate} working day(s) late past Ex-Factory date.`
     );
     if (bufferRemaining < 0) {
       rulesTriggered.push(
@@ -400,10 +408,10 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
       result: varianceQtyPerDay,
     },
     daysLateMath: {
-      formula: 'Days Late = Math.max(0, Working Days Needed - Effective Working Days Available)',
+      formula: 'Days Late = Math.max(0, Total Working Days Needed - Working Days To Ship)',
       substituted: isCompleted
         ? '0 days (Completed on Schedule)'
-        : `${workingDaysNeeded}d needed − ${effectiveWorkingDays}d available = ${daysLate} days`,
+        : `${totalWorkingDaysNeeded}d needed (${workingDaysNeeded}d stage + ${downstreamBufferDays}d downstream) − ${workingDaysToShip}d available = ${daysLate} days`,
       result: daysLate,
     },
     workingDaysTotal: workingDaysToShip,
@@ -423,6 +431,7 @@ export function evaluateProductionRisk(input: RiskEngineInput): RiskEvaluationRe
     varianceQtyPerDay,
     differencePill,
     workingDaysNeeded,
+    projectedStageCompletionDate,
     projectedCompletionDate,
     daysLate,
     financialExposureRupees,

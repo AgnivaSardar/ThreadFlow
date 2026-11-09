@@ -117,7 +117,10 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
     const req = liveRequiredRate;
     const daysNeeded = Math.min(60, Math.ceil(mathBreakdown.remainingPieces / Math.max(1, newRate)));
     const variance = newRate - req;
-    const simLate = Math.max(0, daysNeeded - effDays);
+    const downstreamBuffer = mathBreakdown.downstreamBufferDays || 0;
+    const totalDaysNeeded = daysNeeded + downstreamBuffer;
+    const workingDaysToShip = mathBreakdown.workingDaysTotal || (effDays + downstreamBuffer);
+    const simLate = Math.max(0, totalDaysNeeded - workingDaysToShip);
 
     let simRisk: RiskLevel = 'GREEN';
     let exp = 0;
@@ -126,20 +129,20 @@ export const ShowYourMathCard: React.FC<ShowYourMathCardProps> = ({
       ? (financialExposureRupees / daysLate)
       : (financialExposureRupees > 0 ? financialExposureRupees / Math.max(1, effDays) : 0);
 
+    const today = getAuthoritativeServerDate();
+    let count = 0;
+    const proj = new Date(today);
+    while (count < totalDaysNeeded) {
+      proj.setDate(proj.getDate() + 1);
+      if (proj.getDay() !== 0) count++;
+    }
+
     if (simLate > 0) {
       simRisk = 'RED';
       exp = Math.round(dailyLatePenalty * simLate);
     } else if (variance < 0 || effDays < 2) {
       simRisk = 'AMBER';
       exp = Math.round(financialExposureRupees * 0.25 * (Math.abs(variance) / Math.max(1, req)));
-    }
-
-    const today = getAuthoritativeServerDate();
-    let count = 0;
-    const proj = new Date(today);
-    while (count < daysNeeded) {
-      proj.setDate(proj.getDate() + 1);
-      if (proj.getDay() !== 0) count++;
     }
 
     setSimulationResult({

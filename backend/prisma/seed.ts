@@ -6,11 +6,12 @@ import { OrdersSeedRunner } from './seed/profiles/orders-seed';
 import { StressGenerator } from './seed/generators/stress-generator';
 import calibratedOrdersFixture from './seed/fixtures/calibrated-orders.json';
 import minimalOrdersFixture from './seed/fixtures/minimal-orders.json';
+import { getSystemToday } from '../src/common/utils/dates';
 
 const prisma = new PrismaClient();
 
-// Simulated Today Anchor: 2026-11-02
-const ANCHOR_DATE = new Date('2026-11-02T10:00:00Z');
+// Authoritative system anchor dynamically resolved to current operating date
+const ANCHOR_DATE = getSystemToday();
 
 function parseArgs(): SeedCliOptions {
   const args = process.argv.slice(2);

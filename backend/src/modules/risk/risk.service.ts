@@ -345,17 +345,18 @@ export class RiskService {
 
     const rate = Math.max(1, Math.round(simulatedRate));
     const workingDaysNeeded = Math.min(60, Math.ceil(remainingPieces / rate));
+    const totalWorkingDaysNeeded = workingDaysNeeded + downstreamBufferDays;
 
     let count = 0;
     const projected = new Date(today);
-    while (count < workingDaysNeeded) {
+    while (count < totalWorkingDaysNeeded) {
       projected.setDate(projected.getDate() + 1);
       if (projected.getDay() !== 0) count++;
     }
 
     let daysLate = 0;
-    if (workingDaysNeeded > effectiveWorkingDays) {
-      daysLate = workingDaysNeeded - effectiveWorkingDays;
+    if (totalWorkingDaysNeeded > workingDaysToShip) {
+      daysLate = totalWorkingDaysNeeded - workingDaysToShip;
     }
 
     const variance = rate - requiredDailyRate;

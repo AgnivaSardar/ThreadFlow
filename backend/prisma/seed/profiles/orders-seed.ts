@@ -61,6 +61,23 @@ export interface FullOrderFixture extends CalibratedOrderFixture {
   orderAuditTrail?: ExtendedAuditEvent[];
 }
 
+/**
+ * Calculates a past calendar date skipping Sundays so seeded logs
+ * land directly on actual factory operating days.
+ */
+function getPastWorkingDay(anchor: Date, workingDaysAgo: number): Date {
+  const d = new Date(anchor);
+  d.setHours(10, 0, 0, 0);
+  let daysBack = 0;
+  while (daysBack < workingDaysAgo) {
+    d.setDate(d.getDate() - 1);
+    if (d.getDay() !== 0) {
+      daysBack++;
+    }
+  }
+  return d;
+}
+
 export class OrdersSeedRunner {
   static async run(
     prisma: PrismaClient,
@@ -84,6 +101,16 @@ export class OrdersSeedRunner {
       const orderDate = new Date(anchorDate);
       orderDate.setDate(orderDate.getDate() - 45);
 
+      // Dynamically calculate exFactoryDate relative to anchorDate so seed never has static/stale dates
+      const baseFixtureRefDate = new Date('2026-11-02T10:00:00Z');
+      const fixtureExDate = new Date(fixture.exFactoryDateStr);
+      const exFactoryOffsetDays = Math.round(
+        (fixtureExDate.getTime() - baseFixtureRefDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      const dynamicExFactoryDate = new Date(anchorDate);
+      dynamicExFactoryDate.setDate(dynamicExFactoryDate.getDate() + exFactoryOffsetDays);
+      dynamicExFactoryDate.setHours(0, 0, 0, 0);
+
       // 1. Upsert Order
       const order = await prisma.order.upsert({
         where: { poNumber: fixture.poNumber },
@@ -95,7 +122,7 @@ export class OrdersSeedRunner {
           exchangeRate: fixture.exchangeRate,
           fobPricePerPiece: fixture.fobPricePerPiece,
           totalOrderValue,
-          exFactoryDate: new Date(fixture.exFactoryDateStr),
+          exFactoryDate: dynamicExFactoryDate,
           buyerId: buyer.id,
           unitId: unit.id,
           status: (fixture as any).status || 'ACTIVE',
@@ -110,7 +137,7 @@ export class OrdersSeedRunner {
           fobPricePerPiece: fixture.fobPricePerPiece,
           totalOrderValue,
           orderDate,
-          exFactoryDate: new Date(fixture.exFactoryDateStr),
+          exFactoryDate: dynamicExFactoryDate,
           buyerId: buyer.id,
           unitId: unit.id,
           status: (fixture as any).status || 'ACTIVE',
@@ -196,15 +223,60 @@ export class OrdersSeedRunner {
 
       // 4. Seed Daily Production Updates, Breakdowns & Issue Classifications
       const createdUpdates: any[] = [];
-      for (let logIdx = 0; logIdx < fixture.dailyLogs.length; logIdx++) {
-        const log = fixture.dailyLogs[logIdx];
+      const effectiveLogs: ExtendedDailyLog[] = [...fixture.dailyLogs];
+
+      // Ensure every active order has non-zero floor work across the 3 rolling days [0 (today), -1 (yesterday), -2 (2 days ago)]
+      const isOrderActive = (fixture as any).status !== 'COMPLETED' && activeCompleted < fixture.totalQuantity;
+      if (isOrderActive && activeMilestone) {
+        const coveredOffsets = new Set(effectiveLogs.map((l) => l.dateOffsetDays));
+        const baseDailyGood = Math.max(
+          180,
+          Math.min(750, Math.round((activeMilestone.completedQuantity || activeMilestone.targetQuantity * 0.4) / 4))
+        );
+
+        let defaultSupervisorEmail = 'supervisor.muthu@threadflow.com';
+        if (unit.code === 'WASHTEX') defaultSupervisorEmail = 'supervisor.selvam@threadflow.com';
+        else if (unit.code === 'PRINTTEX') defaultSupervisorEmail = 'supervisor.ravi@threadflow.com';
+        else if (unit.code === 'UNIT_2') defaultSupervisorEmail = 'supervisor.kavitha@threadflow.com';
+
+        const requiredOffsets = [0, -1, -2];
+        for (const offset of requiredOffsets) {
+          if (!coveredOffsets.has(offset)) {
+            const mult = offset === 0 ? 1.0 : offset === -1 ? 1.06 : 0.94;
+            const goodQty = Math.round(baseDailyGood * mult);
+            const rejQty = Math.max(2, Math.round(goodQty * 0.012));
+            effectiveLogs.push({
+              dateOffsetDays: offset,
+              completedQty: goodQty,
+              reworkQty: Math.round(rejQty * 1.5),
+              rejectedQty: rejQty,
+              stage: activeMilestone.stage,
+              unitCode: unit.code,
+              userEmail: defaultSupervisorEmail,
+              shift: 'DAY',
+              machineLine: `${unit.code} Line 1`,
+              operatorNotes:
+                offset === 0
+                  ? 'Shift completed: floor operations running smoothly at scheduled pace.'
+                  : offset === -1
+                  ? 'Shift production logged with standard in-line quality sign-off.'
+                  : 'Floor operations running according to standard production schedule.',
+              issueCategory: 'OTHER',
+              voiceDurationSeconds: 15,
+            });
+          }
+        }
+      }
+
+      for (let logIdx = 0; logIdx < effectiveLogs.length; logIdx++) {
+        const log = effectiveLogs[logIdx];
         const logUnit = unit;
         const logUser = master.usersByEmail.get(log.userEmail) || master.usersByEmail.get('merchandiser@threadflow.com')!;
         const logMilestone = milestonesByStage.get(log.stage) || milestonesByStage.values().next().value;
-        const logDate = new Date(anchorDate);
-        logDate.setDate(logDate.getDate() + log.dateOffsetDays);
+        const workingDaysAgo = Math.abs(log.dateOffsetDays);
+        const logDate = getPastWorkingDay(anchorDate, workingDaysAgo);
 
-        const idempKey = `idemp_${fixture.poNumber.toLowerCase().replace(/[^a-z0-9]/g, '')}_d${log.dateOffsetDays}_${logIdx}_${log.completedQty}`;
+        const idempKey = `idemp_${fixture.poNumber.toLowerCase().replace(/[^a-z0-9]/g, '')}_w${workingDaysAgo}_${logIdx}_${log.completedQty}`;
 
         const update = await prisma.productionUpdate.upsert({
           where: { idempotencyKey: idempKey },
