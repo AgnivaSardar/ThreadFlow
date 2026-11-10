@@ -9,9 +9,14 @@ import {
   Trash2,
   X,
   ExternalLink,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../features/auth/authStore';
+import { BuyerProductRequest } from '../types';
+import { apiRequest } from '../services/api';
+import { ProductRequestReviewModal } from '../features/orders/ProductRequestReviewModal';
 
 export interface AppNotification {
   id: string;
@@ -114,7 +119,34 @@ export const NotificationPopover: React.FC = () => {
     user?.role ? n.targetRole.includes(user.role) : true
   );
 
+  // Active Pending Buyer Sourcing Requests (for Merchandiser & Admin)
+  const [pendingRequests, setPendingRequests] = useState<BuyerProductRequest[]>([]);
+  const [selectedRequest, setSelectedRequest] = useState<BuyerProductRequest | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
+  const fetchPendingRequests = async () => {
+    if (user?.role === 'MERCHANDISER' || user?.role === 'ADMIN') {
+      try {
+        const res = await apiRequest<{ success: boolean; data: BuyerProductRequest[] }>(
+          '/orders/product-requests?status=PENDING'
+        );
+        setPendingRequests(res.data || []);
+      } catch {
+        // Non-blocking
+      }
+    } else {
+      setPendingRequests([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingRequests();
+    const interval = setInterval(fetchPendingRequests, 15000);
+    return () => clearInterval(interval);
+  }, [user?.role]);
+
   const unreadCount = scopedNotifications.filter((n) => !n.read).length;
+  const totalUnreadCount = unreadCount + pendingRequests.length;
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(notifications));
@@ -164,9 +196,9 @@ export const NotificationPopover: React.FC = () => {
         title="Notifications"
       >
         <Bell className="w-4 h-4" />
-        {unreadCount > 0 && (
+        {totalUnreadCount > 0 && (
           <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-500 text-[10px] font-black text-white ring-2 ring-white animate-pulse">
-            {unreadCount}
+            {totalUnreadCount}
           </span>
         )}
       </button>
@@ -180,9 +212,9 @@ export const NotificationPopover: React.FC = () => {
               <span className="font-bold text-xs text-slate-800 uppercase tracking-wider">
                 Notifications
               </span>
-              {unreadCount > 0 && (
+              {totalUnreadCount > 0 && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                  {unreadCount} new
+                  {totalUnreadCount} new
                 </span>
               )}
             </div>
@@ -200,16 +232,57 @@ export const NotificationPopover: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-all"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-all cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
 
-          {/* Scoped Notification List */}
-          <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 smooth-scroll">
-            {scopedNotifications.length === 0 ? (
+          {/* Scoped Notification List & Buyer Sourcing Requests */}
+          <div className="max-h-96 overflow-y-auto divide-y divide-slate-100 smooth-scroll">
+            {/* Top Priority Section: Pending Buyer Product Sourcing Requests */}
+            {pendingRequests.map((req) => (
+              <div
+                key={req.id}
+                onClick={() => {
+                  setSelectedRequest(req);
+                  setIsReviewModalOpen(true);
+                  setIsOpen(false);
+                }}
+                className="p-3.5 bg-amber-50/90 hover:bg-amber-100 border-l-4 border-amber-500 cursor-pointer transition-colors relative"
+              >
+                <div className="flex items-start gap-2.5">
+                  <div className="shrink-0 mt-0.5 w-6 h-6 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center shadow-xs">
+                    <Sparkles className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-xs font-black text-amber-950 truncate">
+                        {req.styleName}
+                      </span>
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-600 text-white uppercase tracking-wider animate-pulse shrink-0">
+                        IMPORTANT
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-700 mt-0.5 line-clamp-2 leading-snug">
+                      <strong>{req.buyer?.name || 'Buyer Partner'}</strong> requested{' '}
+                      <strong>{req.targetQuantity.toLocaleString()} pcs</strong> • Target Ex-Factory:{' '}
+                      {new Date(req.targetExFactoryDate).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                      })}
+                    </p>
+                    <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-amber-800">
+                      <span>Click to view details & create order</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {scopedNotifications.length === 0 && pendingRequests.length === 0 ? (
               <div className="p-6 text-center text-slate-400 text-xs">
                 No notifications for your account.
               </div>
@@ -270,6 +343,24 @@ export const NotificationPopover: React.FC = () => {
             </span>
           </div>
         </div>
+      )}
+
+      {/* Review Modal for Buyer Product Sourcing Requests */}
+      {selectedRequest && (
+        <ProductRequestReviewModal
+          isOpen={isReviewModalOpen}
+          onClose={() => setIsReviewModalOpen(false)}
+          request={selectedRequest}
+          onRequestStatusUpdated={fetchPendingRequests}
+          onGoForward={(req) => {
+            setIsReviewModalOpen(false);
+            sessionStorage.setItem('tf_pending_request_to_order', JSON.stringify(req));
+            window.dispatchEvent(
+              new CustomEvent('threadflow:open_order_with_request', { detail: req })
+            );
+            navigate('/orders');
+          }}
+        />
       )}
     </div>
   );

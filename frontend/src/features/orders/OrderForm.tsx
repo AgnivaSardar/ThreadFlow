@@ -6,12 +6,26 @@ import { apiRequest, getAuthoritativeServerDate } from '../../services/api';
 import { CustomSelect, Option } from '../../components/CustomSelect';
 import { useLanguage } from '../../hooks/useLanguage';
 
+export interface InitialOrderData {
+  productRequestId?: string;
+  buyerId?: string;
+  poNumber?: string;
+  style?: string;
+  description?: string;
+  totalQuantity?: number;
+  exFactoryDate?: string;
+  currency?: string;
+  fobPricePerPiece?: number;
+  sizeRows?: { size: string; color: string; plannedQty: number }[];
+}
+
 interface OrderFormProps {
   isOpen: boolean;
   onClose: () => void;
   onOrderCreated: () => void;
   buyers: Buyer[];
   units: Unit[];
+  initialData?: InitialOrderData | null;
 }
 
 interface SizeRow {
@@ -94,6 +108,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
   onOrderCreated,
   buyers,
   units,
+  initialData,
 }) => {
   const { isTa, t } = useLanguage();
   const [poNumber, setPoNumber] = useState('');
@@ -139,6 +154,31 @@ export const OrderForm: React.FC<OrderFormProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Pre-fill form when initialData is supplied (e.g., from an accepted Buyer Product Sourcing Request)
+  useEffect(() => {
+    if (initialData) {
+      if (initialData.buyerId) setBuyerId(initialData.buyerId);
+      if (initialData.style) setStyle(initialData.style);
+      if (initialData.description) setDescription(initialData.description);
+      if (initialData.totalQuantity) setTotalQuantity(initialData.totalQuantity);
+      if (initialData.exFactoryDate) {
+        const dStr = initialData.exFactoryDate.split('T')[0];
+        setExFactoryDate(dStr);
+      }
+      if (initialData.currency) setCurrency(initialData.currency);
+      if (initialData.fobPricePerPiece !== undefined) setFobPricePerPiece(initialData.fobPricePerPiece);
+      if (initialData.sizeRows && initialData.sizeRows.length > 0) {
+        setSizeRows(initialData.sizeRows);
+      }
+      if (initialData.poNumber) {
+        setPoNumber(initialData.poNumber);
+      } else if (!poNumber) {
+        const rnd = Math.floor(1000 + Math.random() * 9000);
+        setPoNumber(`PO-REQ-${rnd}`);
+      }
+    }
+  }, [initialData]);
 
   // Set default buyer and unit when available
   useEffect(() => {
@@ -356,10 +396,25 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         })),
       };
 
-      await apiRequest('/orders', {
+      const orderRes = await apiRequest<{ success: boolean; data: any }>('/orders', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
+
+      // If this order originated from a Buyer Sourcing Request, mark that request as ACCEPTED and link created order
+      if (initialData?.productRequestId) {
+        try {
+          await apiRequest(`/orders/product-requests/${initialData.productRequestId}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              status: 'ACCEPTED',
+              orderId: orderRes.data?.id,
+            }),
+          });
+        } catch (syncErr) {
+          console.warn('Could not sync buyer request status:', syncErr);
+        }
+      }
 
       onOrderCreated();
       onClose();
@@ -398,10 +453,17 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         {/* Header - Fixed & Pinned */}
         <div className="bg-[#0C2D48] px-5 py-3.5 text-white flex items-center justify-between shrink-0 border-b border-[#143D60]">
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
-              {isTa ? 'புதிய ஏற்றுமதி கொள்முதல் ஆர்டர்' : 'New Export Purchase Order'}
-            </h2>
-            <p className="text-xs text-sky-200/90 font-medium">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                {isTa ? 'புதிய ஏற்றுமதி கொள்முதல் ஆர்டர்' : 'New Export Purchase Order'}
+              </h2>
+              {initialData?.productRequestId && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-slate-950 uppercase tracking-wider shadow-2xs">
+                  Prefilled from Buyer Sourcing Request
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-sky-200/90 font-medium mt-0.5">
               {isTa
                 ? 'ஆர்டர் விவரங்கள், 7-நிலை T&A அட்டவணை மற்றும் அளவு ஒதுக்கீட்டை அமைக்கவும்'
                 : 'Configure order specifications, 7-stage T&A timeline, and size distribution'}

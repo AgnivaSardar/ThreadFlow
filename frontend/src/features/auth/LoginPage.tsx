@@ -15,6 +15,9 @@ import {
   ShieldCheck,
   RotateCcw,
   Clock,
+  Building2,
+  Globe,
+  UserCheck,
 } from 'lucide-react';
 import { useAuthStore } from './authStore';
 
@@ -22,8 +25,12 @@ type ResetStep = 'EMAIL' | 'OTP' | 'PASSWORD' | 'SUCCESS';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, isLoading, error, clearError, forgotPassword, verifyOtp, resetPassword } = useAuthStore();
+  const { login, registerBuyer, isLoading, error, clearError, forgotPassword, verifyOtp, resetPassword } = useAuthStore();
 
+  const [isBuyerRegister, setIsBuyerRegister] = useState(false);
+  const [companyName, setCompanyName] = useState('');
+  const [contactName, setContactName] = useState('');
+  const [country, setCountry] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -82,6 +89,27 @@ export const LoginPage: React.FC = () => {
       }
 
       setLoginSuccessMessage(`Welcome back, ${user.name}`);
+      setTimeout(() => redirectByRole(user.role), 300);
+    } catch {
+      // Error is tracked in authStore
+    }
+  };
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearError();
+    if (!email || !password || !companyName || !contactName) return;
+
+    try {
+      const user = await registerBuyer({
+        companyName: companyName.trim(),
+        name: contactName.trim(),
+        country: country.trim() || 'International',
+        email: email.trim(),
+        password,
+      });
+
+      setLoginSuccessMessage(`Buyer account created! Welcome, ${user.name}`);
       setTimeout(() => redirectByRole(user.role), 300);
     } catch {
       // Error is tracked in authStore
@@ -198,165 +226,340 @@ export const LoginPage: React.FC = () => {
       {/* ======================================================== */}
       {/* LEFT COLUMN: Expanded Blue Login Space (~52% Width)      */}
       {/* ======================================================== */}
-      <div className="w-full lg:w-[50%] xl:w-[52%] h-full bg-[#0C2D48] flex flex-col justify-between p-8 sm:p-12 lg:p-14 xl:p-16 relative z-10 border-r border-[#164368]/70 shadow-2xl">
+      <div className="w-full lg:w-[50%] xl:w-[52%] h-full bg-[#0C2D48] flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-14 relative z-10 border-r border-[#164368]/70 shadow-2xl overflow-hidden">
         {/* Ambient background glow behind form */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-400/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Top Brand Header */}
-        <div className="flex items-center gap-3 relative z-10">
-          <div className="w-11 h-11 rounded-2xl bg-white p-1.5 flex items-center justify-center text-[#0C2D48] shadow-lg shadow-black/20 overflow-hidden ring-1 ring-white/20">
+        <div className="flex items-center gap-3 relative z-10 shrink-0">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white p-1.5 flex items-center justify-center text-[#0C2D48] shadow-lg shadow-black/20 overflow-hidden ring-1 ring-white/20">
             <img src="/logo.png" alt="ThreadFlow Logo" className="w-full h-full object-contain" />
           </div>
           <div>
-            <span className="text-2xl font-black tracking-tight text-white font-mono leading-none">
+            <span className="text-xl sm:text-2xl font-black tracking-tight text-white font-mono leading-none">
               Thread<span className="text-amber-400">Flow</span>
             </span>
-            <div className="text-[10px] uppercase tracking-widest text-sky-200/60 font-bold mt-1">
+            <div className="text-[9px] sm:text-[10px] uppercase tracking-widest text-sky-200/60 font-bold mt-0.5 sm:mt-1">
               Production Intelligence & Critical Path OS
             </div>
           </div>
         </div>
 
         {/* Center Auth Form Container */}
-        <div className="my-auto w-full max-w-[420px] mx-auto relative z-10 py-6">
-          <div className="mb-8">
-            <h1 className="text-3xl font-extrabold text-white tracking-tight">Welcome back</h1>
-            <p className="text-xs sm:text-sm text-sky-100/75 mt-2 leading-relaxed">
-              Sign in to access your production intelligence workspace, milestone schedules, and live floor telemetry.
+        <div className="my-auto w-full max-w-[420px] mx-auto relative z-10 py-2 sm:py-3 shrink-0">
+          <div className="mb-4 sm:mb-5">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              {isBuyerRegister ? 'Register as Buyer' : 'Welcome back'}
+            </h1>
+            <p className="text-xs sm:text-sm text-sky-100/75 mt-1 sm:mt-1.5 leading-relaxed">
+              {isBuyerRegister
+                ? 'Create your direct sourcing account to track factory lines, milestones, and request new styles.'
+                : 'Sign in to access your production intelligence workspace, milestone schedules, and live floor telemetry.'}
             </p>
           </div>
 
           {/* Feedback Alerts */}
-          {inactivityNotice && (
-            <div className="mb-6 p-3.5 rounded-xl bg-amber-950/70 border border-amber-500/50 flex items-start gap-2.5 text-xs text-amber-200 animate-fadeIn shadow-lg">
+          {inactivityNotice && !isBuyerRegister && (
+            <div className="mb-3.5 p-2.5 sm:p-3 rounded-xl bg-amber-950/70 border border-amber-500/50 flex items-start gap-2 text-xs text-amber-200 animate-fadeIn shadow-lg">
               <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-              <span className="font-medium">
-                Your session ended after 30 minutes of inactivity. Please sign in again to resume your work.
+              <span className="font-medium text-[11px] sm:text-xs">
+                Your session ended after 30 minutes of inactivity. Please sign in again.
               </span>
             </div>
           )}
 
           {error && (
-            <div className="mb-6 p-3.5 rounded-xl bg-rose-950/60 border border-rose-500/40 flex items-start gap-2.5 text-xs text-rose-200 animate-fadeIn shadow-lg">
+            <div className="mb-3.5 p-2.5 sm:p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 flex items-start gap-2 text-xs text-rose-200 animate-fadeIn shadow-lg">
               <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-              <span className="font-medium">{error}</span>
+              <span className="font-medium text-[11px] sm:text-xs">{error}</span>
             </div>
           )}
 
           {loginSuccessMessage && (
-            <div className="mb-6 p-3.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 flex items-center gap-2.5 text-xs text-emerald-200 animate-fadeIn shadow-lg">
+            <div className="mb-3.5 p-2.5 sm:p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/40 flex items-center gap-2 text-xs text-emerald-200 animate-fadeIn shadow-lg">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="font-semibold">{loginSuccessMessage}</span>
+              <span className="font-semibold text-[11px] sm:text-xs">{loginSuccessMessage}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Work Email Field */}
-            <div>
-              <label className="block text-xs font-bold text-sky-100/90 mb-2 uppercase tracking-wider text-[11px]">
-                Work Email Address
-              </label>
-              <div className="relative rounded-xl">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#0C2D48] z-10">
-                  <Mail className="h-4.5 w-4.5 stroke-[2.2]" />
+          {isBuyerRegister ? (
+            /* ======================================================== */
+            /* BUYER SELF-REGISTRATION FORM                            */
+            /* ======================================================== */
+            <form onSubmit={handleRegisterSubmit} className="space-y-2.5 sm:space-y-3">
+              {/* Row 1: Company Name + Country (2 cols) */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[10px] sm:text-[11px] font-bold text-sky-100/90 mb-1 uppercase tracking-wider">
+                    Company / Brand
+                  </label>
+                  <div className="relative rounded-xl">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#0C2D48] z-10">
+                      <Building2 className="h-3.5 w-3.5 stroke-[2.2]" />
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      placeholder="e.g. Nordic Brands"
+                      className="block w-full pl-9 pr-3 py-2 text-xs font-medium bg-[#EAF2FB] border border-[#BFDBFE]/80 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:bg-white transition-all shadow-inner"
+                    />
+                  </div>
                 </div>
-                <input
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@threadflow.com"
-                  className="block w-full pl-12 pr-4 py-3.5 text-sm font-medium bg-[#EAF2FB] border border-[#BFDBFE]/80 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:bg-white transition-all shadow-inner [&:-webkit-autofill]:bg-[#EAF2FB] [&:-webkit-autofill]:text-slate-900 [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a] [&:-webkit-autofill]:shadow-[0_0_0_1000px_#EAF2FB_inset]"
-                />
-              </div>
-            </div>
 
-            {/* Password Field */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs font-bold text-sky-100/90 uppercase tracking-wider text-[11px]">
+                <div>
+                  <label className="block text-[10px] sm:text-[11px] font-bold text-sky-100/90 mb-1 uppercase tracking-wider">
+                    Country
+                  </label>
+                  <div className="relative rounded-xl">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#0C2D48] z-10">
+                      <Globe className="h-3.5 w-3.5 stroke-[2.2]" />
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      placeholder="e.g. Germany"
+                      className="block w-full pl-9 pr-3 py-2 text-xs font-medium bg-[#EAF2FB] border border-[#BFDBFE]/80 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:bg-white transition-all shadow-inner"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 2: Contact Person Full Name */}
+              <div>
+                <label className="block text-[10px] sm:text-[11px] font-bold text-sky-100/90 mb-1 uppercase tracking-wider">
+                  Contact Person Name
+                </label>
+                <div className="relative rounded-xl">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#0C2D48] z-10">
+                    <UserCheck className="h-4 w-4 stroke-[2.2]" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    placeholder="e.g. Sarah Jenkins"
+                    className="block w-full pl-10 pr-3 py-2 sm:py-2.5 text-xs sm:text-sm font-medium bg-[#EAF2FB] border border-[#BFDBFE]/80 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:bg-white transition-all shadow-inner"
+                  />
+                </div>
+              </div>
+
+              {/* Row 3: Work Email Address */}
+              <div>
+                <label className="block text-[10px] sm:text-[11px] font-bold text-sky-100/90 mb-1 uppercase tracking-wider">
+                  Work Email Address
+                </label>
+                <div className="relative rounded-xl">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#0C2D48] z-10">
+                    <Mail className="h-4 w-4 stroke-[2.2]" />
+                  </div>
+                  <input
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@company.com"
+                    className="block w-full pl-10 pr-3 py-2 sm:py-2.5 text-xs sm:text-sm font-medium bg-[#EAF2FB] border border-[#BFDBFE]/80 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:bg-white transition-all shadow-inner"
+                  />
+                </div>
+              </div>
+
+              {/* Row 4: Password Field */}
+              <div>
+                <label className="block text-[10px] sm:text-[11px] font-bold text-sky-100/90 mb-1 uppercase tracking-wider">
                   Password
                 </label>
-                <button
-                  type="button"
-                  onClick={openForgotModal}
-                  className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
-                >
-                  Forgot password?
-                </button>
-              </div>
-              <div className="relative rounded-xl">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#0C2D48] z-10">
-                  <Lock className="h-4.5 w-4.5 stroke-[2.2]" />
+                <div className="relative rounded-xl">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#0C2D48] z-10">
+                    <Lock className="h-4 w-4 stroke-[2.2]" />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="block w-full pl-10 pr-10 py-2 sm:py-2.5 text-xs sm:text-sm font-medium bg-[#EAF2FB] border border-[#BFDBFE]/80 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:bg-white transition-all shadow-inner"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-600 hover:text-slate-950 transition-colors cursor-pointer z-10"
+                    tabIndex={-1}
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4 stroke-[2.2]" /> : <Eye className="h-4 w-4 stroke-[2.2]" />}
+                  </button>
                 </div>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="block w-full pl-12 pr-12 py-3.5 text-sm font-medium bg-[#EAF2FB] border border-[#BFDBFE]/80 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:bg-white transition-all shadow-inner [&:-webkit-autofill]:bg-[#EAF2FB] [&:-webkit-autofill]:text-slate-900 [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a] [&:-webkit-autofill]:shadow-[0_0_0_1000px_#EAF2FB_inset]"
-                />
+              </div>
+
+              {/* Submit Registration Button */}
+              <div className="pt-1 sm:pt-2">
                 <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-600 hover:text-slate-950 transition-colors cursor-pointer z-10"
-                  tabIndex={-1}
-                  title={showPassword ? 'Hide password' : 'Show password'}
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full flex justify-center items-center gap-2 py-2.5 sm:py-3 px-4 rounded-xl shadow-lg text-xs sm:text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0C2D48] focus:ring-amber-400 disabled:opacity-50 transition-all cursor-pointer shadow-amber-400/10"
                 >
-                  {showPassword ? <EyeOff className="h-4.5 w-4.5 stroke-[2.2]" /> : <Eye className="h-4.5 w-4.5 stroke-[2.2]" />}
+                  {isLoading ? (
+                    <span className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-slate-950 border-t-transparent" />
+                  ) : (
+                    <>
+                      Register Buyer Account
+                      <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                    </>
+                  )}
                 </button>
               </div>
-            </div>
 
-            {/* Custom Tactile Checkbox: Remember this device */}
-            <div className="flex items-center justify-between pt-1">
-              <div
-                onClick={() => setRememberMe(!rememberMe)}
-                className="flex items-center gap-3 cursor-pointer select-none group"
-              >
+              {/* Switch Back to Login */}
+              <div className="pt-1.5 text-center text-xs text-sky-200/80">
+                Already registered with ThreadFlow?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsBuyerRegister(false);
+                    clearError();
+                  }}
+                  className="text-amber-400 hover:text-amber-300 font-bold underline transition-colors cursor-pointer"
+                >
+                  Sign In to Workspace
+                </button>
+              </div>
+            </form>
+          ) : (
+            /* ======================================================== */
+            /* EXISTING SIGN-IN FORM                                    */
+            /* ======================================================== */
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+              {/* Work Email Field */}
+              <div>
+                <label className="block text-[10px] sm:text-[11px] font-bold text-sky-100/90 mb-1.5 uppercase tracking-wider">
+                  Work Email Address
+                </label>
+                <div className="relative rounded-xl">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#0C2D48] z-10">
+                    <Mail className="h-4.5 w-4.5 stroke-[2.2]" />
+                  </div>
+                  <input
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@threadflow.com"
+                    className="block w-full pl-12 pr-4 py-3 sm:py-3.5 text-xs sm:text-sm font-medium bg-[#EAF2FB] border border-[#BFDBFE]/80 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:bg-white transition-all shadow-inner [&:-webkit-autofill]:bg-[#EAF2FB] [&:-webkit-autofill]:text-slate-900 [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a] [&:-webkit-autofill]:shadow-[0_0_0_1000px_#EAF2FB_inset]"
+                  />
+                </div>
+              </div>
+
+              {/* Password Field */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[10px] sm:text-[11px] font-bold text-sky-100/90 uppercase tracking-wider">
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={openForgotModal}
+                    className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <div className="relative rounded-xl">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#0C2D48] z-10">
+                    <Lock className="h-4.5 w-4.5 stroke-[2.2]" />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="block w-full pl-12 pr-12 py-3 sm:py-3.5 text-xs sm:text-sm font-medium bg-[#EAF2FB] border border-[#BFDBFE]/80 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:bg-white transition-all shadow-inner [&:-webkit-autofill]:bg-[#EAF2FB] [&:-webkit-autofill]:text-slate-900 [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a] [&:-webkit-autofill]:shadow-[0_0_0_1000px_#EAF2FB_inset]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-600 hover:text-slate-950 transition-colors cursor-pointer z-10"
+                    tabIndex={-1}
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="h-4.5 w-4.5 stroke-[2.2]" /> : <Eye className="h-4.5 w-4.5 stroke-[2.2]" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Custom Tactile Checkbox: Remember this device */}
+              <div className="flex items-center justify-between pt-0.5">
                 <div
-                  role="checkbox"
-                  aria-checked={rememberMe}
-                  className={`w-5 h-5 rounded-md flex items-center justify-center transition-all duration-150 shrink-0 ${
-                    rememberMe
-                      ? 'bg-amber-400 border border-amber-400 text-slate-950 shadow-xs'
-                      : 'bg-[#081F33] border-2 border-sky-400/60 group-hover:border-amber-400 text-transparent'
-                  }`}
+                  onClick={() => setRememberMe(!rememberMe)}
+                  className="flex items-center gap-3 cursor-pointer select-none group"
                 >
-                  {rememberMe && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  <div
+                    role="checkbox"
+                    aria-checked={rememberMe}
+                    className={`w-5 h-5 rounded-md flex items-center justify-center transition-all duration-150 shrink-0 ${
+                      rememberMe
+                        ? 'bg-amber-400 border border-amber-400 text-slate-950 shadow-xs'
+                        : 'bg-[#081F33] border-2 border-sky-400/60 group-hover:border-amber-400 text-transparent'
+                    }`}
+                  >
+                    {rememberMe && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </div>
+                  <span className="text-xs font-semibold text-sky-100/85 group-hover:text-white transition-colors">
+                    Remember this device
+                  </span>
                 </div>
-                <span className="text-xs font-semibold text-sky-100/85 group-hover:text-white transition-colors">
-                  Remember this device
-                </span>
               </div>
-            </div>
 
-            {/* Submit Action Button */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-lg text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0C2D48] focus:ring-amber-400 disabled:opacity-50 transition-all cursor-pointer shadow-amber-400/10"
-              >
-                {isLoading ? (
-                  <span className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-slate-950 border-t-transparent" />
-                ) : (
-                  <>
-                    Sign In to Workspace
-                    <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+              {/* Submit Action Button */}
+              <div className="pt-1 sm:pt-2">
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full flex justify-center items-center gap-2 py-3 sm:py-3.5 px-4 rounded-xl shadow-lg text-xs sm:text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0C2D48] focus:ring-amber-400 disabled:opacity-50 transition-all cursor-pointer shadow-amber-400/10"
+                >
+                  {isLoading ? (
+                    <span className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-slate-950 border-t-transparent" />
+                  ) : (
+                    <>
+                      Sign In to Workspace
+                      <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Option to Register as Buyer */}
+              <div className="pt-2 text-center text-xs text-sky-200/80">
+                New international buyer partner?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsBuyerRegister(true);
+                    clearError();
+                  }}
+                  className="text-amber-400 hover:text-amber-300 font-bold underline transition-colors cursor-pointer"
+                >
+                  Register as a Buyer
+                </button>
+              </div>
+            </form>
+          )}
         </div>
 
         {/* Left Bottom Footer */}
-        <div className="text-[11px] text-sky-200/40 text-center pt-3 border-t border-[#164368]/60 relative z-10 flex items-center justify-between">
+        <div className="text-[11px] text-sky-200/40 text-center pt-2 sm:pt-3 border-t border-[#164368]/60 relative z-10 flex items-center justify-between shrink-0">
           <span>© 2026 ThreadFlow Intelligence</span>
           <span className="text-[10px] text-sky-200/30">Enterprise Critical Path Architecture</span>
         </div>

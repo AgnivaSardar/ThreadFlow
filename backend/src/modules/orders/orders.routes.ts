@@ -20,6 +20,15 @@ router.use(enforceBuyerTenantScope);
 // Master data for form selectors (Buyers, Units)
 router.get('/master-data', OrdersController.getMasterData);
 
+// Buyer Product Sourcing Requests
+router.post('/product-requests', OrdersController.createProductRequest);
+router.get('/product-requests', OrdersController.listProductRequests);
+router.patch(
+  '/product-requests/:id/status',
+  requireRole(Role.MERCHANDISER, Role.ADMIN),
+  OrdersController.updateProductRequestStatus
+);
+
 // List orders with query filters
 router.get('/', validateRequest(orderQuerySchema), OrdersController.listOrders);
 

@@ -3,6 +3,7 @@ import { prisma } from '../../config/db';
 import { AppError } from '../../common/errors/AppError';
 import { calculateAuditHash } from '../../common/utils/crypto';
 import { AuthenticatedUser } from '../../common/types/express';
+import { TokenPayload } from '../../common/middleware/auth';
 import { CreateOrderInput, OrderQueryFilters, AdvanceStageInput } from './orders.schema';
 import { calculateWorkingDaysExcludingSundays, evaluateProductionRisk } from '../risk/risk.engine';
 import { getSystemToday } from '../../common/utils/dates';
@@ -1169,5 +1170,155 @@ export class OrdersService {
         adjustDownstreamTargets: input.adjustDownstreamTargets,
       };
     }, { timeout: 25000, maxWait: 15000 });
+  }
+
+  // ==========================================
+  // BUYER PRODUCT SOURCING REQUESTS
+  // ==========================================
+
+  /**
+   * Submit a new product sourcing request from an international buyer
+   */
+  static async createProductRequest(
+    data: {
+      buyerId?: string;
+      styleName: string;
+      description?: string;
+      targetQuantity: number;
+      targetExFactoryDate: string | Date;
+      currency?: string;
+      targetPrice?: number;
+      color?: string;
+      sizeBreakdown?: any;
+      fabricSpecs?: string;
+      specialNotes?: string;
+    },
+    user: TokenPayload
+  ) {
+    const effectiveBuyerId = user.role === Role.BUYER ? user.buyerId : (data.buyerId || user.buyerId);
+    if (!effectiveBuyerId) {
+      throw new AppError('Buyer organization context is required to submit a product request', 400);
+    }
+    if (!data.styleName?.trim()) {
+      throw new AppError('Style name is required', 400);
+    }
+    if (!data.targetQuantity || Number(data.targetQuantity) <= 0) {
+      throw new AppError('Target quantity must be greater than zero', 400);
+    }
+    if (!data.targetExFactoryDate) {
+      throw new AppError('Target ex-factory date is required', 400);
+    }
+
+    const exFactoryDate = new Date(data.targetExFactoryDate);
+    if (isNaN(exFactoryDate.getTime())) {
+      throw new AppError('Invalid ex-factory date format', 400);
+    }
+
+    const sizeBreakdownStr =
+      typeof data.sizeBreakdown === 'string'
+        ? data.sizeBreakdown
+        : data.sizeBreakdown
+        ? JSON.stringify(data.sizeBreakdown)
+        : null;
+
+    const request = await prisma.buyerProductRequest.create({
+      data: {
+        buyerId: effectiveBuyerId,
+        styleName: data.styleName.trim(),
+        description: data.description?.trim() || null,
+        targetQuantity: Number(data.targetQuantity),
+        targetExFactoryDate: exFactoryDate,
+        currency: data.currency || 'USD',
+        targetPrice: data.targetPrice ? Number(data.targetPrice) : null,
+        color: data.color?.trim() || null,
+        sizeBreakdown: sizeBreakdownStr,
+        fabricSpecs: data.fabricSpecs?.trim() || null,
+        specialNotes: data.specialNotes?.trim() || null,
+        status: 'PENDING',
+      },
+      include: {
+        buyer: {
+          select: { id: true, name: true, code: true, country: true, contactEmail: true },
+        },
+      },
+    });
+
+    return request;
+  }
+
+  /**
+   * List product requests (scoped to buyer if role=BUYER, or all if merchandiser/admin)
+   */
+  static async listProductRequests(user: TokenPayload, statusFilter?: string) {
+    const where: any = {};
+    if (user.role === Role.BUYER) {
+      where.buyerId = user.buyerId;
+    }
+    if (statusFilter && statusFilter !== 'ALL') {
+      where.status = statusFilter;
+    }
+
+    const requests = await prisma.buyerProductRequest.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        buyer: {
+          select: { id: true, name: true, code: true, country: true, contactEmail: true },
+        },
+        reviewedByUser: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    return requests;
+  }
+
+  /**
+   * Update request status (ACCEPTED or DECLINED) with reviewer identity
+   */
+  static async updateProductRequestStatus(
+    requestId: string,
+    status: 'ACCEPTED' | 'DECLINED' | 'PENDING',
+    reviewerUserId: string,
+    orderId?: string
+  ) {
+    const existing = await prisma.buyerProductRequest.findUnique({
+      where: { id: requestId },
+    });
+    if (!existing) {
+      throw new AppError('Product request not found', 404);
+    }
+
+    let validReviewerId: string | null = null;
+    if (reviewerUserId) {
+      const userExists = await prisma.user.findUnique({
+        where: { id: reviewerUserId },
+        select: { id: true },
+      });
+      if (userExists) {
+        validReviewerId = userExists.id;
+      }
+    }
+
+    const updated = await prisma.buyerProductRequest.update({
+      where: { id: requestId },
+      data: {
+        status,
+        reviewedAt: new Date(),
+        reviewedByUserId: validReviewerId,
+        createdOrderId: orderId || existing.createdOrderId,
+      },
+      include: {
+        buyer: {
+          select: { id: true, name: true, code: true, country: true },
+        },
+        reviewedByUser: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    return updated;
   }
 }

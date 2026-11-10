@@ -80,17 +80,18 @@ enum GatePassStatus {
 // ==========================================
 
 model Buyer {
-  id           String              @id @default(cuid())
-  name         String
-  code         String              @unique
-  country      String?
-  contactEmail String?
-  orders       Order[]
-  users        User[]
-  magicLinks   BuyerMagicLink[]
-  reports      WeeklyBuyerReport[]
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
+  id              String                @id @default(cuid())
+  name            String
+  code            String                @unique
+  country         String?
+  contactEmail    String?
+  orders          Order[]
+  users           User[]
+  magicLinks      BuyerMagicLink[]
+  reports         WeeklyBuyerReport[]
+  productRequests BuyerProductRequest[]
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
 
   @@map("buyers")
 }
@@ -123,10 +124,11 @@ model User {
   buyer              Buyer?                 @relation(fields: [buyerId], references: [id], onDelete: SetNull)
   assignedUnitId     String?
   assignedUnit       Unit?                  @relation(fields: [assignedUnitId], references: [id], onDelete: SetNull)
-  productionUpdates  ProductionUpdate[]
-  auditEvents        AuditEvent[]
-  mitigationActions  RiskMitigationAction[]
-  createdAt          DateTime               @default(now())
+  productionUpdates       ProductionUpdate[]
+  auditEvents             AuditEvent[]
+  mitigationActions       RiskMitigationAction[]
+  reviewedProductRequests BuyerProductRequest[]  @relation("ProductRequestReviewer")
+  createdAt               DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
 
   @@index([role])
@@ -465,4 +467,31 @@ model PasswordResetOtp {
 
   @@index([email, used])
   @@map("password_reset_otps")
+}
+
+model BuyerProductRequest {
+  id                  String    @id @default(cuid())
+  buyerId             String
+  buyer               Buyer     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  styleName           String
+  description         String?   @db.Text
+  targetQuantity      Int
+  targetExFactoryDate DateTime
+  currency            String    @default("USD")
+  targetPrice         Float?
+  color               String?
+  sizeBreakdown       String?   @db.Text // JSON string: [{"size": "S", "color": "Navy", "plannedQty": 2000}, ...]
+  fabricSpecs         String?   @db.Text
+  specialNotes        String?   @db.Text
+  status              String    @default("PENDING") // PENDING, ACCEPTED, DECLINED
+  reviewedAt          DateTime?
+  reviewedByUserId    String?
+  reviewedByUser      User?     @relation("ProductRequestReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  createdOrderId      String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([buyerId])
+  @@index([status])
+  @@map("buyer_product_requests")
 }

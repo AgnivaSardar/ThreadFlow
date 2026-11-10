@@ -11,6 +11,14 @@ interface AuthState {
 
   // Actions
   login: (email: string, password: string) => Promise<User>;
+  registerBuyer: (data: {
+    companyName: string;
+    name: string;
+    country: string;
+    email: string;
+    password: string;
+    phone?: string;
+  }) => Promise<User>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<boolean>;
   clearError: () => void;
@@ -65,6 +73,39 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return user;
     } catch (err: any) {
       set({ isLoading: false, error: err.message || 'Login failed' });
+      throw err;
+    }
+  },
+
+  registerBuyer: async (data) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await apiRequest<AuthResponse>('/auth/register-buyer', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+
+      const { accessToken, user } = response;
+      const refreshToken = (response as any).refreshToken;
+      setApiAccessToken(accessToken);
+      localStorage.setItem('threadflow_token', accessToken);
+      if (refreshToken) {
+        localStorage.setItem('threadflow_refresh_token', refreshToken);
+      }
+      localStorage.setItem('threadflow_user', JSON.stringify(user));
+      localStorage.setItem('threadflow_last_activity', String(Date.now()));
+
+      set({
+        user,
+        accessToken,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+      });
+
+      return user;
+    } catch (err: any) {
+      set({ isLoading: false, error: err.message || 'Registration failed' });
       throw err;
     }
   },

@@ -40,6 +40,37 @@ export class AuthController {
   }
 
   /**
+   * POST /api/v1/auth/register-buyer
+   * Self-registration for international buyer partners
+   */
+  public async registerBuyer(req: Request, res: Response): Promise<void> {
+    const { companyName, name, country, email, password, phone } = req.body;
+
+    if (!email || !password || !companyName || !name) {
+      throw new AppError('Company name, contact name, email, and password are required', 400);
+    }
+
+    const { tokens, user } = await authService.registerBuyer({
+      companyName,
+      name,
+      country,
+      email,
+      passwordPlain: password,
+      phone,
+    });
+
+    res.cookie('refreshToken', tokens.refreshToken, REFRESH_COOKIE_OPTIONS);
+
+    res.status(201).json({
+      success: true,
+      message: 'Buyer account registered successfully',
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user,
+    });
+  }
+
+  /**
    * POST /api/v1/auth/refresh
    * Exchanges 7-day refresh token for a fresh access token
    */

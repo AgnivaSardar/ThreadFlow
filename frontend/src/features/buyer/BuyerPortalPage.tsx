@@ -33,6 +33,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { exportOrdersToCsv } from '../reports/exportService';
+import { BuyerProductRequestModal } from './BuyerProductRequestModal';
 import { WeeklyReportPrintModal } from '../reports/WeeklyReportPrintModal';
 import { useLanguage } from '../../hooks/useLanguage';
 import { STAGE_TRANSLATIONS } from '../supervisor/supervisorTranslations';
@@ -169,6 +170,9 @@ export const BuyerPortalPage: React.FC = () => {
 
   // Feature 14: Weekly Report Print / PDF Modal
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+
+  // Buyer Product Sourcing Request Modal
+  const [isRequestProductModalOpen, setIsRequestProductModalOpen] = useState(false);
 
   // Close modals on Escape key
   useEffect(() => {
@@ -454,6 +458,17 @@ export const BuyerPortalPage: React.FC = () => {
           >
             <Download className="w-3.5 h-3.5 text-sky-700" />
             <span className="hidden sm:inline">{t.common.exportCsv}</span>
+          </button>
+
+          {/* Sourcing Request for New Product Button */}
+          <button
+            type="button"
+            onClick={() => setIsRequestProductModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-sky-700 to-sky-800 hover:from-sky-800 hover:to-sky-900 text-white font-bold rounded-xl text-xs shadow-xs transition cursor-pointer"
+            title="Upload/submit a sourcing request for a new product style"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>Request New Product</span>
           </button>
 
           <button
@@ -1185,6 +1200,14 @@ export const BuyerPortalPage: React.FC = () => {
           orders={orders as any}
         />
       )}
+
+      {/* Buyer Sourcing Request Modal */}
+      <BuyerProductRequestModal
+        isOpen={isRequestProductModalOpen}
+        onClose={() => setIsRequestProductModalOpen(false)}
+        onRequestSubmitted={() => fetchData()}
+        buyerName={profile?.name}
+      />
     </div>
   );
 };

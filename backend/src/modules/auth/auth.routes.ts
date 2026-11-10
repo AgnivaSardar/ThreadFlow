@@ -7,6 +7,7 @@ const router = Router();
 
 // Authenticated session routes
 router.post('/login', asyncHandler((req, res) => authController.login(req, res)));
+router.post('/register-buyer', asyncHandler((req, res) => authController.registerBuyer(req, res)));
 router.post('/refresh', asyncHandler((req, res) => authController.refresh(req, res)));
 router.post('/logout', asyncHandler((req, res) => authController.logout(req, res)));
 router.post('/forgot-password', asyncHandler((req, res) => authController.forgotPassword(req, res)));

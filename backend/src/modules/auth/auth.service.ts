@@ -95,6 +95,92 @@ export class AuthService {
   }
 
   /**
+   * Registers a new International Buyer partner and creates their initial organization & user account.
+   */
+  public async registerBuyer(data: {
+    companyName: string;
+    name: string;
+    country?: string;
+    email: string;
+    passwordPlain: string;
+    phone?: string;
+  }): Promise<{ tokens: AuthTokens; user: UserSessionDTO }> {
+    const emailNorm = data.email.toLowerCase().trim();
+    if (!emailNorm) {
+      throw new AppError('Work email is required', 400);
+    }
+    if (!data.companyName?.trim()) {
+      throw new AppError('Company / Brand name is required', 400);
+    }
+    if (!data.name?.trim()) {
+      throw new AppError('Contact person name is required', 400);
+    }
+    if (!data.passwordPlain || data.passwordPlain.length < 6) {
+      throw new AppError('Password must be at least 6 characters long', 400);
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email: emailNorm },
+    });
+    if (existingUser) {
+      throw new AppError('An account with this email address already exists. Please sign in.', 400);
+    }
+
+    // Check if buyer organization already exists or create new
+    let buyer = await prisma.buyer.findFirst({
+      where: { name: { equals: data.companyName.trim(), mode: 'insensitive' } },
+    });
+
+    if (!buyer) {
+      const codeBase = (data.companyName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() || 'BUY');
+      const uniqueCode = `${codeBase}-${Math.floor(1000 + Math.random() * 9000)}`;
+      buyer = await prisma.buyer.create({
+        data: {
+          name: data.companyName.trim(),
+          code: uniqueCode,
+          country: data.country?.trim() || null,
+          contactEmail: emailNorm,
+        },
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(data.passwordPlain, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        email: emailNorm,
+        passwordHash,
+        name: data.name.trim(),
+        role: Role.BUYER,
+        languagePreference: 'en',
+        phone: data.phone?.trim() || null,
+        buyerId: buyer.id,
+      },
+      include: {
+        buyer: { select: { id: true, name: true, code: true } },
+        assignedUnit: { select: { id: true, name: true, code: true } },
+      },
+    });
+
+    const tokens = this.generateTokens(user);
+
+    const userDTO: UserSessionDTO = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      languagePreference: user.languagePreference,
+      phone: user.phone,
+      buyerId: user.buyerId,
+      assignedUnitId: user.assignedUnitId,
+      buyer: user.buyer,
+      assignedUnit: user.assignedUnit,
+    };
+
+    return { tokens, user: userDTO };
+  }
+
+  /**
    * Verifies a 7-day refresh token and re-issues fresh session tokens.
    */
   public async refreshToken(refreshToken: string): Promise<{ tokens: AuthTokens; user: UserSessionDTO }> {

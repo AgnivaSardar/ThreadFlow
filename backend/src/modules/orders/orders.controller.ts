@@ -128,4 +128,45 @@ export class OrdersController {
       data: result,
     });
   });
+
+  static createProductRequest = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError('Authentication required', 401);
+    }
+    const request = await OrdersService.createProductRequest(req.body, req.user);
+    res.status(201).json({
+      success: true,
+      message: 'Product sourcing request submitted successfully',
+      data: request,
+    });
+  });
+
+  static listProductRequests = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError('Authentication required', 401);
+    }
+    const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const requests = await OrdersService.listProductRequests(req.user, status);
+    res.status(200).json({
+      success: true,
+      data: requests,
+    });
+  });
+
+  static updateProductRequestStatus = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError('Authentication required', 401);
+    }
+    const { id } = req.params;
+    const { status, orderId } = req.body;
+    if (!['ACCEPTED', 'DECLINED', 'PENDING'].includes(status)) {
+      throw new AppError('Status must be ACCEPTED, DECLINED, or PENDING', 400);
+    }
+    const updated = await OrdersService.updateProductRequestStatus(id, status, req.user.id, orderId);
+    res.status(200).json({
+      success: true,
+      message: `Product request status updated to ${status}`,
+      data: updated,
+    });
+  });
 }

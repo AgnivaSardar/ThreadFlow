@@ -23,7 +23,7 @@ import { OrderListItem, Buyer, Unit, RiskLevel, PaginationMeta } from '../../typ
 import { apiRequest, getAuthoritativeServerDate } from '../../services/api';
 import { StatusBadge } from '../../components/StatusBadge';
 import { CustomSelect, Option } from '../../components/CustomSelect';
-import { OrderForm } from './OrderForm';
+import { OrderForm, InitialOrderData } from './OrderForm';
 import { BulkShiftModal } from './BulkShiftModal';
 import { useAuthStore } from '../auth/authStore';
 import { ShiftCutoffBanner } from '../dashboard/ShiftCutoffBanner';
@@ -72,6 +72,70 @@ export const OrdersPage: React.FC = () => {
 
   // Order Creation Modal
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [initialOrderData, setInitialOrderData] = useState<InitialOrderData | null>(null);
+
+  // Check for incoming Buyer Product Request to convert into an order
+  const checkPendingBuyerRequest = () => {
+    try {
+      const stored = sessionStorage.getItem('tf_pending_request_to_order');
+      if (stored) {
+        sessionStorage.removeItem('tf_pending_request_to_order');
+        const req = JSON.parse(stored);
+        let parsedSizes: any[] = [];
+        try {
+          if (req.sizeBreakdown) parsedSizes = JSON.parse(req.sizeBreakdown);
+        } catch {}
+
+        setInitialOrderData({
+          productRequestId: req.id,
+          buyerId: req.buyerId || req.buyer?.id,
+          style: req.styleName,
+          description: [req.description, req.fabricSpecs ? `Fabric: ${req.fabricSpecs}` : '', req.specialNotes ? `Notes: ${req.specialNotes}` : '']
+            .filter(Boolean)
+            .join(' | '),
+          totalQuantity: req.targetQuantity,
+          exFactoryDate: req.targetExFactoryDate,
+          currency: req.currency || 'USD',
+          fobPricePerPiece: req.targetPrice || undefined,
+          sizeRows: parsedSizes.length > 0 ? parsedSizes : undefined,
+        });
+        setIsCreateModalOpen(true);
+      }
+    } catch {
+      // Fallback
+    }
+  };
+
+  useEffect(() => {
+    checkPendingBuyerRequest();
+
+    const handleCustomEvent = (e: any) => {
+      const req = e.detail;
+      if (!req) return;
+      let parsedSizes: any[] = [];
+      try {
+        if (req.sizeBreakdown) parsedSizes = JSON.parse(req.sizeBreakdown);
+      } catch {}
+
+      setInitialOrderData({
+        productRequestId: req.id,
+        buyerId: req.buyerId || req.buyer?.id,
+        style: req.styleName,
+        description: [req.description, req.fabricSpecs ? `Fabric: ${req.fabricSpecs}` : '', req.specialNotes ? `Notes: ${req.specialNotes}` : '']
+          .filter(Boolean)
+          .join(' | '),
+        totalQuantity: req.targetQuantity,
+        exFactoryDate: req.targetExFactoryDate,
+        currency: req.currency || 'USD',
+        fobPricePerPiece: req.targetPrice || undefined,
+        sizeRows: parsedSizes.length > 0 ? parsedSizes : undefined,
+      });
+      setIsCreateModalOpen(true);
+    };
+
+    window.addEventListener('threadflow:open_order_with_request', handleCustomEvent);
+    return () => window.removeEventListener('threadflow:open_order_with_request', handleCustomEvent);
+  }, []);
 
   const fetchMasterData = async () => {
     try {
@@ -805,10 +869,14 @@ export const OrdersPage: React.FC = () => {
       {/* Order Creation Modal */}
       <OrderForm
         isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setInitialOrderData(null);
+        }}
         onOrderCreated={fetchOrders}
         buyers={buyers}
         units={units}
+        initialData={initialOrderData}
       />
     </div>
   );

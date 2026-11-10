@@ -507,3 +507,36 @@ export interface SupervisorWorkResponse {
   }[];
 }
 
+export interface BuyerProductRequest {
+  id: string;
+  buyerId: string;
+  buyer?: {
+    id: string;
+    name: string;
+    code: string;
+    country?: string | null;
+    contactEmail?: string | null;
+  };
+  styleName: string;
+  description?: string | null;
+  targetQuantity: number;
+  targetExFactoryDate: string;
+  currency: string;
+  targetPrice?: number | null;
+  color?: string | null;
+  sizeBreakdown?: string | null;
+  fabricSpecs?: string | null;
+  specialNotes?: string | null;
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+  reviewedAt?: string | null;
+  reviewedByUserId?: string | null;
+  reviewedByUser?: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+  createdOrderId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
