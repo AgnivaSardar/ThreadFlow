@@ -301,18 +301,29 @@ An intelligent, context-aware conversational copilot available anywhere in the w
 
 ---
 
-## Pre-Configured Demo Accounts
+## Pre-Configured Demo Accounts & Role Directory
 
-All pre-seeded demo accounts use the standard password: `ThreadFlow@2026`
+All pre-seeded accounts are active and authenticated with the standard password: `ThreadFlow@2026`
 
-| Persona | Login Email | Assigned Role | Recommended Navigation & Verification Flow |
-| :--- | :--- | :--- | :--- |
-| **System Admin** | `admin@threadflow.com` | `ADMIN` | Full global access across all orders, audit trails, and user management. |
-| **Senior Merchandiser** | `merchandiser@threadflow.com` | `MERCHANDISER` | Order Board (`/orders`), PO Details, Run-Rate Pace (`/risks`), Issue Review Gate, and Weekly PDF Reports. |
-| **Floor Supervisor (Unit 1)** | `supervisor.muthu@threadflow.com` | `SUPERVISOR` | Unit 1 Floor Hub (`/floor`), Tamil voice logging (`தமிழ்`), and multi-select issue chips. |
-| **Floor Supervisor (Unit 2)** | `supervisor.selvam@threadflow.com` | `SUPERVISOR` | Unit 2 Stitching and Finishing operations. |
-| **Foreign Buyer (UK)** | `sourcing@company-b.co.uk` | `BUYER` | Scoped Buyer Portal (`/buyer`) viewing Company B UK POs (`B-PO-88260`, `B-PO-88240`, `B-PO-88213`). |
-| **Foreign Buyer (Germany)** | `compliance@company-c.de` | `BUYER` | Scoped Buyer Portal (`/buyer`) strictly displaying German POs (`C-PO-0488`, `C-PO-0492`, `C-PO-0501`). |
+| Role | Name | Login Email | Password | Unit / Scope |
+| :--- | :--- | :--- | :--- | :--- |
+| **System Administrator** | System Administrator | `admin@threadflow.com` | `ThreadFlow@2026` | System Administration (All Features) |
+| **Operations Admin** | Tiruppur Operations Admin | `admin.tiruppur@threadflow.com` | `ThreadFlow@2026` | Tiruppur Facility Operations |
+| **Senior Merchandiser** | Ramesh Merchandiser | `merchandiser@threadflow.com` | `ThreadFlow@2026` | Factory-Wide Merchandising (All Units) |
+| **Merchandiser** | Priya Sundaram | `priya.merchandiser@threadflow.com` | `ThreadFlow@2026` | Export Merchandising & Sourcing Requests |
+| **Merchandiser** | Karthik Rajan | `karthik.merchandiser@threadflow.com` | `ThreadFlow@2026` | Export Merchandising & Sourcing Requests |
+| **Supervisor (Unit 1)** | Muthu Floor Supervisor | `supervisor.muthu@threadflow.com` | `ThreadFlow@2026` | Unit 1 (Cotton Hub - 5 POs) |
+| **Supervisor (Unit 1 Co-Lead)** | Kumaravel Shift In-Charge | `supervisor.kumar@threadflow.com` | `ThreadFlow@2026` | Unit 1 (Cotton Hub - 5 POs) |
+| **Supervisor (Unit 2)** | Selvam Floor Supervisor | `supervisor.selvam@threadflow.com` | `ThreadFlow@2026` | Unit 2 (Stitching Hub - 4 POs) |
+| **Supervisor (Unit 2 Co-Lead)** | Manickam Floor Supervisor | `supervisor.manickam@threadflow.com` | `ThreadFlow@2026` | Unit 2 (Stitching Hub - 4 POs) |
+| **Supervisor (Unit 3)** | Murugan Floor Supervisor | `supervisor.murugan@threadflow.com` | `ThreadFlow@2026` | Unit 3 (Specialty & Export - 1 PO) |
+| **Supervisor (PrintTex)** | Palanisamy PrintTex Supervisor | `supervisor.printtex@threadflow.com` | `ThreadFlow@2026` | Subcontract - PrintTex |
+| **Supervisor (WashTex)** | Kandasamy WashTex Supervisor | `supervisor.washtex@threadflow.com` | `ThreadFlow@2026` | Subcontract - WashTex |
+| **Buyer (UK - Company B)** | Sarah Jenkins | `buyer@company-b.co.uk` | `ThreadFlow@2026` | Company B Only (UK Sourcing Portal) |
+| **Buyer (Germany - Company C)** | Klaus Mueller | `compliance@company-c.de` | `ThreadFlow@2026` | Company C Only (EU Compliance Portal) |
+| **Buyer (Spain - Zara/Inditex)** | Laura Gomez | `laura.inditex@inditex.com` | `ThreadFlow@2026` | Zara / Inditex Only |
+| **Buyer (UK - Marks & Spencer)** | David Ross | `sourcing@marksandspencer.co.uk` | `ThreadFlow@2026` | Marks & Spencer Only |
+| **Buyer (UK - Next Retail)** | Emma Watson | `knitwear@next.co.uk` | `ThreadFlow@2026` | Next Retail Only |
 
 ---
 
