@@ -60,12 +60,16 @@ export class RiskService {
     }
 
     // Map production updates to daily logs for WMA
+    const distinctMilestoneDates = new Set(
+      order.productionUpdates.map((u) => new Date(u.clientEventAt).toISOString().split('T')[0])
+    );
+
     let dailyLogs = order.productionUpdates.map((u) => ({
       date: u.clientEventAt,
       quantity: u.goodQuantity,
     }));
 
-    if (dailyLogs.length === 0) {
+    if (distinctMilestoneDates.size < 3) {
       // Fallback: use recent updates from the entire order so a freshly transitioned stage reflects shop floor pace
       const allOrderUpdates = await prisma.productionUpdate.findMany({
         where: { orderId: order.id },
@@ -250,14 +254,20 @@ export class RiskService {
         order.milestones[order.milestones.length - 1];
 
       // Relevant logs for active stage
-      const relevantLogs = order.productionUpdates
-        .filter((u) => u.milestoneId === activeMilestone?.id)
-        .map((u) => ({ date: u.clientEventAt, quantity: u.goodQuantity }));
+      const milestoneUpdates = order.productionUpdates.filter((u) => u.milestoneId === activeMilestone?.id);
+      const distinctActiveDates = new Set(
+        milestoneUpdates.map((u) => new Date(u.clientEventAt).toISOString().split('T')[0])
+      );
 
-      // Fallback: if no active stage logs, use recent logs
+      // If active stage has at least 3 distinct operating days of logs, use active stage logs.
+      // Otherwise, blend with recent logs from the entire order so newly transitioned milestones
+      // reflect established shop floor cadence instead of showing 0 pcs on preceding working days!
       const logsToUse =
-        relevantLogs.length > 0
-          ? relevantLogs
+        distinctActiveDates.size >= 3
+          ? milestoneUpdates.map((u) => ({
+              date: u.clientEventAt,
+              quantity: u.goodQuantity,
+            }))
           : order.productionUpdates.map((u) => ({
               date: u.clientEventAt,
               quantity: u.goodQuantity,
