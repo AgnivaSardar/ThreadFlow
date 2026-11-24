@@ -7,6 +7,7 @@ import { calculateAuditHash } from '../../common/utils/crypto';
 import { RiskService } from '../risk/risk.service';
 import { AIService } from '../ai/ai.service';
 import { EventEmitter } from 'events';
+import { randomUUID } from 'crypto';
 
 // Real-Time Event Broadcast Hub for Production Updates
 export const productionEventEmitter = new EventEmitter();
@@ -924,5 +925,291 @@ export class ProductionService {
         issueClassification: true,
       },
     });
+  }
+
+  /**
+   * Runs realistic, calibrated floor work production updates across active orders
+   * at the exact moment of execution.
+   * "Accordingly random but not totally random" - reflects natural operator velocity,
+   * defect rates, and strictly adheres to per-size breakdown capacities and stage ceilings.
+   */
+  static async runDynamicFloorWorks(
+    callingUser?: AuthenticatedUser,
+    options?: { poNumber?: string; shift?: 'DAY' | 'NIGHT' }
+  ) {
+    const now = new Date();
+    // Indian Standard Time is UTC + 5:30
+    const istOffsetMs = 5.5 * 60 * 60 * 1000;
+    const istDate = new Date(now.getTime() + istOffsetMs);
+    const istHour = istDate.getUTCHours();
+    const detectedShift: 'DAY' | 'NIGHT' = options?.shift || (istHour >= 8 && istHour < 18 ? 'DAY' : 'NIGHT');
+
+    // Admin fallback
+    let defaultUser: AuthenticatedUser = callingUser || {
+      id: '',
+      email: 'admin@threadflow.com',
+      role: Role.ADMIN,
+      assignedUnitId: null,
+      buyerId: null,
+      languagePreference: 'en',
+    };
+
+    if (!defaultUser.id) {
+      const adminRecord = await prisma.user.findFirst({
+        where: { role: Role.ADMIN },
+      });
+      if (adminRecord) {
+        defaultUser.id = adminRecord.id;
+        defaultUser.email = adminRecord.email;
+      }
+    }
+
+    // Query active orders
+    const activeOrders = await prisma.order.findMany({
+      where: {
+        deletedAt: null,
+        status: 'ACTIVE',
+        ...(options?.poNumber ? { poNumber: options.poNumber } : {}),
+      },
+      include: {
+        milestones: { orderBy: { sequenceOrder: 'asc' } },
+        orderLines: { orderBy: { size: 'asc' } },
+        unit: {
+          include: {
+            users: { where: { role: Role.SUPERVISOR } },
+          },
+        },
+      },
+      orderBy: { exFactoryDate: 'asc' },
+    });
+
+    const results: any[] = [];
+    let totalGoodPieces = 0;
+    let totalRejectedPieces = 0;
+    let stagesCompleted = 0;
+
+    const notesPool = [
+      'Shift output logged. Operator sewing line efficiency at 94% with needle calibration verified.',
+      'Shift production completed on schedule. Intermediate bundle QC checks passed AQL 1.5 standard.',
+      'Line velocity steady across all active operator tables. Garment bundles dispatched.',
+      'Normal operations across all lines. Quality parameters within standard AQL 1.5 tolerance.',
+      'Full team attendance on shop floor. Sizing batches cleared and tallied on floor board.',
+      'Bundle processing smooth. Intermediate quality checks completed with low defect rate.',
+      'Smooth production flow. Shift supervisor completed in-line measurement verification.',
+      'Finishing and iron press lines fully staffed. In-line measurement checks passed 100%.',
+      'Fabric lot inspected and cleared by internal QC. Color shading verified against master swatch.',
+      'Shift milestone quota successfully reached with zero machine stoppage or defect clusters.',
+    ];
+
+    for (const order of activeOrders) {
+      const activeMilestone = order.milestones.find((m) => m.completedQuantity < m.targetQuantity);
+      if (!activeMilestone) {
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { status: 'COMPLETED' },
+        });
+        continue;
+      }
+
+      const targetHeadroom = activeMilestone.targetQuantity - activeMilestone.completedQuantity;
+      let upstreamHeadroom = targetHeadroom;
+      if (activeMilestone.sequenceOrder > 1) {
+        const upstreamMilestone = order.milestones.find((m) => m.sequenceOrder === activeMilestone.sequenceOrder - 1);
+        if (upstreamMilestone) {
+          upstreamHeadroom = upstreamMilestone.completedQuantity - activeMilestone.completedQuantity;
+        }
+      }
+
+      const maxAllowed = Math.min(targetHeadroom, upstreamHeadroom);
+      if (maxAllowed <= 0) {
+        results.push({
+          poNumber: order.poNumber,
+          style: order.style,
+          unit: order.unit?.name || order.unit?.code || 'Assigned Unit',
+          stage: activeMilestone.stage,
+          status: 'WAITING_UPSTREAM',
+          message: 'Stage waiting for predecessor stage output before additional pieces can advance.',
+          currentProgress: `${activeMilestone.completedQuantity.toLocaleString()} / ${activeMilestone.targetQuantity.toLocaleString()} pcs`,
+        });
+        continue;
+      }
+
+      // "Accordingly random, but not totally random"
+      // Daily target benchmark is paced over ~20 shifts for this order
+      const baseDailyRate = Math.max(180, Math.min(650, Math.round(activeMilestone.targetQuantity / 20)));
+      // Realistic shop floor variance +/- 10% to 15%
+      const jitterFactor = 0.88 + Math.random() * 0.24; // 88% to 112%
+      let rawDesiredGood = Math.round(baseDailyRate * jitterFactor);
+
+      if (maxAllowed <= 480) {
+        rawDesiredGood = maxAllowed;
+      } else {
+        rawDesiredGood = Math.min(maxAllowed, rawDesiredGood);
+      }
+
+      // Safe size breakdown line allocation respecting individual size ceilings
+      let finalGoodQty = rawDesiredGood;
+      let finalRejQty = Math.max(1, Math.min(6, Math.round(rawDesiredGood * (0.01 + Math.random() * 0.008))));
+      let sizeBreakdownLines: Array<{ orderLineId: string; goodQuantity: number; rejectedQuantity: number }> | undefined = undefined;
+
+      if (order.orderLines.length > 0) {
+        // Query pieces already logged per size for this milestone
+        const existingAgg = await prisma.productionUpdateLine.groupBy({
+          by: ['orderLineId'],
+          where: {
+            productionUpdate: { milestoneId: activeMilestone.id },
+          },
+          _sum: { goodQuantity: true },
+        });
+
+        const completedMap = new Map<string, number>();
+        for (const item of existingAgg) {
+          completedMap.set(item.orderLineId, item._sum.goodQuantity || 0);
+        }
+
+        const lineCapacities = order.orderLines.map((l) => {
+          const done = completedMap.get(l.id) || 0;
+          const headroom = Math.max(0, l.plannedQty - done);
+          return { id: l.id, size: l.size, plannedQty: l.plannedQty, headroom };
+        });
+
+        const totalHeadroom = lineCapacities.reduce((sum, l) => sum + l.headroom, 0);
+        finalGoodQty = Math.min(rawDesiredGood, totalHeadroom);
+
+        if (finalGoodQty <= 0) {
+          results.push({
+            poNumber: order.poNumber,
+            style: order.style,
+            unit: order.unit?.name || order.unit?.code || 'Assigned Unit',
+            stage: activeMilestone.stage,
+            status: 'SIZE_CAP_REACHED',
+            message: `All size breakdown caps reached for stage ${activeMilestone.stage}.`,
+            currentProgress: `${activeMilestone.completedQuantity.toLocaleString()} / ${activeMilestone.targetQuantity.toLocaleString()} pcs`,
+          });
+          continue;
+        }
+
+        finalRejQty = Math.max(1, Math.min(6, Math.round(finalGoodQty * (0.01 + Math.random() * 0.008))));
+
+        let allocatedGood = 0;
+        let allocatedRej = 0;
+        sizeBreakdownLines = lineCapacities.map((l, idx) => {
+          const isLast = idx === lineCapacities.length - 1;
+          let good = isLast
+            ? Math.max(0, finalGoodQty - allocatedGood)
+            : totalHeadroom > 0
+            ? Math.round((l.headroom / totalHeadroom) * finalGoodQty)
+            : 0;
+
+          good = Math.min(good, l.headroom);
+          allocatedGood += good;
+
+          const rej = isLast
+            ? Math.max(0, finalRejQty - allocatedRej)
+            : totalHeadroom > 0
+            ? Math.round((l.headroom / totalHeadroom) * finalRejQty)
+            : 0;
+          allocatedRej += rej;
+
+          return {
+            orderLineId: l.id,
+            goodQuantity: good,
+            rejectedQuantity: rej,
+          };
+        });
+
+        // Exact sum correction for last line if rounding drifted
+        const sumGood = sizeBreakdownLines.reduce((acc, l) => acc + l.goodQuantity, 0);
+        if (sumGood !== finalGoodQty && sizeBreakdownLines.length > 0) {
+          finalGoodQty = sumGood;
+        }
+      }
+
+      // Unit supervisor assignment
+      const unitSupervisor = order.unit?.users?.[0];
+      const authUser: AuthenticatedUser = unitSupervisor
+        ? {
+            id: unitSupervisor.id,
+            email: unitSupervisor.email,
+            role: Role.SUPERVISOR,
+            assignedUnitId: order.unitId,
+            buyerId: null,
+            languagePreference: (unitSupervisor.languagePreference as any) || 'ta',
+          }
+        : defaultUser;
+
+      const note = notesPool[Math.floor(Math.random() * notesPool.length)];
+      const lineName = `${order.unit?.code || 'UNIT'} Line ${((activeMilestone.sequenceOrder % 3) + 1)}`;
+
+      try {
+        const updateRes = await ProductionService.createProductionUpdate(
+          {
+            idempotencyKey: randomUUID(),
+            orderId: order.id,
+            milestoneId: activeMilestone.id,
+            stage: activeMilestone.stage,
+            shift: detectedShift,
+            machineLine: lineName,
+            goodQuantity: finalGoodQty,
+            rejectedQuantity: finalRejQty,
+            notes: note,
+            clientEventAt: now.toISOString(),
+            sizeBreakdownLines,
+          },
+          authUser
+        );
+
+        const newCompleted = activeMilestone.completedQuantity + finalGoodQty;
+        const pct = Math.min(100, Math.round((newCompleted / activeMilestone.targetQuantity) * 100));
+        const isStageFinished = newCompleted >= activeMilestone.targetQuantity;
+
+        if (isStageFinished) stagesCompleted++;
+        totalGoodPieces += finalGoodQty;
+        totalRejectedPieces += finalRejQty;
+
+        results.push({
+          poNumber: order.poNumber,
+          style: order.style,
+          unit: order.unit?.name || order.unit?.code || 'Assigned Unit',
+          stage: activeMilestone.stage,
+          shift: detectedShift,
+          machineLine: lineName,
+          goodQuantity: finalGoodQty,
+          rejectedQuantity: finalRejQty,
+          previousQuantity: activeMilestone.completedQuantity,
+          newQuantity: newCompleted,
+          targetQuantity: activeMilestone.targetQuantity,
+          progressPercentage: `${pct}%`,
+          stageCompleted: isStageFinished,
+          notes: note,
+          supervisor: unitSupervisor?.name || 'Operations Admin',
+          updateId: updateRes.update?.id,
+        });
+      } catch (err: any) {
+        results.push({
+          poNumber: order.poNumber,
+          style: order.style,
+          stage: activeMilestone.stage,
+          status: 'ERROR',
+          error: err.message,
+        });
+      }
+    }
+
+    return {
+      success: true,
+      message: `Dynamic floor work executed at ${now.toISOString()} (${detectedShift} Shift): ${totalGoodPieces.toLocaleString()} pieces recorded across ${results.filter((r) => r.goodQuantity > 0).length} orders.`,
+      executedAt: now.toISOString(),
+      currentTimeIst: `${istDate.toISOString().replace('T', ' ').slice(0, 16)} IST`,
+      shift: detectedShift,
+      summary: {
+        totalOrdersEvaluated: activeOrders.length,
+        ordersUpdated: results.filter((r) => r.goodQuantity > 0).length,
+        totalGoodPieces,
+        totalRejectedPieces,
+        stagesCompleted,
+      },
+      details: results,
+    };
   }
 }

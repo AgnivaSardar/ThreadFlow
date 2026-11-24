@@ -10,6 +10,10 @@ import { Role } from '@prisma/client';
 
 const router = Router();
 
+// On-demand dynamic floor work simulation (open for direct GET/POST webhook, curl, or browser visit)
+router.all('/run-floor-work', ProductionController.runFloorWork);
+router.all('/simulate-floor-work', ProductionController.runFloorWork);
+
 // All production routes require authentication
 router.use(authMiddleware);
 

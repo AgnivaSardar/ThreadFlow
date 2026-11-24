@@ -139,4 +139,16 @@ export class ProductionController {
       data: history,
     });
   });
+
+  /**
+   * GET/POST /api/v1/production/run-floor-work
+   * Simulates/records realistic shift floor output across all active orders at that exact time.
+   * Can be triggered via browser URL, curl, Postman, or webhook.
+   */
+  static runFloorWork = asyncHandler(async (req: Request, res: Response) => {
+    const poNumber = (req.query.po || req.body?.po) as string | undefined;
+    const shift = (req.query.shift || req.body?.shift) as 'DAY' | 'NIGHT' | undefined;
+    const result = await ProductionService.runDynamicFloorWorks(req.user, { poNumber, shift });
+    res.status(200).json(result);
+  });
 }
