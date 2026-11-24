@@ -477,7 +477,7 @@ export class ProductionService {
           });
           const stageCompleted = stageAgg._sum.goodQuantity || 0;
           const proposedLineTotal = stageCompleted + line.goodQuantity;
-          if (proposedLineTotal > lineCap) {
+          if (line.goodQuantity > 0 && proposedLineTotal > lineCap) {
             throw new AppError(
               `Cap amount exceeded for Size ${orderLine.size}: Proposed output (${proposedLineTotal.toLocaleString()} pcs) exceeds required cap of ${lineCap.toLocaleString()} pcs (Planned: ${orderLine.plannedQty.toLocaleString()} pcs). Maximum remaining allowed: ${Math.max(0, lineCap - stageCompleted).toLocaleString()} pcs. Please recheck your entry.`,
               400
@@ -1136,6 +1136,8 @@ export class ProductionService {
             rejRemaining -= lineRej;
           }
         }
+
+        sizeBreakdownLines = sizeBreakdownLines.filter((l) => l.goodQuantity > 0 || l.rejectedQuantity > 0);
       }
 
       // Unit supervisor assignment
