@@ -1016,7 +1016,7 @@ export class ProductionService {
       if (activeMilestone.sequenceOrder > 1) {
         const upstreamMilestone = order.milestones.find((m) => m.sequenceOrder === activeMilestone.sequenceOrder - 1);
         if (upstreamMilestone) {
-          upstreamHeadroom = upstreamMilestone.completedQuantity - activeMilestone.completedQuantity;
+          upstreamHeadroom = Math.max(0, upstreamMilestone.completedQuantity - activeMilestone.completedQuantity);
         }
       }
 
@@ -1089,39 +1089,52 @@ export class ProductionService {
           continue;
         }
 
-        finalRejQty = Math.max(1, Math.min(6, Math.round(finalGoodQty * (0.01 + Math.random() * 0.008))));
-
-        let allocatedGood = 0;
-        let allocatedRej = 0;
-        sizeBreakdownLines = lineCapacities.map((l, idx) => {
-          const isLast = idx === lineCapacities.length - 1;
-          let good = isLast
-            ? Math.max(0, finalGoodQty - allocatedGood)
-            : totalHeadroom > 0
-            ? Math.round((l.headroom / totalHeadroom) * finalGoodQty)
-            : 0;
-
-          good = Math.min(good, l.headroom);
-          allocatedGood += good;
-
-          const rej = isLast
-            ? Math.max(0, finalRejQty - allocatedRej)
-            : totalHeadroom > 0
-            ? Math.round((l.headroom / totalHeadroom) * finalRejQty)
-            : 0;
-          allocatedRej += rej;
-
+        let remainingToGive = finalGoodQty;
+        sizeBreakdownLines = lineCapacities.map((l) => {
+          if (l.headroom <= 0 || remainingToGive <= 0) {
+            return {
+              orderLineId: l.id,
+              goodQuantity: 0,
+              rejectedQuantity: 0,
+            };
+          }
+          const share = Math.min(l.headroom, Math.min(remainingToGive, Math.round((l.headroom / totalHeadroom) * finalGoodQty)));
+          remainingToGive -= share;
           return {
             orderLineId: l.id,
-            goodQuantity: good,
-            rejectedQuantity: rej,
+            goodQuantity: share,
+            rejectedQuantity: 0,
           };
         });
 
-        // Exact sum correction for last line if rounding drifted
-        const sumGood = sizeBreakdownLines.reduce((acc, l) => acc + l.goodQuantity, 0);
-        if (sumGood !== finalGoodQty && sizeBreakdownLines.length > 0) {
-          finalGoodQty = sumGood;
+        // Distribute remaining rounding pieces strictly to lines with available headroom
+        if (remainingToGive > 0) {
+          for (const line of sizeBreakdownLines) {
+            if (remainingToGive <= 0) break;
+            const cap = lineCapacities.find((c) => c.id === line.orderLineId);
+            if (cap) {
+              const currentGiven = line.goodQuantity;
+              const canTakeMore = Math.min(remainingToGive, cap.headroom - currentGiven);
+              if (canTakeMore > 0) {
+                line.goodQuantity += canTakeMore;
+                remainingToGive -= canTakeMore;
+              }
+            }
+          }
+        }
+
+        // Adjust finalGoodQty to exactly match the sum of lines
+        finalGoodQty = sizeBreakdownLines.reduce((acc, l) => acc + l.goodQuantity, 0);
+        if (finalGoodQty <= 0) continue;
+
+        finalRejQty = Math.max(1, Math.min(6, Math.round(finalGoodQty * (0.01 + Math.random() * 0.008))));
+        let rejRemaining = finalRejQty;
+        for (const line of sizeBreakdownLines) {
+          if (line.goodQuantity > 0 && rejRemaining > 0) {
+            const lineRej = Math.min(rejRemaining, Math.max(1, Math.round(line.goodQuantity * 0.015)));
+            line.rejectedQuantity = lineRej;
+            rejRemaining -= lineRej;
+          }
         }
       }
 
